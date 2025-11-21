@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheeziousLogo } from '@/components/icons/CheeziousLogo';
 import { branches } from '@/lib/data';
-import { MapPin } from 'lucide-react';
+import { MapPin, LogIn } from 'lucide-react';
 
 export default function Home() {
   return (
@@ -43,9 +43,17 @@ export default function Home() {
         </CardContent>
       </Card>
 
+      <div className="mt-8 w-full max-w-md">
+        <Button asChild variant="outline" className="w-full" size="lg">
+          <Link href="/cashier">
+            <LogIn className="mr-2 h-5 w-5" />
+            Cashier Login
+          </Link>
+        </Button>
+      </div>
+
       <footer className="mt-12 text-center text-sm text-muted-foreground">
         <p>&copy; {new Date().getFullYear()} Cheezious Connect. All Rights Reserved.</p>
-        <p className="mt-2">For a simulated experience, please select a branch above.</p>
       </footer>
     </main>
   );
