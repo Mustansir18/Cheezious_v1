@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -11,7 +12,7 @@ import Link from "next/link";
 import { branches } from "@/lib/data";
 import type { PlacedOrder } from "@/lib/types";
 import { useFirebase } from "@/firebase";
-import { collection, serverTimestamp } from "firebase/firestore";
+import { collection, serverTimestamp, addDoc } from "firebase/firestore";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 export default function OrderConfirmationPage() {
@@ -49,7 +50,8 @@ export default function OrderConfirmationPage() {
 
     try {
         const ordersCollection = collection(firestore, "orders");
-        const docRef = await addDocumentNonBlocking(ordersCollection, newOrder);
+        // We need to wait for the order to be created to get its ID.
+        const docRef = await addDoc(ordersCollection, newOrder);
 
         // Ensure docRef is not null before proceeding
         if (!docRef) {
@@ -66,7 +68,7 @@ export default function OrderConfirmationPage() {
                 itemPrice: item.price,
                 name: item.name,
             };
-            // Return the promise from addDocumentNonBlocking
+            // Use non-blocking for items as we don't need their refs immediately.
             return addDocumentNonBlocking(orderItemsCollection, orderItem);
         });
 
