@@ -6,6 +6,7 @@ import { Firestore } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import { initializeFirebase } from '@/firebase';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
+import { Loader } from 'lucide-react';
 
 interface FirebaseProviderProps {
   children: ReactNode;
@@ -39,6 +40,13 @@ export interface UserHookResult {
 }
 
 export const FirebaseContext = createContext<FirebaseContextState | undefined>(undefined);
+
+const FullscreenLoader = () => (
+  <div className="flex h-screen w-screen items-center justify-center bg-background">
+    <Loader className="h-12 w-12 animate-spin text-primary" />
+  </div>
+);
+
 
 export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({ children }) => {
   const [userAuthState, setUserAuthState] = useState<{
@@ -104,7 +112,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({ children }) 
   return (
     <FirebaseContext.Provider value={contextValue}>
       <FirebaseErrorListener />
-      {canRenderChildren ? children : null}
+      {canRenderChildren ? children : <FullscreenLoader />}
     </FirebaseContext.Provider>
   );
 };
