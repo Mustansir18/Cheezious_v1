@@ -10,10 +10,14 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import Link from "next/link";
 import { branches } from "@/lib/data";
 import type { PlacedOrder } from "@/lib/types";
+import { useFirebase } from "@/firebase";
+import { collection, serverTimestamp, addDoc } from "firebase/firestore";
+import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 
 export default function OrderConfirmationPage() {
   const { items, cartTotal, branchId, orderType, clearCart } = useCart();
   const router = useRouter();
+  const { firestore } = useFirebase();
 
   if (!branchId || !orderType) {
     return (
@@ -29,20 +33,49 @@ export default function OrderConfirmationPage() {
   
   const branch = branches.find((b) => b.id === branchId);
 
-  const handleConfirmOrder = () => {
+  const handleConfirmOrder = async () => {
+    if (!firestore || !branchId || !orderType) return;
+
     const orderNumber = `${branchId.slice(0,3).toUpperCase()}-${Date.now().toString().slice(-6)}`;
-    const placedOrder: PlacedOrder = {
-        orderNumber,
-        items,
-        total: cartTotal,
-        branchName: branch!.name,
-        orderType,
-    };
     
+    const newOrder = {
+        branchId,
+        orderDate: serverTimestamp(),
+        orderType,
+        status: "Pending",
+        totalAmount: cartTotal,
+        orderNumber,
+    };
+
     try {
+        const ordersCollection = collection(firestore, "orders");
+        const docRef = await addDocumentNonBlocking(ordersCollection, newOrder);
+
+        const orderItemsCollection = collection(firestore, `orders/${docRef.id}/order_items`);
+        
+        for (const item of items) {
+            const orderItem = {
+                orderId: docRef.id,
+                menuItemId: item.id,
+                quantity: item.quantity,
+                itemPrice: item.price,
+                name: item.name,
+            };
+            await addDocumentNonBlocking(orderItemsCollection, orderItem);
+        }
+
+        const placedOrder: PlacedOrder = {
+            orderNumber,
+            items,
+            total: cartTotal,
+            branchName: branch!.name,
+            orderType,
+        };
+
         sessionStorage.setItem('placedOrder', JSON.stringify(placedOrder));
         clearCart();
         router.push("/order-status");
+
     } catch (error) {
         console.error("Failed to place order:", error);
         // Optionally show a toast notification for the error

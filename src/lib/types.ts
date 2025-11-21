@@ -1,3 +1,5 @@
+import { Timestamp } from "firebase/firestore";
+
 export type Branch = {
   id: string;
   name: string;
@@ -30,3 +32,22 @@ export type PlacedOrder = {
     branchName: string;
     orderType: OrderType;
 }
+
+export type Order = {
+    id: string;
+    branchId: string;
+    orderDate: Timestamp;
+    orderType: OrderType;
+    status: 'Pending' | 'Preparing' | 'Ready' | 'Completed' | 'Cancelled';
+    totalAmount: number;
+    orderNumber: string;
+};
+
+export type OrderItem = {
+    id: string;
+    orderId: string;
+    menuItemId: string;
+    quantity: number;
+    itemPrice: number;
+    name: string;
+};
