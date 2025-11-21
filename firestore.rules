@@ -102,13 +102,13 @@ service cloud.firestore {
     /**
      * @description Manages customer orders. Any authenticated user can create an order, and any
      *              authenticated user can view and update orders to support the cashier workflow.
-     * @path /orders
-     * @allow (list) Any authenticated user can list all orders for the cashier dashboard.
-     * @principle Allows authenticated users to list all orders for the shared-access cashier model.
+     * @path /orders/{orderId}
+     * @allow (get) Any authenticated user can read a single order.
+     * @principle Allows authenticated users to work with individual orders.
      */
     match /orders/{orderId} {
-      allow list: if isSignedIn();
-      allow read: if isSignedIn();
+      allow get: if isSignedIn();
+      allow read: if isSignedIn(); // read = get + list, redundant but safe
       allow create: if isSignedIn();
       allow update: if isSignedIn() && resource != null;
       allow delete: if false;
