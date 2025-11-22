@@ -26,6 +26,7 @@ export default function OrderStatusPage() {
       if (storedOrder) {
         setPlacedOrder(JSON.parse(storedOrder));
       } else {
+        // If there's no order in session, we can't show a status. Redirect home.
         router.replace('/');
       }
     } catch (error) {
@@ -34,7 +35,7 @@ export default function OrderStatusPage() {
     }
   }, [router]);
 
-  // 2. Find the full order object from the context
+  // 2. Find the full order object from the context once it's loaded
   const order: Order | undefined = useMemo(() => {
     if (!placedOrder) return undefined;
     return orders.find(o => o.id === placedOrder.orderId);
@@ -65,18 +66,19 @@ export default function OrderStatusPage() {
     }, 500);
   }, [order]);
   
-  // 4. Handle automatic printing
+  // 4. Handle automatic printing - simplified and more reliable
   useEffect(() => {
-    const allLoaded = !isOrdersLoading && !isSettingsLoading && order;
-    
-    if (allLoaded && settings.autoPrintReceipts && !printTriggered.current) {
-        printTriggered.current = true;
+    // This effect runs ONLY when 'order' object gets populated.
+    // At this point, we know settings are also loaded or loading.
+    if (order && !isSettingsLoading && settings.autoPrintReceipts && !printTriggered.current) {
+        // All conditions are met: we have the order, settings are loaded, auto-print is on, and we haven't printed yet.
+        printTriggered.current = true; // Set the flag immediately to prevent re-triggering
         handlePrint();
     }
-  }, [isOrdersLoading, isSettingsLoading, order, settings.autoPrintReceipts, handlePrint]);
+  }, [order, isSettingsLoading, settings.autoPrintReceipts, handlePrint]);
 
 
-  // Play a sound when the order is ready
+  // 5. Play a sound when the order is ready
   useEffect(() => {
     if (status === 'Ready') {
       try {
