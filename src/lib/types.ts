@@ -47,14 +47,14 @@ export type Order = {
     status: OrderStatus;
     totalAmount: number;
     items: OrderItem[];
+    paymentMethod: string;
     // New fields for dine-in orders
     floorId?: string;
     tableId?: string;
-    paymentMethod?: string;
     // Tax fields
-    subtotal?: number;
-    taxRate?: number;
-    taxAmount?: number;
+    subtotal: number;
+    taxRate: number;
+    taxAmount: number;
 };
 
 export type OrderItem = {

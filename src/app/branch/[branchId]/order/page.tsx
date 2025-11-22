@@ -36,9 +36,8 @@ export default function OrderConfirmationPage() {
   const table = useMemo(() => settings.tables.find(t => t.id === tableId), [settings.tables, tableId]);
 
   const taxRate = useMemo(() => {
-    if (orderType !== 'Dine-In' || !paymentMethod) return 0;
     return taxRates[paymentMethod] || 0;
-  }, [paymentMethod, orderType, taxRates]);
+  }, [paymentMethod, taxRates]);
 
   const taxAmount = useMemo(() => cartTotal * taxRate, [cartTotal, taxRate]);
   const grandTotal = useMemo(() => cartTotal + taxAmount, [cartTotal, taxAmount]);
@@ -58,7 +57,7 @@ export default function OrderConfirmationPage() {
   
   const handleConfirmOrder = async () => {
     if (!branchId || !orderType) return;
-    if (orderType === 'Dine-In' && !paymentMethod) {
+    if (!paymentMethod) {
         toast({
             variant: "destructive",
             title: "Payment Method Required",
@@ -89,7 +88,8 @@ export default function OrderConfirmationPage() {
         taxRate: taxRate,
         taxAmount: taxAmount,
         items: orderItems,
-        ...(orderType === 'Dine-In' && { floorId, tableId, paymentMethod }),
+        paymentMethod,
+        ...(orderType === 'Dine-In' && { floorId, tableId }),
     };
     
     // Asynchronously sync the order to the external system.
@@ -168,23 +168,23 @@ export default function OrderConfirmationPage() {
             ))}
             <Separator />
 
-            {orderType === 'Dine-In' && (
-                <div className="grid gap-2 pt-4">
-                    <Label htmlFor="payment-method">Payment Method</Label>
-                    <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                        <SelectTrigger id="payment-method">
-                            <SelectValue placeholder="Select a payment method" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {settings.paymentMethods.map(method => (
-                                <SelectItem key={method.id} value={method.name}>
-                                    {method.name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-            )}
+            
+            <div className="grid gap-2 pt-4">
+                <Label htmlFor="payment-method">Payment Method</Label>
+                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                    <SelectTrigger id="payment-method">
+                        <SelectValue placeholder="Select a payment method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {settings.paymentMethods.map(method => (
+                            <SelectItem key={method.id} value={method.name}>
+                                {method.name}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+            
 
             <div className="space-y-1 pt-4">
                 <div className="flex justify-between">
