@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { useMenu } from '@/context/MenuContext';
 import { Button } from '@/components/ui/button';
 import {
@@ -101,6 +102,17 @@ function ItemForm({
   const [categoryId, setCategoryId] = useState(item?.categoryId || '');
   const [imageUrl, setImageUrl] = useState(item?.imageUrl || '');
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImageUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const data = { name, description, price, categoryId, imageUrl };
@@ -139,9 +151,15 @@ function ItemForm({
         </Select>
       </div>
       <div>
-        <Label htmlFor="item-image-url">Image URL</Label>
-        <Input id="item-image-url" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://example.com/image.png" required />
-        <p className="text-sm text-muted-foreground mt-1">Provide a direct link to the item's image.</p>
+        <Label htmlFor="item-image">Item Image</Label>
+        <Input id="item-image" type="file" accept="image/*" onChange={handleImageChange} className="file:text-foreground"/>
+        <p className="text-sm text-muted-foreground mt-1">Select an image from your system.</p>
+        {imageUrl && (
+          <div className="mt-4">
+            <p className="text-sm font-medium mb-2">Image Preview:</p>
+            <Image src={imageUrl} alt="Image preview" width={100} height={100} className="rounded-md object-cover" />
+          </div>
+        )}
       </div>
       <DialogFooter>
         <DialogClose asChild>
@@ -305,3 +323,5 @@ export default function MenuManagementPage() {
     </div>
   );
 }
+
+    
