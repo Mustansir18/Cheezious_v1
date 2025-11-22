@@ -4,7 +4,8 @@ import {
   Home,
   Settings,
   Package,
-  BarChart4
+  BarChart4,
+  LayoutDashboard
 } from 'lucide-react';
 import {
   Tooltip,
@@ -32,6 +33,16 @@ export default function AdminLayout({
               <CheeziousLogo className="h-5 w-5 transition-all group-hover:scale-110" />
               <span className="sr-only">Cheezious Connect</span>
             </Link>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link href="/admin">
+                  <Button variant="outline" size="icon" aria-label="Dashboard">
+                    <LayoutDashboard className="h-5 w-5" />
+                  </Button>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right">Dashboard</TooltipContent>
+            </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Link href="/admin/reporting">
