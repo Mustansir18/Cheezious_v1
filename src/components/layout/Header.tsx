@@ -19,7 +19,7 @@ export default function Header({ branchId }: { branchId: string }) {
         <Link href="/" className="flex items-center gap-2">
           <CheeziousLogo className="h-8 w-8 text-primary" />
           <span className="hidden font-headline text-xl font-bold text-primary sm:inline-block">
-            Cheezious Connect
+            Cheezious
           </span>
         </Link>
         <div className="text-center">

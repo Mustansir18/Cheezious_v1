@@ -4,7 +4,7 @@ import './globals.css';
 import AppLayout from './AppLayout';
 
 export const metadata: Metadata = {
-  title: 'Cheezious Connect',
+  title: 'Cheezious',
   description: 'Order your favorite Cheezious meals online.',
 };
 
