@@ -45,31 +45,31 @@
     {
       "id": "cheezy-sticks",
       "description": "Cheezy bread sticks with a dip",
-      "imageUrl": "https://images.unsplash.com/photo-1625944239843-9916a25615a1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1080&q=80",
+      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F58498b35-7798-4665-b77c-639a0c2834b9.png&w=1920&q=75",
       "imageHint": "cheese sticks"
     },
     {
       "id": "calzone-chunks",
       "description": "Stuffed calzone pieces with fries",
-      "imageUrl": "https://images.unsplash.com/photo-1623101594998-38c4c7b8c386?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1080&q=80",
+      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2Fd8a6c8e3-b3c1-4c11-9e58-39a756658137.png&w=1920&q=75",
       "imageHint": "calzone"
     },
     {
       "id": "baked-wings",
       "description": "A plate of oven-baked chicken wings",
-      "imageUrl": "https://images.unsplash.com/photo-1541592106381-b58e7c136329?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1080&q=80",
+      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F09805988-0520-4352-ac53-0668b57b1029.png&w=1920&q=75",
       "imageHint": "wings"
     },
     {
       "id": "flaming-wings",
       "description": "Spicy peri peri chicken wings",
-      "imageUrl": "https://images.unsplash.com/photo-1623653387945-3fdc9b99f518?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1080&q=80",
+      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F80b18f0f-02a8-410a-9d62-37887e41b312.png&w=1920&q=75",
       "imageHint": "spicy wings"
     },
     {
       "id": "cheezious-rolls",
       "description": "Fried spring rolls on a plate",
-      "imageUrl": "https://images.unsplash.com/photo-1599421882585-7a4c0003b3e7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1080&q=80",
+      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F4a1c53e0-6e42-4b35-8664-9b884964f434.png&w=1920&q=75",
       "imageHint": "spring rolls"
     },
     {
