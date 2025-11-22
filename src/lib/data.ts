@@ -1,11 +1,7 @@
 import type { Branch, MenuItem } from './types';
+import branchesData from '@/config/branches.json';
 
-export const branches: Branch[] = [
-  { id: 'rssu', name: 'Cheezious RSSU', location: '1 Ramee Strand Road' },
-  { id: 'downtown', name: 'Cheezious Downtown', location: '123 Main St' },
-  { id: 'uptown', name: 'Cheezious Uptown', location: '456 High St' },
-  { id: 'riverside', name: 'Cheezious Riverside', location: '789 River Rd' },
-];
+export const branches: Branch[] = branchesData.branches;
 
 export const menuItems: MenuItem[] = [
   {
