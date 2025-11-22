@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState, useMemo, useRef, useCallback } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import * as Tone from "tone";
 import { Button } from "@/components/ui/button";
@@ -19,14 +19,13 @@ export default function OrderStatusPage() {
   const { settings, isLoading: isSettingsLoading } = useSettings();
   const printTriggered = useRef(false);
 
+  // 1. Load placed order from session storage on mount
   useEffect(() => {
     try {
       const storedOrder = sessionStorage.getItem("placedOrder");
       if (storedOrder) {
-        const parsed = JSON.parse(storedOrder);
-        setPlacedOrder(parsed);
+        setPlacedOrder(JSON.parse(storedOrder));
       } else {
-        // If no order in session, maybe redirect to home
         router.replace('/');
       }
     } catch (error) {
@@ -35,19 +34,20 @@ export default function OrderStatusPage() {
     }
   }, [router]);
 
+  // 2. Find the full order object from the context
   const order: Order | undefined = useMemo(() => {
     if (!placedOrder) return undefined;
     return orders.find(o => o.id === placedOrder.orderId);
   }, [orders, placedOrder]);
-  
+
   const status = order?.status;
 
-  const handlePrint = useCallback(() => {
+  // 3. Handle manual printing
+  const handlePrint = () => {
     if (!order) return;
     const printableArea = document.getElementById(`printable-receipt-${order.id}`);
     if (!printableArea) return;
 
-    // The printable area is already in the DOM but hidden. We just need to trigger the print.
     const printContainer = document.createElement('div');
     printContainer.id = 'printable-area';
     printContainer.appendChild(printableArea.cloneNode(true));
@@ -55,43 +55,49 @@ export default function OrderStatusPage() {
     
     document.body.classList.add('printing-active');
     window.print();
-    // Use a timeout to ensure the class is removed after printing UI has closed
+    
+    // Use a timeout to ensure the class is removed after the print dialog has had time to close
     setTimeout(() => {
-        document.body.classList.remove('printing-active');
         if (document.body.contains(printContainer)) {
             document.body.removeChild(printContainer);
         }
+        document.body.classList.remove('printing-active');
     }, 500);
-  }, [order]);
+  };
   
+  // 4. Handle automatic printing
   useEffect(() => {
-      // Auto-print logic
-      if (
-          !isSettingsLoading &&
-          !isOrdersLoading &&
-          settings.autoPrintReceipts &&
-          order &&
-          !printTriggered.current
-      ) {
-          handlePrint();
-          printTriggered.current = true; // Prevents re-triggering
-      }
-  }, [settings.autoPrintReceipts, order, isSettingsLoading, isOrdersLoading, handlePrint]);
+    // Only proceed if everything is loaded, the order is found, and printing is enabled
+    const canPrint = !isOrdersLoading && !isSettingsLoading && order && settings.autoPrintReceipts;
+
+    if (canPrint && !printTriggered.current) {
+      // Mark as triggered immediately to prevent multiple calls
+      printTriggered.current = true;
+      handlePrint();
+    }
+  }, [isOrdersLoading, isSettingsLoading, order, settings.autoPrintReceipts]);
 
 
+  // Play a sound when the order is ready
   useEffect(() => {
     if (status === 'Ready') {
-      if (typeof window !== "undefined") {
-        const synth = new Tone.Synth().toDestination();
-        const now = Tone.now();
-        synth.triggerAttackRelease("E5", "16n", now);
-        synth.triggerAttackRelease("G5", "16n", now + 0.1);
-        synth.triggerAttackRelease("C6", "8n", now + 0.2);
+      try {
+        if (typeof window !== "undefined") {
+          const synth = new Tone.Synth().toDestination();
+          const now = Tone.now();
+          synth.triggerAttackRelease("E5", "16n", now);
+          synth.triggerAttackRelease("G5", "16n", now + 0.1);
+          synth.triggerAttackRelease("C6", "8n", now + 0.2);
+        }
+      } catch (e) {
+          console.error("Could not play sound", e)
       }
     }
   }, [status]);
   
-  if (isOrdersLoading || isSettingsLoading || !placedOrder || !order) {
+  const isLoading = isOrdersLoading || isSettingsLoading || !placedOrder || !order;
+
+  if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <Loader className="h-12 w-12 animate-spin text-primary" />
