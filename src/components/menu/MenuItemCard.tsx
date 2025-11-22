@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from "next/image";
@@ -14,7 +15,7 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
   const cartItem = items.find((i) => i.id === item.id);
 
   const imageUrl = PlaceHolderImages.find((img) => img.id === item.imageId)?.imageUrl || "/placeholder.jpg";
-  const imageHint = PlaceHolderImages.find((img) => img.id === item.imageId)?.imageHint || "food item";
+  const imageHint = PlaceHolderImages.find((img) => img.id === item.imageId)?.imageHint || "food";
 
   return (
     <Card className="flex h-full flex-col overflow-hidden transition-shadow hover:shadow-lg">
@@ -51,3 +52,5 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
     </Card>
   );
 }
+
+    
