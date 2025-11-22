@@ -59,6 +59,9 @@ export default function ReportingPage() {
     const dineInOrders = filteredOrders.filter((o) => o.orderType === "Dine-In");
     const takeAwayOrders = filteredOrders.filter((o) => o.orderType === "Take-Away");
     const paymentMethodCounts: { [key: string]: number } = {};
+    
+    const dineInSales = dineInOrders.reduce((sum, order) => sum + order.totalAmount, 0);
+    const takeAwaySales = takeAwayOrders.reduce((sum, order) => sum + order.totalAmount, 0);
 
     for (const order of filteredOrders) {
       const hour = new Date(order.orderDate).getHours();
@@ -76,7 +79,7 @@ export default function ReportingPage() {
         itemSales[item.menuItemId].totalRevenue += item.quantity * item.itemPrice;
       }
       
-      if (order.orderType === 'Dine-In' && order.paymentMethod) {
+      if (order.paymentMethod) {
           paymentMethodCounts[order.paymentMethod] = (paymentMethodCounts[order.paymentMethod] || 0) + 1;
       }
     }
@@ -101,6 +104,8 @@ export default function ReportingPage() {
       hourlySalesChartData,
       dineInCount: dineInOrders.length,
       takeAwayCount: takeAwayOrders.length,
+      dineInSales,
+      takeAwaySales,
       paymentMethodCounts,
     };
   }, [orders, dateRange]);
@@ -184,6 +189,8 @@ export default function ReportingPage() {
     hourlySalesChartData,
     dineInCount,
     takeAwayCount,
+    dineInSales,
+    takeAwaySales,
     paymentMethodCounts,
   } = reportData;
 
@@ -191,9 +198,12 @@ export default function ReportingPage() {
     { title: "Total Sales", value: `RS ${totalSales.toFixed(2)}`, icon: DollarSign },
     { title: "Total Orders", value: totalOrders, icon: ShoppingCart },
     { title: "Total Items Sold", value: totalItemsSold, icon: Utensils },
-    { title: "Dine-In Orders", value: dineInCount, icon: Utensils },
-    { title: "Take Away Orders", value: takeAwayCount, icon: ShoppingBag },
   ];
+  
+  const orderTypeCards = [
+      { title: "Dine-In Orders", value: dineInCount, icon: Utensils, description: `RS ${dineInSales.toFixed(2)} in sales`},
+      { title: "Take Away Orders", value: takeAwayCount, icon: ShoppingBag, description: `RS ${takeAwaySales.toFixed(2)} in sales`},
+  ]
 
   return (
     <TooltipProvider>
@@ -245,7 +255,7 @@ export default function ReportingPage() {
       
       <div className="space-y-8">
           <div id="summary-report">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {summaryCards.map(card => (
                         <Card key={card.title}>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -259,12 +269,27 @@ export default function ReportingPage() {
                     ))}
                 </div>
           </div>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {orderTypeCards.map(card => (
+                 <Card key={card.title}>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
+                        <card.icon className="h-5 w-5 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{card.value}</div>
+                        <p className="text-xs text-muted-foreground">{card.description}</p>
+                    </CardContent>
+                </Card>
+            ))}
+        </div>
           
           <div id="payment-report">
             <Card>
                 <CardHeader>
                     <CardTitle className="font-headline flex items-center"><CreditCard className="mr-2 h-5 w-5 text-primary"/>Payment Method Breakdown</CardTitle>
-                    <CardDescription>Number of dine-in orders per payment method for the selected period.</CardDescription>
+                    <CardDescription>Number of orders per payment method for the selected period.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     {Object.keys(paymentMethodCounts).length > 0 ? (
@@ -277,7 +302,7 @@ export default function ReportingPage() {
                             ))}
                         </div>
                     ) : (
-                        <p className="text-muted-foreground">No dine-in orders with a payment method recorded for this period.</p>
+                        <p className="text-muted-foreground">No orders with a payment method recorded for this period.</p>
                     )}
                 </CardContent>
             </Card>
@@ -296,3 +321,5 @@ export default function ReportingPage() {
     </TooltipProvider>
   );
 }
+
+    
