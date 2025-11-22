@@ -93,29 +93,35 @@ body {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
     }
-    .print-content {
-        display: block !important;
-    }
-    .print\:hidden {
-        display: none !important;
-    }
-    /* Hide everything that is not the print area */
+    
+    /* Hide everything in the body by default */
     body > * {
+        visibility: hidden;
         display: none;
     }
+    
+    /* Make only the print area and its children visible */
     #print-area, #print-area * {
-        display: block;
         visibility: visible;
+        display: block;
     }
-     /* Hide elements inside print area that are not part of the content */
-    #print-area .print\:hidden {
+    
+    /* Position the print area at the top of the page */
+    #print-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+    
+    /* Hide elements marked with .print-hidden inside the print area */
+    #print-area .print\:hidden, .print\:hidden {
         display: none !important;
     }
-    /* Ensure the body has no margin/padding in print */
-    body {
-        margin: 0 !important;
-        padding: 0 !important;
+
+    /* Ensure charts are visible and sized correctly */
+    .recharts-wrapper {
+      display: block !important;
+      visibility: visible !important;
     }
 }
-
-    
