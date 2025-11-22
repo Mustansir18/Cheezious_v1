@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import * as Tone from "tone";
 import { Button } from "@/components/ui/button";
@@ -43,7 +43,7 @@ export default function OrderStatusPage() {
   const status = order?.status;
 
   // 3. Handle manual printing
-  const handlePrint = () => {
+  const handlePrint = useCallback(() => {
     if (!order) return;
     const printableArea = document.getElementById(`printable-receipt-${order.id}`);
     if (!printableArea) return;
@@ -63,19 +63,17 @@ export default function OrderStatusPage() {
         }
         document.body.classList.remove('printing-active');
     }, 500);
-  };
+  }, [order]);
   
   // 4. Handle automatic printing
   useEffect(() => {
-    // Only proceed if everything is loaded, the order is found, and printing is enabled
-    const canPrint = !isOrdersLoading && !isSettingsLoading && order && settings.autoPrintReceipts;
-
-    if (canPrint && !printTriggered.current) {
-      // Mark as triggered immediately to prevent multiple calls
-      printTriggered.current = true;
-      handlePrint();
+    const allLoaded = !isOrdersLoading && !isSettingsLoading && order;
+    
+    if (allLoaded && settings.autoPrintReceipts && !printTriggered.current) {
+        printTriggered.current = true;
+        handlePrint();
     }
-  }, [isOrdersLoading, isSettingsLoading, order, settings.autoPrintReceipts]);
+  }, [isOrdersLoading, isSettingsLoading, order, settings.autoPrintReceipts, handlePrint]);
 
 
   // Play a sound when the order is ready
@@ -170,9 +168,11 @@ export default function OrderStatusPage() {
       
       {/* Hidden receipt for printing */}
       <div className="hidden">
-        <div id={`printable-receipt-${order.id}`}>
-          <OrderReceipt order={order} />
-        </div>
+        {order && (
+            <div id={`printable-receipt-${order.id}`}>
+                <OrderReceipt order={order} />
+            </div>
+        )}
       </div>
     </div>
   );

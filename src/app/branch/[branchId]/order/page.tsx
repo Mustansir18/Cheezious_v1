@@ -37,7 +37,7 @@ export default function OrderConfirmationPage() {
 
   const taxRate = useMemo(() => {
     return taxRates[paymentMethod] || 0;
-  }, [paymentMethod, taxRates]);
+  }, [paymentMethod]);
 
   const taxAmount = useMemo(() => cartTotal * taxRate, [cartTotal, taxRate]);
   const grandTotal = useMemo(() => cartTotal + taxAmount, [cartTotal, taxAmount]);
@@ -79,6 +79,7 @@ export default function OrderConfirmationPage() {
 
     const newOrder: Order = {
         id: orderId,
+        orderNumber,
         branchId,
         orderDate: new Date().toISOString(),
         orderType,
