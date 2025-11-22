@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
@@ -11,12 +12,28 @@ import { useOrders } from "@/context/OrderContext";
 import { useSettings } from "@/context/SettingsContext";
 import { OrderReceipt } from "@/components/cashier/OrderReceipt";
 
+const IDLE_TIMEOUT_SECONDS = 30; // 30 seconds
+
 export default function OrderStatusPage() {
   const [placedOrder, setPlacedOrder] = useState<PlacedOrder | null>(null);
   const router = useRouter();
   const { orders, isLoading: isOrdersLoading } = useOrders();
   const { settings, isLoading: isSettingsLoading } = useSettings();
   const printTriggered = useRef(false);
+  const idleTimer = useRef<NodeJS.Timeout>();
+
+  const resetToHome = useCallback(() => {
+    sessionStorage.removeItem("placedOrder");
+    router.push("/");
+  }, [router]);
+
+  const resetIdleTimer = useCallback(() => {
+    if (idleTimer.current) {
+        clearTimeout(idleTimer.current);
+    }
+    idleTimer.current = setTimeout(resetToHome, IDLE_TIMEOUT_SECONDS * 1000);
+  },[resetToHome]);
+
 
   // 1. Load placed order from session storage on mount
   useEffect(() => {
@@ -44,6 +61,7 @@ export default function OrderStatusPage() {
 
   // 3. Handle manual printing
   const handlePrint = useCallback(() => {
+    resetIdleTimer(); // Reset timer on interaction
     if (!order) return;
     const printableArea = document.getElementById(`printable-receipt-${order.id}`);
     if (!printableArea) return;
@@ -62,15 +80,12 @@ export default function OrderStatusPage() {
       }
       document.body.classList.remove('printing-active');
     }, 500);
-  }, [order]);
+  }, [order, resetIdleTimer]);
   
   // 4. Handle automatic printing
   useEffect(() => {
-    // This effect runs whenever the loading state changes.
-    // We only want to act when loading is complete.
     if (!isLoading && order && settings.autoPrintReceipts && !printTriggered.current) {
-        // All conditions met: data is loaded, order exists, auto-print is on, and we haven't printed yet.
-        printTriggered.current = true; // Set the flag immediately to prevent re-triggering.
+        printTriggered.current = true;
         handlePrint();
     }
   }, [isLoading, order, settings.autoPrintReceipts, handlePrint]);
@@ -93,6 +108,27 @@ export default function OrderStatusPage() {
     }
   }, [status]);
   
+  // 6. Set up idle timer and activity listeners
+  useEffect(() => {
+      resetIdleTimer();
+      // Add event listeners for user activity
+      window.addEventListener('mousemove', resetIdleTimer);
+      window.addEventListener('mousedown', resetIdleTimer);
+      window.addEventListener('keypress', resetIdleTimer);
+      window.addEventListener('touchstart', resetIdleTimer);
+
+      // Cleanup
+      return () => {
+          if (idleTimer.current) {
+              clearTimeout(idleTimer.current);
+          }
+          window.removeEventListener('mousemove', resetIdleTimer);
+          window.removeEventListener('mousedown', resetIdleTimer);
+          window.removeEventListener('keypress', resetIdleTimer);
+          window.removeEventListener('touchstart', resetIdleTimer);
+      };
+  }, [resetIdleTimer]);
+
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -107,7 +143,7 @@ export default function OrderStatusPage() {
     return (
        <div className="flex h-screen items-center justify-center">
          <p className="text-muted-foreground">Could not find order details.</p>
-         <Button onClick={() => router.push("/")} className="ml-4">New Order</Button>
+         <Button onClick={resetToHome} className="ml-4">New Order</Button>
        </div>
     );
   }
@@ -169,8 +205,9 @@ export default function OrderStatusPage() {
             size="lg"
             className="w-full"
             onClick={() => {
-              sessionStorage.removeItem("placedOrder");
-              router.push("/");
+              // Also reset timer on explicit click
+              if (idleTimer.current) clearTimeout(idleTimer.current);
+              resetToHome();
             }}
           >
             New Order
@@ -187,3 +224,5 @@ export default function OrderStatusPage() {
     </div>
   );
 }
+
+    
