@@ -46,31 +46,31 @@
       "id": "cheezy-sticks",
       "description": "Cheezy bread sticks with a dip",
       "imageUrl": "https://images.unsplash.com/photo-1625944239843-9916a25615a1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1080&q=80",
-      "imageHint": "cheese"
+      "imageHint": "cheese sticks"
     },
     {
       "id": "calzone-chunks",
       "description": "Stuffed calzone pieces with fries",
       "imageUrl": "https://images.unsplash.com/photo-1623101594998-38c4c7b8c386?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1080&q=80",
-      "imageHint": "calzone"
+      "imageHint": "calzone fries"
     },
     {
       "id": "baked-wings",
       "description": "A plate of oven-baked chicken wings",
       "imageUrl": "https://images.unsplash.com/photo-1541592106381-b58e7c136329?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1080&q=80",
-      "imageHint": "wings"
+      "imageHint": "baked wings"
     },
     {
       "id": "flaming-wings",
       "description": "Spicy peri peri chicken wings",
       "imageUrl": "https://images.unsplash.com/photo-1623653387945-3fdc9b99f518?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1080&q=80",
-      "imageHint": "wings"
+      "imageHint": "spicy wings"
     },
     {
       "id": "cheezious-rolls",
       "description": "Fried spring rolls on a plate",
-      "imageUrl": "https://images.unsplash.com/photo-1599421882585-7a4c0003b3e7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG9otby1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1080&q=80",
-      "imageHint": "rolls"
+      "imageUrl": "https://images.unsplash.com/photo-1599421882585-7a4c0003b3e7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1080&q=80",
+      "imageHint": "spring rolls"
     },
     {
       "id": "crown-crust",
@@ -105,7 +105,7 @@
     {
       "id": "chicken-supreme",
       "description": "A supreme pizza with chicken and vegetables",
-      "imageUrl": "https://images.unsplash.com/photo-1571066811602-716837d681DE?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzdXByZW1lJTIwcGl6emF8ZW58MHx8fHwxNzYzOTMwMTQ2fDA&ixlibrb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1571066811602-716837d681DE?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzdXByZW1lJTIwcGl6emF8ZW58MHx8fHwxNzYzOTMwMTQ2fDA&ixlib-rb-4.1.0&q=80&w=1080",
       "imageHint": "pizza"
     },
     {
@@ -147,25 +147,25 @@
     {
       "id": "mexican-sandwich",
       "description": "A mexican style sandwich with fries",
-      "imageUrl": "https://images.unsplash.com/photo-1607013251379-e6eecfffe234?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzcGljeSUyMHNhbmR3aWNofGVufDB8fHx8MTc2MzkzNjM3MXww&ixlibrb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1607013251379-e6eecfffe234?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzcGljeSUyMHNhbmR3aWNofGVufDB8fHx8MTc2MzkzNjM3MXww&ixlib-rb-4.1.0&q=80&w=1080",
       "imageHint": "sandwich"
     },
     {
       "id": "pizza-stacker",
       "description": "A layered pizza stacker sandwich",
-      "imageUrl": "https://images.unsplash.com/photo-1619734490039-a68d5c82cf30?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwaXp6YSUyMHNhbmR3aWNofGVufDB8fHx8MTc2MzkzNjM3Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1619734490039-a68d5c82cf30?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwaXp6YSUyMHNhbmR3aWNofGVufDB8fHx8MTc2MzkzNjM3Mnww&ixlib-rb-4.1.0&q=80&w=1080",
       "imageHint": "sandwich"
     },
     {
       "id": "reggy-burger",
       "description": "A simple beef or chicken burger",
-      "imageUrl": "https://images.unsplash.com/photo-1571091718767-18b5b1457add?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjbGFzc2ljJTIwYnVyZ2VyfGVufDB8fHx8MTc2MzkzNjM3Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1571091718767-18b5b1457add?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjbGFzc2ljJTIwYnVyZ2VyfGVufDB8fHx8MTc2MzkzNjM3Mnww&ixlib-rb-4.1.0&q=80&w=1080",
       "imageHint": "burger"
     },
     {
       "id": "bazinga-burger",
       "description": "A large crispy chicken zinger burger",
-      "imageUrl": "https://images.unsplash.com/photo-1550547660-d9450f859349?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx6aW5nZXIlMjBidXJnZXJ8ZW58MHx8fHwxNzYzOTM2MzczfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1550547660-d9450f859349?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx6aW5nZXIlMjBidXJnZXJ8ZW58MHx8fHwxNzYzOTM2MzczfDA&ixlib-rb-4.1.0&q=80&w=1080",
       "imageHint": "burger"
     },
     {
@@ -189,7 +189,7 @@
     {
       "id": "nuggets",
       "description": "A serving of chicken nuggets with dip",
-      "imageUrl": "https://images.unsplash.com/photo-1617454800330-4e3845c43a4e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjaGlja2VuJTIwbnVnZ2V0c3xlbnwwfHx8fDE3NjM5MzYzNzZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1617454800330-4e3845c43a4e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjaGlja2VuJTIwbnVnZ2V0c3xlbnwwfHx8fDE3NjM5MzYzNzZ8MA&ixlib-rb-4.1.0&q=80&w=1080",
       "imageHint": "nuggets"
     },
     {
