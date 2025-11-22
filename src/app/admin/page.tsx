@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { BarChart4, Package, Settings, ClipboardList, CookingPot, Megaphone } from 'lucide-react';
+import { BarChart4, Package, Settings, ClipboardList, Megaphone } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 const adminSections = [
@@ -36,12 +36,6 @@ const adminSections = [
     description: 'Manage ready and completed orders.',
     href: '/cashier',
     icon: ClipboardList,
-  },
-    {
-    title: 'Kitchen Display',
-    description: 'Live order display for the kitchen.',
-    href: '/kds',
-    icon: CookingPot,
   },
 ];
 
