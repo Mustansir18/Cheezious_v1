@@ -1,24 +1,24 @@
 {
   "branches": [
-    {
-      "id": "rssu",
-      "name": " J3",
-      "location": "1 Ramee Strand Road"
-    },
-    {
-      "id": "downtown",
-      "name": "Cheezious Downtown",
-      "location": "123 Main St"
-    },
-    {
-      "id": "uptown",
-      "name": "Cheezious Uptown",
-      "location": "456 High St"
-    },
-    {
-      "id": "riverside",
-      "name": "Cheezious Riverside",
-      "location": "789 River Rd"
-    }
+    { "id": "saddar-rwp", "name": "CHZ SADDAR RWP", "location": "Saddar, Rawalpindi" },
+    { "id": "wah-cantt", "name": "CHZ WAH CANTT. TXA", "location": "Wah Cantt, Taxila" },
+    { "id": "hayatabad-pew", "name": "CHZ HBK ARENA, HAYATABAD PEW", "location": "Hayatabad, Peshawar" },
+    { "id": "commercial-rwp", "name": "CHZ1 COMMERCIAL RWP", "location": "Commercial Market, Rawalpindi" },
+    { "id": "chaklala-rwp", "name": "CHZ CHAKLALA SCHEME-III RWP", "location": "Chaklala Scheme III, Rawalpindi" },
+    { "id": "adiala-rwp", "name": "CHZ ADIALA RWP", "location": "Adiala Road, Rawalpindi" },
+    { "id": "f11-isb", "name": "CHZ 1 F-11 ISB", "location": "F-11, Islamabad" },
+    { "id": "pwd-isb", "name": "CHZ PWD ISB", "location": "PWD, Islamabad" },
+    { "id": "ghauri-isb", "name": "CHZ GHAURI TOWN ISB", "location": "Ghauri Town, Islamabad" },
+    { "id": "golra-isb", "name": "CHZ GOLRA MOR ISB", "location": "Golra Mor, Islamabad" },
+    { "id": "f7-old-isb", "name": "CHZ (OLD) F-7 ISB", "location": "F-7 (Old), Islamabad" },
+    { "id": "i8-isb", "name": "CHZ I-8 ISB", "location": "I-8, Islamabad" },
+    { "id": "giga-mall-isb", "name": "CHZ GIGA MALL ISB", "location": "Giga Mall, Islamabad" },
+    { "id": "centaurus-isb", "name": "CHZ CENTAURUS ISB", "location": "The Centaurus Mall, Islamabad" },
+    { "id": "g13-isb", "name": "CHZ G-13 ISB", "location": "G-13, Islamabad" },
+    { "id": "bahria-7-rwp", "name": "CHZ 2 BAHRIA PHASE-7 RWP", "location": "Bahria Town Phase 7, Rawalpindi" },
+    { "id": "tramri-isb", "name": "CHZ TRAMRI CHOWK ISB", "location": "Tramri Chowk, Islamabad" },
+    { "id": "chandni-rwp", "name": "CHZ CHANDNI CWK RWP", "location": "Chandni Chowk, Rawalpindi" },
+    { "id": "f7-new-isb", "name": "CHZ (NEW) F-7 ISB", "location": "F-7 (New), Islamabad" },
+    { "id": "kalma-chowk-rwp", "name": "CHZ KALMA CHOWK, RWP", "location": "Kalma Chowk, Rawalpindi" }
   ]
 }
