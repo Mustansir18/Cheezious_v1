@@ -1,6 +1,48 @@
 {
   "placeholderImages": [
     {
+      "id": "deal-1",
+      "description": "Two burgers with fries and drinks",
+      "imageUrl": "https://images.unsplash.com/photo-1594212699903-ec8a3e28167b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxidXJnZXIlMjBtZWFsJTIwZnJpZXN8ZW58MHx8fHwxNzYzOTM2MzU5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "burger meal"
+    },
+    {
+      "id": "deal-2",
+      "description": "Two burgers with chicken, fries and drinks",
+      "imageUrl": "https://images.unsplash.com/photo-1562967914-608f82629710?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxidXJnZXIlMjBjaGlja2VuJTIwbWVhbHxlbnwwfHx8fDE3NjQwMTg4OTN8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "burger chicken meal"
+    },
+    {
+      "id": "deal-3",
+      "description": "Three burgers with fries and a large drink",
+      "imageUrl": "https://images.unsplash.com/photo-1596662955359-2a29375a6182?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxmYW1pbHklMjBtZWFsJTIwYnVyZ2Vyc3xlbnwwfHx8fDE3NjQwMTg5MjB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "family meal"
+    },
+    {
+      "id": "deal-4",
+      "description": "Three burgers with chicken, fries and a large drink",
+      "imageUrl": "https://images.unsplash.com/photo-1561758033-7e924f64b454?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxidXJnZXIlMjBwbGF0dGVyfGVufDB8fHx8MTc2NDAxODk0N3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "burger platter"
+    },
+    {
+      "id": "pizza-deal-sm",
+      "description": "A small pizza with a drink",
+      "imageUrl": "https://images.unsplash.com/photo-1627485783321-c0436a4988f3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzbWFsbCUyMHBpenphJTIwZHJpbmt8ZW58MHx8fHwxNzY0MDE4OTczfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "pizza meal"
+    },
+    {
+      "id": "pizza-deal-reg",
+      "description": "A regular pizza with two drinks",
+      "imageUrl": "https://images.unsplash.com/photo-1513104890138-7c749659a591?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwaXp6YSUyMGRyaW5rc3xlbnwwfHx8fDE3NjQwMTg5OTN8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "pizza drinks"
+    },
+    {
+      "id": "pizza-deal-lg",
+      "description": "A large pizza with a large drink",
+      "imageUrl": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwaXp6YSUyMG1lYWx8ZW58MHx8fHwxNzY0MDE5MDEwMA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "pizza meal"
+    },
+    {
       "id": "cheezy-sticks",
       "description": "Cheezy bread sticks with a dip",
       "imageUrl": "https://images.unsplash.com/photo-1625944239843-9916a25615a1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjaGVlc2UlMjBzdGlja3N8ZW58MHx8fHwxNzYzOTM2MzU5fDA&ixlib=rb-4.1.0&q=80&w=1080",
