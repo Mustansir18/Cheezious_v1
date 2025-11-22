@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 
 export type Branch = {
@@ -6,21 +7,23 @@ export type Branch = {
   location: string;
 };
 
+export type MenuCategory = {
+  id: string;
+  name: string;
+  icon: string;
+}
+
 export type MenuItem = {
   id: string;
   name: string;
   description: string;
   price: number;
-  category: string;
+  categoryId: string;
   imageId: string;
 };
 
-export type CartItem = {
-  id: string;
-  name: string;
-  price: number;
+export type CartItem = MenuItem & {
   quantity: number;
-  imageId: string;
 };
 
 export type OrderType = 'Dine-In' | 'Take Away';

@@ -14,8 +14,9 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
   const { items, addItem } = useCart();
   const cartItem = items.find((i) => i.id === item.id);
 
-  const imageUrl = PlaceHolderImages.find((img) => img.id === item.imageId)?.imageUrl || "/placeholder.jpg";
-  const imageHint = PlaceHolderImages.find((img) => img.id === item.imageId)?.imageHint || "food";
+  const image = PlaceHolderImages.find((img) => img.id === item.imageId);
+  const imageUrl = image ? image.imageUrl : `https://picsum.photos/seed/${item.imageId}/400/300`;
+  const imageHint = image ? image.imageHint : "food";
 
   return (
     <Card className="flex h-full flex-col overflow-hidden transition-shadow hover:shadow-lg">
@@ -52,5 +53,3 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
     </Card>
   );
 }
-
-    

@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -18,10 +19,11 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { UpdateQuantity } from "./UpdateQuantity";
 
 export function CartSheet({ children }: { children: React.ReactNode }) {
-  const { items, cartTotal, cartCount, branchId } = useCart();
+  const { items, cartTotal, cartCount, branchId, clearCart } = useCart();
 
   const getImageUrl = (imageId: string) => {
-    return PlaceHolderImages.find((img) => img.id === imageId)?.imageUrl || "/placeholder.jpg";
+    const image = PlaceHolderImages.find((img) => img.id === imageId);
+    return image ? image.imageUrl : `https://picsum.photos/seed/${imageId}/200/200`;
   };
   const getImageHint = (imageId: string) => {
     return PlaceHolderImages.find((img) => img.id === imageId)?.imageHint || "food item";

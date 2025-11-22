@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
@@ -52,8 +53,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, [items, branchId, orderType, floorId, tableId]);
 
   const setOrderDetails = (details: { branchId: string; orderType: OrderType; floorId?: string; tableId?: string; }) => {
+    const hasChanged = details.branchId !== branchId || details.orderType !== orderType;
+    
     setBranchId(details.branchId);
     setOrderType(details.orderType);
+
     if (details.orderType === 'Dine-In') {
         setFloorId(details.floorId || null);
         setTableId(details.tableId || null);
@@ -61,8 +65,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         setFloorId(null);
         setTableId(null);
     }
-     // Clear items if branch or mode changes
-     if (details.branchId !== branchId || details.orderType !== orderType) {
+    
+    if (hasChanged) {
       setItems([]);
     }
   };
@@ -75,7 +79,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           item.id === itemToAdd.id ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
-      return [...prevItems, { ...itemToAdd, quantity: 1 }];
+      const cartItem: CartItem = { ...itemToAdd, quantity: 1 };
+      return [...prevItems, cartItem];
     });
   };
 
@@ -92,6 +97,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const clearCart = () => {
     setItems([]);
+    // Do not clear branch/orderType so the user can continue ordering
+    // from the same location after placing an order.
+    // Only clear table/floor selection.
     setTableId(null);
     setFloorId(null);
   };
