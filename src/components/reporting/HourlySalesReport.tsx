@@ -93,5 +93,3 @@ export function HourlySalesReport({ data, onPrint }: HourlySalesReportProps) {
     </Card>
   );
 }
-
-    

@@ -80,5 +80,3 @@ export function TopSellingItems({ data, onPrint }: TopSellingItemsProps) {
     </Card>
   );
 }
-
-    
