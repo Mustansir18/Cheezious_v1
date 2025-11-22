@@ -119,7 +119,7 @@ export default function ReportingPage() {
   
   if (!reportData || orders.length === 0) {
       return (
-        <div className="container mx-auto p-4 lg:p-8 text-center" id="print-area">
+        <div className="container mx-auto p-4 lg:p-8 text-center">
              <header className="mb-8 print:hidden">
                 <h1 className="font-headline text-4xl font-bold">Admin Reports</h1>
                 <p className="text-muted-foreground">Sales data from the current session.</p>
@@ -154,7 +154,7 @@ export default function ReportingPage() {
   ];
 
   return (
-    <div className="container mx-auto p-4 lg:p-8">
+    <div className="container mx-auto p-4 lg:p-8" id="print-area">
       <header className="mb-8 flex flex-col md:flex-row justify-between items-start gap-4 print:hidden">
         <div>
             <h1 className="font-headline text-4xl font-bold">Admin Reports</h1>
@@ -208,54 +208,54 @@ export default function ReportingPage() {
         </div>
       </header>
       
-      <div id="print-area">
-        {/* This div wrapper ensures print styles apply correctly */}
-        <div className="print-content space-y-8">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-5">
-                {summaryCards.map(card => (
-                    <Card key={card.title}>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
-                            <card.icon className="h-5 w-5 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{card.value}</div>
-                        </CardContent>
-                    </Card>
-                ))}
-            </div>
-            
-            <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline flex items-center"><CreditCard className="mr-2 h-5 w-5 text-primary"/>Payment Method Breakdown (Dine-In)</CardTitle>
-                    <CardDescription>Number of dine-in orders per payment method for the selected period.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {Object.keys(paymentMethodCounts).length > 0 ? (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                            {Object.entries(paymentMethodCounts).map(([method, count]) => (
-                                <div key={method} className="bg-muted/50 p-4 rounded-lg">
-                                    <p className="text-sm font-medium text-muted-foreground">{method}</p>
-                                    <p className="text-2xl font-bold">{count}</p>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <p className="text-muted-foreground">No dine-in orders with a payment method recorded for this period.</p>
-                    )}
-                </CardContent>
-            </Card>
+      {/* This div wrapper ensures print styles apply correctly */}
+      <div className="print-content space-y-8">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-5">
+              {summaryCards.map(card => (
+                  <Card key={card.title}>
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                          <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
+                          <card.icon className="h-5 w-5 text-muted-foreground" />
+                      </CardHeader>
+                      <CardContent>
+                          <div className="text-2xl font-bold">{card.value}</div>
+                      </CardContent>
+                  </Card>
+              ))}
+          </div>
+          
+          <Card>
+              <CardHeader>
+                  <CardTitle className="font-headline flex items-center"><CreditCard className="mr-2 h-5 w-5 text-primary"/>Payment Method Breakdown (Dine-In)</CardTitle>
+                  <CardDescription>Number of dine-in orders per payment method for the selected period.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                  {Object.keys(paymentMethodCounts).length > 0 ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                          {Object.entries(paymentMethodCounts).map(([method, count]) => (
+                              <div key={method} className="bg-muted/50 p-4 rounded-lg">
+                                  <p className="text-sm font-medium text-muted-foreground">{method}</p>
+                                  <p className="text-2xl font-bold">{count}</p>
+                              </div>
+                          ))}
+                      </div>
+                  ) : (
+                      <p className="text-muted-foreground">No dine-in orders with a payment method recorded for this period.</p>
+                  )}
+              </CardContent>
+          </Card>
 
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-                <div className="lg:col-span-3">
-                    <HourlySalesReport data={hourlySalesChartData} />
-                </div>
-                <div className="lg:col-span-2">
-                    <TopSellingItems data={topSellingItems} />
-                </div>
-            </div>
-        </div>
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+              <div className="lg:col-span-3">
+                  <HourlySalesReport data={hourlySalesChartData} />
+              </div>
+              <div className="lg:col-span-2">
+                  <TopSellingItems data={topSellingItems} />
+              </div>
+          </div>
       </div>
     </div>
   );
 }
+
+    

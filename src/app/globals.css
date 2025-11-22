@@ -99,11 +99,23 @@ body {
     .print\:hidden {
         display: none !important;
     }
-    /* Hide everything except the main print area */
-    body > :not(#print-area) {
-       display: none !important;
+    /* Hide everything that is not the print area */
+    body > * {
+        display: none;
     }
-    #print-area > :not(.print-content) {
+    #print-area, #print-area * {
+        display: block;
+        visibility: visible;
+    }
+     /* Hide elements inside print area that are not part of the content */
+    #print-area .print\:hidden {
         display: none !important;
     }
+    /* Ensure the body has no margin/padding in print */
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
 }
+
+    
