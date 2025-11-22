@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useCart } from "@/context/CartContext";
@@ -17,7 +17,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/context/SettingsContext";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useMemo } from "react";
 
 
 export default function OrderConfirmationPage() {
@@ -28,8 +27,22 @@ export default function OrderConfirmationPage() {
   const { toast } = useToast();
   const [paymentMethod, setPaymentMethod] = useState<string>('');
 
+  const taxRates: { [key: string]: number } = {
+    'Cash': 0.16, // 16%
+    'Credit/Debit Card': 0.05, // 5%
+  };
+
   const branch = useMemo(() => branches.find((b) => b.id === branchId), [branchId]);
   const table = useMemo(() => settings.tables.find(t => t.id === tableId), [settings.tables, tableId]);
+
+  const taxRate = useMemo(() => {
+    if (orderType !== 'Dine-In' || !paymentMethod) return 0;
+    return taxRates[paymentMethod] || 0;
+  }, [paymentMethod, orderType, taxRates]);
+
+  const taxAmount = useMemo(() => cartTotal * taxRate, [cartTotal, taxRate]);
+  const grandTotal = useMemo(() => cartTotal + taxAmount, [cartTotal, taxAmount]);
+
 
   if (!branchId || !orderType) {
     return (
@@ -71,8 +84,10 @@ export default function OrderConfirmationPage() {
         orderDate: new Date().toISOString(),
         orderType,
         status: "Pending",
-        totalAmount: cartTotal,
-        orderNumber,
+        totalAmount: grandTotal,
+        subtotal: cartTotal,
+        taxRate: taxRate,
+        taxAmount: taxAmount,
         items: orderItems,
         ...(orderType === 'Dine-In' && { floorId, tableId, paymentMethod }),
     };
@@ -101,7 +116,7 @@ export default function OrderConfirmationPage() {
     const placedOrder: PlacedOrder = {
         orderId: newOrder.id,
         orderNumber: newOrder.orderNumber,
-        total: cartTotal,
+        total: grandTotal,
         branchName: branch!.name,
         orderType,
         ...(table && { tableName: table.name }),
@@ -171,9 +186,21 @@ export default function OrderConfirmationPage() {
                 </div>
             )}
 
-            <div className="flex justify-between pt-4 text-xl font-bold">
-              <span>Total</span>
-              <span>RS {cartTotal.toFixed(2)}</span>
+            <div className="space-y-1 pt-4">
+                <div className="flex justify-between">
+                    <span>Subtotal</span>
+                    <span>RS {cartTotal.toFixed(2)}</span>
+                </div>
+                {taxAmount > 0 && (
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                        <span>Tax ({(taxRate * 100).toFixed(0)}%)</span>
+                        <span>RS {taxAmount.toFixed(2)}</span>
+                    </div>
+                )}
+                <div className="flex justify-between pt-2 text-xl font-bold border-t">
+                    <span>Grand Total</span>
+                    <span>RS {grandTotal.toFixed(2)}</span>
+                </div>
             </div>
           </div>
         </CardContent>

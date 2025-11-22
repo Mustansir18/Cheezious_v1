@@ -23,7 +23,7 @@ export type MenuItem = {
 };
 
 export type Deal = {
-  id: string;
+  id:string;
   name: string;
   description: string;
   price: number;
@@ -51,6 +51,10 @@ export type Order = {
     floorId?: string;
     tableId?: string;
     paymentMethod?: string;
+    // Tax fields
+    subtotal?: number;
+    taxRate?: number;
+    taxAmount?: number;
 };
 
 export type OrderItem = {
