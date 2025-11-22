@@ -21,7 +21,7 @@ import { branches } from "@/lib/data";
 
 export default function Home() {
   const { deals, isLoading } = useDeals();
-  const defaultBranch = branches.find(b => b.id === 'rssu');
+  const defaultBranch = branches.find(b => b.id === 'j3-johar-town-lahore');
 
   return (
     <main className="flex min-h-screen flex-col">
@@ -34,7 +34,7 @@ export default function Home() {
           Your seamless digital dining experience starts here.
         </p>
         <Button asChild size="lg" className="mt-6">
-          <Link href="/branch/rssu">Start Your Order</Link>
+          <Link href={`/branch/${defaultBranch?.id || ''}`}>Start Your Order</Link>
         </Button>
       </div>
 
