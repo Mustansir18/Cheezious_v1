@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import * as Tone from "tone";
 import { Button } from "@/components/ui/button";
@@ -41,7 +41,7 @@ export default function OrderStatusPage() {
   
   const status = order?.status;
 
-  const handlePrint = () => {
+  const handlePrint = useCallback(() => {
     if (!order) return;
     const printableArea = document.getElementById(`printable-receipt-${order.id}`);
     if (!printableArea) return;
@@ -56,7 +56,7 @@ export default function OrderStatusPage() {
     document.body.classList.remove('printing-active');
 
     document.body.removeChild(printContainer);
-  };
+  }, [order]);
 
   useEffect(() => {
     if (status === 'Ready') {
