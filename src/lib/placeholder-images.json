@@ -52,13 +52,13 @@
       "id": "calzone-chunks",
       "description": "Stuffed calzone pieces with fries",
       "imageUrl": "https://images.unsplash.com/photo-1623101594998-38c4c7b8c386?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1080&q=80",
-      "imageHint": "calzone fries"
+      "imageHint": "calzone"
     },
     {
       "id": "baked-wings",
       "description": "A plate of oven-baked chicken wings",
       "imageUrl": "https://images.unsplash.com/photo-1541592106381-b58e7c136329?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1080&q=80",
-      "imageHint": "baked wings"
+      "imageHint": "wings"
     },
     {
       "id": "flaming-wings",
@@ -105,7 +105,7 @@
     {
       "id": "chicken-supreme",
       "description": "A supreme pizza with chicken and vegetables",
-      "imageUrl": "https://images.unsplash.com/photo-1571066811602-716837d681DE?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzdXByZW1lJTIwcGl6emF8ZW58MHx8fHwxNzYzOTMwMTQ2fDA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1571066811602-716837d681DE?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzdXByZW1lJTIwcGl6emF8ZW58MHx8fHwxNzYzOTMwMTQ2fDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "pizza"
     },
     {
