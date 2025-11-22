@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -10,9 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Trash2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 
 export default function AdminSettingsPage() {
-    const { settings, addFloor, deleteFloor, addTable, deleteTable, addPaymentMethod, deletePaymentMethod } = useSettings();
+    const { settings, addFloor, deleteFloor, addTable, deleteTable, addPaymentMethod, deletePaymentMethod, toggleAutoPrint } = useSettings();
 
     const [newFloorName, setNewFloorName] = useState("");
     const [newTableName, setNewTableName] = useState("");
@@ -47,6 +49,30 @@ export default function AdminSettingsPage() {
                 <h1 className="font-headline text-4xl font-bold">Admin Settings</h1>
                 <p className="text-muted-foreground">Manage restaurant floors, tables, and payment methods.</p>
             </header>
+            
+            {/* Printer Settings */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Printer Settings</CardTitle>
+                    <CardDescription>Configure automatic printing options.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                            <Label htmlFor="auto-print-switch" className="text-base">Auto-Print Receipts</Label>
+                            <p className="text-sm text-muted-foreground">
+                                Automatically open the print dialog when an order is placed.
+                                Set your desired receipt printer (e.g., EPSON) as the system default for seamless printing.
+                            </p>
+                        </div>
+                        <Switch
+                            id="auto-print-switch"
+                            checked={settings.autoPrintReceipts}
+                            onCheckedChange={toggleAutoPrint}
+                        />
+                    </div>
+                </CardContent>
+            </Card>
 
             {/* Floors Management */}
             <Card>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
@@ -8,12 +9,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { CheckCircle, Loader, Utensils, Printer } from "lucide-react";
 import type { Order, PlacedOrder } from "@/lib/types";
 import { useOrders } from "@/context/OrderContext";
+import { useSettings } from "@/context/SettingsContext";
 import { OrderReceipt } from "@/components/cashier/OrderReceipt";
 
 export default function OrderStatusPage() {
   const [placedOrder, setPlacedOrder] = useState<PlacedOrder | null>(null);
   const router = useRouter();
-  const { orders, isLoading } = useOrders();
+  const { orders, isLoading: isOrdersLoading } = useOrders();
+  const { settings, isLoading: isSettingsLoading } = useSettings();
+  const printTriggered = useRef(false);
 
   useEffect(() => {
     try {
@@ -54,7 +58,6 @@ export default function OrderStatusPage() {
     document.body.removeChild(printContainer);
   };
 
-
   useEffect(() => {
     if (status === 'Ready') {
       // Ensure Tone.js only runs on the client
@@ -67,8 +70,15 @@ export default function OrderStatusPage() {
       }
     }
   }, [status]);
+
+  useEffect(() => {
+      if (settings.autoPrintReceipts && order && !isSettingsLoading && !printTriggered.current) {
+          handlePrint();
+          printTriggered.current = true; // ensure it only triggers once
+      }
+  }, [settings.autoPrintReceipts, order, isSettingsLoading, handlePrint])
   
-  if (!placedOrder || isLoading || !order) {
+  if (!placedOrder || isOrdersLoading || !order || isSettingsLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <Loader className="h-12 w-12 animate-spin text-primary" />

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
@@ -7,6 +8,7 @@ interface Settings {
     floors: Floor[];
     tables: Table[];
     paymentMethods: PaymentMethod[];
+    autoPrintReceipts: boolean;
 }
 
 interface SettingsContextType {
@@ -18,6 +20,7 @@ interface SettingsContextType {
   deleteTable: (id: string) => void;
   addPaymentMethod: (name: string) => void;
   deletePaymentMethod: (id: string) => void;
+  toggleAutoPrint: (enabled: boolean) => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -30,7 +33,8 @@ const initialSettings: Settings = {
     paymentMethods: [
         { id: 'cash', name: 'Cash' },
         { id: 'card', name: 'Credit/Debit Card' }
-    ]
+    ],
+    autoPrintReceipts: false,
 };
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
@@ -47,6 +51,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
             floors: parsed.floors || [],
             tables: parsed.tables || [],
             paymentMethods: parsed.paymentMethods || initialSettings.paymentMethods,
+            autoPrintReceipts: parsed.autoPrintReceipts || false,
         });
       } else {
         // If nothing is in storage, set the initial state
@@ -101,6 +106,10 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     setSettings(s => ({ ...s, paymentMethods: s.paymentMethods.filter(pm => pm.id !== id) }));
   }, []);
 
+  const toggleAutoPrint = useCallback((enabled: boolean) => {
+    setSettings(s => ({...s, autoPrintReceipts: enabled }));
+  }, []);
+
   return (
     <SettingsContext.Provider
       value={{
@@ -112,6 +121,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         deleteTable,
         addPaymentMethod,
         deletePaymentMethod,
+        toggleAutoPrint,
       }}
     >
       {children}
