@@ -111,7 +111,7 @@ export default function ReportingPage() {
   if (!reportData || orders.length === 0) {
       return (
         <div className="container mx-auto p-4 lg:p-8 text-center">
-             <header className="mb-8">
+             <header className="mb-8 print:hidden">
                 <h1 className="font-headline text-4xl font-bold">Admin Reports</h1>
                 <p className="text-muted-foreground">Sales data from the current session.</p>
             </header>
