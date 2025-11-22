@@ -21,23 +21,6 @@ export default function Home() {
           Your seamless digital dining experience starts here. Redirecting to our branch...
         </p>
       </div>
-      
-      <footer className="absolute bottom-4 text-center text-sm text-muted-foreground">
-        <Button asChild variant="ghost" className="text-muted-foreground">
-          <Link href="/cashier">
-            <LogIn className="mr-2 h-4 w-4" />
-            Cashier
-          </Link>
-        </Button>
-        <span className='mx-2'>|</span>
-         <Button asChild variant="ghost" className="text-muted-foreground">
-          <Link href="/kds">
-            <LogIn className="mr-2 h-4 w-4" />
-            Kitchen
-          </Link>
-        </Button>
-        <p className="mt-2">&copy; {new Date().getFullYear()} Cheezious Connect. All Rights Reserved.</p>
-      </footer>
     </main>
   );
 }
