@@ -13,6 +13,7 @@ import { branches } from "@/lib/data";
 import type { PlacedOrder } from "@/lib/types";
 import { useFirebase, errorEmitter, FirestorePermissionError } from "@/firebase";
 import { collection, serverTimestamp, addDoc, DocumentReference } from "firebase/firestore";
+import { syncOrderToExternalSystem } from "@/ai/flows/sync-order-flow";
 
 export default function OrderConfirmationPage() {
   const { items, cartTotal, branchId, orderType, clearCart } = useCart();
@@ -95,6 +96,20 @@ export default function OrderConfirmationPage() {
             branchName: branch!.name,
             orderType,
         };
+
+        // Asynchronously sync the order to the external system.
+        // We don't need to await this; it can happen in the background.
+        syncOrderToExternalSystem({
+            ...newOrder,
+            id: docRef.id,
+            orderDate: new Date().toISOString(), // Convert to ISO string for serialization
+            items: items.map(item => ({
+                menuItemId: item.id,
+                name: item.name,
+                quantity: item.quantity,
+                itemPrice: item.price
+            }))
+        });
 
         sessionStorage.setItem('placedOrder', JSON.stringify(placedOrder));
         clearCart();
