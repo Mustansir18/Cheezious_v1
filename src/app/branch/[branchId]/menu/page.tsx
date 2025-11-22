@@ -20,7 +20,7 @@ const categoryIcons: { [key: string]: React.ReactNode } = {
 export default function MenuPage({ params }: { params: { branchId: string } }) {
   const searchParams = useSearchParams();
   const { setOrderDetails } = useCart();
-  const { branchId } = params;
+  const branchId = params.branchId;
 
   useEffect(() => {
     const mode = searchParams.get("mode") as OrderType;
