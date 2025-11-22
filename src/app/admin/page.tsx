@@ -31,12 +31,6 @@ const adminSections = [
     href: '/admin/settings',
     icon: Settings,
   },
-  {
-    title: 'Cashier View',
-    description: 'Manage ready and completed orders.',
-    href: '/cashier',
-    icon: ClipboardList,
-  },
 ];
 
 export default function AdminDashboardPage() {
