@@ -3,27 +3,28 @@ import * as React from 'react';
 export function CheeziousLogo(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
-        viewBox="0 0 100 100"
+        viewBox="0 0 1024 1024"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         aria-label="Cheezious Logo"
         {...props}
     >
-        <g clipPath="url(#clip0_103_2)">
-            <path
-                d="M50 0C22.3858 0 0 22.3858 0 50C0 77.6142 22.3858 100 50 100C77.6142 100 100 77.6142 100 50C100 22.3858 77.6142 0 50 0ZM50 88.2353C28.9137 88.2353 11.7647 71.0863 11.7647 50C11.7647 28.9137 28.9137 11.7647 50 11.7647C71.0863 11.7647 88.2353 28.9137 88.2353 50C88.2353 71.0863 71.0863 88.2353 50 88.2353Z"
-                fill="currentColor"
-            />
-            <path
-                d="M50 23.5294C35.3944 23.5294 23.5294 35.3944 23.5294 50C23.5294 64.6056 35.3944 76.4706 50 76.4706C64.6056 76.4706 76.4706 64.6056 76.4706 50C76.4706 35.3944 64.6056 23.5294 50 23.5294ZM50 64.7059C41.8833 64.7059 35.2941 58.1167 35.2941 50C35.2941 41.8833 41.8833 35.2941 50 35.2941C58.1167 35.2941 64.7059 41.8833 64.7059 50C64.7059 58.1167 58.1167 64.7059 50 64.7059Z"
-                fill="currentColor"
-            />
-        </g>
-        <defs>
-            <clipPath id="clip0_103_2">
-                <rect width="100" height="100" fill="white" />
-            </clipPath>
-        </defs>
+        <circle cx="512" cy="512" r="512" fill="currentColor" />
+        <circle cx="512" cy="512" r="450" fill="var(--background, #fff)" stroke="currentColor" strokeWidth="20" />
+        <circle cx="512" cy="512" r="320" fill="currentColor" />
+        <circle cx="512" cy="512" r="270" fill="var(--background, #fff)" stroke="currentColor" strokeWidth="15" />
+        <text
+            x="512"
+            y="525"
+            fontFamily="var(--font-headline, Poppins), sans-serif"
+            fontSize="140"
+            fontWeight="bold"
+            textAnchor="middle"
+            alignmentBaseline="middle"
+            fill="currentColor"
+        >
+            Cheezious
+        </text>
     </svg>
   );
 }
