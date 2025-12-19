@@ -1,7 +1,8 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import QRCode from "react-qr-code";
 import { useSettings } from "@/context/SettingsContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -9,17 +10,41 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash2 } from "lucide-react";
+import { Trash2, QrCode } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { branches } from "@/lib/data";
+
+const QRCodeCard = ({ title, value, description }: { title: string; value: string; description: string }) => {
+    return (
+        <div className="rounded-lg border bg-card text-card-foreground p-4 flex flex-col items-center justify-center text-center gap-4">
+            <div className="bg-white p-2 border rounded-md">
+                <QRCode value={value} size={128} />
+            </div>
+            <div>
+                <h3 className="font-semibold">{title}</h3>
+                <p className="text-xs text-muted-foreground">{description}</p>
+            </div>
+        </div>
+    );
+};
+
 
 export default function AdminSettingsPage() {
     const { settings, addFloor, deleteFloor, addTable, deleteTable, addPaymentMethod, deletePaymentMethod, toggleAutoPrint } = useSettings();
+    const [baseUrl, setBaseUrl] = useState("");
 
     const [newFloorName, setNewFloorName] = useState("");
     const [newTableName, setNewTableName] = useState("");
     const [selectedFloorForNewTable, setSelectedFloorForNewTable] = useState("");
     const [newPaymentMethodName, setNewPaymentMethodName] = useState("");
+
+    useEffect(() => {
+        // Ensure this runs only on the client
+        if (typeof window !== "undefined") {
+            setBaseUrl(window.location.origin);
+        }
+    }, []);
 
     const handleAddFloor = () => {
         if (newFloorName.trim()) {
@@ -42,16 +67,101 @@ export default function AdminSettingsPage() {
             setNewPaymentMethodName("");
         }
     };
+    
+    const handlePrintQRCodes = () => {
+        const printableArea = document.getElementById('qr-codes-section');
+        if (!printableArea) return;
+
+        const printContainer = document.createElement('div');
+        printContainer.id = 'printable-area';
+        printContainer.innerHTML = `
+            <style>
+                @media print {
+                    @page { size: A4; margin: 20mm; }
+                    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                    .qr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20mm; }
+                    .qr-card-print { break-inside: avoid; border: 1px solid #ccc; border-radius: 8px; padding: 16px; text-align: center; }
+                    .qr-card-print h3 { font-size: 14pt; font-weight: bold; margin-bottom: 8px; }
+                    .qr-card-print p { font-size: 10pt; color: #555; }
+                    .qr-code-bg { background-color: white; padding: 8px; border: 1px solid #eee; border-radius: 4px; display: inline-block; margin-bottom: 12px;}
+                }
+            </style>
+            <div class="qr-grid">
+                ${Array.from(printableArea.children).map(child => {
+                    const title = child.querySelector('h3')?.textContent || '';
+                    const description = child.querySelector('p')?.textContent || '';
+                    const qrSvg = child.querySelector('svg')?.outerHTML || '';
+                    return `
+                        <div class="qr-card-print">
+                            <h3>${title}</h3>
+                            <div class="qr-code-bg">${qrSvg}</div>
+                            <p>${description}</p>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+
+        document.body.appendChild(printContainer);
+        document.body.classList.add('printing-active');
+        window.print();
+        document.body.classList.remove('printing-active');
+        document.body.removeChild(printContainer);
+    };
 
     const defaultPaymentMethodIds = ['cash', 'card'];
+    const defaultBranch = branches[0]; // Assuming one branch for now
 
     return (
         <div className="container mx-auto p-4 lg:p-8 space-y-8">
             <header>
                 <h1 className="font-headline text-4xl font-bold">Admin Settings</h1>
-                <p className="text-muted-foreground">Manage restaurant floors, tables, and payment methods.</p>
+                <p className="text-muted-foreground">Manage restaurant layout, payments, and QR codes.</p>
             </header>
             
+            {/* QR Codes Section */}
+            <Card>
+                 <CardHeader className="flex flex-row justify-between items-center">
+                    <div>
+                        <CardTitle>QR Codes</CardTitle>
+                        <CardDescription>Generate QR codes for tables and take-away orders to streamline the ordering process.</CardDescription>
+                    </div>
+                     <Button onClick={handlePrintQRCodes}><QrCode className="mr-2 h-4 w-4"/> Print QR Codes</Button>
+                </CardHeader>
+                <CardContent>
+                    <div id="qr-codes-section" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {/* Take Away QR */}
+                        {baseUrl && defaultBranch && (
+                             <QRCodeCard
+                                title="Take-Away Orders"
+                                value={`${baseUrl}/branch/${defaultBranch.id}/menu?mode=Take-Away`}
+                                description={`Scan to order Take-Away from ${defaultBranch.name}`}
+                            />
+                        )}
+
+                        {/* Dine-In Table QRs */}
+                        {baseUrl && settings.tables.map(table => {
+                            const floor = settings.floors.find(f => f.id === table.floorId);
+                            if (!floor || !defaultBranch) return null;
+                            const url = `${baseUrl}/branch/${defaultBranch.id}/menu?mode=Dine-In&floorId=${floor.id}&tableId=${table.id}`;
+                            return (
+                                <QRCodeCard
+                                    key={table.id}
+                                    title={`Table: ${table.name}`}
+                                    value={url}
+                                    description={`Floor: ${floor.name}`}
+                                />
+                            );
+                         })}
+                    </div>
+                    {settings.tables.length === 0 && (
+                        <p className="text-center text-muted-foreground py-8">
+                            Add floors and tables below to generate QR codes for them.
+                        </p>
+                    )}
+                </CardContent>
+            </Card>
+
             {/* Printer Settings */}
             <Card>
                 <CardHeader>

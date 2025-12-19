@@ -33,8 +33,11 @@ export default function MenuPage() {
 
   useEffect(() => {
     const mode = searchParams.get("mode") as OrderType;
+    const floorId = searchParams.get("floorId") || undefined;
+    const tableId = searchParams.get("tableId") || undefined;
+
     if (mode && branchId) {
-      setOrderDetails({ branchId: branchId, orderType: mode });
+      setOrderDetails({ branchId: branchId, orderType: mode, floorId, tableId });
     }
   }, [searchParams, branchId, setOrderDetails]);
 
