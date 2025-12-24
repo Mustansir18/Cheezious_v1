@@ -98,7 +98,7 @@ body {
   }
 
   .animate-blink {
-    animation: blink 1s ease-in-out;
+    animation: blink 1s ease-in-out infinite;
   }
 }
 

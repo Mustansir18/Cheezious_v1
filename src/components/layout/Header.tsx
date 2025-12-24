@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { Pizza, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,18 +14,6 @@ export default function Header({ branchId }: { branchId: string }) {
   const { settings } = useSettings();
   const branch = settings.branches.find((b) => b.id === branchId);
 
-  const [isItemAdded, setIsItemAdded] = useState(false);
-  const prevCartCount = useRef(cartCount);
-
-  useEffect(() => {
-    if (cartCount > prevCartCount.current) {
-      setIsItemAdded(true);
-      const timer = setTimeout(() => setIsItemAdded(false), 1000); // Animation duration
-      return () => clearTimeout(timer);
-    }
-    prevCartCount.current = cartCount;
-  }, [cartCount]);
-
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-sm">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -40,7 +27,7 @@ export default function Header({ branchId }: { branchId: string }) {
             {branch && <h2 className="font-headline text-lg font-semibold">{branch.name}</h2>}
         </div>
         <CartSheet>
-          <Button variant="outline" className={cn("relative", isItemAdded && "animate-blink")}>
+          <Button variant="outline" className={cn("relative", cartCount > 0 && "animate-blink")}>
             <ShoppingCart className="h-5 w-5" />
             <span className="ml-2">Cart</span>
             {cartCount > 0 && (
