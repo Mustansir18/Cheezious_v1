@@ -17,9 +17,9 @@ export function OrderReceipt({ order }: OrderReceiptProps) {
     return (
         <div className="p-4 bg-white text-black font-mono text-xs w-[300px]">
             <div className="text-center mb-4">
-                <h2 className="font-bold text-sm mt-2">{branch?.name}</h2>
-                <p>{branch?.location}</p>
-                <p>--- Customer Receipt ---</p>
+                <h2 className="font-bold text-sm">Cheezious</h2>
+                <p className="text-xs">{branch?.name}</p>
+                <p className="mt-2">--- Customer Receipt ---</p>
             </div>
             
             <div className="mb-2">
