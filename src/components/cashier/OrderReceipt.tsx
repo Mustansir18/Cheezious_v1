@@ -33,24 +33,20 @@ export function OrderReceipt({ order }: OrderReceiptProps) {
             
             {order.items.map(item => (
                 <div key={item.id} className="flex justify-between">
-                    <div className="flex-grow w-3/4 pr-2">
-                        <p>{item.quantity}x {item.name}</p>
-                    </div>
-                    <div className="text-right">
-                        <p>{(item.itemPrice * item.quantity).toFixed(2)}</p>
-                    </div>
+                    <span>{item.quantity}x {item.name}</span>
+                    <span>{(item.itemPrice * item.quantity).toFixed(2)}</span>
                 </div>
             ))}
             
             <hr className="border-dashed border-black my-2" />
             
             <div className="flex justify-between">
-                <p>Subtotal:</p>
-                <p>{order.subtotal.toFixed(2)}</p>
+                <span>Subtotal:</span>
+                <span>{order.subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
-                <p>Tax ({(order.taxRate * 100).toFixed(0)}%):</p>
-                <p>{order.taxAmount.toFixed(2)}</p>
+                <span>Tax ({(order.taxRate * 100).toFixed(0)}%):</span>
+                <span>{order.taxAmount.toFixed(2)}</span>
             </div>
             
             <hr className="border-dashed border-black my-2" />
