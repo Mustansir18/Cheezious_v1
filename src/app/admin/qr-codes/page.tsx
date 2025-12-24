@@ -135,6 +135,7 @@ export default function QRCodesPage() {
   const [selectedBranchId, setSelectedBranchId] = useState<string>('');
   const [selectedFloorId, setSelectedFloorId] = useState<string>('');
   const [origin, setOrigin] = useState('');
+  const { toast } = useToast();
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
