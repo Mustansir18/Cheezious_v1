@@ -4,6 +4,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import type { User, UserRole } from '@/lib/types';
+import { useActivityLog } from './ActivityLogContext';
 
 // Define the shape of the context
 interface AuthContextType {
@@ -14,7 +15,7 @@ interface AuthContextType {
   logout: () => void;
   addUser: (username: string, password: string, role: UserRole, branchId?: string) => void;
   updateUser: (user: User) => void;
-  deleteUser: (id: string) => void;
+  deleteUser: (id: string, username: string) => void;
 }
 
 // Create the context
@@ -36,6 +37,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([rootUser]);
   const [isLoading, setIsLoading] = useState(true);
+  const { logActivity } = useActivityLog();
   const router = useRouter();
 
   // Load users from localStorage on initial render
@@ -110,15 +112,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const foundUser = users.find(u => u.username === username && u.password === password);
     if (foundUser) {
       setUser(foundUser);
+      logActivity(`User '${username}' logged in.`);
       return foundUser;
     }
     throw new Error('Invalid username or password');
-  }, [users]);
+  }, [users, logActivity]);
 
   const logout = useCallback(() => {
+    logActivity(`User '${user?.username}' logged out.`);
     setUser(null);
     router.push('/login');
-  }, [router]);
+  }, [router, user, logActivity]);
 
   const addUser = useCallback((username: string, password: string, role: UserRole, branchId?: string) => {
     if (users.some(u => u.username === username)) {
@@ -127,7 +131,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     const newUser: User = { id: crypto.randomUUID(), username, password, role, branchId };
     setUsers(prev => [...prev, newUser]);
-  }, [users]);
+    logActivity(`Added new user: '${username}' with role '${role}'.`);
+  }, [users, logActivity]);
 
   const updateUser = useCallback((updatedUser: User) => {
     setUsers(prev => prev.map(u => {
@@ -138,15 +143,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
         return u;
     }));
-  }, []);
+    logActivity(`Updated user details for: '${updatedUser.username}'.`);
+  }, [logActivity]);
 
-  const deleteUser = useCallback((id: string) => {
+  const deleteUser = useCallback((id: string, username: string) => {
     if (id === rootUser.id) {
         alert("Cannot delete the root user.");
         return;
     }
     setUsers(prev => prev.filter(u => u.id !== id));
-  }, []);
+    logActivity(`Deleted user: '${username}'.`);
+  }, [logActivity]);
 
   const value = { user, users, isLoading, login, logout, addUser, updateUser, deleteUser };
 

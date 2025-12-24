@@ -4,6 +4,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { menuItems as initialMenuItems, menuCategories as initialMenuCategories } from '@/lib/data';
 import type { MenuItem, MenuCategory } from '@/lib/types';
+import { useActivityLog } from './ActivityLogContext';
 
 interface MenuData {
     items: MenuItem[];
@@ -15,10 +16,10 @@ interface MenuContextType {
   isLoading: boolean;
   addCategory: (category: Omit<MenuCategory, 'id'>) => void;
   updateCategory: (category: MenuCategory) => void;
-  deleteCategory: (id: string) => void;
+  deleteCategory: (id: string, name: string) => void;
   addItem: (item: Omit<MenuItem, 'id'>) => void;
   updateItem: (item: MenuItem) => void;
-  deleteItem: (id: string) => void;
+  deleteItem: (id: string, name: string) => void;
 }
 
 const MenuContext = createContext<MenuContextType | undefined>(undefined);
@@ -33,6 +34,7 @@ const initialData: MenuData = {
 export const MenuProvider = ({ children }: { children: ReactNode }) => {
   const [menu, setMenu] = useState<MenuData>(initialData);
   const [isLoading, setIsLoading] = useState(true);
+  const { logActivity } = useActivityLog();
 
   useEffect(() => {
     try {
@@ -63,38 +65,44 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
   const addCategory = useCallback((category: Omit<MenuCategory, 'id'>) => {
     const newCategory: MenuCategory = { ...category, id: crypto.randomUUID() };
     setMenu(m => ({ ...m, categories: [...m.categories, newCategory] }));
-  }, []);
+    logActivity(`Added menu category: '${category.name}'.`);
+  }, [logActivity]);
 
   const updateCategory = useCallback((updatedCategory: MenuCategory) => {
     setMenu(m => ({
         ...m,
         categories: m.categories.map(c => c.id === updatedCategory.id ? updatedCategory : c)
     }));
-  }, []);
+    logActivity(`Updated menu category: '${updatedCategory.name}'.`);
+  }, [logActivity]);
 
-  const deleteCategory = useCallback((id: string) => {
+  const deleteCategory = useCallback((id: string, name: string) => {
     setMenu(m => ({ 
         ...m, 
         categories: m.categories.filter(c => c.id !== id),
         items: m.items.filter(i => i.categoryId !== id) // Also remove items in that category
     }));
-  }, []);
+    logActivity(`Deleted menu category: '${name}' and all its items.`);
+  }, [logActivity]);
 
   const addItem = useCallback((item: Omit<MenuItem, 'id'>) => {
     const newItem: MenuItem = { ...item, id: crypto.randomUUID() };
     setMenu(m => ({ ...m, items: [...m.items, newItem] }));
-  }, []);
+    logActivity(`Added menu item: '${item.name}'.`);
+  }, [logActivity]);
 
   const updateItem = useCallback((updatedItem: MenuItem) => {
     setMenu(m => ({
         ...m,
         items: m.items.map(i => i.id === updatedItem.id ? updatedItem : i)
     }));
-  }, []);
+    logActivity(`Updated menu item: '${updatedItem.name}'.`);
+  }, [logActivity]);
 
-  const deleteItem = useCallback((id: string) => {
+  const deleteItem = useCallback((id: string, name: string) => {
     setMenu(m => ({ ...m, items: m.items.filter(i => i.id !== id) }));
-  }, []);
+    logActivity(`Deleted menu item: '${name}'.`);
+  }, [logActivity]);
 
   return (
     <MenuContext.Provider

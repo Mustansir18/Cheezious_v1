@@ -4,6 +4,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import type { Floor, Table, PaymentMethod, Branch } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { useActivityLog } from './ActivityLogContext';
 
 interface Settings {
     floors: Floor[];
@@ -21,15 +22,15 @@ interface SettingsContextType {
   settings: Settings;
   isLoading: boolean;
   addFloor: (name: string) => void;
-  deleteFloor: (id: string) => void;
+  deleteFloor: (id: string, name: string) => void;
   addTable: (name: string, floorId: string) => void;
-  deleteTable: (id: string) => void;
+  deleteTable: (id: string, name: string) => void;
   addPaymentMethod: (name: string) => void;
-  deletePaymentMethod: (id: string) => void;
+  deletePaymentMethod: (id: string, name: string) => void;
   toggleAutoPrint: (enabled: boolean) => void;
   addBranch: (name: string, orderPrefix: string) => void;
   updateBranch: (id: string, name: string, orderPrefix: string) => void;
-  deleteBranch: (id: string) => void;
+  deleteBranch: (id: string, name: string) => void;
   setDefaultBranch: (id: string) => void;
   toggleService: (branchId: string, service: 'dineInEnabled' | 'takeAwayEnabled', enabled: boolean) => void;
   updateBusinessDayHours: (start: string, end: string) => void;
@@ -83,6 +84,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   const [settings, setSettings] = useState<Settings>(initialSettings);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { logActivity } = useActivityLog();
 
   useEffect(() => {
     try {
@@ -128,72 +130,89 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   const addFloor = useCallback((name: string) => {
     const newFloor: Floor = { id: crypto.randomUUID(), name };
     setSettings(s => ({ ...s, floors: [...s.floors, newFloor] }));
-  }, []);
+    logActivity(`Added floor: '${name}'.`);
+  }, [logActivity]);
 
-  const deleteFloor = useCallback((id: string) => {
+  const deleteFloor = useCallback((id: string, name: string) => {
     setSettings(s => ({ 
         ...s, 
         floors: s.floors.filter(f => f.id !== id),
         tables: s.tables.filter(t => t.floorId !== id),
     }));
-  }, []);
+    logActivity(`Deleted floor: '${name}' and its tables.`);
+  }, [logActivity]);
 
   const addTable = useCallback((name: string, floorId: string) => {
     const newTable: Table = { id: crypto.randomUUID(), name, floorId };
     setSettings(s => ({ ...s, tables: [...s.tables, newTable] }));
-  }, []);
+    const floorName = settings.floors.find(f => f.id === floorId)?.name || 'N/A';
+    logActivity(`Added table: '${name}' to floor '${floorName}'.`);
+  }, [logActivity, settings.floors]);
 
-  const deleteTable = useCallback((id: string) => {
+  const deleteTable = useCallback((id: string, name: string) => {
     setSettings(s => ({ ...s, tables: s.tables.filter(t => t.id !== id) }));
-  }, []);
+    logActivity(`Deleted table: '${name}'.`);
+  }, [logActivity]);
 
   const addPaymentMethod = useCallback((name: string) => {
     const newMethod: PaymentMethod = { id: crypto.randomUUID(), name };
     setSettings(s => ({ ...s, paymentMethods: [...s.paymentMethods, newMethod] }));
-  }, []);
+    logActivity(`Added payment method: '${name}'.`);
+  }, [logActivity]);
 
-  const deletePaymentMethod = useCallback((id: string) => {
+  const deletePaymentMethod = useCallback((id: string, name: string) => {
     if (defaultPaymentMethods.some(pm => pm.id === id)) {
         toast({ title: "Action Denied", description: "Cannot delete a default payment method.", variant: "destructive" });
         return;
     }
     setSettings(s => ({ ...s, paymentMethods: s.paymentMethods.filter(pm => pm.id !== id) }));
-  }, [toast]);
+    logActivity(`Deleted payment method: '${name}'.`);
+  }, [toast, logActivity]);
 
   const toggleAutoPrint = useCallback((enabled: boolean) => {
     setSettings(s => ({...s, autoPrintReceipts: enabled }));
-  }, []);
+    logActivity(`Toggled auto-print receipts to: ${enabled ? 'ON' : 'OFF'}.`);
+  }, [logActivity]);
 
   const addBranch = useCallback((name: string, orderPrefix: string) => {
     const newBranch: Branch = { id: crypto.randomUUID(), name, orderPrefix, dineInEnabled: true, takeAwayEnabled: true };
     setSettings(s => ({...s, branches: [...s.branches, newBranch]}));
-  }, []);
+    logActivity(`Added branch: '${name}'.`);
+  }, [logActivity]);
 
   const updateBranch = useCallback((id: string, name: string, orderPrefix: string) => {
     setSettings(s => ({...s, branches: s.branches.map(b => b.id === id ? {...b, name, orderPrefix} : b)}));
-  }, []);
+    logActivity(`Updated branch: '${name}'.`);
+  }, [logActivity]);
 
-  const deleteBranch = useCallback((id: string) => {
+  const deleteBranch = useCallback((id: string, name: string) => {
     setSettings(s => {
         const newBranches = s.branches.filter(b => b.id !== id);
         // If the deleted branch was the default, reset the default
         const newDefaultId = id === s.defaultBranchId ? (newBranches[0]?.id || null) : s.defaultBranchId;
         return {...s, branches: newBranches, defaultBranchId: newDefaultId };
     });
-  }, []);
+    logActivity(`Deleted branch: '${name}'.`);
+  }, [logActivity]);
   
   const setDefaultBranch = useCallback((id: string) => {
       setSettings(s => ({...s, defaultBranchId: id}));
-  }, []);
+      const branchName = settings.branches.find(b => b.id === id)?.name;
+      logActivity(`Set default branch to: '${branchName}'.`);
+  }, [logActivity, settings.branches]);
   
   const toggleService = useCallback((branchId: string, service: 'dineInEnabled' | 'takeAwayEnabled', enabled: boolean) => {
     setSettings(s => ({...s, branches: s.branches.map(b => b.id === branchId ? {...b, [service]: enabled} : b)}));
-  }, []);
+    const branchName = settings.branches.find(b => b.id === branchId)?.name;
+    const serviceName = service === 'dineInEnabled' ? 'Dine-In' : 'Take Away';
+    logActivity(`Set ${serviceName} service to ${enabled ? 'ON' : 'OFF'} for branch '${branchName}'.`);
+  }, [logActivity, settings.branches]);
 
   const updateBusinessDayHours = useCallback((start: string, end: string) => {
       setSettings(s => ({...s, businessDayStart: start, businessDayEnd: end}));
       toast({ title: "Success", description: "Business hours have been updated." });
-  }, [toast]);
+      logActivity(`Updated business hours. Start: ${start}, End: ${end}.`);
+  }, [toast, logActivity]);
 
 
   return (

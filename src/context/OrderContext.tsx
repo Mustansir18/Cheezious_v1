@@ -3,6 +3,7 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import type { Order, OrderStatus } from '@/lib/types';
+import { useActivityLog } from './ActivityLogContext';
 
 interface OrderContextType {
   orders: Order[];
@@ -20,6 +21,7 @@ const ORDERS_STORAGE_KEY = 'cheeziousOrders';
 export const OrderProvider = ({ children }: { children: ReactNode }) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { logActivity } = useActivityLog();
 
   // Load orders from sessionStorage on initial render
   useEffect(() => {
@@ -71,18 +73,30 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const updateOrderStatus = useCallback((orderId: string, status: OrderStatus, reason?: string) => {
-    setOrders((prevOrders) =>
-      prevOrders.map((order) =>
-        order.id === orderId 
-        ? { ...order, status, ...(status === 'Cancelled' && { cancellationReason: reason }) } 
-        : order
-      )
-    );
-  }, []);
+    setOrders((prevOrders) => {
+        const orderToUpdate = prevOrders.find(o => o.id === orderId);
+        if (!orderToUpdate) return prevOrders;
+
+        const updatedOrder = { 
+            ...orderToUpdate, 
+            status, 
+            ...(status === 'Cancelled' && { cancellationReason: reason }) 
+        };
+
+        if (status === 'Cancelled') {
+            logActivity(`Cancelled Order #${orderToUpdate.orderNumber}. Reason: ${reason}`);
+        } else {
+            logActivity(`Updated Order #${orderToUpdate.orderNumber} status to '${status}'.`);
+        }
+
+        return prevOrders.map(order => order.id === orderId ? updatedOrder : order);
+    });
+  }, [logActivity]);
 
   const clearOrders = useCallback(() => {
     setOrders([]);
-  }, []);
+    logActivity('Cleared all orders for the current session.');
+  }, [logActivity]);
 
   return (
     <OrderContext.Provider

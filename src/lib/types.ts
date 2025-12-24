@@ -108,6 +108,14 @@ export type User = {
     branchId?: string; // Assigned branch for admins and cashiers
 };
 
+// --- Activity Log Types ---
+export type ActivityLog = {
+    id: string;
+    timestamp: string; // ISO string
+    user: string; // username
+    message: string;
+};
+
 // --- Types for External System Sync ---
 
 // Defines the schema for a single item within the order for external sync.
@@ -142,5 +150,3 @@ export const SyncOrderOutputSchema = z.object({
   message: z.string().describe('A message detailing the result of the operation.'),
 });
 export type SyncOrderOutput = z.infer<typeof SyncOrderOutputSchema>;
-
-    
