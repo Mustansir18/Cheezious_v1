@@ -6,6 +6,7 @@ export type Branch = {
   name: string;
   dineInEnabled: boolean;
   takeAwayEnabled: boolean;
+  orderPrefix: string;
 };
 
 export type MenuCategory = {
@@ -140,3 +141,5 @@ export const SyncOrderOutputSchema = z.object({
   message: z.string().describe('A message detailing the result of the operation.'),
 });
 export type SyncOrderOutput = z.infer<typeof SyncOrderOutputSchema>;
+
+    

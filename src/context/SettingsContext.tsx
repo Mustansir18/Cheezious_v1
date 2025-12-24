@@ -27,8 +27,8 @@ interface SettingsContextType {
   addPaymentMethod: (name: string) => void;
   deletePaymentMethod: (id: string) => void;
   toggleAutoPrint: (enabled: boolean) => void;
-  addBranch: (name: string) => void;
-  updateBranch: (id: string, name: string) => void;
+  addBranch: (name: string, orderPrefix: string) => void;
+  updateBranch: (id: string, name: string, orderPrefix: string) => void;
   deleteBranch: (id: string) => void;
   setDefaultBranch: (id: string) => void;
   toggleService: (branchId: string, service: 'dineInEnabled' | 'takeAwayEnabled', enabled: boolean) => void;
@@ -45,7 +45,7 @@ const defaultPaymentMethods: PaymentMethod[] = [
 ];
 
 const initialBranches: Branch[] = [
-    { id: 'j3-johar-town-lahore', name: 'CHZ J3, JOHAR TOWN LAHORE', dineInEnabled: true, takeAwayEnabled: true }
+    { id: 'j3-johar-town-lahore', name: 'CHZ J3, JOHAR TOWN LAHORE', dineInEnabled: true, takeAwayEnabled: true, orderPrefix: 'G3' }
 ];
 
 const floorsData: { id: string, name: string, prefix: string }[] = [
@@ -164,13 +164,13 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     setSettings(s => ({...s, autoPrintReceipts: enabled }));
   }, []);
 
-  const addBranch = useCallback((name: string) => {
-    const newBranch: Branch = { id: crypto.randomUUID(), name, dineInEnabled: true, takeAwayEnabled: true };
+  const addBranch = useCallback((name: string, orderPrefix: string) => {
+    const newBranch: Branch = { id: crypto.randomUUID(), name, orderPrefix, dineInEnabled: true, takeAwayEnabled: true };
     setSettings(s => ({...s, branches: [...s.branches, newBranch]}));
   }, []);
 
-  const updateBranch = useCallback((id: string, name: string) => {
-    setSettings(s => ({...s, branches: s.branches.map(b => b.id === id ? {...b, name} : b)}));
+  const updateBranch = useCallback((id: string, name: string, orderPrefix: string) => {
+    setSettings(s => ({...s, branches: s.branches.map(b => b.id === id ? {...b, name, orderPrefix} : b)}));
   }, []);
 
   const deleteBranch = useCallback((id: string) => {
@@ -228,3 +228,5 @@ export const useSettings = () => {
   }
   return context;
 };
+
+    

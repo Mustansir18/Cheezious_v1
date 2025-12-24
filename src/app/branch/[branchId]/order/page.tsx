@@ -64,7 +64,7 @@ export default function OrderConfirmationPage() {
   }
   
   const handleConfirmOrder = async () => {
-    if (!branchId || !orderType) return;
+    if (!branchId || !orderType || !branch) return;
     if (!paymentMethod) {
         toast({
             variant: "destructive",
@@ -75,8 +75,7 @@ export default function OrderConfirmationPage() {
     }
 
     const orderId = crypto.randomUUID();
-    const branchPrefix = branch?.name.split(',')[0].replace(/[^A-Z0-9]/g, '').slice(0, 5) || 'CHZ';
-    const orderNumber = `${branchPrefix}-${Date.now().toString().slice(-6)}`;
+    const orderNumber = `${branch.orderPrefix}-${Date.now().toString().slice(-6)}`;
 
     const orderItems: OrderItem[] = items.map(item => ({
         id: crypto.randomUUID(),
@@ -128,7 +127,7 @@ export default function OrderConfirmationPage() {
         orderId: newOrder.id,
         orderNumber: newOrder.orderNumber,
         total: grandTotal,
-        branchName: branch!.name,
+        branchName: branch.name,
         orderType,
         ...(table && { tableName: table.name }),
         ...(floor && { floorName: floor.name }),
@@ -234,3 +233,5 @@ export default function OrderConfirmationPage() {
     </div>
   );
 }
+
+    

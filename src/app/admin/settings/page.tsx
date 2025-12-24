@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import type { Branch } from "@/lib/types";
 
 
 function AdvancedSettingsGate({ onUnlock }: { onUnlock: () => void }) {
@@ -41,7 +42,6 @@ function AdvancedSettingsGate({ onUnlock }: { onUnlock: () => void }) {
     const { toast } = useToast();
 
     const handleUnlock = () => {
-        // NOTE: In a real app, this would be a secure API call.
         if (username === 'root' && password === 'Faith123$$') {
             onUnlock();
         } else {
@@ -86,13 +86,15 @@ export default function AdminSettingsPage() {
     const [newTableName, setNewTableName] = useState("");
     const [selectedFloorForNewTable, setSelectedFloorForNewTable] = useState("");
     const [newPaymentMethodName, setNewPaymentMethodName] = useState("");
-    const [editingBranch, setEditingBranch] = useState<(typeof settings.branches)[0] | null>(null);
+    const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
     const [editingBranchName, setEditingBranchName] = useState("");
+    const [editingBranchPrefix, setEditingBranchPrefix] = useState("");
     
     const [businessDayStart, setBusinessDayStart] = useState(settings.businessDayStart);
     const [businessDayEnd, setBusinessDayEnd] = useState(settings.businessDayEnd);
 
     const [newBranchName, setNewBranchName] = useState('');
+    const [newBranchPrefix, setNewBranchPrefix] = useState('');
 
     useEffect(() => {
         setBusinessDayStart(settings.businessDayStart);
@@ -122,10 +124,11 @@ export default function AdminSettingsPage() {
     };
     
     const handleUpdateBranch = () => {
-        if (editingBranch && editingBranchName.trim()) {
-            updateBranch(editingBranch.id, editingBranchName.trim());
+        if (editingBranch && editingBranchName.trim() && editingBranchPrefix.trim()) {
+            updateBranch(editingBranch.id, editingBranchName.trim(), editingBranchPrefix.trim());
             setEditingBranch(null);
             setEditingBranchName("");
+            setEditingBranchPrefix("");
         }
     };
     
@@ -134,11 +137,18 @@ export default function AdminSettingsPage() {
     };
 
     const handleAddBranch = () => {
-        if (newBranchName.trim()) {
-            addBranch(newBranchName.trim());
+        if (newBranchName.trim() && newBranchPrefix.trim()) {
+            addBranch(newBranchName.trim(), newBranchPrefix.trim());
             setNewBranchName('');
+            setNewBranchPrefix('');
         }
     };
+    
+    const openEditDialog = (branch: Branch) => {
+        setEditingBranch(branch);
+        setEditingBranchName(branch.name);
+        setEditingBranchPrefix(branch.orderPrefix);
+    }
 
     const defaultPaymentMethodIds = ['cash', 'card'];
 
@@ -262,11 +272,16 @@ export default function AdminSettingsPage() {
                                     {user?.role === 'root' && (
                                         <div className="mb-6 p-4 border rounded-lg space-y-4">
                                             <h4 className="font-semibold">Add New Branch</h4>
-                                            <div className="grid md:grid-cols-2 gap-2">
+                                            <div className="grid md:grid-cols-3 gap-2">
                                                 <Input
                                                     placeholder="New branch name"
                                                     value={newBranchName}
                                                     onChange={(e) => setNewBranchName(e.target.value)}
+                                                />
+                                                 <Input
+                                                    placeholder="Order Prefix (e.g., G3)"
+                                                    value={newBranchPrefix}
+                                                    onChange={(e) => setNewBranchPrefix(e.target.value)}
                                                 />
                                                 <Button onClick={handleAddBranch}>Add Branch</Button>
                                             </div>
@@ -276,6 +291,7 @@ export default function AdminSettingsPage() {
                                         <TableHeader>
                                             <TableRow>
                                                 <TableHead>Branch Name</TableHead>
+                                                <TableHead>Order Prefix</TableHead>
                                                 <TableHead>Dine-In</TableHead>
                                                 <TableHead>Take Away</TableHead>
                                                 <TableHead className="text-right w-[120px]">Actions</TableHead>
@@ -285,6 +301,7 @@ export default function AdminSettingsPage() {
                                             {visibleBranches.map(branch => (
                                                 <TableRow key={branch.id}>
                                                     <TableCell className="font-medium">{branch.name}</TableCell>
+                                                    <TableCell className="font-mono">{branch.orderPrefix}</TableCell>
                                                     <TableCell>
                                                         <Switch
                                                             checked={branch.dineInEnabled}
@@ -300,7 +317,7 @@ export default function AdminSettingsPage() {
                                                         />
                                                     </TableCell>
                                                     <TableCell className="text-right">
-                                                        <Button variant="ghost" size="icon" onClick={() => { setEditingBranch(branch); setEditingBranchName(branch.name); }}>
+                                                        <Button variant="ghost" size="icon" onClick={() => openEditDialog(branch)}>
                                                             <Edit className="h-4 w-4" />
                                                         </Button>
                                                         <AlertDialog>
@@ -466,24 +483,36 @@ export default function AdminSettingsPage() {
             <Dialog open={!!editingBranch} onOpenChange={(isOpen) => !isOpen && setEditingBranch(null)}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Edit Branch Name</DialogTitle>
+                        <DialogTitle>Edit Branch</DialogTitle>
                     </DialogHeader>
-                    <div className="py-4">
-                        <Label htmlFor="branch-name">Branch Name</Label>
-                        <Input
-                            id="branch-name"
-                            value={editingBranchName}
-                            onChange={(e) => setEditingBranchName(e.target.value)}
-                        />
+                    <div className="py-4 space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="branch-name">Branch Name</Label>
+                            <Input
+                                id="branch-name"
+                                value={editingBranchName}
+                                onChange={(e) => setEditingBranchName(e.target.value)}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                             <Label htmlFor="branch-prefix">Order Prefix</Label>
+                            <Input
+                                id="branch-prefix"
+                                value={editingBranchPrefix}
+                                onChange={(e) => setEditingBranchPrefix(e.target.value)}
+                            />
+                        </div>
                     </div>
                     <DialogFooter>
                         <DialogClose asChild>
                             <Button type="button" variant="secondary">Cancel</Button>
                         </DialogClose>
-                        <Button onClick={handleUpdateBranch}>Save</Button>
+                        <Button onClick={handleUpdateBranch}>Save Changes</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>
     );
 }
+
+    
