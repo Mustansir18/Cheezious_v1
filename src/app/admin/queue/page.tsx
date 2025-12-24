@@ -27,15 +27,15 @@ const StatusColumn = ({ title, orders, status }: { title: string, orders: { orde
                 <CardTitle className="font-headline text-3xl text-center">{title}</CardTitle>
             </CardHeader>
             <CardContent className="flex-grow p-6">
-                 <div className="grid grid-cols-2 gap-4">
+                 <div className="grid grid-cols-1 justify-items-center gap-4">
                     {orders.length > 0 ? (
                         orders.map(order => (
-                            <Badge key={order.orderNumber} variant={badgeVariant[status]} className={cn("text-4xl font-bold p-4 block rounded-lg", badgeColor[status])}>
+                            <Badge key={order.orderNumber} variant={badgeVariant[status]} className={cn("text-4xl font-bold p-4 block rounded-lg w-full text-center", badgeColor[status])}>
                                 {order.orderNumber}
                             </Badge>
                         ))
                     ) : (
-                        <div className="col-span-2 flex items-center justify-center h-full text-muted-foreground">
+                        <div className="col-span-1 flex items-center justify-center h-full text-muted-foreground">
                             <p>No orders in this status</p>
                         </div>
                     )}
