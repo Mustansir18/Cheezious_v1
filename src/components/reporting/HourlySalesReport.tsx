@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { HourlySale } from '@/app/admin/reporting/page';

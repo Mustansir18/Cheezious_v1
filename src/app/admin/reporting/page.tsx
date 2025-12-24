@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useOrders } from "@/context/OrderContext";
@@ -8,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Calendar as CalendarIcon, ShoppingCart, DollarSign, Utensils, Loader, Printer, CreditCard, ShoppingBag, FileDown } from "lucide-react";
 import { HourlySalesReport } from "@/components/reporting/HourlySalesReport";
 import { TopSellingItems } from "@/components/reporting/TopSellingItems";
+import { PaymentMethodBreakdown, type PaymentData } from "@/components/reporting/PaymentMethodBreakdown";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -50,6 +52,7 @@ function ReportCardActions({ reportId, onPrint }: { reportId: string; onPrint: (
 
 export default function ReportingPage() {
   const { orders, isLoading } = useOrders();
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: new Date(new Date().setHours(0, 0, 0, 0)),
     to: new Date(),
@@ -58,15 +61,18 @@ export default function ReportingPage() {
   const reportData = useMemo(() => {
     if (!orders) return null;
 
-    const filteredOrders = orders.filter(order => {
+    const baseFilteredOrders = orders.filter(order => {
         const orderDate = new Date(order.orderDate);
         if (!dateRange?.from) return false;
-        // Set 'to' date to the end of the day
         const toDate = dateRange.to ? new Date(dateRange.to) : new Date();
         toDate.setHours(23, 59, 59, 999);
         return orderDate >= dateRange.from && orderDate <= toDate;
     });
 
+    const filteredOrders = selectedPaymentMethod 
+        ? baseFilteredOrders.filter(order => order.paymentMethod === selectedPaymentMethod)
+        : baseFilteredOrders;
+        
     const totalOrders = filteredOrders.length;
     const totalSales = filteredOrders.reduce((sum, order) => sum + order.totalAmount, 0);
     const totalItemsSold = filteredOrders.reduce(
@@ -79,8 +85,15 @@ export default function ReportingPage() {
     const hourlySales: { [key: number]: number } = {};
     const dineInOrders = filteredOrders.filter((o) => o.orderType === "Dine-In");
     const takeAwayOrders = filteredOrders.filter((o) => o.orderType === "Take-Away");
-    const paymentMethodCounts: { [key: string]: number } = {};
     
+    // Payment method counts should be calculated from the base (unfiltered) list to show the full breakdown
+    const paymentMethodSales: { [key: string]: number } = {};
+     baseFilteredOrders.forEach(order => {
+        if (order.paymentMethod) {
+            paymentMethodSales[order.paymentMethod] = (paymentMethodSales[order.paymentMethod] || 0) + order.totalAmount;
+        }
+    });
+
     // --- Dine In Metrics ---
     const dineInSales = dineInOrders.reduce((sum, order) => sum + order.totalAmount, 0);
     const dineInGrossSales = dineInOrders.reduce((sum, order) => sum + order.totalAmount, 0);
@@ -113,10 +126,6 @@ export default function ReportingPage() {
         itemSales[item.menuItemId].quantity += item.quantity;
         itemSales[item.menuItemId].totalRevenue += item.quantity * item.itemPrice;
       }
-      
-      if (order.paymentMethod) {
-          paymentMethodCounts[order.paymentMethod] = (paymentMethodCounts[order.paymentMethod] || 0) + 1;
-      }
     }
 
     const topSellingItems = Object.values(itemSales).sort(
@@ -130,6 +139,12 @@ export default function ReportingPage() {
             sales: hourlySales[i] || 0,
         };
     });
+    
+    const paymentChartData: PaymentData[] = Object.entries(paymentMethodSales).map(([method, sales], index) => ({
+        method,
+        sales,
+        fill: `hsl(var(--chart-${index + 1}))`
+    }));
 
     return {
       totalOrders,
@@ -141,7 +156,7 @@ export default function ReportingPage() {
       takeAwayCount: takeAwayOrders.length,
       dineInSales,
       takeAwaySales,
-      paymentMethodCounts,
+      paymentChartData,
       dineInGrossSales,
       dineInNetSales,
       dineInTax,
@@ -153,7 +168,7 @@ export default function ReportingPage() {
       takeAwayCashSales,
       takeAwayCardSales,
     };
-  }, [orders, dateRange]);
+  }, [orders, dateRange, selectedPaymentMethod]);
 
     const handlePrint = (reportId: string) => {
         const reportElement = document.getElementById(reportId);
@@ -230,7 +245,7 @@ export default function ReportingPage() {
     takeAwayCount,
     dineInSales,
     takeAwaySales,
-    paymentMethodCounts,
+    paymentChartData,
     dineInGrossSales,
     dineInNetSales,
     dineInTax,
@@ -276,7 +291,12 @@ export default function ReportingPage() {
       <header className="mb-8 flex flex-col md:flex-row justify-between items-start gap-4">
         <div>
             <h1 className="font-headline text-4xl font-bold">Admin Reports</h1>
-            <p className="text-muted-foreground">Sales data for the selected period.</p>
+            <p className="text-muted-foreground">
+              {selectedPaymentMethod 
+                ? `Displaying sales data for '${selectedPaymentMethod}' transactions.`
+                : `Sales data for the selected period.`
+              }
+            </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
             <Popover>
@@ -346,32 +366,42 @@ export default function ReportingPage() {
              </Card>
           </div>
 
-        <div id="ordertype-report">
-            <Card>
-                <CardHeader className="flex-row justify-between items-center">
-                    <div>
-                        <CardTitle className="font-headline flex items-center">Order Type Summary</CardTitle>
-                        <CardDescription>Transaction counts and sales totals by order type.</CardDescription>
-                    </div>
-                    <ReportCardActions reportId="ordertype-report" onPrint={handlePrint} />
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        {orderTypeCards.map(card => (
-                             <Card key={card.title}>
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
-                                    <card.icon className="h-5 w-5 text-muted-foreground" />
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-2xl font-bold">{card.value}</div>
-                                    <p className="text-xs text-muted-foreground">{card.description}</p>
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </div>
-                </CardContent>
-            </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+             <div className="lg:col-span-3" id="ordertype-report">
+                <Card>
+                    <CardHeader className="flex-row justify-between items-center">
+                        <div>
+                            <CardTitle className="font-headline flex items-center">Order Type Summary</CardTitle>
+                            <CardDescription>Transaction counts and sales totals by order type.</CardDescription>
+                        </div>
+                        <ReportCardActions reportId="ordertype-report" onPrint={handlePrint} />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            {orderTypeCards.map(card => (
+                                <Card key={card.title}>
+                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
+                                        <card.icon className="h-5 w-5 text-muted-foreground" />
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="text-2xl font-bold">{card.value}</div>
+                                        <p className="text-xs text-muted-foreground">{card.description}</p>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+             <div className="lg:col-span-2" id="payment-report">
+                <PaymentMethodBreakdown 
+                  data={paymentChartData} 
+                  onPrint={() => handlePrint('payment-report')} 
+                  selectedMethod={selectedPaymentMethod}
+                  onSelectMethod={setSelectedPaymentMethod}
+                />
+            </div>
         </div>
           
         <div id="dine-in-breakdown">
@@ -413,33 +443,6 @@ export default function ReportingPage() {
                 </CardContent>
              </Card>
         </div>
-
-
-          <div id="payment-report">
-            <Card>
-                <CardHeader className="flex-row justify-between items-center">
-                    <div>
-                        <CardTitle className="font-headline flex items-center"><CreditCard className="mr-2 h-5 w-5 text-primary"/>Payment Method Breakdown</CardTitle>
-                        <CardDescription>Number of orders per payment method for the selected period.</CardDescription>
-                    </div>
-                    <ReportCardActions reportId="payment-report" onPrint={handlePrint} />
-                </CardHeader>
-                <CardContent>
-                    {Object.keys(paymentMethodCounts).length > 0 ? (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-                            {Object.entries(paymentMethodCounts).map(([method, count]) => (
-                                <Card key={method} className="p-4 flex flex-col items-center justify-center">
-                                    <p className="text-2xl font-bold">{count}</p>
-                                    <p className="text-sm font-medium text-muted-foreground">{method}</p>
-                                </Card>
-                            ))}
-                        </div>
-                    ) : (
-                        <p className="text-muted-foreground">No orders with a payment method recorded for this period.</p>
-                    )}
-                </CardContent>
-            </Card>
-          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
               <div className="lg:col-span-3" id="hourly-sales-report">
