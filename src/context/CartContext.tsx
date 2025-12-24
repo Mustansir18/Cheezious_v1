@@ -10,9 +10,12 @@ interface CartContextType {
   orderType: OrderType | null;
   tableId: string | null;
   floorId: string | null;
+  isCartOpen: boolean;
+  setIsCartOpen: React.Dispatch<React.SetStateAction<boolean>>;
   addItem: (item: MenuItem) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
   clearCart: () => void;
+  closeCart: () => void;
   setOrderDetails: (details: { branchId: string; orderType: OrderType; floorId?: string; tableId?: string; }) => void;
   cartCount: number;
   cartTotal: number;
@@ -26,6 +29,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [orderType, setOrderType] = useState<OrderType | null>(null);
   const [tableId, setTableId] = useState<string | null>(null);
   const [floorId, setFloorId] = useState<string | null>(null);
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -112,6 +116,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setTableId(null);
     setFloorId(null);
   };
+  
+  const closeCart = () => {
+    setIsCartOpen(false);
+  }
 
   const cartCount = items.reduce((count, item) => count + item.quantity, 0);
   const cartTotal = items.reduce((total, item) => total + item.price * item.quantity, 0);
@@ -124,9 +132,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         orderType,
         tableId,
         floorId,
+        isCartOpen,
+        setIsCartOpen,
         addItem,
         updateQuantity,
         clearCart,
+        closeCart,
         setOrderDetails,
         cartCount,
         cartTotal,

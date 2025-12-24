@@ -20,10 +20,10 @@ import { UpdateQuantity } from "./UpdateQuantity";
 const FALLBACK_IMAGE_URL = "https://picsum.photos/seed/placeholder/400/300";
 
 export function CartSheet({ children }: { children: React.ReactNode }) {
-  const { items, cartTotal, cartCount, branchId, clearCart } = useCart();
+  const { items, cartTotal, cartCount, branchId, isCartOpen, setIsCartOpen } = useCart();
 
   return (
-    <Sheet>
+    <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
       <SheetTrigger asChild>{children}</SheetTrigger>
       <SheetContent className="flex flex-col">
         <SheetHeader>

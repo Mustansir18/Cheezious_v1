@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useCart } from "@/context/CartContext";
@@ -20,12 +20,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 const FALLBACK_IMAGE_URL = "https://picsum.photos/seed/placeholder/400/300";
 
 export default function OrderConfirmationPage() {
-  const { items, cartTotal, branchId, orderType, floorId, tableId, clearCart } = useCart();
+  const { items, cartTotal, branchId, orderType, floorId, tableId, clearCart, closeCart, setIsCartOpen } = useCart();
   const { addOrder } = useOrders();
   const { settings } = useSettings();
   const router = useRouter();
   const { toast } = useToast();
   const [paymentMethod, setPaymentMethod] = useState<string>('');
+
+  useEffect(() => {
+    // When navigating to this page, ensure the cart sheet is closed.
+    setIsCartOpen(false);
+  }, [setIsCartOpen]);
+
 
   const taxRates: { [key: string]: number } = {
     'Cash': 0.16, // 16%
@@ -130,6 +136,7 @@ export default function OrderConfirmationPage() {
 
     sessionStorage.setItem('placedOrder', JSON.stringify(placedOrder));
     clearCart();
+    closeCart();
     router.push("/order-status");
   };
 
