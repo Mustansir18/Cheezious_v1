@@ -44,7 +44,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         className="rounded-md object-cover"
                         data-ai-hint="food item"
                       />
-                      <div className="flex-grow">
+                      <div className="flex-grow space-y-1">
                         <p className="font-semibold">{item.name}</p>
                         <p className="text-sm text-muted-foreground">
                           RS {item.price.toFixed(2)}
