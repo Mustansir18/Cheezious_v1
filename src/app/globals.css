@@ -89,6 +89,11 @@ body {
 
 /* Print-specific styles */
 @media print {
+    @page {
+        margin: 0mm;
+        size: auto;
+    }
+
     body {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
