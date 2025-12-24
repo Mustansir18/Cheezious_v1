@@ -31,22 +31,26 @@ export function OrderReceipt({ order }: OrderReceiptProps) {
             
             <hr className="border-dashed border-black my-2" />
             
-            {order.items.map(item => (
-                <div key={item.id} className="flex justify-between">
-                    <span>{item.quantity}x {item.name}</span>
-                    <span>{(item.itemPrice * item.quantity).toFixed(2)}</span>
-                </div>
-            ))}
+            <div className="space-y-1">
+                {order.items.map(item => (
+                    <div key={item.id} className="flex">
+                        <span className="flex-grow pr-2">{item.quantity}x {item.name}</span>
+                        <span className="shrink-0">{(item.itemPrice * item.quantity).toFixed(2)}</span>
+                    </div>
+                ))}
+            </div>
             
             <hr className="border-dashed border-black my-2" />
             
-            <div className="flex justify-between">
-                <span>Subtotal:</span>
-                <span>{order.subtotal.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between">
-                <span>Tax ({(order.taxRate * 100).toFixed(0)}%):</span>
-                <span>{order.taxAmount.toFixed(2)}</span>
+            <div className="space-y-1">
+                <div className="flex justify-between">
+                    <span>Subtotal:</span>
+                    <span>{order.subtotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span>Tax ({(order.taxRate * 100).toFixed(0)}%):</span>
+                    <span>{order.taxAmount.toFixed(2)}</span>
+                </div>
             </div>
             
             <hr className="border-dashed border-black my-2" />
