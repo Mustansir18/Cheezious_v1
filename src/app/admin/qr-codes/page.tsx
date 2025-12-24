@@ -100,10 +100,10 @@ function QRCodeDisplay({ title, subtitle, icon: Icon, url, companyName, branchNa
                 options={{
                     type: 'image/png',
                     quality: 1,
-                    errorCorrectionLevel: 'M',
-                    margin: 3,
-                    scale: 4,
-                    width: 200,
+                    errorCorrectionLevel: 'H',
+                    margin: 1,
+                    scale: 8,
+                    width: 256,
                     color: { dark: '#000000FF', light: '#FFFFFFFF' },
                 }}
             />
