@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { BarChart4, Package, Settings, Users, Megaphone, ShoppingCart } from 'lucide-react';
+import { BarChart4, Package, Settings, Users, Megaphone, ShoppingCart, QrCode } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useEffect } from 'react';
@@ -48,6 +48,13 @@ export default function AdminDashboardPage() {
       href: '/admin/deals',
       icon: Megaphone,
        role: ['root'],
+    },
+    {
+      title: 'QR Code Generation',
+      description: 'Generate and print QR codes for tables.',
+      href: '/admin/qr-codes',
+      icon: QrCode,
+      role: ['root'],
     },
     {
       title: 'User Management',

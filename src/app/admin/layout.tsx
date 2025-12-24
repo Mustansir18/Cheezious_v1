@@ -12,6 +12,7 @@ import {
   LogOut,
   ShoppingCart,
   Pizza,
+  QrCode,
 } from 'lucide-react';
 import {
   Tooltip,
@@ -35,6 +36,7 @@ function AdminSidebar() {
     { href: '/admin/reporting', label: 'Reporting', icon: BarChart4, role: ['root', 'admin'] },
     { href: '/admin/menu', label: 'Menu', icon: Package, role: ['root'] },
     { href: '/admin/deals', label: 'Deals', icon: Megaphone, role: ['root'] },
+    { href: '/admin/qr-codes', label: 'QR Codes', icon: QrCode, role: ['root'] },
     { href: '/admin/users', label: 'Users', icon: Users, role: ['root'] },
     { href: '/admin/settings', label: 'Settings', icon: Settings, role: ['root'] },
   ];

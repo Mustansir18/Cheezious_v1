@@ -131,13 +131,13 @@ export default function AdminSettingsPage() {
             <Card>
                  <CardHeader className="flex flex-row justify-between items-center">
                     <div>
-                        <CardTitle>QR Codes</CardTitle>
-                        <CardDescription>Generate QR codes for tables and take-away orders to streamline the ordering process.</CardDescription>
+                        <CardTitle>Quick Access QR Codes</CardTitle>
+                        <CardDescription>This section has been deprecated. Please use the new QR Codes page for more options.</CardDescription>
                     </div>
-                     <Button onClick={handlePrintQRCodes}><QrCode className="mr-2 h-4 w-4"/> Print QR Codes</Button>
+                     <Button onClick={handlePrintQRCodes} disabled><QrCode className="mr-2 h-4 w-4"/> Print QR Codes</Button>
                 </CardHeader>
                 <CardContent>
-                    <div id="qr-codes-section" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <div id="qr-codes-section" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 filter grayscale opacity-50">
                         {/* Take Away QR */}
                         {baseUrl && defaultBranch && (
                              <QRCodeCard

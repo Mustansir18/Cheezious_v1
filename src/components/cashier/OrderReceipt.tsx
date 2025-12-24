@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Order } from "@/lib/types";
@@ -15,77 +14,82 @@ export function OrderReceipt({ order }: OrderReceiptProps) {
     const table = settings.tables.find(t => t.id === order.tableId);
 
     return (
-        <div className="p-4 bg-white text-black font-mono text-xs w-[300px]">
+        <div className="p-4 bg-white text-black font-mono text-xs w-[300px] border border-gray-200">
+            {/* Header */}
             <div className="text-center mb-4">
                 <h2 className="font-bold text-sm">Cheezious</h2>
-                <p className="text-xs">{branch?.name}</p>
+                <p className="uppercase text-[10px]">{branch?.name || "CHZ J3, JOHAR TOWN LAHORE"}</p>
                 <p className="mt-2">--- Customer Receipt ---</p>
             </div>
-            
-            <div className="mb-2 space-y-1">
-                <div className="flex justify-between">
-                    <span>Order #:</span>
-                    <span>{order.orderNumber}</span>
+
+            {/* Order Info - Vertical Stack */}
+            <div className="mb-4 space-y-2">
+                <div>
+                    <div>Order #:</div>
+                    <div className="font-bold">{order.orderNumber}</div>
                 </div>
-                <div className="flex justify-between">
-                    <span>Date:</span>
-                    <span>{new Date(order.orderDate).toLocaleDateString()}</span>
+                <div>
+                    <div>Date:</div>
+                    <div className="font-bold">{new Date(order.orderDate).toLocaleDateString()}</div>
                 </div>
-                <div className="flex justify-between">
-                    <span>Time:</span>
-                    <span>{new Date(order.orderDate).toLocaleTimeString()}</span>
+                <div>
+                    <div>Time:</div>
+                    <div className="font-bold">{new Date(order.orderDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</div>
                 </div>
-                <div className="flex justify-between">
-                    <span>Type:</span>
-                    <span>{order.orderType}</span>
+                <div>
+                    <div>Type:</div>
+                    <div className="font-bold">{order.orderType}</div>
                 </div>
-                {table && (
-                    <div className="flex justify-between">
-                        <span>Table:</span>
-                        <span>{table.name}</span>
-                    </div>
-                )}
             </div>
-            
+
             <hr className="border-dashed border-black my-2" />
-            
+
+            {/* Items - Using Grid to force horizontal alignment */}
             <div className="space-y-1">
                 {order.items.map(item => (
-                    <div key={item.id} className="flex justify-between">
-                        <span className="pr-2">{item.quantity}x {item.name}</span>
-                        <span className="shrink-0">{(item.itemPrice * item.quantity).toFixed(2)}</span>
+                    <div key={item.id} className="grid grid-cols-[1fr_auto] gap-2 items-start">
+                        <span className="break-words">{item.quantity}x {item.name}</span>
+                        <span className="text-right tabular-nums whitespace-nowrap">
+                            {(item.itemPrice * item.quantity).toFixed(2)}
+                        </span>
                     </div>
                 ))}
             </div>
-            
-            <hr className="border-dashed border-black my-2" />
-            
-            <div className="space-y-1">
-                <div className="flex justify-between">
-                    <span>Subtotal:</span>
-                    <span>{order.subtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span>Tax ({(order.taxRate * 100).toFixed(0)}%):</span>
-                    <span>{order.taxAmount.toFixed(2)}</span>
-                </div>
-            </div>
-            
-            <hr className="border-dashed border-black my-2" />
-            
-            <div className="font-bold text-base flex justify-between">
-                <span>TOTAL:</span>
-                <span>RS {order.totalAmount.toFixed(2)}</span>
-            </div>
-            
+
             <hr className="border-dashed border-black my-2" />
 
-            {order.paymentMethod && (
-                 <p className="text-center">Paid via: {order.paymentMethod}</p>
-            )}
-            
-            <p className="text-center mt-4">Thank you for your visit!</p>
-            <p className="text-center">Have a Cheezious Day!</p>
+            {/* Subtotal & Tax - Using Grid */}
+            <div className="space-y-1">
+                <div className="grid grid-cols-[1fr_auto] gap-2">
+                    <span>Subtotal:</span>
+                    <span className="text-right tabular-nums">{order.subtotal.toFixed(2)}</span>
+                </div>
+                <div className="grid grid-cols-[1fr_auto] gap-2">
+                    <span>Tax ({(order.taxRate * 100).toFixed(0)}%):</span>
+                    <span className="text-right tabular-nums">{order.taxAmount.toFixed(2)}</span>
+                </div>
+            </div>
+
+            <hr className="border-dashed border-black my-2" />
+
+            {/* TOTAL - Using Grid */}
+            <div className="grid grid-cols-[1fr_auto] gap-2 font-bold text-sm">
+                <span>TOTAL:</span>
+                <span className="text-right whitespace-nowrap">
+                    RS {order.totalAmount.toFixed(2)}
+                </span>
+            </div>
+
+            <hr className="border-dashed border-black my-2" />
+
+            {/* Footer */}
+            <div className="text-center mt-4 space-y-1">
+                {order.paymentMethod && (
+                    <p>Paid via: {order.paymentMethod}</p>
+                )}
+                <p className="mt-2">Thank you for your visit!</p>
+                <p>Have a Cheezious Day!</p>
+            </div>
         </div>
     );
 }

@@ -9,6 +9,7 @@ interface Settings {
     tables: Table[];
     paymentMethods: PaymentMethod[];
     autoPrintReceipts: boolean;
+    companyName: string;
 }
 
 interface SettingsContextType {
@@ -37,6 +38,7 @@ const initialSettings: Settings = {
     tables: [],
     paymentMethods: defaultPaymentMethods,
     autoPrintReceipts: false,
+    companyName: "Cheezious",
 };
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
@@ -57,6 +59,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
             tables: parsed.tables || [],
             paymentMethods: [...defaultPaymentMethods, ...customMethods],
             autoPrintReceipts: parsed.autoPrintReceipts || false,
+            companyName: parsed.companyName || "Cheezious",
         });
       } else {
         setSettings(initialSettings);
