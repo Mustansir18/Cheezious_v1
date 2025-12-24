@@ -12,7 +12,7 @@ const StatusColumn = ({ title, orders, status }: { title: string, orders: { orde
     const badgeVariant = {
         Pending: "secondary",
         Preparing: "default",
-        Ready: "destructive",
+        Ready: "default", // Changed from "destructive"
     } as const;
 
     const bgColor = {
@@ -20,6 +20,8 @@ const StatusColumn = ({ title, orders, status }: { title: string, orders: { orde
         Preparing: "bg-blue-100 dark:bg-blue-900/50",
         Ready: "bg-green-100 dark:bg-green-900/50",
     }
+    
+    const readyBadgeClass = status === 'Ready' ? 'bg-green-600 text-white hover:bg-green-700' : '';
 
     return (
         <Card className={cn("flex flex-col h-full", bgColor[status])}>
@@ -29,7 +31,7 @@ const StatusColumn = ({ title, orders, status }: { title: string, orders: { orde
             <CardContent className="flex-grow space-y-2 p-4">
                 {orders.length > 0 ? (
                     orders.map(order => (
-                        <Badge key={order.orderNumber} variant={badgeVariant[status]} className="w-full justify-center text-2xl font-bold p-3 block">
+                        <Badge key={order.orderNumber} variant={badgeVariant[status]} className={cn("w-full justify-center text-2xl font-bold p-3 block", readyBadgeClass)}>
                             {order.orderNumber}
                         </Badge>
                     ))
