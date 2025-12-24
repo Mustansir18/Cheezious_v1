@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { BarChart4, Package, Settings, Users, Megaphone, ShoppingCart, QrCode } from 'lucide-react';
+import { BarChart4, Package, Settings, Users, Megaphone, ShoppingCart, QrCode, Monitor } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useEffect } from 'react';
@@ -26,6 +26,13 @@ export default function AdminDashboardPage() {
       description: 'View and manage live orders.',
       href: '/admin/orders',
       icon: ShoppingCart,
+      role: ['root', 'admin'],
+    },
+    {
+      title: 'Queue Display',
+      description: 'Public-facing order status screen.',
+      href: '/admin/queue',
+      icon: Monitor,
       role: ['root', 'admin'],
     },
     {

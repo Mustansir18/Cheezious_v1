@@ -20,6 +20,12 @@ export function AdminRouteGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
+    // The queue page is a special case; it should be accessible by branch admins and root
+    // but the layout itself is guarded, so we don't need to redirect here.
+    if (pathname === '/admin/queue') {
+        return;
+    }
+
     if (!isLoading) {
       if (!user) {
         // Not logged in, redirect to login page
@@ -40,6 +46,11 @@ export function AdminRouteGuard({ children }: { children: React.ReactNode }) {
       }
     }
   }, [user, isLoading, router, pathname]);
+
+  // If we are on the queue page, don't show the sidebar/layout, just the page content
+  if (pathname === '/admin/queue') {
+    return <>{children}</>;
+  }
 
   // Initial loading state
   if (isLoading || !user) {
