@@ -88,6 +88,8 @@ function QRCodeDisplay({ title, subtitle, icon: Icon, url, companyName, branchNa
      }
   }, [title, subtitle, companyName, branchName, captureCardAsCanvas]);
 
+  const formattedSubtitle = subtitle?.replace(/\s*-\s*/, ' ').replace(/\s+/g, ' ');
+
   return (
     <div className="flex flex-col items-center p-6 border-2 border-dashed rounded-xl break-inside-avoid bg-card">
         <div id={qrId} className="text-center w-full bg-card p-8 rounded-lg">
@@ -107,8 +109,13 @@ function QRCodeDisplay({ title, subtitle, icon: Icon, url, companyName, branchNa
                       color: { dark: '#000000FF', light: '#FFFFFFFF' },
                   }}
               />
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-md backdrop-blur-sm">
-                <span className="font-headline font-bold text-black text-xl tracking-wider">SCAN ME</span>
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-md backdrop-blur-sm flex flex-col items-center justify-center">
+                <span className="font-headline font-bold text-black text-lg tracking-wider">Cheezious</span>
+                {formattedSubtitle && (
+                    <span className="font-sans font-semibold text-black text-sm">
+                        Table {formattedSubtitle}
+                    </span>
+                )}
               </div>
             </div>
 
