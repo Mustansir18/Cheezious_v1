@@ -69,7 +69,9 @@ export default function OrderConfirmationPage() {
     }
 
     const orderId = crypto.randomUUID();
-    const orderNumber = `${branchId.slice(0,3).toUpperCase()}-${Date.now().toString().slice(-6)}`;
+    const branchPrefix = branch?.name.split(',')[0].replace(/[^A-Z0-9]/g, '').slice(0, 5) || 'CHZ';
+    const orderNumber = `${branchPrefix}-${Date.now().toString().slice(-6)}`;
+
     const orderItems: OrderItem[] = items.map(item => ({
         id: crypto.randomUUID(),
         orderId: orderId,

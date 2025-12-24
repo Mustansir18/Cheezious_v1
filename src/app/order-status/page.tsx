@@ -57,7 +57,7 @@ export default function OrderStatusPage() {
   }, [orders, placedOrder]);
 
   const status = order?.status;
-  const isLoading = isOrdersLoading || isSettingsLoading || !placedOrder || !order;
+  const isLoading = isOrdersLoading || isSettingsLoading || !placedOrder;
 
   // 3. Handle manual printing
   const handlePrint = useCallback(() => {
@@ -140,7 +140,7 @@ export default function OrderStatusPage() {
   }
 
   // This check is important for the case where the order is not found
-  if (!order) {
+  if (!placedOrder) {
     return (
        <div className="flex h-screen items-center justify-center">
          <p className="text-muted-foreground">Could not find order details.</p>
@@ -157,7 +157,7 @@ export default function OrderStatusPage() {
     <div className="container mx-auto flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md text-center shadow-2xl">
         <CardHeader>
-          {isOrderActive ? (
+          {isOrderActive || !status ? (
             <>
               <Utensils className="mx-auto h-16 w-16 animate-pulse text-primary" />
               <CardTitle className="font-headline text-2xl mt-4">
@@ -175,23 +175,23 @@ export default function OrderStatusPage() {
         </CardHeader>
         <CardContent>
           <p className="text-lg">
-            Order <span className="font-bold text-primary">#{order.orderNumber}</span>
+            Order <span className="font-bold text-primary">#{placedOrder.orderNumber}</span>
           </p>
           <p className="text-muted-foreground mt-2">
-            {isOrderActive
+            {isOrderActive || !status
               ? "We'll notify you with a sound when it's ready."
               : isOrderReady
-              ? `Please collect your ${order.orderType} order at the counter.`
+              ? `Please collect your ${placedOrder.orderType} order at the counter.`
               : 'Thank you for your order!'}
           </p>
           
           <div className="mt-6 text-left border rounded-lg p-4 bg-muted/20">
             <h3 className="font-headline font-semibold mb-2">Order Summary</h3>
-            <p><strong>Branch:</strong> {placedOrder?.branchName}</p>
-            {placedOrder?.orderType === 'Dine-In' && placedOrder?.tableName && (
+            <p><strong>Branch:</strong> {placedOrder.branchName}</p>
+            {placedOrder.orderType === 'Dine-In' && placedOrder.tableName && (
               <p><strong>Table:</strong> {placedOrder.tableName} ({placedOrder.floorName})</p>
             )}
-            <p><strong>Total:</strong> <span className="font-bold">RS {order.totalAmount.toFixed(2)}</span></p>
+            <p><strong>Total:</strong> <span className="font-bold">RS {placedOrder.total.toFixed(2)}</span></p>
           </div>
 
         </CardContent>
@@ -201,6 +201,7 @@ export default function OrderStatusPage() {
             variant="outline"
             onClick={handlePrint}
             className="w-full"
+            disabled={!order}
           >
             <Printer className="mr-2 h-4 w-4" /> Print Receipt
           </Button>
@@ -219,11 +220,13 @@ export default function OrderStatusPage() {
       </Card>
       
       {/* Hidden receipt for printing */}
-      <div className="hidden">
-          <div id={`printable-receipt-${order.id}`}>
-              <OrderReceipt order={order} />
-          </div>
-      </div>
+      {order && (
+        <div className="hidden">
+            <div id={`printable-receipt-${order.id}`}>
+                <OrderReceipt order={order} />
+            </div>
+        </div>
+      )}
     </div>
   );
 }
