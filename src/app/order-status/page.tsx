@@ -74,6 +74,7 @@ export default function OrderStatusPage() {
     document.body.classList.add('printing-active');
     window.print();
     
+    // Use a timeout to ensure the cleanup happens after the print dialog is likely closed
     setTimeout(() => {
       if (document.body.contains(printContainer)) {
           document.body.removeChild(printContainer);
@@ -224,5 +225,3 @@ export default function OrderStatusPage() {
     </div>
   );
 }
-
-    

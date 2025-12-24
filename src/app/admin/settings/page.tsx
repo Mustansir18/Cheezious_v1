@@ -74,33 +74,41 @@ export default function AdminSettingsPage() {
 
         const printContainer = document.createElement('div');
         printContainer.id = 'printable-area';
-        printContainer.innerHTML = `
+        
+        // Define a wrapper for the grid and the styles
+        const contentToPrint = `
             <style>
                 @media print {
                     @page { size: A4; margin: 20mm; }
                     body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                    .qr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20mm; }
-                    .qr-card-print { break-inside: avoid; border: 1px solid #ccc; border-radius: 8px; padding: 16px; text-align: center; }
-                    .qr-card-print h3 { font-size: 14pt; font-weight: bold; margin-bottom: 8px; }
-                    .qr-card-print p { font-size: 10pt; color: #555; }
-                    .qr-code-bg { background-color: white; padding: 8px; border: 1px solid #eee; border-radius: 4px; display: inline-block; margin-bottom: 12px;}
+                    .qr-grid-print { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 20mm !important; }
+                    .qr-card-print { break-inside: avoid !important; page-break-inside: avoid !important; border: 1px solid #ccc !important; border-radius: 8px !important; padding: 16px !important; text-align: center !important; }
+                    .qr-card-print h3 { font-size: 14pt !important; font-weight: bold !important; margin-bottom: 8px !important; }
+                    .qr-card-print p { font-size: 10pt !important; color: #555 !important; }
+                    .qr-code-bg-print { background-color: white !important; padding: 8px !important; border: 1px solid #eee !important; border-radius: 4px !important; display: inline-block !important; margin-bottom: 12px !important;}
                 }
             </style>
-            <div class="qr-grid">
+            <div class="qr-grid-print">
                 ${Array.from(printableArea.children).map(child => {
                     const title = child.querySelector('h3')?.textContent || '';
                     const description = child.querySelector('p')?.textContent || '';
-                    const qrSvg = child.querySelector('svg')?.outerHTML || '';
+                    const qrSvgHtml = child.querySelector('svg')?.outerHTML || '';
+                    
+                    // The QRCode component generates an SVG. We need to make sure its styles are inline for printing.
+                    const styledQrSvgHtml = qrSvgHtml.replace('<svg', '<svg style="width: 100%; height: auto;"');
+
                     return `
                         <div class="qr-card-print">
                             <h3>${title}</h3>
-                            <div class="qr-code-bg">${qrSvg}</div>
+                            <div class="qr-code-bg-print">${styledQrSvgHtml}</div>
                             <p>${description}</p>
                         </div>
                     `;
                 }).join('')}
             </div>
         `;
+        
+        printContainer.innerHTML = contentToPrint;
 
         document.body.appendChild(printContainer);
         document.body.classList.add('printing-active');

@@ -156,32 +156,26 @@ export default function ReportingPage() {
   }, [orders, dateRange]);
 
     const handlePrint = (reportId: string) => {
-    const reportElement = document.getElementById(reportId);
-    if (!reportElement) return;
+        const reportElement = document.getElementById(reportId);
+        if (!reportElement) return;
 
-    // Create a temporary, printable container
-    const printableArea = document.createElement('div');
-    printableArea.id = 'printable-area';
-    
-    // Clone the node to avoid moving the original element
-    const contentToPrint = reportElement.cloneNode(true) as HTMLElement;
-    
-    // If printing the main charts area, remove buttons from the cloned headers
-    if (reportId === 'hourly-sales-report' || reportId === 'top-items-report') {
+        const printContainer = document.createElement('div');
+        printContainer.id = 'printable-area';
+        
+        const contentToPrint = reportElement.cloneNode(true) as HTMLElement;
+        
         const buttons = contentToPrint.querySelectorAll('.print-hidden');
         buttons.forEach(btn => btn.remove());
-    }
 
-    printableArea.appendChild(contentToPrint);
-    
-    // Append to body, print, then remove
-    document.body.appendChild(printableArea);
-    document.body.classList.add('printing-active');
-    
-    window.print();
-    
-    document.body.removeChild(printableArea);
-    document.body.classList.remove('printing-active');
+        printContainer.appendChild(contentToPrint);
+        
+        document.body.appendChild(printContainer);
+        document.body.classList.add('printing-active');
+        
+        window.print();
+        
+        document.body.removeChild(printContainer);
+        document.body.classList.remove('printing-active');
   };
 
   useEffect(() => {

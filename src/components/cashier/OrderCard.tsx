@@ -38,7 +38,6 @@ interface OrderCardProps {
 
 export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, children }: OrderCardProps) {
   const { settings } = useSettings();
-  const receiptRef = useRef<HTMLDivElement>(null);
   
   const handleUpdateStatus = (newStatus: OrderStatus) => {
     onUpdateStatus(order.id, newStatus);
@@ -48,7 +47,6 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
     const printableArea = document.getElementById(`printable-receipt-${order.id}`);
     if (!printableArea) return;
 
-    // Temporarily append to a visible part of the body to print
     const printContainer = document.createElement('div');
     printContainer.id = 'printable-area';
     printContainer.appendChild(printableArea.cloneNode(true));
@@ -56,9 +54,14 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
     
     document.body.classList.add('printing-active');
     window.print();
-    document.body.classList.remove('printing-active');
 
-    document.body.removeChild(printContainer);
+    // Use a timeout to ensure the cleanup happens after the print dialog is likely closed
+    setTimeout(() => {
+        if (document.body.contains(printContainer)) {
+            document.body.removeChild(printContainer);
+        }
+        document.body.classList.remove('printing-active');
+    }, 500);
   };
   
   const StatusIcon = statusConfig[order.status]?.icon || Loader;
@@ -154,6 +157,7 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
              </div>
          )}
       </CardFooter>
+      {/* Hidden receipt for printing */}
       <div className="hidden">
         <div id={`printable-receipt-${order.id}`}>
           <OrderReceipt order={order} />
