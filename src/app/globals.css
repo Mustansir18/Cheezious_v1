@@ -87,6 +87,22 @@ body {
   }
 }
 
+@layer utilities {
+  @keyframes blink {
+    0%, 100% {
+      background-color: hsl(var(--primary) / 0.2);
+    }
+    50% {
+      background-color: hsl(var(--primary) / 0.4);
+    }
+  }
+
+  .animate-blink {
+    animation: blink 1s ease-in-out;
+  }
+}
+
+
 /* Print-specific styles */
 @media print {
     @page {
