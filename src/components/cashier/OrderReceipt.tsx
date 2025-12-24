@@ -1,10 +1,9 @@
-
-"use client";
+'use client';
 
 import { Order } from "@/lib/types";
 import { branches } from "@/lib/data";
 import { useSettings } from "@/context/SettingsContext";
-import { CheeziousLogo } from "../icons/CheeziousLogo";
+import { Pizza } from "lucide-react";
 
 interface OrderReceiptProps {
     order: Order;
@@ -18,7 +17,7 @@ export function OrderReceipt({ order }: OrderReceiptProps) {
     return (
         <div className="p-4 bg-white text-black font-mono text-xs w-[300px]">
             <div className="text-center mb-4">
-                <CheeziousLogo className="h-16 w-16 mx-auto text-black" />
+                <Pizza className="h-16 w-16 mx-auto text-black" />
                 <h2 className="font-bold text-sm mt-2">{branch?.name}</h2>
                 <p>{branch?.location}</p>
                 <p>--- Customer Receipt ---</p>
@@ -85,4 +84,3 @@ export function OrderReceipt({ order }: OrderReceiptProps) {
         </div>
     );
 }
-
