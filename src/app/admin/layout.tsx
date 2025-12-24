@@ -41,7 +41,7 @@ function AdminSidebar() {
     { href: '/admin/menu', label: 'Menu', icon: Package, role: ['root'] },
     { href: '/admin/deals', label: 'Deals', icon: Megaphone, role: ['root'] },
     { href: '/admin/qr-codes', label: 'QR Codes', icon: QrCode, role: ['root'] },
-    { href: '/admin/activity-log', label: 'Activity Log', icon: ClipboardList, role: ['root'] },
+    { href: '/admin/activity-log', label: 'Activity Log', icon: ClipboardList, role: ['root', 'admin'] },
     { href: '/admin/users', label: 'Users', icon: Users, role: ['root'] },
     { href: '/admin/settings', label: 'Settings', icon: Settings, role: ['root'] },
   ];
