@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button";
 import { useCart } from "@/context/CartContext";
 import { CartSheet } from "@/components/cart/CartSheet";
 import { Badge } from "@/components/ui/badge";
-import { branches } from "@/lib/data";
+import { useSettings } from "@/context/SettingsContext";
 
 export default function Header({ branchId }: { branchId: string }) {
   const { cartCount } = useCart();
-  const branch = branches.find((b) => b.id === branchId);
+  const { settings } = useSettings();
+  const branch = settings.branches.find((b) => b.id === branchId);
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-sm">

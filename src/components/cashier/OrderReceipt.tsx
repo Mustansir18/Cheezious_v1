@@ -1,7 +1,6 @@
 'use client';
 
 import { Order } from "@/lib/types";
-import { branches } from "@/lib/data";
 import { useSettings } from "@/context/SettingsContext";
 
 interface OrderReceiptProps {
@@ -10,7 +9,7 @@ interface OrderReceiptProps {
 
 export function OrderReceipt({ order }: OrderReceiptProps) {
     const { settings } = useSettings();
-    const branch = branches.find(b => b.id === order.branchId);
+    const branch = settings.branches.find(b => b.id === order.branchId);
     const table = settings.tables.find(t => t.id === order.tableId);
 
     return (
@@ -22,33 +21,43 @@ export function OrderReceipt({ order }: OrderReceiptProps) {
                 <p className="mt-2">--- Customer Receipt ---</p>
             </div>
 
-            {/* Order Info - Vertical Stack */}
-            <div className="mb-4 space-y-2">
-                <div>
-                    <div>Order #:</div>
-                    <div className="font-bold">{order.orderNumber}</div>
+            {/* Order Info */}
+            <div className="mb-4 space-y-1">
+                <div className="flex justify-between">
+                    <span>Order #:</span>
+                    <span className="font-bold">{order.orderNumber}</span>
                 </div>
-                <div>
-                    <div>Date:</div>
-                    <div className="font-bold">{new Date(order.orderDate).toLocaleDateString()}</div>
+                <div className="flex justify-between">
+                    <span>Date:</span>
+                    <span className="font-bold">{new Date(order.orderDate).toLocaleDateString()}</span>
                 </div>
-                <div>
-                    <div>Time:</div>
-                    <div className="font-bold">{new Date(order.orderDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</div>
+                <div className="flex justify-between">
+                    <span>Time:</span>
+                    <span className="font-bold">{new Date(order.orderDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
-                <div>
-                    <div>Type:</div>
-                    <div className="font-bold">{order.orderType}</div>
+                <div className="flex justify-between">
+                    <span>Type:</span>
+                    <span className="font-bold">{order.orderType}</span>
                 </div>
+                 {order.orderType === 'Dine-In' && table && (
+                    <div className="flex justify-between">
+                        <span>Table:</span>
+                        <span className="font-bold">{table.name}</span>
+                    </div>
+                 )}
             </div>
 
             <hr className="border-dashed border-black my-2" />
 
-            {/* Items - Using Grid to force horizontal alignment */}
+            {/* Items */}
             <div className="space-y-1">
+                 <div className="flex justify-between font-bold">
+                    <span>Item</span>
+                    <span>Price</span>
+                </div>
                 {order.items.map(item => (
-                    <div key={item.id} className="grid grid-cols-[1fr_auto] gap-2 items-start">
-                        <span className="break-words">{item.quantity}x {item.name}</span>
+                    <div key={item.id} className="flex justify-between items-start gap-2">
+                        <span className="break-words w-4/5">{item.quantity}x {item.name}</span>
                         <span className="text-right tabular-nums whitespace-nowrap">
                             {(item.itemPrice * item.quantity).toFixed(2)}
                         </span>
@@ -58,13 +67,13 @@ export function OrderReceipt({ order }: OrderReceiptProps) {
 
             <hr className="border-dashed border-black my-2" />
 
-            {/* Subtotal & Tax - Using Grid */}
+            {/* Totals */}
             <div className="space-y-1">
-                <div className="grid grid-cols-[1fr_auto] gap-2">
+                <div className="flex justify-between">
                     <span>Subtotal:</span>
                     <span className="text-right tabular-nums">{order.subtotal.toFixed(2)}</span>
                 </div>
-                <div className="grid grid-cols-[1fr_auto] gap-2">
+                <div className="flex justify-between">
                     <span>Tax ({(order.taxRate * 100).toFixed(0)}%):</span>
                     <span className="text-right tabular-nums">{order.taxAmount.toFixed(2)}</span>
                 </div>
@@ -72,8 +81,8 @@ export function OrderReceipt({ order }: OrderReceiptProps) {
 
             <hr className="border-dashed border-black my-2" />
 
-            {/* TOTAL - Using Grid */}
-            <div className="grid grid-cols-[1fr_auto] gap-2 font-bold text-sm">
+            {/* GRAND TOTAL */}
+            <div className="flex justify-between font-bold text-sm">
                 <span>TOTAL:</span>
                 <span className="text-right whitespace-nowrap">
                     RS {order.totalAmount.toFixed(2)}

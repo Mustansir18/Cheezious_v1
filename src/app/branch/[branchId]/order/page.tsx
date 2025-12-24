@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
-import { branches } from "@/lib/data";
 import type { PlacedOrder, Order, OrderItem } from "@/lib/types";
 import { syncOrderToExternalSystem } from "@/ai/flows/sync-order-flow";
 import { useOrders } from "@/context/OrderContext";
@@ -33,7 +32,7 @@ export default function OrderConfirmationPage() {
     'Credit/Debit Card': 0.05, // 5%
   };
 
-  const branch = useMemo(() => branches.find((b) => b.id === branchId), [branchId]);
+  const branch = useMemo(() => settings.branches.find((b) => b.id === branchId), [branchId, settings.branches]);
   const table = useMemo(() => settings.tables.find(t => t.id === tableId), [settings.tables, tableId]);
 
   const taxRate = useMemo(() => {

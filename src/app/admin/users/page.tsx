@@ -20,7 +20,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Trash2, PlusCircle, User, Edit } from 'lucide-react';
 import type { User as UserType } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { branches } from '@/lib/data';
+import { useSettings } from '@/context/SettingsContext';
 import { Badge } from '@/components/ui/badge';
 
 function UserForm({
@@ -34,6 +34,8 @@ function UserForm({
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<'admin' | 'cashier' | 'root'>(user?.role || 'cashier');
   const [branchId, setBranchId] = useState<string | undefined>(user?.branchId);
+  const { settings } = useSettings();
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,7 +85,7 @@ function UserForm({
                     <SelectValue placeholder="Select a branch" />
                 </SelectTrigger>
                 <SelectContent>
-                    {branches.map(branch => (
+                    {settings.branches.map(branch => (
                         <SelectItem key={branch.id} value={branch.id}>{branch.name}</SelectItem>
                     ))}
                 </SelectContent>
@@ -103,6 +105,7 @@ function UserForm({
 
 export default function UserManagementPage() {
     const { users, user, addUser, deleteUser, updateUser } = useAuth();
+    const { settings } = useSettings();
     const [isDialogOpen, setDialogOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<UserType | undefined>();
 
@@ -181,7 +184,7 @@ export default function UserManagementPage() {
                                         {u.role === 'admin' ? 'Branch Admin' : 'Cashier'}
                                     </Badge>
                                 </TableCell>
-                                <TableCell>{branches.find(b => b.id === u.branchId)?.name || 'N/A'}</TableCell>
+                                <TableCell>{settings.branches.find(b => b.id === u.branchId)?.name || 'N/A'}</TableCell>
                                 <TableCell className="text-right">
                                     <Button variant="ghost" size="icon" onClick={() => openEditDialog(u)}>
                                         <Edit className="h-4 w-4" />

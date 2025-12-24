@@ -12,7 +12,6 @@ import { Utensils, ShoppingBag, Download, Image as ImageIcon, File as FileIcon, 
 import jsPDF from "jspdf";
 import JSZip from 'jszip';
 import { useToast } from '@/hooks/use-toast';
-import { branches } from '@/lib/data';
 
 
 const loadHtml2Canvas = () => {
@@ -114,7 +113,7 @@ function QRCodeDisplay({ title, subtitle, icon: Icon, url, companyName, branchNa
             <div className="text-center mt-6">
                 <Icon className="mx-auto h-12 w-12 text-primary" />
                 <h4 className="mt-2 text-2xl font-bold">{title}</h4>
-                {subtitle && <p className="text-xl font-semibold">{subtitle}</p>}
+                {subtitle && <p className="text-xl font-semibold">{formattedSubtitle}</p>}
                 <p className="text-muted-foreground mt-2">Scan this code to begin your order.</p>
             </div>
         </div>
@@ -143,24 +142,24 @@ export default function QRCodesPage() {
     if (typeof window !== 'undefined') {
       loadHtml2Canvas(); 
       setOrigin(window.location.origin);
-      if (branches.length > 0) {
-        setSelectedBranchId(branches[0].id);
+      if (settings.branches.length > 0) {
+        setSelectedBranchId(settings.defaultBranchId || settings.branches[0].id);
       }
       if (settings.floors.length > 0) {
         setSelectedFloorId(settings.floors[0].id);
       }
     }
-  }, [settings.floors]);
+  }, [settings.branches, settings.defaultBranchId, settings.floors]);
 
   const { selectedBranch, selectedFloor, tablesForSelectedFloor } = useMemo(() => {
-    const branch = branches.find(b => b.id === selectedBranchId);
+    const branch = settings.branches.find(b => b.id === selectedBranchId);
     const floor = settings.floors.find(f => f.id === selectedFloorId);
     if (!branch) return { selectedBranch: null, selectedFloor: null, tablesForSelectedFloor: [] };
 
     const tables = settings.tables.filter(t => t.floorId === selectedFloorId);
     
     return { selectedBranch: branch, selectedFloor: floor, tablesForSelectedFloor: tables };
-  }, [selectedBranchId, selectedFloorId, settings.tables, settings.floors]);
+  }, [selectedBranchId, selectedFloorId, settings.tables, settings.branches, settings.floors]);
 
   const exportAllAs = useCallback(async (format: 'pdf' | 'zip') => {
     if (!selectedBranch || !selectedFloor || tablesForSelectedFloor.length === 0) {
@@ -269,7 +268,7 @@ export default function QRCodesPage() {
               <SelectValue placeholder="Select a branch" />
             </SelectTrigger>
             <SelectContent>
-              {branches.map(branch => (
+              {settings.branches.map(branch => (
                 <SelectItem key={branch.id} value={branch.id}>
                   {branch.name}
                 </SelectItem>

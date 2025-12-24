@@ -4,7 +4,8 @@ import { z } from 'zod';
 export type Branch = {
   id: string;
   name: string;
-  location: string;
+  dineInEnabled: boolean;
+  takeAwayEnabled: boolean;
 };
 
 export type MenuCategory = {

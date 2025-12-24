@@ -1,9 +1,6 @@
 
-import type { Branch, MenuCategory, MenuItem } from './types';
-import branchesData from '@/config/branches.json';
+import type { MenuCategory, MenuItem } from './types';
 import { PlaceHolderImages } from './placeholder-images';
-
-export const branches: Branch[] = branchesData.branches;
 
 export const menuCategories: MenuCategory[] = [
     { id: 'deals', name: 'Deals', icon: 'Tag' },

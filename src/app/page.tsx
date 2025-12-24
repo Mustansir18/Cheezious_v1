@@ -14,11 +14,15 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useDeals } from '@/context/DealsContext';
 import Autoplay from 'embla-carousel-autoplay';
 import { Loader, Pizza } from 'lucide-react';
-import { branches } from '@/lib/data';
+import { useSettings } from '@/context/SettingsContext';
 
 export default function Home() {
-  const { deals, isLoading } = useDeals();
-  const defaultBranch = branches.find(b => b.id === 'j3-johar-town-lahore');
+  const { deals, isLoading: isDealsLoading } = useDeals();
+  const { settings, isLoading: isSettingsLoading } = useSettings();
+
+  const isLoading = isDealsLoading || isSettingsLoading;
+  
+  const defaultBranch = settings.branches.find(b => b.id === settings.defaultBranchId) || settings.branches[0];
 
   return (
     <main className="flex min-h-screen flex-col">
@@ -30,7 +34,7 @@ export default function Home() {
         <p className="max-w-xl text-lg text-muted-foreground mt-2">
           Your seamless digital dining experience starts here.
         </p>
-        <Button asChild size="lg" className="mt-6">
+        <Button asChild size="lg" className="mt-6" disabled={!defaultBranch}>
           <Link href={`/branch/${defaultBranch?.id || ''}`}>Start Your Order</Link>
         </Button>
       </div>
