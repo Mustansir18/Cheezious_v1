@@ -34,6 +34,8 @@ export default function OrderConfirmationPage() {
 
   const branch = useMemo(() => settings.branches.find((b) => b.id === branchId), [branchId, settings.branches]);
   const table = useMemo(() => settings.tables.find(t => t.id === tableId), [settings.tables, tableId]);
+  const floor = useMemo(() => settings.floors.find(f => f.id === floorId), [settings.floors, floorId]);
+
 
   const taxRate = useMemo(() => {
     return taxRates[paymentMethod] || 0;
@@ -121,6 +123,7 @@ export default function OrderConfirmationPage() {
         branchName: branch!.name,
         orderType,
         ...(table && { tableName: table.name }),
+        ...(floor && { floorName: floor.name }),
     };
 
     sessionStorage.setItem('placedOrder', JSON.stringify(placedOrder));
@@ -140,7 +143,7 @@ export default function OrderConfirmationPage() {
                 <p><strong>Branch:</strong> {branch?.name}</p>
                 <p><strong>Order Type:</strong> {orderType}</p>
                 {orderType === 'Dine-In' && table && (
-                    <p><strong>Table:</strong> {table.name}</p>
+                    <p><strong>Table:</strong> {table.name} ({floor?.name})</p>
                 )}
             </div>
 
@@ -207,7 +210,7 @@ export default function OrderConfirmationPage() {
         </CardContent>
         <CardFooter className="flex flex-col-reverse gap-4 sm:flex-row sm:justify-end sm:gap-2">
           <Button variant="outline" asChild>
-            <Link href={`/branch/${branchId}/menu?mode=${orderType}`}>Cancel</Link>
+            <Link href={`/branch/${branchId}/menu?mode=${orderType}&floorId=${floorId}&tableId=${tableId}`}>Cancel</Link>
           </Button>
           <Button
             onClick={handleConfirmOrder}

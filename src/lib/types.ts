@@ -74,6 +74,7 @@ export type PlacedOrder = {
     branchName: string;
     orderType: OrderType;
     tableName?: string;
+    floorName?: string;
 };
 
 
