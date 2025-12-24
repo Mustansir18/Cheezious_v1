@@ -94,19 +94,22 @@ function QRCodeDisplay({ title, subtitle, icon: Icon, url, companyName, branchNa
             <h3 className="text-3xl font-bold font-headline text-center text-primary">{companyName}</h3>
             <p className="text-amber-800 text-center mb-6 text-lg font-semibold">{branchName}</p>
             
-            <div className="flex justify-center">
-            <Canvas
-                text={url}
-                options={{
-                    type: 'image/png',
-                    quality: 1,
-                    errorCorrectionLevel: 'H',
-                    margin: 1,
-                    scale: 8,
-                    width: 256,
-                    color: { dark: '#000000FF', light: '#FFFFFFFF' },
-                }}
-            />
+            <div className="flex justify-center relative">
+              <Canvas
+                  text={url}
+                  options={{
+                      type: 'image/png',
+                      quality: 1,
+                      errorCorrectionLevel: 'H',
+                      margin: 1,
+                      scale: 8,
+                      width: 256,
+                      color: { dark: '#000000FF', light: '#FFFFFFFF' },
+                  }}
+              />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-2 py-1 border border-gray-300 rounded-md">
+                <span className="font-headline font-bold text-primary text-sm">Cheezious</span>
+              </div>
             </div>
 
             <div className="text-center mt-6">
