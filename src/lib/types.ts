@@ -57,6 +57,7 @@ export type Order = {
     subtotal: number;
     taxRate: number;
     taxAmount: number;
+    cancellationReason?: string;
 };
 
 export type OrderItem = {

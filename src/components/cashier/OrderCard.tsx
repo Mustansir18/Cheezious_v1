@@ -16,23 +16,106 @@ import { Separator } from "@/components/ui/separator";
 import { formatDistanceToNow } from "date-fns";
 import { Skeleton } from "../ui/skeleton";
 import { ScrollArea } from "../ui/scroll-area";
-import { Utensils, ShoppingBag, Check, CheckCircle, CookingPot, Loader, CreditCard, Printer, Info } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { Utensils, ShoppingBag, Check, CheckCircle, CookingPot, Loader, CreditCard, Printer, Info, XCircle } from "lucide-react";
+import { useMemo, useRef, useState, useCallback } from "react";
 import { useSettings } from "@/context/SettingsContext";
 import { OrderReceipt } from "./OrderReceipt";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Input } from "../ui/input";
 
 const statusConfig = {
     Pending: { icon: Loader, color: "text-gray-500", label: "Pending" },
     Preparing: { icon: CookingPot, color: "text-blue-500", label: "Preparing" },
     Ready: { icon: Check, color: "text-yellow-500", label: "Ready for Pickup" },
     Completed: { icon: CheckCircle, color: "text-green-500", label: "Completed" },
-    Cancelled: { icon: CheckCircle, color: "text-red-500", label: "Cancelled" },
+    Cancelled: { icon: XCircle, color: "text-red-500", label: "Cancelled" },
 };
+
+function CancellationDialog({ orderId, onConfirm }: { orderId: string, onConfirm: (orderId: string, reason: string) => void }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [reason, setReason] = useState("");
+    const [customReason, setCustomReason] = useState("");
+
+    const handleConfirm = () => {
+        const finalReason = reason === 'custom' ? customReason : reason;
+        if (finalReason) {
+            onConfirm(orderId, finalReason);
+            setIsOpen(false);
+        }
+    };
+
+    const reasons = [
+        { id: "false-order", label: "False Order" },
+        { id: "guest-mind-change", label: "Guest Mind Change" },
+        { id: "double-order", label: "Double Order" },
+        { id: "guest-not-found", label: "Guest Not Found" },
+    ];
+
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                     <Button variant="destructive" size="sm" className="w-full">
+                        Cancel Order
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure you want to cancel this order?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will mark the order as cancelled.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>No, Keep Order</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => setIsOpen(true)}>Yes, Cancel Order</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+            
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Reason for Cancellation</DialogTitle>
+                    <DialogDescription>
+                        Please select a reason for cancelling order #{orderId.slice(-6)}.
+                    </DialogDescription>
+                </DialogHeader>
+                <RadioGroup value={reason} onValueChange={setReason} className="space-y-2 py-4">
+                    {reasons.map(r => (
+                        <div key={r.id} className="flex items-center space-x-2">
+                            <RadioGroupItem value={r.label} id={r.id} />
+                            <Label htmlFor={r.id}>{r.label}</Label>
+                        </div>
+                    ))}
+                     <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="custom" id="custom" />
+                        <Label htmlFor="custom">Other</Label>
+                    </div>
+                    {reason === 'custom' && (
+                        <Input 
+                            placeholder="Please specify the reason"
+                            value={customReason}
+                            onChange={(e) => setCustomReason(e.target.value)}
+                            className="mt-2"
+                        />
+                    )}
+                </RadioGroup>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
+                    <Button onClick={handleConfirm} disabled={!reason || (reason === 'custom' && !customReason)}>Confirm Cancellation</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
 
 interface OrderCardProps {
     order: Order;
     workflow?: 'cashier' | 'kds';
-    onUpdateStatus: (orderId: string, newStatus: OrderStatus) => void;
+    onUpdateStatus: (orderId: string, newStatus: OrderStatus, reason?: string) => void;
     children?: React.ReactNode; // For additional action buttons like InfoModal
 }
 
@@ -42,6 +125,11 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
   const handleUpdateStatus = (newStatus: OrderStatus) => {
     onUpdateStatus(order.id, newStatus);
   };
+
+  const handleCancelOrder = useCallback((orderId: string, reason: string) => {
+    console.log(`Order ${orderId} cancelled. Reason: ${reason}`);
+    onUpdateStatus(orderId, 'Cancelled', reason);
+  }, [onUpdateStatus]);
 
   const handlePrint = () => {
     const printableArea = document.getElementById(`printable-receipt-${order.id}`);
@@ -85,6 +173,7 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
         </CardTitle>
         <CardDescription>
           {formatDistanceToNow(orderDate, { addSuffix: true })}
+           {order.status === 'Cancelled' && order.cancellationReason && ` - Reason: ${order.cancellationReason}`}
         </CardDescription>
         {table && <CardDescription>Table: <span className="font-semibold">{table.name}</span></CardDescription>}
       </CardHeader>
@@ -150,9 +239,7 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
                      </Button>
                 )}
                  {(order.status === 'Pending' || order.status === 'Preparing' || order.status === 'Ready') && (
-                    <Button onClick={() => handleUpdateStatus('Cancelled')} size="sm" variant="destructive" className="w-full">
-                        Cancel Order
-                    </Button>
+                    <CancellationDialog orderId={order.id} onConfirm={handleCancelOrder} />
                  )}
              </div>
          )}

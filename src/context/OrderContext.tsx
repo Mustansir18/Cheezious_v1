@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
@@ -7,7 +8,7 @@ interface OrderContextType {
   orders: Order[];
   isLoading: boolean;
   addOrder: (order: Order) => void;
-  updateOrderStatus: (orderId: string, status: OrderStatus) => void;
+  updateOrderStatus: (orderId: string, status: OrderStatus, reason?: string) => void;
   clearOrders: () => void;
 }
 
@@ -69,10 +70,12 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
     setOrders((prevOrders) => [...prevOrders, order]);
   }, []);
 
-  const updateOrderStatus = useCallback((orderId: string, status: OrderStatus) => {
+  const updateOrderStatus = useCallback((orderId: string, status: OrderStatus, reason?: string) => {
     setOrders((prevOrders) =>
       prevOrders.map((order) =>
-        order.id === orderId ? { ...order, status } : order
+        order.id === orderId 
+        ? { ...order, status, ...(status === 'Cancelled' && { cancellationReason: reason }) } 
+        : order
       )
     );
   }, []);
