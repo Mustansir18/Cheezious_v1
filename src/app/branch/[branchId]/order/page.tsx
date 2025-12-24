@@ -156,8 +156,8 @@ export default function OrderConfirmationPage() {
                     className="rounded-md object-cover"
                   />
                   <div className="flex-grow">
-                    <p className="font-semibold">{item.name}</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="font-semibold text-left">{item.name}</p>
+                    <p className="text-sm text-muted-foreground text-left">
                       {item.quantity} x RS {item.price.toFixed(2)}
                     </p>
                   </div>
@@ -223,5 +223,3 @@ export default function OrderConfirmationPage() {
     </div>
   );
 }
-
-    

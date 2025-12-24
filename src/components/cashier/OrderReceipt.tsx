@@ -31,37 +31,27 @@ export function OrderReceipt({ order }: OrderReceiptProps) {
             
             <hr className="border-dashed border-black my-2" />
             
-            <table className="w-full">
-                <thead>
-                    <tr>
-                        <th className="text-left">ITEM</th>
-                        <th className="text-right">PRICE</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {order.items.map(item => (
-                        <tr key={item.id}>
-                            <td className="align-top">{item.quantity}x {item.name}</td>
-                            <td className="text-right align-top">{(item.itemPrice * item.quantity).toFixed(2)}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+            {order.items.map(item => (
+                <div key={item.id} className="flex justify-between">
+                    <div className="flex-grow w-3/4 pr-2">
+                        <p>{item.quantity}x {item.name}</p>
+                    </div>
+                    <div className="text-right">
+                        <p>{(item.itemPrice * item.quantity).toFixed(2)}</p>
+                    </div>
+                </div>
+            ))}
             
             <hr className="border-dashed border-black my-2" />
             
-            <table className="w-full">
-                <tbody>
-                    <tr>
-                        <td>Subtotal:</td>
-                        <td className="text-right">{order.subtotal.toFixed(2)}</td>
-                    </tr>
-                    <tr>
-                        <td>Tax ({(order.taxRate * 100).toFixed(0)}%):</td>
-                        <td className="text-right">{order.taxAmount.toFixed(2)}</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div className="flex justify-between">
+                <p>Subtotal:</p>
+                <p>{order.subtotal.toFixed(2)}</p>
+            </div>
+            <div className="flex justify-between">
+                <p>Tax ({(order.taxRate * 100).toFixed(0)}%):</p>
+                <p>{order.taxAmount.toFixed(2)}</p>
+            </div>
             
             <hr className="border-dashed border-black my-2" />
             
