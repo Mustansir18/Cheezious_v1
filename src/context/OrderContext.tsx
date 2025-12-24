@@ -4,6 +4,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import type { Order, OrderStatus } from '@/lib/types';
 import { useActivityLog } from './ActivityLogContext';
+import { useAuth } from './AuthContext';
 
 interface OrderContextType {
   orders: Order[];
@@ -22,6 +23,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { logActivity } = useActivityLog();
+  const { user } = useAuth();
 
   // Load orders from sessionStorage on initial render
   useEffect(() => {
@@ -84,19 +86,19 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
         };
 
         if (status === 'Cancelled') {
-            logActivity(`Cancelled Order #${orderToUpdate.orderNumber}. Reason: ${reason}`);
+            logActivity(`Cancelled Order #${orderToUpdate.orderNumber}. Reason: ${reason}`, user?.username || 'System');
         } else {
-            logActivity(`Updated Order #${orderToUpdate.orderNumber} status to '${status}'.`);
+            logActivity(`Updated Order #${orderToUpdate.orderNumber} status to '${status}'.`, user?.username || 'System');
         }
 
         return prevOrders.map(order => order.id === orderId ? updatedOrder : order);
     });
-  }, [logActivity]);
+  }, [logActivity, user]);
 
   const clearOrders = useCallback(() => {
     setOrders([]);
-    logActivity('Cleared all orders for the current session.');
-  }, [logActivity]);
+    logActivity('Cleared all orders for the current session.', user?.username || 'System');
+  }, [logActivity, user]);
 
   return (
     <OrderContext.Provider

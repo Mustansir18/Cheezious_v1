@@ -5,6 +5,7 @@ import React, { createContext, useContext, useState, ReactNode, useEffect, useCa
 import type { Deal } from '@/lib/types';
 import { menuItems } from '@/lib/data'; // Using some menu items as initial deals
 import { useActivityLog } from './ActivityLogContext';
+import { useAuth } from './AuthContext';
 
 interface DealsContextType {
   deals: Deal[];
@@ -28,6 +29,7 @@ export const DealsProvider = ({ children }: { children: ReactNode }) => {
   const [deals, setDeals] = useState<Deal[]>(initialDeals);
   const [isLoading, setIsLoading] = useState(true);
   const { logActivity } = useActivityLog();
+  const { user } = useAuth();
 
   useEffect(() => {
     try {
@@ -58,18 +60,18 @@ export const DealsProvider = ({ children }: { children: ReactNode }) => {
   const addDeal = useCallback((deal: Omit<Deal, 'id'>) => {
     const newDeal: Deal = { ...deal, id: crypto.randomUUID() };
     setDeals(d => [...d, newDeal]);
-    logActivity(`Added new deal: '${deal.name}'.`);
-  }, [logActivity]);
+    logActivity(`Added new deal: '${deal.name}'.`, user?.username || 'System');
+  }, [logActivity, user]);
 
   const updateDeal = useCallback((updatedDeal: Deal) => {
     setDeals(d => d.map(deal => deal.id === updatedDeal.id ? updatedDeal : deal));
-    logActivity(`Updated deal: '${updatedDeal.name}'.`);
-  }, [logActivity]);
+    logActivity(`Updated deal: '${updatedDeal.name}'.`, user?.username || 'System');
+  }, [logActivity, user]);
 
   const deleteDeal = useCallback((id: string, name: string) => {
     setDeals(d => d.filter(deal => deal.id !== id));
-    logActivity(`Deleted deal: '${name}'.`);
-  }, [logActivity]);
+    logActivity(`Deleted deal: '${name}'.`, user?.username || 'System');
+  }, [logActivity, user]);
 
   return (
     <DealsContext.Provider

@@ -5,6 +5,7 @@ import React, { createContext, useContext, useState, ReactNode, useEffect, useCa
 import { menuItems as initialMenuItems, menuCategories as initialMenuCategories } from '@/lib/data';
 import type { MenuItem, MenuCategory } from '@/lib/types';
 import { useActivityLog } from './ActivityLogContext';
+import { useAuth } from './AuthContext';
 
 interface MenuData {
     items: MenuItem[];
@@ -35,6 +36,7 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
   const [menu, setMenu] = useState<MenuData>(initialData);
   const [isLoading, setIsLoading] = useState(true);
   const { logActivity } = useActivityLog();
+  const { user } = useAuth();
 
   useEffect(() => {
     try {
@@ -65,16 +67,16 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
   const addCategory = useCallback((category: Omit<MenuCategory, 'id'>) => {
     const newCategory: MenuCategory = { ...category, id: crypto.randomUUID() };
     setMenu(m => ({ ...m, categories: [...m.categories, newCategory] }));
-    logActivity(`Added menu category: '${category.name}'.`);
-  }, [logActivity]);
+    logActivity(`Added menu category: '${category.name}'.`, user?.username || 'System');
+  }, [logActivity, user]);
 
   const updateCategory = useCallback((updatedCategory: MenuCategory) => {
     setMenu(m => ({
         ...m,
         categories: m.categories.map(c => c.id === updatedCategory.id ? updatedCategory : c)
     }));
-    logActivity(`Updated menu category: '${updatedCategory.name}'.`);
-  }, [logActivity]);
+    logActivity(`Updated menu category: '${updatedCategory.name}'.`, user?.username || 'System');
+  }, [logActivity, user]);
 
   const deleteCategory = useCallback((id: string, name: string) => {
     setMenu(m => ({ 
@@ -82,27 +84,27 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
         categories: m.categories.filter(c => c.id !== id),
         items: m.items.filter(i => i.categoryId !== id) // Also remove items in that category
     }));
-    logActivity(`Deleted menu category: '${name}' and all its items.`);
-  }, [logActivity]);
+    logActivity(`Deleted menu category: '${name}' and all its items.`, user?.username || 'System');
+  }, [logActivity, user]);
 
   const addItem = useCallback((item: Omit<MenuItem, 'id'>) => {
     const newItem: MenuItem = { ...item, id: crypto.randomUUID() };
     setMenu(m => ({ ...m, items: [...m.items, newItem] }));
-    logActivity(`Added menu item: '${item.name}'.`);
-  }, [logActivity]);
+    logActivity(`Added menu item: '${item.name}'.`, user?.username || 'System');
+  }, [logActivity, user]);
 
   const updateItem = useCallback((updatedItem: MenuItem) => {
     setMenu(m => ({
         ...m,
         items: m.items.map(i => i.id === updatedItem.id ? updatedItem : i)
     }));
-    logActivity(`Updated menu item: '${updatedItem.name}'.`);
-  }, [logActivity]);
+    logActivity(`Updated menu item: '${updatedItem.name}'.`, user?.username || 'System');
+  }, [logActivity, user]);
 
   const deleteItem = useCallback((id: string, name: string) => {
     setMenu(m => ({ ...m, items: m.items.filter(i => i.id !== id) }));
-    logActivity(`Deleted menu item: '${name}'.`);
-  }, [logActivity]);
+    logActivity(`Deleted menu item: '${name}'.`, user?.username || 'System');
+  }, [logActivity, user]);
 
   return (
     <MenuContext.Provider

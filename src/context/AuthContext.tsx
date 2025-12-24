@@ -112,14 +112,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const foundUser = users.find(u => u.username === username && u.password === password);
     if (foundUser) {
       setUser(foundUser);
-      logActivity(`User '${username}' logged in.`);
+      logActivity(`User '${username}' logged in.`, username);
       return foundUser;
     }
     throw new Error('Invalid username or password');
   }, [users, logActivity]);
 
   const logout = useCallback(() => {
-    logActivity(`User '${user?.username}' logged out.`);
+    logActivity(`User '${user?.username}' logged out.`, user?.username || 'Unknown');
     setUser(null);
     router.push('/login');
   }, [router, user, logActivity]);
@@ -131,8 +131,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     const newUser: User = { id: crypto.randomUUID(), username, password, role, branchId };
     setUsers(prev => [...prev, newUser]);
-    logActivity(`Added new user: '${username}' with role '${role}'.`);
-  }, [users, logActivity]);
+    logActivity(`Added new user: '${username}' with role '${role}'.`, user?.username || 'System');
+  }, [users, logActivity, user?.username]);
 
   const updateUser = useCallback((updatedUser: User) => {
     setUsers(prev => prev.map(u => {
@@ -143,8 +143,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
         return u;
     }));
-    logActivity(`Updated user details for: '${updatedUser.username}'.`);
-  }, [logActivity]);
+    logActivity(`Updated user details for: '${updatedUser.username}'.`, user?.username || 'System');
+  }, [logActivity, user?.username]);
 
   const deleteUser = useCallback((id: string, username: string) => {
     if (id === rootUser.id) {
@@ -152,8 +152,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return;
     }
     setUsers(prev => prev.filter(u => u.id !== id));
-    logActivity(`Deleted user: '${username}'.`);
-  }, [logActivity]);
+    logActivity(`Deleted user: '${username}'.`, user?.username || 'System');
+  }, [logActivity, user?.username]);
 
   const value = { user, users, isLoading, login, logout, addUser, updateUser, deleteUser };
 

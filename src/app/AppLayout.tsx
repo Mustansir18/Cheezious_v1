@@ -13,8 +13,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col">
       <main className="flex-grow">
-        <AuthProvider>
-          <ActivityLogProvider>
+        <ActivityLogProvider>
+          <AuthProvider>
             <SettingsProvider>
               <DealsProvider>
                 <MenuProvider>
@@ -24,8 +24,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </MenuProvider>
               </DealsProvider>
             </SettingsProvider>
-          </ActivityLogProvider>
-        </AuthProvider>
+          </AuthProvider>
+        </ActivityLogProvider>
       </main>
     </div>
   );

@@ -3,12 +3,11 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import type { ActivityLog } from '@/lib/types';
-import { useAuth } from './AuthContext';
 
 interface ActivityLogContextType {
   logs: ActivityLog[];
   isLoading: boolean;
-  logActivity: (message: string) => void;
+  logActivity: (message: string, user: string) => void;
   clearLogs: () => void;
 }
 
@@ -19,7 +18,6 @@ const LOG_STORAGE_KEY = 'cheeziousActivityLog';
 export const ActivityLogProvider = ({ children }: { children: ReactNode }) => {
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { user } = useAuth(); // Get current user from AuthContext
 
   // Load logs from localStorage on initial render
   useEffect(() => {
@@ -46,19 +44,20 @@ export const ActivityLogProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [logs, isLoading]);
 
-  const logActivity = useCallback((message: string) => {
+  const logActivity = useCallback((message: string, user: string) => {
     const newLog: ActivityLog = {
       id: crypto.randomUUID(),
       timestamp: new Date().toISOString(),
-      user: user?.username || 'System',
+      user: user || 'System',
       message: message,
     };
     setLogs((prevLogs) => [newLog, ...prevLogs]);
-  }, [user]);
+  }, []);
 
   const clearLogs = useCallback(() => {
     setLogs([]);
-  }, []);
+    logActivity('Cleared all activity logs.', 'System');
+  }, [logActivity]);
 
   return (
     <ActivityLogContext.Provider
