@@ -107,7 +107,7 @@ function QRCodeDisplay({ title, subtitle, icon: Icon, url, companyName, branchNa
                       color: { dark: '#000000FF', light: '#FFFFFFFF' },
                   }}
               />
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-transparent">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-md backdrop-blur-sm">
                 <span className="font-headline font-bold text-black text-xl tracking-wider">SCAN ME</span>
               </div>
             </div>
