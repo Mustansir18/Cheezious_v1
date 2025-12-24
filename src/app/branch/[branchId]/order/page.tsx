@@ -161,7 +161,7 @@ export default function OrderConfirmationPage() {
                       {item.quantity} x RS {item.price.toFixed(2)}
                     </p>
                   </div>
-                  <p className="font-semibold">
+                  <p className="font-semibold shrink-0">
                     RS {(item.quantity * item.price).toFixed(2)}
                   </p>
                 </div>
