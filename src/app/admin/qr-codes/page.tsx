@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -107,7 +108,7 @@ function QRCodeDisplay({ title, subtitle, icon: Icon, url, companyName, branchNa
                       color: { dark: '#000000FF', light: '#FFFFFFFF' },
                   }}
               />
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-2 py-1 border border-gray-300 rounded-md">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-transparent">
                 <span className="font-headline font-bold text-primary text-sm">Cheezious</span>
               </div>
             </div>
