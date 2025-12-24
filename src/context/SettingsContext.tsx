@@ -33,9 +33,28 @@ const defaultPaymentMethods: PaymentMethod[] = [
     { id: 'card', name: 'Credit/Debit Card' }
 ];
 
+const floorsData: { id: string, name: string, prefix: string }[] = [
+    { id: 'floor-basement', name: 'Basement', prefix: 'B' },
+    { id: 'floor-ground', name: 'Ground', prefix: 'G' },
+    { id: 'floor-first', name: 'First', prefix: 'F' },
+    { id: 'floor-second', name: 'Second', prefix: 'S' },
+    { id: 'floor-rooftop', name: 'Roof Top', prefix: 'R' }
+];
+
+const initialFloors: Floor[] = floorsData.map(({ id, name }) => ({ id, name }));
+
+const initialTables: Table[] = floorsData.flatMap(floor => 
+    Array.from({ length: 10 }, (_, i) => ({
+        id: `table-${floor.prefix.toLowerCase()}-${i + 1}`,
+        name: `${floor.prefix}-${i + 1}`,
+        floorId: floor.id,
+    }))
+);
+
+
 const initialSettings: Settings = {
-    floors: [],
-    tables: [],
+    floors: initialFloors,
+    tables: initialTables,
     paymentMethods: defaultPaymentMethods,
     autoPrintReceipts: false,
     companyName: "Cheezious",
@@ -55,8 +74,8 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         const customMethods = parsed.paymentMethods?.filter((pm: PaymentMethod) => !defaultPaymentMethods.some(dpm => dpm.id === pm.id)) || [];
         
         setSettings({
-            floors: parsed.floors || [],
-            tables: parsed.tables || [],
+            floors: parsed.floors && parsed.floors.length > 0 ? parsed.floors : initialFloors,
+            tables: parsed.tables && parsed.tables.length > 0 ? parsed.tables : initialTables,
             paymentMethods: [...defaultPaymentMethods, ...customMethods],
             autoPrintReceipts: parsed.autoPrintReceipts || false,
             companyName: parsed.companyName || "Cheezious",
