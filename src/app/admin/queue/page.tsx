@@ -30,7 +30,7 @@ const StatusColumn = ({ title, orders, status }: { title: string, orders: { orde
                  <div className="grid grid-cols-1 justify-items-center gap-4">
                     {orders.length > 0 ? (
                         orders.map(order => (
-                            <Badge key={order.orderNumber} variant={badgeVariant[status]} className={cn("text-4xl font-bold p-4 block rounded-lg w-full text-center", badgeColor[status])}>
+                            <Badge key={order.orderNumber} variant={badgeVariant[status]} className={cn("text-3xl font-bold p-3 px-6 rounded-lg", badgeColor[status])}>
                                 {order.orderNumber}
                             </Badge>
                         ))
