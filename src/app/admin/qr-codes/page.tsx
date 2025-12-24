@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -109,7 +108,7 @@ function QRCodeDisplay({ title, subtitle, icon: Icon, url, companyName, branchNa
                   }}
               />
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-transparent">
-                <span className="font-headline font-bold text-primary text-sm">Cheezious</span>
+                <span className="font-headline font-bold text-black text-xl tracking-wider">SCAN ME</span>
               </div>
             </div>
 
