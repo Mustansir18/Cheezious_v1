@@ -32,27 +32,29 @@ function DealsCarousel() {
   }
 
   return (
-    <Carousel 
-        opts={{ align: "start", loop: true }}
-        plugins={[Autoplay({ delay: 5000, stopOnInteraction: false })]}
-        className="w-full relative"
-    >
-      <CarouselContent>
-        {deals.map((deal) => (
-          <CarouselItem key={deal.id} className="md:basis-1/2 lg:basis-1/3">
-             <Link href={`/branch/${defaultBranchId}?dealId=${deal.id}`} className="block p-1 group">
-                <Card className="overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:scale-105">
-                  <CardContent className="flex aspect-video items-center justify-center p-0">
-                    <Image src={deal.imageUrl} alt={deal.name} width={600} height={400} className="object-cover w-full h-full" />
-                  </CardContent>
-                </Card>
-            </Link>
-          </CarouselItem>
-        ))}
-      </CarouselContent>
-       <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-10 h-10 w-10 bg-black/50 text-white border-none hover:bg-black/75" />
-      <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-10 h-10 w-10 bg-black/50 text-white border-none hover:bg-black/75" />
-    </Carousel>
+    <div className="relative w-full">
+      <Carousel 
+          opts={{ align: "start", loop: true }}
+          plugins={[Autoplay({ delay: 5000, stopOnInteraction: false })]}
+          className="w-full"
+      >
+        <CarouselContent className="-ml-4">
+          {deals.map((deal) => (
+            <CarouselItem key={deal.id} className="md:basis-1/2 lg:basis-1/3 pl-4">
+              <Link href={`/branch/${defaultBranchId}?dealId=${deal.id}`} className="block p-1 group">
+                  <Card className="overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:scale-105">
+                    <CardContent className="flex aspect-video items-center justify-center p-0">
+                      <Image src={deal.imageUrl} alt={deal.name} width={600} height={400} className="object-cover w-full h-full" />
+                    </CardContent>
+                  </Card>
+              </Link>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        <CarouselPrevious className="absolute left-[-50px] top-1/2 -translate-y-1/2 z-10 h-10 w-10 bg-background/80 text-foreground border hover:bg-accent" />
+        <CarouselNext className="absolute right-[-50px] top-1/2 -translate-y-1/2 z-10 h-10 w-10 bg-background/80 text-foreground border hover:bg-accent" />
+      </Carousel>
+    </div>
   );
 }
 
@@ -110,7 +112,7 @@ export default function Home() {
              )}
         </div>
         
-        <div className="w-full max-w-6xl mt-12">
+        <div className="w-full max-w-6xl mt-12 px-14">
             <h2 className="text-2xl font-bold font-headline mb-4 text-center">Today's Hot Deals</h2>
             <DealsCarousel />
         </div>
