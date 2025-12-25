@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useCart } from "@/context/CartContext";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import type { PlacedOrder, Order, OrderItem } from "@/lib/types";
@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/context/SettingsContext";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CreditCard } from "lucide-react";
 
 const FALLBACK_IMAGE_URL = "https://picsum.photos/seed/placeholder/400/300";
 
@@ -180,23 +181,31 @@ export default function OrderConfirmationPage() {
             ))}
             <Separator />
 
-            
-            <div className="grid gap-2 pt-4">
-                <Label htmlFor="payment-method">Payment Method</Label>
-                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                    <SelectTrigger id="payment-method">
-                        <SelectValue placeholder="Select a payment method" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {settings.paymentMethods.map(method => (
-                            <SelectItem key={method.id} value={method.name}>
-                                {method.name}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
-            
+             <Card className="mt-6 bg-muted/30">
+                <CardHeader>
+                    <CardTitle className="flex items-center text-xl">
+                        <CreditCard className="mr-2 h-5 w-5"/>
+                        Payment
+                    </CardTitle>
+                    <CardDescription>
+                        Please select a payment method to see the final total.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                        <SelectTrigger id="payment-method">
+                            <SelectValue placeholder="Select a payment method" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {settings.paymentMethods.map(method => (
+                                <SelectItem key={method.id} value={method.name}>
+                                    {method.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </CardContent>
+            </Card>
 
             <div className="space-y-1 pt-4">
                 <div className="flex justify-between">
@@ -233,5 +242,3 @@ export default function OrderConfirmationPage() {
     </div>
   );
 }
-
-    
