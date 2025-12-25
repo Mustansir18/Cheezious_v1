@@ -53,7 +53,7 @@ function AddToCartDialog({ item, onAddToCart }: { item: MenuItem; onAddToCart: (
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                <Button className="bg-accent text-accent-foreground hover:bg-accent/90">
+                <Button onClick={() => setIsOpen(true)} className="bg-accent text-accent-foreground hover:bg-accent/90">
                     <PlusCircle className="mr-2 h-5 w-5" /> Customize & Add
                 </Button>
             </DialogTrigger>
