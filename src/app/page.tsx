@@ -82,7 +82,8 @@ export default function Home() {
 
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-center p-4">
-        <div className="absolute top-4 right-4">
+        <div className="absolute top-4 right-4 text-right">
+            <p className="text-sm text-muted-foreground mb-1">Already placed an order?</p>
             <Button size="sm" variant="outline" onClick={handleCheckStatus}>
                 Check Order Status
             </Button>
