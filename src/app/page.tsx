@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useSettings } from '@/context/SettingsContext';
 import { useDeals } from '@/context/DealsContext';
-import { Loader, ListChecks, Pizza, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader, Pizza, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
@@ -100,11 +100,14 @@ export default function Home() {
                     <p className="mt-1 text-sm text-muted-foreground">Please log in as an admin to add a branch.</p>
                 </div>
              ) : (
-                <div className="flex flex-col sm:flex-row gap-4 py-6 items-center">
+                <div className="flex flex-col sm:flex-row gap-8 py-6 items-center">
                     <Button size="lg" className="px-10 py-6 text-lg font-bold" onClick={handleStartOrder}>Start Your Order</Button>
-                    <Button size="lg" variant="secondary" onClick={handleCheckStatus}>
-                        Already placed an order?
-                    </Button>
+                    <div className="flex flex-col items-center gap-2">
+                        <p className="text-sm text-muted-foreground">Already placed an order?</p>
+                        <Button size="default" variant="secondary" onClick={handleCheckStatus}>
+                           Check Order Status
+                        </Button>
+                    </div>
                 </div>
              )}
         </div>
