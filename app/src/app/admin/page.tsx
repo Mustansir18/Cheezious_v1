@@ -7,6 +7,7 @@ import { BarChart4, Package, Settings, Users, Megaphone, ShoppingCart, QrCode, M
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useEffect } from 'react';
+import { Loader } from 'lucide-react';
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -15,7 +16,7 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     // If user is a branch admin, redirect them directly to their default page
     if (user?.role === 'admin') {
-      router.replace('/admin/orders');
+      router.push('/admin/orders');
     }
   }, [user, router]);
 
@@ -88,24 +89,25 @@ export default function AdminDashboardPage() {
 
   const visibleSections = adminSections.filter(section => user?.role && section.role.includes(user.role));
 
-  // If the user is a branch admin, we show a loading/redirecting state.
+  // If the user is an admin, the useEffect will trigger a redirect.
+  // We return a loading state to prevent the rest of the component from rendering
+  // and causing a race condition with the navigation.
   if (user?.role === 'admin') {
       return (
-          <div className="container mx-auto p-4 lg:p-8">
-            <header className="mb-8">
-                <h1 className="font-headline text-4xl font-bold">Admin Dashboard</h1>
-                <p className="text-muted-foreground">Redirecting to your dashboard...</p>
-            </header>
+          <div className="flex h-screen items-center justify-center">
+            <Loader className="h-12 w-12 animate-spin text-primary" />
+            <p className="ml-4 text-muted-foreground">Redirecting to your dashboard...</p>
           </div>
-      )
+      );
   }
 
+  // This content will only be rendered for the 'root' user.
   return (
     <div className="container mx-auto p-4 lg:p-8">
       <header className="mb-8">
         <h1 className="font-headline text-4xl font-bold">Admin Dashboard</h1>
         <p className="text-muted-foreground">
-            {user?.role === 'root' ? 'Select a section to manage your restaurant.' : 'Manage your assigned branch.'}
+            Select a section to manage your restaurant.
         </p>
       </header>
 
