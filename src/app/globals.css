@@ -90,15 +90,15 @@ body {
 @layer utilities {
   @keyframes blink {
     0%, 100% {
-      box-shadow: 0 0 0 0 hsl(var(--primary) / 0.7);
+      box-shadow: 0 0 2px 0px rgba(255, 255, 255, 0.7);
     }
     50% {
-      box-shadow: 0 0 0 4px hsl(var(--primary) / 0);
+      box-shadow: 0 0 6px 3px rgba(255, 255, 255, 0.3);
     }
   }
 
   .animate-blink {
-    animation: blink 2s ease-in-out infinite;
+    animation: blink 1.5s ease-in-out infinite;
   }
 }
 
