@@ -55,7 +55,7 @@ export function Logo({ className, ...props }: React.SVGProps<SVGSVGElement>) {
         <path d="M 15,68 C 15,63 65,63 65,68 L 60,85 C 60,90 20,90 15,85 Z" fill="#D2691E" stroke="#5D4037" strokeWidth="2" />
         {/* Sesame seeds */}
         <circle cx="30" cy="56" r="1" fill="#FFFDE7" />
-        <circle cx="40" cy="55" r="1.2" fill="#FFFDE7" />
+        <circle cx="40"cy="55" r="1.2" fill="#FFFDE7" />
         <circle cx="50" cy="56" r="1" fill="#FFFDE7" />
 
          {/* Swirl Left */}
