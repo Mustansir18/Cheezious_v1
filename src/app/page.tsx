@@ -15,6 +15,8 @@ import Autoplay from "embla-carousel-autoplay";
 
 function DealsCarousel() {
   const { deals, isLoading } = useDeals();
+  const { settings } = useSettings();
+  const defaultBranchId = settings.defaultBranchId || (settings.branches.length > 0 ? settings.branches[0].id : null);
 
   if (isLoading) {
     return (
@@ -24,8 +26,8 @@ function DealsCarousel() {
     );
   }
 
-  if (deals.length === 0) {
-      return null; // Don't show the carousel if there are no deals
+  if (deals.length === 0 || !defaultBranchId) {
+      return null; // Don't show the carousel if there are no deals or no branches
   }
 
   return (
@@ -37,13 +39,13 @@ function DealsCarousel() {
       <CarouselContent>
         {deals.map((deal) => (
           <CarouselItem key={deal.id} className="md:basis-1/2 lg:basis-1/3">
-            <div className="p-1">
-              <Card className="overflow-hidden">
-                <CardContent className="flex aspect-video items-center justify-center p-0">
-                   <Image src={deal.imageUrl} alt={deal.name} width={600} height={400} className="object-cover w-full h-full" />
-                </CardContent>
-              </Card>
-            </div>
+             <Link href={`/branch/${defaultBranchId}?dealId=${deal.id}`} className="block p-1 group">
+                <Card className="overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:scale-105">
+                  <CardContent className="flex aspect-video items-center justify-center p-0">
+                    <Image src={deal.imageUrl} alt={deal.name} width={600} height={400} className="object-cover w-full h-full" />
+                  </CardContent>
+                </Card>
+            </Link>
           </CarouselItem>
         ))}
       </CarouselContent>

@@ -6,11 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Utensils, ShoppingBag } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useMemo } from "react";
-import { notFound, useParams } from "next/navigation";
+import { notFound, useParams, useSearchParams } from "next/navigation";
 
 export default function ModeSelectionPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const branchId = params.branchId as string;
+  const dealId = searchParams.get('dealId');
+
   const { settings } = useSettings();
   const branch = useMemo(() => settings.branches.find((b) => b.id === branchId), [branchId, settings.branches]);
 
@@ -20,6 +23,10 @@ export default function ModeSelectionPage() {
 
   const isDineInAvailable = branch.dineInEnabled;
   const isTakeAwayAvailable = branch.takeAwayEnabled;
+
+  const takeAwayUrl = `/branch/${branchId}/menu?mode=Take-Away${dealId ? `&dealId=${dealId}` : ''}`;
+  const dineInUrl = `/branch/${branchId}/table-selection${dealId ? `?dealId=${dealId}` : ''}`;
+
 
   return (
     <div className="container mx-auto flex flex-col items-center justify-center px-4 py-12 text-center min-h-[calc(100vh-4rem)]">
@@ -32,7 +39,7 @@ export default function ModeSelectionPage() {
 
       <div className="mt-10 grid w-full max-w-2xl grid-cols-1 gap-8 md:grid-cols-2">
         {isDineInAvailable ? (
-            <Link href={`/branch/${branchId}/table-selection`}>
+            <Link href={dineInUrl}>
                 <Card className="transform transition-transform duration-300 hover:scale-105 hover:shadow-xl">
                     <CardHeader>
                     <Utensils className="mx-auto h-16 w-16 text-primary" />
@@ -60,7 +67,7 @@ export default function ModeSelectionPage() {
         )}
 
         {isTakeAwayAvailable ? (
-            <Link href={`/branch/${branchId}/menu?mode=Take-Away`}>
+            <Link href={takeAwayUrl}>
                 <Card className="transform transition-transform duration-300 hover:scale-105 hover:shadow-xl">
                     <CardHeader>
                     <ShoppingBag className="mx-auto h-16 w-16 text-primary" />

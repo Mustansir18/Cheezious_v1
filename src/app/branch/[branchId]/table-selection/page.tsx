@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { useSettings } from "@/context/SettingsContext";
 import { useCart } from "@/context/CartContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export default function TableSelectionPage() {
     const params = useParams();
+    const searchParams = useSearchParams();
     const branchId = params.branchId as string;
+    const dealId = searchParams.get('dealId');
+
     const { settings, isLoading } = useSettings();
     const { setOrderDetails } = useCart();
     const router = useRouter();
@@ -30,7 +33,8 @@ export default function TableSelectionPage() {
                 floorId: selectedFloorId,
                 tableId: selectedTableId,
             });
-            router.push(`/branch/${branchId}/menu?mode=Dine-In`);
+            const menuUrl = `/branch/${branchId}/menu?mode=Dine-In${dealId ? `&dealId=${dealId}` : ''}`;
+            router.push(menuUrl);
         }
     };
     

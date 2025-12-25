@@ -1,14 +1,15 @@
 
 "use client";
 
-import { useEffect, useMemo } from "react";
-import { useSearchParams, useParams } from "next/navigation";
+import { useEffect, useMemo, useRef } from "react";
+import { useSearchParams, useParams, useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
-import type { OrderType } from "@/lib/types";
+import type { OrderType, MenuItem } from "@/lib/types";
 import { MenuItemCard } from "@/components/menu/MenuItemCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import * as LucideIcons from 'lucide-react';
 import { useMenu } from "@/context/MenuContext";
+import { useDeals } from "@/context/DealsContext";
 import { Loader } from "lucide-react";
 
 
@@ -24,10 +25,13 @@ const Icon = ({ name, className }: { name: string, className: string }) => {
 
 export default function MenuPage() {
   const params = useParams();
+  const router = useRouter();
   const branchId = params.branchId as string;
   const searchParams = useSearchParams();
-  const { setOrderDetails } = useCart();
-  const { menu, isLoading } = useMenu();
+  const { setOrderDetails, addItem } = useCart();
+  const { menu, isLoading: isMenuLoading } = useMenu();
+  const { deals, isLoading: areDealsLoading } = useDeals();
+  const processedDeal = useRef(false);
 
   const { items: menuItems, categories } = menu;
 
@@ -35,13 +39,38 @@ export default function MenuPage() {
     const mode = searchParams.get("mode") as OrderType;
     const floorId = searchParams.get("floorId") || undefined;
     const tableId = searchParams.get("tableId") || undefined;
+    const dealId = searchParams.get("dealId");
 
     if (mode && branchId) {
       setOrderDetails({ branchId: branchId, orderType: mode, floorId, tableId });
     }
-  }, [searchParams, branchId, setOrderDetails]);
 
-  if (isLoading) {
+    // Auto-add deal to cart if dealId is present and not yet processed
+    if (dealId && !areDealsLoading && !processedDeal.current) {
+        const dealToAdd = deals.find(d => d.id === dealId);
+        if (dealToAdd) {
+            // Convert Deal to a MenuItem-like structure for the cart
+            const dealAsMenuItem: MenuItem = {
+                id: dealToAdd.id,
+                name: dealToAdd.name,
+                description: dealToAdd.description,
+                price: dealToAdd.price,
+                imageUrl: dealToAdd.imageUrl,
+                categoryId: 'deals', // Assign to a conceptual 'deals' category
+            };
+            addItem(dealAsMenuItem);
+            processedDeal.current = true; // Mark as processed
+            
+            // Remove dealId from URL to prevent re-adding on refresh
+            const current = new URL(window.location.toString());
+            current.searchParams.delete('dealId');
+            router.replace(current.pathname + current.search);
+        }
+    }
+
+  }, [searchParams, branchId, setOrderDetails, deals, areDealsLoading, addItem, router]);
+
+  if (isMenuLoading || areDealsLoading) {
     return (
         <div className="flex h-[calc(100vh-10rem)] items-center justify-center">
             <Loader className="h-12 w-12 animate-spin text-primary" />
