@@ -58,7 +58,7 @@ export default function MenuPage() {
                 imageUrl: dealToAdd.imageUrl,
                 categoryId: 'deals', // Assign to a conceptual 'deals' category
             };
-            addItem(dealAsMenuItem);
+            addItem({ item: dealAsMenuItem });
             processedDeal.current = true; // Mark as processed
             
             // Remove dealId from URL to prevent re-adding on refresh
