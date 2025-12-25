@@ -191,9 +191,9 @@ export default function ReportingPage() {
     ];
     
     const adjustmentChartData = [
-        { type: 'Discounted', count: discountedCount, icon: Tag, fill: 'hsl(var(--chart-4))'},
-        { type: 'Complementary', count: complementaryCount, icon: Gift, fill: 'hsl(var(--chart-5))'},
-        { type: 'Cancelled', count: cancelledCount, icon: XCircle, fill: 'hsl(var(--chart-3))'},
+        { type: 'Discounted', count: discountedCount, icon: Tag, color: 'text-blue-500'},
+        { type: 'Complementary', count: complementaryCount, icon: Gift, color: 'text-green-500'},
+        { type: 'Cancelled', count: cancelledCount, icon: XCircle, color: 'text-red-500'},
     ]
 
     const today = new Date();
@@ -427,28 +427,13 @@ export default function ReportingPage() {
           </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2" id="interactive-filters-report">
-                <Card className="h-full">
-                    <CardHeader className="flex-row justify-between items-center">
-                        <div>
-                            <CardTitle className="font-headline">Interactive Filters</CardTitle>
-                            <CardDescription>Click a chart segment to filter all reports.</CardDescription>
-                        </div>
-                        <ReportCardActions reportId="interactive-filters-report" onPrint={handlePrint} />
-                    </CardHeader>
-                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                         <PaymentMethodBreakdown 
-                            data={paymentChartData}
-                            selectedMethod={selectedPaymentMethod}
-                            onSelectMethod={setSelectedPaymentMethod}
-                        />
-                        <OrderAdjustmentsSummary 
-                            data={adjustmentChartData}
-                            selectedType={selectedAdjustmentType}
-                            onSelectType={setSelectedAdjustmentType}
-                        />
-                    </CardContent>
-                </Card>
+             <div id="payment-method-report">
+                <PaymentMethodBreakdown 
+                    data={paymentChartData}
+                    selectedMethod={selectedPaymentMethod}
+                    onSelectMethod={setSelectedPaymentMethod}
+                    onPrint={() => handlePrint('payment-method-report')}
+                />
             </div>
             <div id="ordertype-report">
                 <OrderTypeSummary
@@ -456,6 +441,14 @@ export default function ReportingPage() {
                     onPrint={() => handlePrint('ordertype-report')}
                     selectedType={selectedOrderType}
                     onSelectType={setSelectedOrderType}
+                />
+            </div>
+             <div id="adjustments-report">
+                <OrderAdjustmentsSummary 
+                    data={adjustmentChartData}
+                    selectedType={selectedAdjustmentType}
+                    onSelectType={setSelectedAdjustmentType}
+                    onPrint={() => handlePrint('adjustments-report')}
                 />
             </div>
         </div>

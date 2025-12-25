@@ -17,9 +17,10 @@ interface PaymentMethodBreakdownProps {
   data: PaymentData[];
   selectedMethod: string | null;
   onSelectMethod: (method: string | null) => void;
+  onPrint: () => void;
 }
 
-export function PaymentMethodBreakdown({ data, selectedMethod, onSelectMethod }: PaymentMethodBreakdownProps) {
+export function PaymentMethodBreakdown({ data, selectedMethod, onSelectMethod, onPrint }: PaymentMethodBreakdownProps) {
   
   const handlePieClick = (payload: any) => {
     const clickedMethod = payload.name;
@@ -28,10 +29,31 @@ export function PaymentMethodBreakdown({ data, selectedMethod, onSelectMethod }:
   }
 
   return (
-    <div className="h-full w-full">
-        <CardTitle className="text-base font-medium mb-2">Payment Methods</CardTitle>
+     <Card className="h-full flex flex-col">
+      <CardHeader className="flex-row justify-between items-center">
+        <div>
+          <CardTitle className="font-headline">Payment Methods</CardTitle>
+          <CardDescription>Click a segment to filter the report.</CardDescription>
+        </div>
+        <div className="flex items-center gap-2 print-hidden">
+            <UITooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" disabled>
+                        <FileDown className="h-4 w-4"/>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>Download report (coming soon)</p>
+                </TooltipContent>
+            </UITooltip>
+            <Button variant="ghost" size="icon" onClick={onPrint}>
+                <Printer className="h-4 w-4"/>
+            </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="flex-grow flex flex-col items-center justify-center">
          {data.length > 0 ? (
-            <div className="flex flex-col items-center">
+            <>
                  <ResponsiveContainer width="100%" height={150}>
                     <PieChart>
                          <Tooltip
@@ -85,12 +107,13 @@ export function PaymentMethodBreakdown({ data, selectedMethod, onSelectMethod }:
                         </div>
                     ))}
                 </div>
-            </div>
+            </>
          ) : (
-             <div className="flex h-[220px] items-center justify-center">
+             <div className="flex h-full items-center justify-center">
                 <p className="text-muted-foreground">No payment data for this period.</p>
              </div>
          )}
-    </div>
+      </CardContent>
+    </Card>
   );
 }
