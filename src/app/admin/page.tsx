@@ -11,20 +11,20 @@ import { Loader } from 'lucide-react';
 
 export default function AdminDashboardPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
 
   useEffect(() => {
     // If user is a branch admin, redirect them directly to their default page
-    if (user?.role === 'admin') {
+    if (!isLoading && user?.role === 'admin') {
       router.push('/admin/orders');
     }
-  }, [user, router]);
+  }, [user, isLoading, router]);
 
 
   // If the user is an admin, the useEffect will trigger a redirect.
   // We return a loading state to prevent the rest of the component from rendering
   // and causing a race condition with the navigation.
-  if (user?.role === 'admin') {
+  if (isLoading || user?.role === 'admin') {
       return (
           <div className="flex h-screen items-center justify-center">
             <Loader className="h-12 w-12 animate-spin text-primary" />
