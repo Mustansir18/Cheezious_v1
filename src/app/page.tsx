@@ -1,18 +1,16 @@
 
 'use client';
 
-import { useEffect } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useSettings } from '@/context/SettingsContext';
 import { useDeals } from '@/context/DealsContext';
-import { Loader, Pizza, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader, Pizza } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import Autoplay from "embla-carousel-autoplay";
-import { cn } from '@/lib/utils';
+import Link from 'next/link';
+import Image from 'next/image';
 
 function DealsCarousel() {
   const { deals, isLoading } = useDeals();
@@ -28,7 +26,7 @@ function DealsCarousel() {
   }
 
   if (deals.length === 0 || !defaultBranchId) {
-      return null; // Don't show the carousel if there are no deals or no branches
+      return null;
   }
 
   return (
@@ -67,10 +65,8 @@ export default function Home() {
     if (!isLoading && settings.defaultBranchId) {
       router.push(`/branch/${settings.defaultBranchId}`);
     } else if (!isLoading && settings.branches.length > 0) {
-      // Fallback to the first branch if default is not set
       router.push(`/branch/${settings.branches[0].id}`);
     } else {
-        // Handle case with no branches
         alert("No branches are available at the moment. Please check back later.");
     }
   };
