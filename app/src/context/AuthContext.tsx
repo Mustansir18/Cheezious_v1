@@ -63,30 +63,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
     try {
       const storedUsersJSON = localStorage.getItem(USERS_STORAGE_KEY);
-      let loadedUsers: User[] = [];
-      if (storedUsersJSON) {
-        loadedUsers = JSON.parse(storedUsersJSON);
-      }
+      const storedUsers: Omit<User, 'password'>[] = storedUsersJSON ? JSON.parse(storedUsersJSON) : [];
+      
+      const userMap = new Map<string, User>();
 
-      // Merge stored users with initial users, giving precedence to stored users but ensuring initial users exist
-      const combinedUsers = [...initialUsers];
-      loadedUsers.forEach(storedUser => {
-          const index = combinedUsers.findIndex(u => u.id === storedUser.id);
-          if (index !== -1) {
-              // Update existing user, but keep the initial password for default users
-              combinedUsers[index] = { ...storedUser, password: combinedUsers[index].password };
-          } else {
-              // Add new user from storage
-              combinedUsers.push(storedUser);
-          }
+      // 1. Add initial users with their passwords to the map.
+      initialUsers.forEach(u => userMap.set(u.id, { ...u }));
+
+      // 2. Add/overwrite with users from storage, but they won't have passwords.
+      storedUsers.forEach(storedUser => {
+        const existingUser = userMap.get(storedUser.id);
+        if (existingUser) {
+          // If it's a default user, keep the hardcoded password.
+          userMap.set(storedUser.id, { ...existingUser, ...storedUser });
+        } else {
+          // It's a user added by the admin, add them without a password.
+          // Note: This architecture means non-default users can't log back in after a full page refresh.
+          // This is a limitation of the current design that doesn't use a real database.
+          userMap.set(storedUser.id, storedUser as User);
+        }
       });
-
+      
+      const combinedUsers = Array.from(userMap.values());
       setUsers(combinedUsers);
-
-      const sessionUser = sessionStorage.getItem(SESSION_STORAGE_KEY);
-      if(sessionUser) {
-        setUser(JSON.parse(sessionUser));
+      
+      const sessionUserJSON = sessionStorage.getItem(SESSION_STORAGE_KEY);
+      if (sessionUserJSON) {
+        const sessionUser = JSON.parse(sessionUserJSON);
+        // Verify the session user still exists and is valid
+        const validUser = combinedUsers.find(u => u.id === sessionUser.id);
+        if (validUser) {
+            setUser(validUser);
+        } else {
+            sessionStorage.removeItem(SESSION_STORAGE_KEY);
+        }
       }
+
     } catch (error) {
       console.error("Failed to initialize auth state:", error);
       setUsers(initialUsers); // Reset to default if storage is corrupt
