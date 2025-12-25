@@ -171,11 +171,11 @@ export default function OrderConfirmationPage() {
                         {item.selectedAddons.map(addon => (<p key={addon.id}>+ {addon.name}</p>))}
                     </div>
                     <p className="text-sm text-muted-foreground text-left">
-                      {item.quantity} x RS {item.price.toFixed(2)}
+                      {item.quantity} x RS {Math.round(item.price)}
                     </p>
                   </div>
                   <p className="font-semibold shrink-0">
-                    RS {(item.quantity * item.price).toFixed(2)}
+                    RS {Math.round(item.quantity * item.price)}
                   </p>
                 </div>
                 {index < items.length - 1 && <Separator />}
@@ -206,9 +206,9 @@ export default function OrderConfirmationPage() {
             </div>
 
             <div className="space-y-1 pt-2">
-                <div className="flex justify-between"><span>Subtotal</span><span>RS {cartTotal.toFixed(2)}</span></div>
-                {paymentMethod && taxAmount > 0 && (<div className="flex justify-between text-sm text-muted-foreground"><span>Tax ({(taxRate * 100).toFixed(0)}%)</span><span>RS {taxAmount.toFixed(2)}</span></div>)}
-                <div className="flex justify-between pt-2 text-xl font-bold border-t"><span>Grand Total</span><span>RS {paymentMethod ? grandTotal.toFixed(2) : cartTotal.toFixed(2)}</span></div>
+                <div className="flex justify-between"><span>Subtotal</span><span>RS {Math.round(cartTotal)}</span></div>
+                {paymentMethod && taxAmount > 0 && (<div className="flex justify-between text-sm text-muted-foreground"><span>Tax ({(taxRate * 100).toFixed(0)}%)</span><span>RS {Math.round(taxAmount)}</span></div>)}
+                <div className="flex justify-between pt-2 text-xl font-bold border-t"><span>Grand Total</span><span>RS {paymentMethod ? Math.round(grandTotal) : Math.round(cartTotal)}</span></div>
             </div>
           </div>
         </CardContent>

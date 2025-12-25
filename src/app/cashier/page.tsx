@@ -46,7 +46,7 @@ export default function CashierPage() {
     { title: "Running Orders", value: runningOrders?.length ?? 0, icon: Clock },
     { title: "Ready for Pickup", value: readyOrders?.length ?? 0, icon: CookingPot },
     { title: "Completed Today", value: completedOrders?.length ?? 0, icon: CheckCircle },
-    { title: "Total Sales", value: `RS ${totalSales.toFixed(2)}`, icon: BarChart },
+    { title: "Total Sales", value: `RS ${Math.round(totalSales)}`, icon: BarChart },
   ];
 
   if (isLoading) {

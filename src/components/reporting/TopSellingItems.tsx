@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ItemSale } from '@/app/admin/reporting/page';
@@ -69,7 +70,7 @@ export function TopSellingItems({ data, onPrint }: TopSellingItemsProps) {
                   <TableCell className="font-medium">{item.name}</TableCell>
                   <TableCell className="text-center">{item.quantity}</TableCell>
                   <TableCell className="text-right">
-                    RS {item.totalRevenue.toFixed(2)}
+                    RS {Math.round(item.totalRevenue)}
                   </TableCell>
                 </TableRow>
               ))}

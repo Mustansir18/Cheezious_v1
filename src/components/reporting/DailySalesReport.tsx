@@ -59,7 +59,7 @@ export function DailySalesReport({ data, onPrint }: DailySalesReportProps) {
               fontSize={12}
               tickLine={false}
               axisLine={false}
-              tickFormatter={(value) => `RS ${value}`}
+              tickFormatter={(value) => `RS ${Math.round(value)}`}
             />
             <Tooltip
               cursor={{ fill: 'hsl(var(--muted))' }}
@@ -81,7 +81,7 @@ export function DailySalesReport({ data, onPrint }: DailySalesReportProps) {
                             Sales
                           </span>
                           <span className="font-bold">
-                            RS {payload[0].value?.toLocaleString()}
+                            RS {payload[0].value ? Math.round(payload[0].value as number).toLocaleString() : 0}
                           </span>
                         </div>
                       </div>

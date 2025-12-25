@@ -322,25 +322,25 @@ export default function ReportingPage() {
   } = reportData;
 
   const summaryCards = [
-    { title: "Total Sales", value: `RS ${totalSales.toFixed(2)}`, icon: DollarSign },
+    { title: "Total Sales", value: `RS ${Math.round(totalSales)}`, icon: DollarSign },
     { title: "Total Orders", value: totalOrders, icon: ShoppingCart },
     { title: "Total Items Sold", value: totalItemsSold, icon: Utensils },
   ];
   
   const dineInBreakdown = [
-      { label: "Gross Sales", value: `RS ${dineInGrossSales.toFixed(2)}` },
-      { label: "Net Sales", value: `RS ${dineInNetSales.toFixed(2)}` },
-      { label: "Total Tax", value: `RS ${dineInTax.toFixed(2)}` },
-      { label: "Cash Sales", value: `RS ${dineInCashSales.toFixed(2)}` },
-      { label: "Card Sales", value: `RS ${dineInCardSales.toFixed(2)}` },
+      { label: "Gross Sales", value: `RS ${Math.round(dineInGrossSales)}` },
+      { label: "Net Sales", value: `RS ${Math.round(dineInNetSales)}` },
+      { label: "Total Tax", value: `RS ${Math.round(dineInTax)}` },
+      { label: "Cash Sales", value: `RS ${Math.round(dineInCashSales)}` },
+      { label: "Card Sales", value: `RS ${Math.round(dineInCardSales)}` },
   ]
   
   const takeAwayBreakdown = [
-      { label: "Gross Sales", value: `RS ${takeAwayGrossSales.toFixed(2)}` },
-      { label: "Net Sales", value: `RS ${takeAwayNetSales.toFixed(2)}` },
-      { label: "Total Tax", value: `RS ${takeAwayTax.toFixed(2)}` },
-      { label: "Cash Sales", value: `RS ${takeAwayCashSales.toFixed(2)}` },
-      { label: "Card Sales", value: `RS ${takeAwayCardSales.toFixed(2)}` },
+      { label: "Gross Sales", value: `RS ${Math.round(takeAwayGrossSales)}` },
+      { label: "Net Sales", value: `RS ${Math.round(takeAwayNetSales)}` },
+      { label: "Total Tax", value: `RS ${Math.round(takeAwayTax)}` },
+      { label: "Cash Sales", value: `RS ${Math.round(takeAwayCashSales)}` },
+      { label: "Card Sales", value: `RS ${Math.round(takeAwayCardSales)}` },
   ]
   
   const activeFilters = [selectedOrderType, selectedPaymentMethod, selectedAdjustmentType].filter(Boolean);

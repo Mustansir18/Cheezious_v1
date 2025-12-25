@@ -192,7 +192,7 @@ export default function DealsManagementPage() {
                      <Image src={deal.imageUrl} alt={deal.name} width={64} height={64} className="rounded-md object-cover" />
                    </TableCell>
                   <TableCell className="font-medium">{deal.name}</TableCell>
-                  <TableCell className="text-right">RS {deal.price.toFixed(2)}</TableCell>
+                  <TableCell className="text-right">RS {Math.round(deal.price)}</TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="icon" onClick={() => { setEditingDeal(deal); setDialogOpen(true); }}>
                         <Edit className="h-4 w-4" />

@@ -64,7 +64,7 @@ export function OrderReceipt({ order }: OrderReceiptProps) {
                         <div className="flex justify-between items-start gap-2">
                             <span className="break-words w-4/5">{item.quantity}x {item.name}</span>
                             <span className="text-right tabular-nums whitespace-nowrap">
-                                {(item.baseItemPrice * item.quantity).toFixed(2)}
+                                {Math.round(item.baseItemPrice * item.quantity)}
                             </span>
                         </div>
                         {item.selectedAddons && item.selectedAddons.length > 0 && (
@@ -73,7 +73,7 @@ export function OrderReceipt({ order }: OrderReceiptProps) {
                                      <div key={addon.name} className="flex justify-between items-start gap-2 text-gray-600">
                                         <span className="break-words w-4/5">+ {addon.name}</span>
                                         <span className="text-right tabular-nums whitespace-nowrap">
-                                            {(addon.price * item.quantity).toFixed(2)}
+                                            {Math.round(addon.price * item.quantity)}
                                         </span>
                                     </div>
                                 ))}
@@ -96,16 +96,16 @@ export function OrderReceipt({ order }: OrderReceiptProps) {
             <div className="space-y-1">
                 <div className="flex justify-between">
                     <span>Subtotal:</span>
-                    <span className="text-right tabular-nums">{order.subtotal.toFixed(2)}</span>
+                    <span className="text-right tabular-nums">{Math.round(order.subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
                     <span>Tax ({(order.taxRate * 100).toFixed(0)}%):</span>
-                    <span className="text-right tabular-nums">{order.taxAmount.toFixed(2)}</span>
+                    <span className="text-right tabular-nums">{Math.round(order.taxAmount)}</span>
                 </div>
                 {order.discountAmount && (
                     <div className="flex justify-between">
                         <span>Discount:</span>
-                        <span className="text-right tabular-nums">-{order.discountAmount.toFixed(2)}</span>
+                        <span className="text-right tabular-nums">-{Math.round(order.discountAmount)}</span>
                     </div>
                 )}
             </div>
@@ -116,7 +116,7 @@ export function OrderReceipt({ order }: OrderReceiptProps) {
             <div className="flex justify-between font-bold text-sm">
                 <span>TOTAL:</span>
                 <span className="text-right whitespace-nowrap">
-                    RS {order.totalAmount.toFixed(2)}
+                    RS {Math.round(order.totalAmount)}
                 </span>
             </div>
 

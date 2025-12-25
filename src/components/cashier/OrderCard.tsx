@@ -282,14 +282,14 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
                 <div key={item.id} className="text-sm">
                   <div className="flex justify-between items-center">
                     <div><span className="font-semibold">{item.quantity}x</span> {item.name}</div>
-                    <div className="font-mono">RS {(item.baseItemPrice * item.quantity).toFixed(2)}</div>
+                    <div className="font-mono">RS {Math.round(item.baseItemPrice * item.quantity)}</div>
                   </div>
                    {item.selectedAddons && item.selectedAddons.length > 0 && (
                         <div className="pl-4 text-xs text-muted-foreground">
                             {item.selectedAddons.map(addon => (
                                 <div key={addon.name} className="flex justify-between">
                                   <span>+ {addon.name}</span>
-                                  <span>RS {(addon.price * item.quantity).toFixed(2)}</span>
+                                  <span>RS {Math.round(addon.price * item.quantity)}</span>
                                 </div>
                             ))}
                         </div>
@@ -312,20 +312,20 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
 
         { (order.isComplementary || order.discountAmount) && order.originalTotalAmount && (
             <div className="text-sm">
-                <div className="flex justify-between"><span>Subtotal</span><span>RS {order.subtotal.toFixed(2)}</span></div>
-                 <div className="flex justify-between"><span>Tax</span><span>RS {order.taxAmount.toFixed(2)}</span></div>
-                <div className="flex justify-between"><span>Original Total</span><span className="line-through">RS {order.originalTotalAmount.toFixed(2)}</span></div>
+                <div className="flex justify-between"><span>Subtotal</span><span>RS {Math.round(order.subtotal)}</span></div>
+                 <div className="flex justify-between"><span>Tax</span><span>RS {Math.round(order.taxAmount)}</span></div>
+                <div className="flex justify-between"><span>Original Total</span><span className="line-through">RS {Math.round(order.originalTotalAmount)}</span></div>
                 {order.isComplementary ? (
-                    <div className="flex justify-between text-green-600 font-semibold"><span>Complementary</span><span>-RS {order.discountAmount?.toFixed(2)}</span></div>
+                    <div className="flex justify-between text-green-600 font-semibold"><span>Complementary</span><span>-RS {order.discountAmount ? Math.round(order.discountAmount) : 0}</span></div>
                 ) : (
-                    <div className="flex justify-between"><span>Discount ({order.discountType === 'percentage' ? `${order.discountValue}%` : 'RS'})</span><span>-RS {order.discountAmount?.toFixed(2)}</span></div>
+                    <div className="flex justify-between"><span>Discount ({order.discountType === 'percentage' ? `${order.discountValue}%` : 'RS'})</span><span>-RS {order.discountAmount ? Math.round(order.discountAmount) : 0}</span></div>
                 )}
             </div>
         )}
 
         <div className="flex justify-between font-bold text-lg mt-2 pt-2 border-t">
             <span>Total</span>
-            <span>RS {order.totalAmount.toFixed(2)}</span>
+            <span>RS {Math.round(order.totalAmount)}</span>
         </div>
          {order.paymentMethod && (
             <div className="flex items-center mt-2 text-sm text-muted-foreground">

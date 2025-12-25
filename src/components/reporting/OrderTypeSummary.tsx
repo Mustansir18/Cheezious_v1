@@ -72,7 +72,7 @@ export function OrderTypeSummary({ data, onPrint, selectedType, onSelectType }: 
                             </CardHeader>
                             <CardContent>
                                 <div className="text-2xl font-bold">{entry.count}</div>
-                                <p className="text-xs text-muted-foreground">RS {entry.sales.toFixed(2)}</p>
+                                <p className="text-xs text-muted-foreground">RS {Math.round(entry.sales)}</p>
                             </CardContent>
                         </Card>
                     ))}
@@ -90,7 +90,7 @@ export function OrderTypeSummary({ data, onPrint, selectedType, onSelectType }: 
                                                 {payload[0].name}
                                             </span>
                                             <span className="font-bold">
-                                                RS {payload[0].value?.toLocaleString()}
+                                                RS {payload[0].value ? Math.round(payload[0].value as number).toLocaleString() : 0}
                                             </span>
                                         </div>
                                     </div>

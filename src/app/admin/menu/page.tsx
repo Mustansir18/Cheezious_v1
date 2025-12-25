@@ -165,7 +165,7 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
                                     onCheckedChange={() => handleAddonToggle(addon.id)}
                                 />
                                 <Label htmlFor={`addon-${addon.id}`} className="font-normal flex-grow">{addon.name}</Label>
-                                <span className="text-sm text-muted-foreground">+RS {addon.price}</span>
+                                <span className="text-sm text-muted-foreground">+RS {Math.round(addon.price)}</span>
                             </div>
                         ))}
                     </div>
@@ -316,7 +316,7 @@ export default function MenuManagementPage() {
                 </Dialog>
             </CardHeader>
             <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Category</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
-                <TableBody>{menu.addons.map(addon => (<TableRow key={addon.id}><TableCell>{addon.name}</TableCell><TableCell>{menu.addonCategories.find(c => c.id === addon.addonCategoryId)?.name || 'N/A'}</TableCell><TableCell className="text-right">RS {addon.price.toFixed(2)}</TableCell>
+                <TableBody>{menu.addons.map(addon => (<TableRow key={addon.id}><TableCell>{addon.name}</TableCell><TableCell>{menu.addonCategories.find(c => c.id === addon.addonCategoryId)?.name || 'N/A'}</TableCell><TableCell className="text-right">RS {Math.round(addon.price)}</TableCell>
                     <TableCell className="text-right">
                         <Button variant="ghost" size="icon" onClick={() => { setEditingAddon(addon); setAddonOpen(true); }}><Edit/></Button>
                         <AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon"><Trash2 className="text-destructive"/></Button></AlertDialogTrigger>
@@ -338,7 +338,7 @@ export default function MenuManagementPage() {
                 </Dialog>
             </CardHeader>
             <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Category</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
-                <TableBody>{menu.items.map(item => (<TableRow key={item.id}><TableCell>{item.name}</TableCell><TableCell>{menu.categories.find(c => c.id === item.categoryId)?.name || 'N/A'}</TableCell><TableCell className="text-right">RS {item.price.toFixed(2)}</TableCell>
+                <TableBody>{menu.items.map(item => (<TableRow key={item.id}><TableCell>{item.name}</TableCell><TableCell>{menu.categories.find(c => c.id === item.categoryId)?.name || 'N/A'}</TableCell><TableCell className="text-right">RS {Math.round(item.price)}</TableCell>
                     <TableCell className="text-right">
                         <Button variant="ghost" size="icon" onClick={() => { setEditingItem(item); setItemOpen(true); }}><Edit/></Button>
                         <AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon"><Trash2 className="text-destructive"/></Button></AlertDialogTrigger>

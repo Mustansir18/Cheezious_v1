@@ -198,7 +198,7 @@ export default function OrderStatusPage() {
             {placedOrder.orderType === 'Dine-In' && placedOrder.tableName && (
               <p><strong>Table:</strong> {placedOrder.tableName} ({placedOrder.floorName})</p>
             )}
-            <p><strong>Total:</strong> <span className="font-bold">RS {placedOrder.total.toFixed(2)}</span></p>
+            <p><strong>Total:</strong> <span className="font-bold">RS {Math.round(placedOrder.total)}</span></p>
           </div>
 
         </CardContent>
@@ -237,5 +237,3 @@ export default function OrderStatusPage() {
     </div>
   );
 }
-
-    

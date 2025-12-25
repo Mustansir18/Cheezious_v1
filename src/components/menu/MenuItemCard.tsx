@@ -74,7 +74,7 @@ function AddToCartDialog({ item, onAddToCart }: { item: MenuItem; onAddToCart: (
                                         <Label htmlFor={`addon-dialog-${addon.id}`} className="flex-grow font-normal cursor-pointer">
                                             {addon.name}
                                         </Label>
-                                        <span className="text-sm text-muted-foreground">+RS {addon.price.toFixed(2)}</span>
+                                        <span className="text-sm text-muted-foreground">+RS {Math.round(addon.price)}</span>
                                     </div>
                                 ))}
                             </div>
@@ -84,7 +84,7 @@ function AddToCartDialog({ item, onAddToCart }: { item: MenuItem; onAddToCart: (
 
                 <DialogFooter className="mt-auto pt-4 border-t">
                     <div className="w-full flex justify-between items-center">
-                       <p className="text-xl font-bold">Total: RS {finalPrice.toFixed(2)}</p>
+                       <p className="text-xl font-bold">Total: RS {Math.round(finalPrice)}</p>
                        <div className="flex gap-2">
                          <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
                          <Button onClick={handleConfirm}>Add to Cart</Button>
@@ -123,7 +123,7 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
         <CardDescription className="mt-2 flex-grow">{item.description}</CardDescription>
       </CardContent>
       <CardFooter className="flex items-center justify-between p-4 pt-0">
-        <p className="text-xl font-bold text-primary">RS {item.price.toFixed(2)}</p>
+        <p className="text-xl font-bold text-primary">RS {Math.round(item.price)}</p>
         <AddToCartDialog item={item} onAddToCart={handleAddToCart} />
       </CardFooter>
     </Card>
