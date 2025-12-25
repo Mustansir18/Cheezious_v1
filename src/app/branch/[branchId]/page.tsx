@@ -93,7 +93,7 @@ export default function ModeSelectionPage({ params }: { params: { branchId: stri
 
         <div>
             <h2 className="text-lg font-semibold text-muted-foreground">Already placed an order?</h2>
-             <Button variant="secondary" className="mt-4" size="lg" onClick={() => router.push('/order-status')}>
+             <Button variant="link" className="mt-2 text-lg" size="lg" onClick={() => router.push('/order-status')}>
                 <ListChecks className="mr-2 h-5 w-5" />
                 Check Order Status
             </Button>
