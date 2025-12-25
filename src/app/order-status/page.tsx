@@ -12,7 +12,7 @@ import { useOrders } from "@/context/OrderContext";
 import { useSettings } from "@/context/SettingsContext";
 import { OrderReceipt } from "@/components/cashier/OrderReceipt";
 
-const IDLE_TIMEOUT_SECONDS = 30; // 30 seconds
+const IDLE_TIMEOUT_SECONDS = 10; // 10 seconds
 
 export default function OrderStatusPage() {
   const [placedOrder, setPlacedOrder] = useState<PlacedOrder | null>(null);
@@ -113,6 +113,7 @@ export default function OrderStatusPage() {
   useEffect(() => {
       resetIdleTimer();
       // Add event listeners for user activity
+      window.addEventListener('scroll', resetIdleTimer);
       window.addEventListener('mousemove', resetIdleTimer);
       window.addEventListener('mousedown', resetIdleTimer);
       window.addEventListener('keypress', resetIdleTimer);
@@ -123,6 +124,7 @@ export default function OrderStatusPage() {
           if (idleTimer.current) {
               clearTimeout(idleTimer.current);
           }
+          window.removeEventListener('scroll', resetIdleTimer);
           window.removeEventListener('mousemove', resetIdleTimer);
           window.removeEventListener('mousedown', resetIdleTimer);
           window.removeEventListener('keypress', resetIdleTimer);

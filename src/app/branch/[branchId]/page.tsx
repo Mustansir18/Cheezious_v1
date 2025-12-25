@@ -3,13 +3,16 @@
 
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Utensils, ShoppingBag } from "lucide-react";
+import { Utensils, ShoppingBag, ListChecks } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useMemo } from "react";
-import { notFound } from "next/navigation";
+import { notFound, useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
 export default function ModeSelectionPage({ params }: { params: { branchId: string } }) {
   const { settings } = useSettings();
+  const router = useRouter();
   const branch = useMemo(() => settings.branches.find((b) => b.id === params.branchId), [params.branchId, settings.branches]);
 
   if (!branch) {
@@ -85,6 +88,16 @@ export default function ModeSelectionPage({ params }: { params: { branchId: stri
             </Card>
          )}
       </div>
+
+       <Separator className="my-8" />
+
+        <div>
+            <h2 className="text-lg font-semibold text-muted-foreground">Already placed an order?</h2>
+             <Button variant="secondary" className="mt-4" size="lg" onClick={() => router.push('/order-status')}>
+                <ListChecks className="mr-2 h-5 w-5" />
+                Check Order Status
+            </Button>
+        </div>
     </div>
   );
 }
