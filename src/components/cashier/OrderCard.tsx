@@ -213,9 +213,10 @@ interface OrderCardProps {
     workflow?: 'cashier' | 'kds';
     onUpdateStatus: (orderId: string, newStatus: OrderStatus, reason?: string) => void;
     children?: React.ReactNode;
+    isMutable?: boolean;
 }
 
-export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, children }: OrderCardProps) {
+export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, children, isMutable = true }: OrderCardProps) {
   const { settings } = useSettings();
   const { user } = useAuth();
   
@@ -248,7 +249,8 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
   };
   
   const StatusIcon = statusConfig[order.status]?.icon || Loader;
-  const isModifiable = user?.role === 'admin' || user?.role === 'root';
+  const isModifiableByUser = user?.role === 'admin' || user?.role === 'root';
+  
   const orderDate = useMemo(() => new Date(order.orderDate), [order.orderDate]);
   
   const table = useMemo(() => {
@@ -358,7 +360,7 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
                 {order.status === 'Preparing' && <Button onClick={() => handleUpdateStatus('Ready')} size="sm" className="w-full bg-yellow-500 hover:bg-yellow-600 text-black"><Check className="mr-2 h-4 w-4" /> Mark as Ready</Button>}
              </div>
          )}
-         {workflow === 'cashier' && (
+         {workflow === 'cashier' && isMutable && (
             <div className="grid grid-cols-1 gap-2 w-full">
                 {order.status === 'Pending' && <Button onClick={() => handleUpdateStatus('Preparing')} size="sm" className="w-full"><CookingPot className="mr-2 h-4 w-4" /> Accept & Prepare</Button>}
                  {order.status === 'Preparing' && <Button onClick={() => handleUpdateStatus('Ready')} size="sm" className="w-full bg-yellow-500 hover:bg-yellow-600 text-black"><Check className="mr-2 h-4 w-4" /> Mark as Ready</Button>}
@@ -366,11 +368,13 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
                  {(order.status === 'Pending' || order.status === 'Preparing' || order.status === 'Ready') && (
                      <div className="grid grid-cols-2 gap-2">
                         <CancellationDialog orderId={order.id} onConfirm={handleCancelOrder} />
-                        {isModifiable && <OrderModificationDialog order={order} />}
+                        {isModifiableByUser && <OrderModificationDialog order={order} />}
                      </div>
                  )}
-                 {order.status === 'Completed' && isModifiable && (<div className="grid grid-cols-1 gap-2"><OrderModificationDialog order={order} /></div>)}
-             </div>
+            </div>
+         )}
+         {order.status === 'Completed' && isModifiableByUser && isMutable && (
+             <div className="grid grid-cols-1 gap-2"><OrderModificationDialog order={order} /></div>
          )}
       </CardFooter>
       <div className="hidden"><div id={`printable-receipt-${order.id}`}><OrderReceipt order={order} /></div></div>

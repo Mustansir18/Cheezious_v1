@@ -2,12 +2,12 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
-import type { ActivityLog } from '@/lib/types';
+import type { ActivityLog, ActivityLogCategory } from '@/lib/types';
 
 interface ActivityLogContextType {
   logs: ActivityLog[];
   isLoading: boolean;
-  logActivity: (message: string, user: string) => void;
+  logActivity: (message: string, user: string, category: ActivityLogCategory) => void;
   clearLogs: () => void;
 }
 
@@ -44,19 +44,20 @@ export const ActivityLogProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [logs, isLoading]);
 
-  const logActivity = useCallback((message: string, user: string) => {
+  const logActivity = useCallback((message: string, user: string, category: ActivityLogCategory) => {
     const newLog: ActivityLog = {
       id: crypto.randomUUID(),
       timestamp: new Date().toISOString(),
       user: user || 'System',
       message: message,
+      category: category,
     };
     setLogs((prevLogs) => [newLog, ...prevLogs]);
   }, []);
 
   const clearLogs = useCallback(() => {
     setLogs([]);
-    logActivity('Cleared all activity logs.', 'System');
+    logActivity('Cleared all activity logs.', 'System', 'System');
   }, [logActivity]);
 
   return (

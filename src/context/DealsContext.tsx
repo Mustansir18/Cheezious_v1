@@ -60,17 +60,17 @@ export const DealsProvider = ({ children }: { children: ReactNode }) => {
   const addDeal = useCallback((deal: Omit<Deal, 'id'>) => {
     const newDeal: Deal = { ...deal, id: crypto.randomUUID() };
     setDeals(d => [...d, newDeal]);
-    logActivity(`Added new deal: '${deal.name}'.`, user?.username || 'System');
+    logActivity(`Added new deal: '${deal.name}'.`, user?.username || 'System', 'Deal');
   }, [logActivity, user]);
 
   const updateDeal = useCallback((updatedDeal: Deal) => {
     setDeals(d => d.map(deal => deal.id === updatedDeal.id ? updatedDeal : deal));
-    logActivity(`Updated deal: '${updatedDeal.name}'.`, user?.username || 'System');
+    logActivity(`Updated deal: '${updatedDeal.name}'.`, user?.username || 'System', 'Deal');
   }, [logActivity, user]);
 
   const deleteDeal = useCallback((id: string, name: string) => {
     setDeals(d => d.filter(deal => deal.id !== id));
-    logActivity(`Deleted deal: '${name}'.`, user?.username || 'System');
+    logActivity(`Deleted deal: '${name}'.`, user?.username || 'System', 'Deal');
   }, [logActivity, user]);
 
   return (

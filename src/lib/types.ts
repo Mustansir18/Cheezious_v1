@@ -137,11 +137,14 @@ export type User = {
 };
 
 // --- Activity Log Types ---
+export type ActivityLogCategory = 'Order' | 'User' | 'Settings' | 'Deal' | 'Menu' | 'System';
+
 export type ActivityLog = {
     id: string;
     timestamp: string; // ISO string
     user: string; // username
     message: string;
+    category: ActivityLogCategory;
 };
 
 // --- Types for External System Sync ---

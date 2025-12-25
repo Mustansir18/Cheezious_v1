@@ -132,7 +132,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   const addFloor = useCallback((name: string) => {
     const newFloor: Floor = { id: crypto.randomUUID(), name };
     setSettings(s => ({ ...s, floors: [...s.floors, newFloor] }));
-    logActivity(`Added floor: '${name}'.`, user?.username || 'System');
+    logActivity(`Added floor: '${name}'.`, user?.username || 'System', 'Settings');
   }, [logActivity, user]);
 
   const deleteFloor = useCallback((id: string, name: string) => {
@@ -141,25 +141,25 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         floors: s.floors.filter(f => f.id !== id),
         tables: s.tables.filter(t => t.floorId !== id),
     }));
-    logActivity(`Deleted floor: '${name}' and its tables.`, user?.username || 'System');
+    logActivity(`Deleted floor: '${name}' and its tables.`, user?.username || 'System', 'Settings');
   }, [logActivity, user]);
 
   const addTable = useCallback((name: string, floorId: string) => {
     const newTable: Table = { id: crypto.randomUUID(), name, floorId };
     setSettings(s => ({ ...s, tables: [...s.tables, newTable] }));
     const floorName = settings.floors.find(f => f.id === floorId)?.name || 'N/A';
-    logActivity(`Added table: '${name}' to floor '${floorName}'.`, user?.username || 'System');
+    logActivity(`Added table: '${name}' to floor '${floorName}'.`, user?.username || 'System', 'Settings');
   }, [logActivity, settings.floors, user]);
 
   const deleteTable = useCallback((id: string, name: string) => {
     setSettings(s => ({ ...s, tables: s.tables.filter(t => t.id !== id) }));
-    logActivity(`Deleted table: '${name}'.`, user?.username || 'System');
+    logActivity(`Deleted table: '${name}'.`, user?.username || 'System', 'Settings');
   }, [logActivity, user]);
 
   const addPaymentMethod = useCallback((name: string) => {
     const newMethod: PaymentMethod = { id: crypto.randomUUID(), name };
     setSettings(s => ({ ...s, paymentMethods: [...s.paymentMethods, newMethod] }));
-    logActivity(`Added payment method: '${name}'.`, user?.username || 'System');
+    logActivity(`Added payment method: '${name}'.`, user?.username || 'System', 'Settings');
   }, [logActivity, user]);
 
   const deletePaymentMethod = useCallback((id: string, name: string) => {
@@ -168,23 +168,23 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         return;
     }
     setSettings(s => ({ ...s, paymentMethods: s.paymentMethods.filter(pm => pm.id !== id) }));
-    logActivity(`Deleted payment method: '${name}'.`, user?.username || 'System');
+    logActivity(`Deleted payment method: '${name}'.`, user?.username || 'System', 'Settings');
   }, [toast, logActivity, user]);
 
   const toggleAutoPrint = useCallback((enabled: boolean) => {
     setSettings(s => ({...s, autoPrintReceipts: enabled }));
-    logActivity(`Toggled auto-print receipts to: ${enabled ? 'ON' : 'OFF'}.`, user?.username || 'System');
+    logActivity(`Toggled auto-print receipts to: ${enabled ? 'ON' : 'OFF'}.`, user?.username || 'System', 'Settings');
   }, [logActivity, user]);
 
   const addBranch = useCallback((name: string, orderPrefix: string) => {
     const newBranch: Branch = { id: crypto.randomUUID(), name, orderPrefix, dineInEnabled: true, takeAwayEnabled: true };
     setSettings(s => ({...s, branches: [...s.branches, newBranch]}));
-    logActivity(`Added branch: '${name}'.`, user?.username || 'System');
+    logActivity(`Added branch: '${name}'.`, user?.username || 'System', 'Settings');
   }, [logActivity, user]);
 
   const updateBranch = useCallback((id: string, name: string, orderPrefix: string) => {
     setSettings(s => ({...s, branches: s.branches.map(b => b.id === id ? {...b, name, orderPrefix} : b)}));
-    logActivity(`Updated branch: '${name}'.`, user?.username || 'System');
+    logActivity(`Updated branch: '${name}'.`, user?.username || 'System', 'Settings');
   }, [logActivity, user]);
 
   const deleteBranch = useCallback((id: string, name: string) => {
@@ -194,26 +194,26 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         const newDefaultId = id === s.defaultBranchId ? (newBranches[0]?.id || null) : s.defaultBranchId;
         return {...s, branches: newBranches, defaultBranchId: newDefaultId };
     });
-    logActivity(`Deleted branch: '${name}'.`, user?.username || 'System');
+    logActivity(`Deleted branch: '${name}'.`, user?.username || 'System', 'Settings');
   }, [logActivity, user]);
   
   const setDefaultBranch = useCallback((id: string) => {
       setSettings(s => ({...s, defaultBranchId: id}));
       const branchName = settings.branches.find(b => b.id === id)?.name;
-      logActivity(`Set default branch to: '${branchName}'.`, user?.username || 'System');
+      logActivity(`Set default branch to: '${branchName}'.`, user?.username || 'System', 'Settings');
   }, [logActivity, settings.branches, user]);
   
   const toggleService = useCallback((branchId: string, service: 'dineInEnabled' | 'takeAwayEnabled', enabled: boolean) => {
     setSettings(s => ({...s, branches: s.branches.map(b => b.id === branchId ? {...b, [service]: enabled} : b)}));
     const branchName = settings.branches.find(b => b.id === branchId)?.name;
     const serviceName = service === 'dineInEnabled' ? 'Dine-In' : 'Take Away';
-    logActivity(`Set ${serviceName} service to ${enabled ? 'ON' : 'OFF'} for branch '${branchName}'.`, user?.username || 'System');
+    logActivity(`Set ${serviceName} service to ${enabled ? 'ON' : 'OFF'} for branch '${branchName}'.`, user?.username || 'System', 'Settings');
   }, [logActivity, settings.branches, user]);
 
   const updateBusinessDayHours = useCallback((start: string, end: string) => {
       setSettings(s => ({...s, businessDayStart: start, businessDayEnd: end}));
       toast({ title: "Success", description: "Business hours have been updated." });
-      logActivity(`Updated business hours. Start: ${start}, End: ${end}.`, user?.username || 'System');
+      logActivity(`Updated business hours. Start: ${start}, End: ${end}.`, user?.username || 'System', 'Settings');
   }, [toast, logActivity, user]);
 
 
