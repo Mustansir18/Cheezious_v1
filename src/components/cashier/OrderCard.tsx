@@ -251,6 +251,7 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
   const isModifiable = user?.role === 'admin' || user?.role === 'root';
   const orderDate = useMemo(() => new Date(order.orderDate), [order.orderDate]);
   const table = useMemo(() => settings.tables.find(t => t.id === order.tableId), [settings.tables, order.tableId]);
+  const floor = useMemo(() => settings.floors.find(f => f.id === order.floorId), [settings.floors, order.floorId]);
 
 
   return (
@@ -268,7 +269,7 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
           {formatDistanceToNow(orderDate, { addSuffix: true })}
            {order.status === 'Cancelled' && order.cancellationReason && ` - Reason: ${order.cancellationReason}`}
         </CardDescription>
-        {table && <CardDescription>Table: <span className="font-semibold">{table.name}</span></CardDescription>}
+        {table && floor && <CardDescription>Table: <span className="font-semibold">{floor.name} - {table.name}</span></CardDescription>}
       </CardHeader>
       <CardContent className="flex-grow">
         <ScrollArea className="h-40 pr-4">
