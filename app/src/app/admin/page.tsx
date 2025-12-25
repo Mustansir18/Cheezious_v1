@@ -21,6 +21,19 @@ export default function AdminDashboardPage() {
   }, [user, router]);
 
 
+  // If the user is an admin, the useEffect will trigger a redirect.
+  // We return a loading state to prevent the rest of the component from rendering
+  // and causing a race condition with the navigation.
+  if (user?.role === 'admin') {
+      return (
+          <div className="flex h-screen items-center justify-center">
+            <Loader className="h-12 w-12 animate-spin text-primary" />
+            <p className="ml-4 text-muted-foreground">Redirecting to your dashboard...</p>
+          </div>
+      );
+  }
+
+  // This content will only be rendered for the 'root' user.
   const adminSections = [
     {
       title: 'Order Management',
@@ -88,20 +101,7 @@ export default function AdminDashboardPage() {
   ];
 
   const visibleSections = adminSections.filter(section => user?.role && section.role.includes(user.role));
-
-  // If the user is an admin, the useEffect will trigger a redirect.
-  // We return a loading state to prevent the rest of the component from rendering
-  // and causing a race condition with the navigation.
-  if (user?.role === 'admin') {
-      return (
-          <div className="flex h-screen items-center justify-center">
-            <Loader className="h-12 w-12 animate-spin text-primary" />
-            <p className="ml-4 text-muted-foreground">Redirecting to your dashboard...</p>
-          </div>
-      );
-  }
-
-  // This content will only be rendered for the 'root' user.
+  
   return (
     <div className="container mx-auto p-4 lg:p-8">
       <header className="mb-8">
