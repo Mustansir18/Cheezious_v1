@@ -370,6 +370,11 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
                         {isModifiable && <OrderModificationDialog order={order} />}
                      </div>
                  )}
+                 {order.status === 'Completed' && isModifiable && (
+                    <div className="grid grid-cols-1 gap-2">
+                        <OrderModificationDialog order={order} />
+                    </div>
+                 )}
              </div>
          )}
       </CardFooter>
@@ -418,3 +423,5 @@ OrderCard.Skeleton = function OrderCardSkeleton() {
       </Card>
     );
   };
+
+    
