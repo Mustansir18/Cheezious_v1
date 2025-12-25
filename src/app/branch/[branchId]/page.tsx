@@ -6,11 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Utensils, ShoppingBag } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useMemo } from "react";
-import { notFound } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 
-export default function ModeSelectionPage({ params }: { params: { branchId: string } }) {
+export default function ModeSelectionPage() {
+  const params = useParams();
+  const branchId = params.branchId as string;
   const { settings } = useSettings();
-  const branch = useMemo(() => settings.branches.find((b) => b.id === params.branchId), [params.branchId, settings.branches]);
+  const branch = useMemo(() => settings.branches.find((b) => b.id === branchId), [branchId, settings.branches]);
 
   if (!branch) {
     return notFound();
@@ -30,7 +32,7 @@ export default function ModeSelectionPage({ params }: { params: { branchId: stri
 
       <div className="mt-10 grid w-full max-w-2xl grid-cols-1 gap-8 md:grid-cols-2">
         {isDineInAvailable ? (
-            <Link href={`/branch/${params.branchId}/table-selection`}>
+            <Link href={`/branch/${branchId}/table-selection`}>
                 <Card className="transform transition-transform duration-300 hover:scale-105 hover:shadow-xl">
                     <CardHeader>
                     <Utensils className="mx-auto h-16 w-16 text-primary" />
@@ -58,7 +60,7 @@ export default function ModeSelectionPage({ params }: { params: { branchId: stri
         )}
 
         {isTakeAwayAvailable ? (
-            <Link href={`/branch/${params.branchId}/menu?mode=Take-Away`}>
+            <Link href={`/branch/${branchId}/menu?mode=Take-Away`}>
                 <Card className="transform transition-transform duration-300 hover:scale-105 hover:shadow-xl">
                     <CardHeader>
                     <ShoppingBag className="mx-auto h-16 w-16 text-primary" />
