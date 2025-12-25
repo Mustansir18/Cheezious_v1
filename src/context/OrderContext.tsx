@@ -11,6 +11,14 @@ interface OrderContextType {
   isLoading: boolean;
   addOrder: (order: Order) => void;
   updateOrderStatus: (orderId: string, status: OrderStatus, reason?: string) => void;
+  applyDiscountOrComplementary: (
+    orderId: string, 
+    details: { 
+        discountType?: 'percentage' | 'amount', 
+        discountValue?: number, 
+        isComplementary?: boolean,
+        complementaryReason?: string 
+    }) => void;
   clearOrders: () => void;
 }
 
@@ -95,6 +103,54 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [logActivity, user]);
 
+
+   const applyDiscountOrComplementary = useCallback((orderId: string, details: { discountType?: 'percentage' | 'amount', discountValue?: number, isComplementary?: boolean, complementaryReason?: string }) => {
+    setOrders(prevOrders => {
+      const orderToUpdate = prevOrders.find(o => o.id === orderId);
+      if (!orderToUpdate) return prevOrders;
+
+      let updatedOrder = { ...orderToUpdate };
+      const originalTotal = orderToUpdate.originalTotalAmount ?? orderToUpdate.totalAmount;
+
+      if (details.isComplementary) {
+        updatedOrder = {
+          ...updatedOrder,
+          isComplementary: true,
+          complementaryReason: details.complementaryReason,
+          totalAmount: 0,
+          discountAmount: originalTotal,
+          originalTotalAmount: originalTotal,
+          discountType: undefined,
+          discountValue: undefined,
+        };
+        logActivity(`Order #${orderToUpdate.orderNumber} marked as complementary. Reason: ${details.complementaryReason}.`, user?.username || 'System');
+      } else if (details.discountType && details.discountValue) {
+        let discountAmount = 0;
+        if (details.discountType === 'percentage') {
+          discountAmount = originalTotal * (details.discountValue / 100);
+        } else {
+          discountAmount = details.discountValue;
+        }
+
+        const newTotalAmount = Math.max(0, originalTotal - discountAmount);
+
+        updatedOrder = {
+          ...updatedOrder,
+          discountType: details.discountType,
+          discountValue: details.discountValue,
+          discountAmount: discountAmount,
+          totalAmount: newTotalAmount,
+          originalTotalAmount: originalTotal,
+          isComplementary: false,
+          complementaryReason: undefined,
+        };
+        logActivity(`Applied ${details.discountType} discount of ${details.discountValue} to Order #${orderToUpdate.orderNumber}.`, user?.username || 'System');
+      }
+
+      return prevOrders.map(o => o.id === orderId ? updatedOrder : o);
+    });
+  }, [logActivity, user]);
+
   const clearOrders = useCallback(() => {
     setOrders([]);
     logActivity('Cleared all orders for the current session.', user?.username || 'System');
@@ -107,6 +163,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
         isLoading,
         addOrder,
         updateOrderStatus,
+        applyDiscountOrComplementary,
         clearOrders,
       }}
     >

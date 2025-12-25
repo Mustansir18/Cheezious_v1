@@ -36,7 +36,7 @@ export type CartItem = MenuItem & {
   quantity: number;
 };
 
-export type OrderType = 'Dine-In' | 'Take Away';
+export type OrderType = 'Dine-In' | 'Take-Away';
 
 export type OrderStatus = 'Pending' | 'Preparing' | 'Ready' | 'Completed' | 'Cancelled';
 
@@ -58,6 +58,13 @@ export type Order = {
     taxRate: number;
     taxAmount: number;
     cancellationReason?: string;
+    // Discount and Complementary Fields
+    isComplementary?: boolean;
+    complementaryReason?: string;
+    discountType?: 'percentage' | 'amount';
+    discountValue?: number;
+    discountAmount?: number;
+    originalTotalAmount?: number;
 };
 
 export type OrderItem = {

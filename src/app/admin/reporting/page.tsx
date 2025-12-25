@@ -6,12 +6,13 @@ import { useOrders } from "@/context/OrderContext";
 import { useMemo, useState, useEffect } from "react";
 import type { Order } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Calendar as CalendarIcon, ShoppingCart, DollarSign, Utensils, Loader, Printer, CreditCard, ShoppingBag, FileDown } from "lucide-react";
+import { Calendar as CalendarIcon, ShoppingCart, DollarSign, Utensils, Loader, Printer, CreditCard, ShoppingBag, FileDown, Tag, Gift, XCircle } from "lucide-react";
 import { HourlySalesReport } from "@/components/reporting/HourlySalesReport";
 import { DailySalesReport, type DailySale } from "@/components/reporting/DailySalesReport";
 import { TopSellingItems } from "@/components/reporting/TopSellingItems";
 import { PaymentMethodBreakdown, type PaymentData } from "@/components/reporting/PaymentMethodBreakdown";
 import { OrderTypeSummary, type OrderTypeData } from "@/components/reporting/OrderTypeSummary";
+import { OrderAdjustmentsSummary } from "@/components/reporting/OrderAdjustmentsSummary";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -56,6 +57,7 @@ export default function ReportingPage() {
   const { orders, isLoading } = useOrders();
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
   const [selectedOrderType, setSelectedOrderType] = useState<string | null>(null);
+  const [selectedAdjustmentType, setSelectedAdjustmentType] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: new Date(new Date().setHours(0, 0, 0, 0)),
     to: new Date(),
@@ -74,7 +76,14 @@ export default function ReportingPage() {
 
     const filteredOrders = baseFilteredOrders
       .filter(order => selectedPaymentMethod ? order.paymentMethod === selectedPaymentMethod : true)
-      .filter(order => selectedOrderType ? order.orderType === selectedOrderType : true);
+      .filter(order => selectedOrderType ? order.orderType === selectedOrderType : true)
+      .filter(order => {
+          if (!selectedAdjustmentType) return true;
+          if (selectedAdjustmentType === 'Discounted') return !!order.discountAmount && order.discountAmount > 0;
+          if (selectedAdjustmentType === 'Complementary') return !!order.isComplementary;
+          if (selectedAdjustmentType === 'Cancelled') return order.status === 'Cancelled';
+          return true;
+      });
         
     const totalOrders = filteredOrders.length;
     const totalSales = filteredOrders.reduce((sum, order) => sum + order.totalAmount, 0);
@@ -87,22 +96,42 @@ export default function ReportingPage() {
     const itemSales: { [key: string]: ItemSale } = {};
     const hourlySales: { [key: number]: number } = {};
     
-    // Order type counts and sales should be calculated from the date-filtered list (before other filters)
-    const orderTypeFilteredOrders = baseFilteredOrders.filter(order => selectedPaymentMethod ? order.paymentMethod === selectedPaymentMethod : true);
-    const dineInOrders = orderTypeFilteredOrders.filter((o) => o.orderType === "Dine-In");
-    const takeAwayOrders = orderTypeFilteredOrders.filter((o) => o.orderType === "Take-Away");
+    // --- Data for Charts (calculated from less filtered data) ---
+    let orderTypeFiltered = baseFilteredOrders.filter(o => selectedPaymentMethod ? o.paymentMethod === selectedPaymentMethod : true);
+    orderTypeFiltered = orderTypeFiltered.filter(o => {
+        if (!selectedAdjustmentType) return true;
+        if (selectedAdjustmentType === 'Discounted') return !!o.discountAmount && o.discountAmount > 0;
+        if (selectedAdjustmentType === 'Complementary') return !!o.isComplementary;
+        if (selectedAdjustmentType === 'Cancelled') return o.status === 'Cancelled';
+        return true;
+    });
+    const dineInOrders = orderTypeFiltered.filter((o) => o.orderType === "Dine-In");
+    const takeAwayOrders = orderTypeFiltered.filter((o) => o.orderType === "Take-Away");
     const dineInSales = dineInOrders.reduce((sum, order) => sum + order.totalAmount, 0);
     const takeAwaySales = takeAwayOrders.reduce((sum, order) => sum + order.totalAmount, 0);
 
-    
-    // Payment method counts should be calculated from the base (unfiltered by payment) list to show the full breakdown
-    const paymentFilteredOrders = baseFilteredOrders.filter(order => selectedOrderType ? order.orderType === selectedOrderType : true);
+    let paymentFiltered = baseFilteredOrders.filter(o => selectedOrderType ? o.orderType === selectedOrderType : true);
+     paymentFiltered = paymentFiltered.filter(o => {
+        if (!selectedAdjustmentType) return true;
+        if (selectedAdjustmentType === 'Discounted') return !!o.discountAmount && o.discountAmount > 0;
+        if (selectedAdjustmentType === 'Complementary') return !!o.isComplementary;
+        if (selectedAdjustmentType === 'Cancelled') return o.status === 'Cancelled';
+        return true;
+    });
     const paymentMethodSales: { [key: string]: number } = {};
-     paymentFilteredOrders.forEach(order => {
+     paymentFiltered.forEach(order => {
         if (order.paymentMethod) {
             paymentMethodSales[order.paymentMethod] = (paymentMethodSales[order.paymentMethod] || 0) + order.totalAmount;
         }
     });
+
+    const adjustmentFiltered = baseFilteredOrders
+        .filter(o => selectedPaymentMethod ? o.paymentMethod === selectedPaymentMethod : true)
+        .filter(o => selectedOrderType ? o.orderType === selectedOrderType : true);
+
+    const discountedCount = adjustmentFiltered.filter(o => o.discountAmount && o.discountAmount > 0).length;
+    const complementaryCount = adjustmentFiltered.filter(o => o.isComplementary).length;
+    const cancelledCount = adjustmentFiltered.filter(o => o.status === 'Cancelled').length;
 
     // --- Dine In Metrics ---
     const dineInBreakdownOrders = dineInOrders.filter(order => selectedPaymentMethod ? order.paymentMethod === selectedPaymentMethod : true);
@@ -161,6 +190,12 @@ export default function ReportingPage() {
         { type: "Take-Away", count: takeAwayOrders.length, sales: takeAwaySales, icon: ShoppingBag, fill: 'hsl(var(--chart-2))' },
     ];
     
+    const adjustmentChartData = [
+        { type: 'Discounted', count: discountedCount, icon: Tag, fill: 'hsl(var(--chart-4))'},
+        { type: 'Complementary', count: complementaryCount, icon: Gift, fill: 'hsl(var(--chart-5))'},
+        { type: 'Cancelled', count: cancelledCount, icon: XCircle, fill: 'hsl(var(--chart-3))'},
+    ]
+
     const today = new Date();
     const last8Days = Array.from({ length: 8 }, (_, i) => subDays(today, i)).reverse();
     const dailySalesChartData: DailySale[] = last8Days.map(date => {
@@ -185,6 +220,7 @@ export default function ReportingPage() {
       dailySalesChartData,
       orderTypeChartData,
       paymentChartData,
+      adjustmentChartData,
       dineInGrossSales,
       dineInNetSales,
       dineInTax,
@@ -196,7 +232,7 @@ export default function ReportingPage() {
       takeAwayCashSales,
       takeAwayCardSales,
     };
-  }, [orders, dateRange, selectedPaymentMethod, selectedOrderType]);
+  }, [orders, dateRange, selectedPaymentMethod, selectedOrderType, selectedAdjustmentType]);
 
     const handlePrint = (reportId: string) => {
         const reportElement = document.getElementById(reportId);
@@ -272,6 +308,7 @@ export default function ReportingPage() {
     dailySalesChartData,
     orderTypeChartData,
     paymentChartData,
+    adjustmentChartData,
     dineInGrossSales,
     dineInNetSales,
     dineInTax,
@@ -305,6 +342,13 @@ export default function ReportingPage() {
       { label: "Cash Sales", value: `RS ${takeAwayCashSales.toFixed(2)}` },
       { label: "Card Sales", value: `RS ${takeAwayCardSales.toFixed(2)}` },
   ]
+  
+  const activeFilters = [selectedOrderType, selectedPaymentMethod, selectedAdjustmentType].filter(Boolean);
+  let filterDescription = 'Sales data for the selected period.';
+  if (activeFilters.length > 0) {
+      filterDescription = `Displaying data for '${activeFilters.join(', ')}' orders.`
+  }
+
 
   return (
     <TooltipProvider>
@@ -312,11 +356,7 @@ export default function ReportingPage() {
       <header className="mb-8 flex flex-col md:flex-row justify-between items-start gap-4">
         <div>
             <h1 className="font-headline text-4xl font-bold">Admin Reports</h1>
-            <p className="text-muted-foreground">
-              {selectedOrderType ? `Displaying sales data for '${selectedOrderType}' orders.` : 
-              selectedPaymentMethod ? `Displaying sales data for '${selectedPaymentMethod}' transactions.` : 
-              `Sales data for the selected period.`}
-            </p>
+            <p className="text-muted-foreground">{filterDescription}</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
             <Popover>
@@ -386,21 +426,36 @@ export default function ReportingPage() {
              </Card>
           </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-             <div className="lg:col-span-3" id="ordertype-report">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2" id="interactive-filters-report">
+                <Card className="h-full">
+                    <CardHeader className="flex-row justify-between items-center">
+                        <div>
+                            <CardTitle className="font-headline">Interactive Filters</CardTitle>
+                            <CardDescription>Click a chart segment to filter all reports.</CardDescription>
+                        </div>
+                        <ReportCardActions reportId="interactive-filters-report" onPrint={handlePrint} />
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                         <PaymentMethodBreakdown 
+                            data={paymentChartData}
+                            selectedMethod={selectedPaymentMethod}
+                            onSelectMethod={setSelectedPaymentMethod}
+                        />
+                        <OrderAdjustmentsSummary 
+                            data={adjustmentChartData}
+                            selectedType={selectedAdjustmentType}
+                            onSelectType={setSelectedAdjustmentType}
+                        />
+                    </CardContent>
+                </Card>
+            </div>
+            <div id="ordertype-report">
                 <OrderTypeSummary
                     data={orderTypeChartData}
                     onPrint={() => handlePrint('ordertype-report')}
                     selectedType={selectedOrderType}
                     onSelectType={setSelectedOrderType}
-                />
-            </div>
-             <div className="lg:col-span-2" id="payment-report">
-                <PaymentMethodBreakdown 
-                  data={paymentChartData} 
-                  onPrint={() => handlePrint('payment-report')} 
-                  selectedMethod={selectedPaymentMethod}
-                  onSelectMethod={setSelectedPaymentMethod}
                 />
             </div>
         </div>

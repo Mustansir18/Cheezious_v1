@@ -4,7 +4,7 @@
 import { Pie, PieChart, ResponsiveContainer, Cell, Tooltip } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Printer, FileDown, Utensils, ShoppingBag } from 'lucide-react';
+import { Printer, FileDown } from 'lucide-react';
 import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import type { ElementType } from 'react';
@@ -132,5 +132,3 @@ export function OrderTypeSummary({ data, onPrint, selectedType, onSelectType }: 
     </Card>
   );
 }
-
-    

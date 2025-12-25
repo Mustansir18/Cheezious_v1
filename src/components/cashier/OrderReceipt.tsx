@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Order } from "@/lib/types";
@@ -11,6 +12,8 @@ export function OrderReceipt({ order }: OrderReceiptProps) {
     const { settings } = useSettings();
     const branch = settings.branches.find(b => b.id === order.branchId);
     const table = settings.tables.find(t => t.id === order.tableId);
+
+    const displayTotal = order.originalTotalAmount ?? order.totalAmount;
 
     return (
         <div className="p-4 bg-white text-black font-mono text-xs w-[300px] border border-gray-200">
@@ -77,6 +80,12 @@ export function OrderReceipt({ order }: OrderReceiptProps) {
                     <span>Tax ({(order.taxRate * 100).toFixed(0)}%):</span>
                     <span className="text-right tabular-nums">{order.taxAmount.toFixed(2)}</span>
                 </div>
+                {order.discountAmount && (
+                    <div className="flex justify-between">
+                        <span>Discount:</span>
+                        <span className="text-right tabular-nums">-{order.discountAmount.toFixed(2)}</span>
+                    </div>
+                )}
             </div>
 
             <hr className="border-dashed border-black my-2" />
@@ -93,7 +102,9 @@ export function OrderReceipt({ order }: OrderReceiptProps) {
 
             {/* Footer */}
             <div className="text-center mt-4 space-y-1">
-                {order.paymentMethod && (
+                {order.isComplementary ? (
+                     <p className="font-bold">COMPLEMENTARY ({order.complementaryReason})</p>
+                ) : order.paymentMethod && (
                     <p>Paid via: {order.paymentMethod}</p>
                 )}
                 <p className="mt-2">Thank you for your visit!</p>

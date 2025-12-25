@@ -16,7 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { formatDistanceToNow } from "date-fns";
 import { Skeleton } from "../ui/skeleton";
 import { ScrollArea } from "../ui/scroll-area";
-import { Utensils, ShoppingBag, Check, CheckCircle, CookingPot, Loader, CreditCard, Printer, Info, XCircle } from "lucide-react";
+import { Utensils, ShoppingBag, Check, CheckCircle, CookingPot, Loader, CreditCard, Printer, Info, XCircle, Tag, Gift } from "lucide-react";
 import { useMemo, useRef, useState, useCallback } from "react";
 import { useSettings } from "@/context/SettingsContext";
 import { OrderReceipt } from "./OrderReceipt";
@@ -25,6 +25,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Input } from "../ui/input";
+import { useAuth } from "@/context/AuthContext";
+import { useOrders } from "@/context/OrderContext";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "../ui/tabs";
+import { useToast } from "@/hooks/use-toast";
 
 const statusConfig = {
     Pending: { icon: Loader, color: "text-gray-500", label: "Pending" },
@@ -112,6 +116,98 @@ function CancellationDialog({ orderId, onConfirm }: { orderId: string, onConfirm
     );
 }
 
+function OrderModificationDialog({ order }: { order: Order }) {
+    const { applyDiscountOrComplementary } = useOrders();
+    const { toast } = useToast();
+    const [isOpen, setIsOpen] = useState(false);
+
+    // Discount state
+    const [discountType, setDiscountType] = useState<'percentage' | 'amount'>('amount');
+    const [discountValue, setDiscountValue] = useState<number | string>('');
+
+    // Complementary state
+    const [complementaryReason, setComplementaryReason] = useState('');
+
+    const handleApplyDiscount = () => {
+        const value = Number(discountValue);
+        if (isNaN(value) || value <= 0) {
+            toast({ variant: 'destructive', title: 'Invalid Discount', description: 'Please enter a valid positive number for the discount.' });
+            return;
+        }
+        applyDiscountOrComplementary(order.id, { discountType, discountValue: value });
+        toast({ title: 'Discount Applied', description: `A ${discountType} discount of ${value} has been applied.` });
+        setIsOpen(false);
+    };
+    
+    const handleApplyComplementary = () => {
+        if (!complementaryReason) {
+            toast({ variant: 'destructive', title: 'Reason Required', description: 'Please select a reason for making the order complementary.' });
+            return;
+        }
+        applyDiscountOrComplementary(order.id, { isComplementary: true, complementaryReason });
+        toast({ title: 'Order is now Complementary', description: `The order has been marked as complementary.` });
+        setIsOpen(false);
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+                <Button variant="secondary" size="sm" className="w-full">
+                    Modify Order
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Modify Order #{order.orderNumber}</DialogTitle>
+                    <DialogDescription>Apply a discount or mark the order as complementary.</DialogDescription>
+                </DialogHeader>
+                <Tabs defaultValue="discount">
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="discount">Discount</TabsTrigger>
+                        <TabsTrigger value="complementary">Complementary</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="discount" className="pt-4 space-y-4">
+                        <RadioGroup value={discountType} onValueChange={(v) => setDiscountType(v as any)} className="flex gap-4">
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="amount" id="amount" />
+                                <Label htmlFor="amount">Amount (RS)</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="percentage" id="percentage" />
+                                <Label htmlFor="percentage">Percentage (%)</Label>
+                            </div>
+                        </RadioGroup>
+                         <Input 
+                            type="number" 
+                            placeholder={discountType === 'amount' ? 'e.g., 100' : 'e.g., 15'}
+                            value={discountValue}
+                            onChange={(e) => setDiscountValue(e.target.value)}
+                        />
+                         <Button onClick={handleApplyDiscount} className="w-full">Apply Discount</Button>
+                    </TabsContent>
+                    <TabsContent value="complementary" className="pt-4 space-y-4">
+                        <RadioGroup value={complementaryReason} onValueChange={setComplementaryReason}>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="Marketing" id="r-marketing" />
+                                <Label htmlFor="r-marketing">Marketing</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="Guest Experience" id="r-guest" />
+                                <Label htmlFor="r-guest">Guest Experience</Label>
+                            </div>
+                             <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="Internal" id="r-internal" />
+                                <Label htmlFor="r-internal">Internal</Label>
+                            </div>
+                        </RadioGroup>
+                        <Button onClick={handleApplyComplementary} className="w-full">Mark as Complementary</Button>
+                    </TabsContent>
+                </Tabs>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 interface OrderCardProps {
     order: Order;
     workflow?: 'cashier' | 'kds';
@@ -121,6 +217,7 @@ interface OrderCardProps {
 
 export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, children }: OrderCardProps) {
   const { settings } = useSettings();
+  const { user } = useAuth();
   
   const handleUpdateStatus = (newStatus: OrderStatus) => {
     onUpdateStatus(order.id, newStatus);
@@ -153,7 +250,7 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
   };
   
   const StatusIcon = statusConfig[order.status]?.icon || Loader;
-
+  const isModifiable = user?.role === 'admin' || user?.role === 'root';
   const orderDate = useMemo(() => new Date(order.orderDate), [order.orderDate]);
   const table = useMemo(() => settings.tables.find(t => t.id === order.tableId), [settings.tables, order.tableId]);
 
@@ -191,14 +288,43 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
             </div>
         </ScrollArea>
         <Separator className="my-4" />
-        <div className="flex justify-between font-bold text-lg">
+
+        { (order.isComplementary || order.discountAmount) && order.originalTotalAmount && (
+            <div className="text-sm">
+                <div className="flex justify-between">
+                    <span>Subtotal</span>
+                    <span>RS {order.subtotal.toFixed(2)}</span>
+                </div>
+                 <div className="flex justify-between">
+                    <span>Tax</span>
+                    <span>RS {order.taxAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span>Original Total</span>
+                    <span className="line-through">RS {order.originalTotalAmount.toFixed(2)}</span>
+                </div>
+                {order.isComplementary ? (
+                    <div className="flex justify-between text-green-600 font-semibold">
+                        <span>Complementary</span>
+                        <span>-RS {order.discountAmount?.toFixed(2)}</span>
+                    </div>
+                ) : (
+                    <div className="flex justify-between">
+                        <span>Discount ({order.discountType === 'percentage' ? `${order.discountValue}%` : 'RS'})</span>
+                        <span>-RS {order.discountAmount?.toFixed(2)}</span>
+                    </div>
+                )}
+            </div>
+        )}
+
+        <div className="flex justify-between font-bold text-lg mt-2 pt-2 border-t">
             <span>Total</span>
             <span>RS {order.totalAmount.toFixed(2)}</span>
         </div>
          {order.paymentMethod && (
             <div className="flex items-center mt-2 text-sm text-muted-foreground">
-                <CreditCard className="mr-2 h-4 w-4" />
-                <span>Paid with {order.paymentMethod}</span>
+                {order.isComplementary ? <Gift className="mr-2 h-4 w-4" /> : <CreditCard className="mr-2 h-4 w-4" />}
+                <span>{order.isComplementary ? `Complementary (${order.complementaryReason})` : `Paid with ${order.paymentMethod}`}</span>
             </div>
          )}
       </CardContent>
@@ -239,7 +365,10 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
                      </Button>
                 )}
                  {(order.status === 'Pending' || order.status === 'Preparing' || order.status === 'Ready') && (
-                    <CancellationDialog orderId={order.id} onConfirm={handleCancelOrder} />
+                     <div className="grid grid-cols-2 gap-2">
+                        <CancellationDialog orderId={order.id} onConfirm={handleCancelOrder} />
+                        {isModifiable && <OrderModificationDialog order={order} />}
+                     </div>
                  )}
              </div>
          )}
