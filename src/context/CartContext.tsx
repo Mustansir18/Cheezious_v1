@@ -2,8 +2,15 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import type { CartItem, MenuItem, OrderType } from '@/lib/types';
+import type { CartItem, MenuItem, OrderType, Addon } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
 
+
+interface AddToCartOptions {
+    item: MenuItem;
+    selectedAddons?: Addon[];
+    instructions?: string;
+}
 interface CartContextType {
   items: CartItem[];
   branchId: string | null;
@@ -12,8 +19,8 @@ interface CartContextType {
   floorId: string | null;
   isCartOpen: boolean;
   setIsCartOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  addItem: (item: MenuItem) => void;
-  updateQuantity: (itemId: string, quantity: number) => void;
+  addItem: (options: AddToCartOptions) => void;
+  updateQuantity: (cartItemId: string, quantity: number) => void;
   clearCart: () => void;
   closeCart: () => void;
   setOrderDetails: (details: { branchId: string; orderType: OrderType; floorId?: string; tableId?: string; }) => void;
@@ -30,6 +37,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [tableId, setTableId] = useState<string | null>(null);
   const [floorId, setFloorId] = useState<string | null>(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     try {
@@ -75,44 +83,55 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const addItem = (itemToAdd: MenuItem) => {
+  const addItem = ({ item: itemToAdd, selectedAddons = [], instructions = '' }: AddToCartOptions) => {
+    const addonPrice = selectedAddons.reduce((sum, addon) => sum + addon.price, 0);
+    const finalPrice = itemToAdd.price + addonPrice;
+
+    // Create a unique ID for this specific combination of item + addons
+    const addonIds = selectedAddons.map(a => a.id).sort().join('-');
+    const cartItemId = `${itemToAdd.id}${addonIds ? `-${addonIds}` : ''}${instructions ? '-instr' : ''}`;
+
     setItems((prevItems) => {
-      const existingItem = prevItems.find((item) => item.id === itemToAdd.id);
+      const existingItem = prevItems.find((item) => item.cartItemId === cartItemId && item.instructions === instructions);
       if (existingItem) {
+        // If the exact same item with the same instructions exists, just increase its quantity
         return prevItems.map((item) =>
-          item.id === itemToAdd.id ? { ...item, quantity: item.quantity + 1 } : item
+          item.cartItemId === cartItemId ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
-      // When adding item to cart, we don't need all properties from MenuItem, only a few
-      const cartItem: CartItem = { 
-        id: itemToAdd.id,
-        name: itemToAdd.name,
-        price: itemToAdd.price,
-        imageUrl: itemToAdd.imageUrl,
-        categoryId: itemToAdd.categoryId,
-        description: itemToAdd.description,
-        quantity: 1 
+      
+      const newCartItem: CartItem = { 
+        ...itemToAdd,
+        cartItemId: cartItemId,
+        price: finalPrice, // Use the price including addons
+        basePrice: itemToAdd.price,
+        selectedAddons,
+        instructions,
+        quantity: 1,
       };
-      return [...prevItems, cartItem];
+      return [...prevItems, newCartItem];
+    });
+
+    toast({
+        title: "Added to Cart",
+        description: `${itemToAdd.name} is now in your order.`,
     });
   };
 
-  const updateQuantity = (itemId: string, quantity: number) => {
+  const updateQuantity = (cartItemId: string, quantity: number) => {
     setItems((prevItems) => {
       if (quantity <= 0) {
-        return prevItems.filter((item) => item.id !== itemId);
+        return prevItems.filter((item) => item.cartItemId !== cartItemId);
       }
       return prevItems.map((item) =>
-        item.id === itemId ? { ...item, quantity } : item
+        item.cartItemId === cartItemId ? { ...item, quantity } : item
       );
     });
   };
 
+
   const clearCart = () => {
     setItems([]);
-    // Do not clear branch/orderType so the user can continue ordering
-    // from the same location after placing an order.
-    // Only clear table/floor selection.
     setTableId(null);
     setFloorId(null);
   };

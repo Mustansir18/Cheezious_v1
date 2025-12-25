@@ -27,6 +27,8 @@ export async function syncOrderToExternalSystem(input: SyncOrderInput): Promise<
   // To re-enable, re-introduce the fetch() call and environment variable logic.
   
   console.log('[SYNC-FLOW] External synchronization is disabled. Returning success.');
+  // For debugging, you can log the full payload that would be sent:
+  // console.log('[SYNC-FLOW] Payload:', JSON.stringify(input, null, 2));
 
   return {
     success: true,

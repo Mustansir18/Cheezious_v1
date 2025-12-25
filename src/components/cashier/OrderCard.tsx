@@ -16,8 +16,8 @@ import { Separator } from "@/components/ui/separator";
 import { formatDistanceToNow } from "date-fns";
 import { Skeleton } from "../ui/skeleton";
 import { ScrollArea } from "../ui/scroll-area";
-import { Utensils, ShoppingBag, Check, CheckCircle, CookingPot, Loader, CreditCard, Printer, Info, XCircle, Tag, Gift } from "lucide-react";
-import { useMemo, useRef, useState, useCallback } from "react";
+import { Utensils, ShoppingBag, Check, CheckCircle, CookingPot, Loader, CreditCard, Printer, Info, XCircle, Tag, Gift, MessageSquareText } from "lucide-react";
+import { useMemo, useState, useCallback } from "react";
 import { useSettings } from "@/context/SettingsContext";
 import { OrderReceipt } from "./OrderReceipt";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -212,7 +212,7 @@ interface OrderCardProps {
     order: Order;
     workflow?: 'cashier' | 'kds';
     onUpdateStatus: (orderId: string, newStatus: OrderStatus, reason?: string) => void;
-    children?: React.ReactNode; // For additional action buttons like InfoModal
+    children?: React.ReactNode;
 }
 
 export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, children }: OrderCardProps) {
@@ -224,7 +224,6 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
   };
 
   const handleCancelOrder = useCallback((orderId: string, reason: string) => {
-    console.log(`Order ${orderId} cancelled. Reason: ${reason}`);
     onUpdateStatus(orderId, 'Cancelled', reason);
   }, [onUpdateStatus]);
 
@@ -239,8 +238,7 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
     
     document.body.classList.add('printing-active');
     window.print();
-
-    // Use a timeout to ensure the cleanup happens after the print dialog is likely closed
+    
     setTimeout(() => {
         if (document.body.contains(printContainer)) {
             document.body.removeChild(printContainer);
@@ -262,9 +260,7 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
             <span className="font-headline text-xl">Order #{order.orderNumber}</span>
             <div className="flex items-center gap-1">
                 {children}
-                <Button variant="ghost" size="icon" className="h-8 w-8 print-hidden" onClick={handlePrint}>
-                    <Printer className="h-4 w-4" />
-                </Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8 print-hidden" onClick={handlePrint}><Printer className="h-4 w-4" /></Button>
                 <Badge variant="secondary">{order.orderType === 'Dine-In' ? <Utensils className="mr-1 h-4 w-4"/> : <ShoppingBag className="mr-1 h-4 w-4" />} {order.orderType}</Badge>
             </div>
         </CardTitle>
@@ -278,11 +274,26 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
         <ScrollArea className="h-40 pr-4">
             <div className="space-y-3">
             {order.items?.map((item) => (
-                <div key={item.id} className="flex justify-between items-center text-sm">
-                    <div>
-                        <span className="font-semibold">{item.quantity}x</span> {item.name}
-                    </div>
-                    <div className="font-mono">RS {(item.quantity * item.itemPrice).toFixed(2)}</div>
+                <div key={item.id} className="text-sm">
+                  <div className="flex justify-between items-center">
+                    <div><span className="font-semibold">{item.quantity}x</span> {item.name}</div>
+                    <div className="font-mono">RS {(item.baseItemPrice * item.quantity).toFixed(2)}</div>
+                  </div>
+                   {item.selectedAddons && item.selectedAddons.length > 0 && (
+                        <div className="pl-4 text-xs text-muted-foreground">
+                            {item.selectedAddons.map(addon => (
+                                <div key={addon.name} className="flex justify-between">
+                                  <span>+ {addon.name}</span>
+                                  <span>RS {(addon.price * item.quantity).toFixed(2)}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    {item.instructions && (
+                        <div className="pl-4 text-xs text-muted-foreground italic flex items-center gap-1">
+                           <MessageSquareText className="h-3 w-3" /> "{item.instructions}"
+                        </div>
+                    )}
                 </div>
             ))}
             </div>
@@ -291,28 +302,13 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
 
         { (order.isComplementary || order.discountAmount) && order.originalTotalAmount && (
             <div className="text-sm">
-                <div className="flex justify-between">
-                    <span>Subtotal</span>
-                    <span>RS {order.subtotal.toFixed(2)}</span>
-                </div>
-                 <div className="flex justify-between">
-                    <span>Tax</span>
-                    <span>RS {order.taxAmount.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span>Original Total</span>
-                    <span className="line-through">RS {order.originalTotalAmount.toFixed(2)}</span>
-                </div>
+                <div className="flex justify-between"><span>Subtotal</span><span>RS {order.subtotal.toFixed(2)}</span></div>
+                 <div className="flex justify-between"><span>Tax</span><span>RS {order.taxAmount.toFixed(2)}</span></div>
+                <div className="flex justify-between"><span>Original Total</span><span className="line-through">RS {order.originalTotalAmount.toFixed(2)}</span></div>
                 {order.isComplementary ? (
-                    <div className="flex justify-between text-green-600 font-semibold">
-                        <span>Complementary</span>
-                        <span>-RS {order.discountAmount?.toFixed(2)}</span>
-                    </div>
+                    <div className="flex justify-between text-green-600 font-semibold"><span>Complementary</span><span>-RS {order.discountAmount?.toFixed(2)}</span></div>
                 ) : (
-                    <div className="flex justify-between">
-                        <span>Discount ({order.discountType === 'percentage' ? `${order.discountValue}%` : 'RS'})</span>
-                        <span>-RS {order.discountAmount?.toFixed(2)}</span>
-                    </div>
+                    <div className="flex justify-between"><span>Discount ({order.discountType === 'percentage' ? `${order.discountValue}%` : 'RS'})</span><span>-RS {order.discountAmount?.toFixed(2)}</span></div>
                 )}
             </div>
         )}
@@ -335,65 +331,33 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
          </div>
          {workflow === 'kds' && (
              <div className="grid grid-cols-1 gap-2 w-full">
-                {order.status === 'Pending' && (
-                    <Button onClick={() => handleUpdateStatus('Preparing')} size="sm" className="w-full">
-                        <CookingPot className="mr-2 h-4 w-4" /> Accept & Prepare
-                    </Button>
-                )}
-                {order.status === 'Preparing' && (
-                    <Button onClick={() => handleUpdateStatus('Ready')} size="sm" className="w-full bg-yellow-500 hover:bg-yellow-600 text-black">
-                       <Check className="mr-2 h-4 w-4" /> Mark as Ready
-                    </Button>
-                )}
+                {order.status === 'Pending' && <Button onClick={() => handleUpdateStatus('Preparing')} size="sm" className="w-full"><CookingPot className="mr-2 h-4 w-4" /> Accept & Prepare</Button>}
+                {order.status === 'Preparing' && <Button onClick={() => handleUpdateStatus('Ready')} size="sm" className="w-full bg-yellow-500 hover:bg-yellow-600 text-black"><Check className="mr-2 h-4 w-4" /> Mark as Ready</Button>}
              </div>
          )}
          {workflow === 'cashier' && (
             <div className="grid grid-cols-1 gap-2 w-full">
-                {order.status === 'Pending' && (
-                    <Button onClick={() => handleUpdateStatus('Preparing')} size="sm" className="w-full">
-                        <CookingPot className="mr-2 h-4 w-4" /> Accept & Prepare
-                    </Button>
-                )}
-                 {order.status === 'Preparing' && (
-                    <Button onClick={() => handleUpdateStatus('Ready')} size="sm" className="w-full bg-yellow-500 hover:bg-yellow-600 text-black">
-                       <Check className="mr-2 h-4 w-4" /> Mark as Ready
-                    </Button>
-                )}
-                {order.status === 'Ready' && (
-                     <Button onClick={() => handleUpdateStatus('Completed')} size="sm" className="w-full bg-green-500 hover:bg-green-600">
-                        <CheckCircle className="mr-2 h-4 w-4" /> Mark as Completed
-                     </Button>
-                )}
+                {order.status === 'Pending' && <Button onClick={() => handleUpdateStatus('Preparing')} size="sm" className="w-full"><CookingPot className="mr-2 h-4 w-4" /> Accept & Prepare</Button>}
+                 {order.status === 'Preparing' && <Button onClick={() => handleUpdateStatus('Ready')} size="sm" className="w-full bg-yellow-500 hover:bg-yellow-600 text-black"><Check className="mr-2 h-4 w-4" /> Mark as Ready</Button>}
+                {order.status === 'Ready' && <Button onClick={() => handleUpdateStatus('Completed')} size="sm" className="w-full bg-green-500 hover:bg-green-600"><CheckCircle className="mr-2 h-4 w-4" /> Mark as Completed</Button>}
                  {(order.status === 'Pending' || order.status === 'Preparing' || order.status === 'Ready') && (
                      <div className="grid grid-cols-2 gap-2">
                         <CancellationDialog orderId={order.id} onConfirm={handleCancelOrder} />
                         {isModifiable && <OrderModificationDialog order={order} />}
                      </div>
                  )}
-                 {order.status === 'Completed' && isModifiable && (
-                    <div className="grid grid-cols-1 gap-2">
-                        <OrderModificationDialog order={order} />
-                    </div>
-                 )}
+                 {order.status === 'Completed' && isModifiable && (<div className="grid grid-cols-1 gap-2"><OrderModificationDialog order={order} /></div>)}
              </div>
          )}
       </CardFooter>
-      {/* Hidden receipt for printing */}
-      <div className="hidden">
-        <div id={`printable-receipt-${order.id}`}>
-          <OrderReceipt order={order} />
-        </div>
-      </div>
+      <div className="hidden"><div id={`printable-receipt-${order.id}`}><OrderReceipt order={order} /></div></div>
     </Card>
   );
 }
 
 const OrderItemSkeleton = () => (
     <div className="flex justify-between items-center text-sm">
-        <div className="flex items-center gap-2">
-            <Skeleton className="h-4 w-4 rounded-full" />
-            <Skeleton className="h-4 w-24" />
-        </div>
+        <div className="flex items-center gap-2"><Skeleton className="h-4 w-4 rounded-full" /><Skeleton className="h-4 w-24" /></div>
         <Skeleton className="h-4 w-12" />
     </div>
 );
@@ -401,27 +365,13 @@ const OrderItemSkeleton = () => (
 OrderCard.Skeleton = function OrderCardSkeleton() {
     return (
       <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
-        </CardHeader>
+        <CardHeader><Skeleton className="h-6 w-3/4" /><Skeleton className="h-4 w-1/2" /></CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            <OrderItemSkeleton />
-            <OrderItemSkeleton />
-          </div>
+          <div className="space-y-3"><OrderItemSkeleton /><OrderItemSkeleton /></div>
           <Separator className="my-4" />
-          <div className="flex justify-between">
-            <Skeleton className="h-6 w-16" />
-            <Skeleton className="h-6 w-20" />
-          </div>
+          <div className="flex justify-between"><Skeleton className="h-6 w-16" /><Skeleton className="h-6 w-20" /></div>
         </CardContent>
-        <CardFooter className="flex flex-col gap-2">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-        </CardFooter>
+        <CardFooter className="flex flex-col gap-2"><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /></CardFooter>
       </Card>
     );
   };
-
-    

@@ -34,8 +34,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             <ScrollArea className="flex-grow">
               <div className="pr-4">
                 {items.map((item, index) => (
-                  <div key={item.id}>
-                    <div className="flex items-center gap-4 py-4">
+                  <div key={item.cartItemId}>
+                    <div className="flex items-start gap-4 py-4">
                        <Image
                         src={item.imageUrl || FALLBACK_IMAGE_URL}
                         alt={item.name}
@@ -46,11 +46,19 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                       />
                       <div className="flex-grow space-y-1">
                         <p className="font-semibold">{item.name}</p>
-                        <p className="text-sm text-muted-foreground">
+                        <div className="text-sm text-muted-foreground">
+                            {item.selectedAddons.map(addon => (
+                                <p key={addon.id}>+ {addon.name}</p>
+                            ))}
+                            {item.instructions && (
+                                <p className="italic text-primary">"{item.instructions}"</p>
+                            )}
+                        </div>
+                        <p className="text-sm">
                           RS {item.price.toFixed(2)}
                         </p>
                       </div>
-                      <UpdateQuantity itemId={item.id} quantity={item.quantity} />
+                      <UpdateQuantity cartItemId={item.cartItemId} quantity={item.quantity} />
                     </div>
                     {index < items.length - 1 && <Separator />}
                   </div>

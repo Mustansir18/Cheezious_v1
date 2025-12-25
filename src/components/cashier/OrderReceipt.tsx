@@ -59,11 +59,28 @@ export function OrderReceipt({ order }: OrderReceiptProps) {
                     <span>Price</span>
                 </div>
                 {order.items.map(item => (
-                    <div key={item.id} className="flex justify-between items-start gap-2">
-                        <span className="break-words w-4/5">{item.quantity}x {item.name}</span>
-                        <span className="text-right tabular-nums whitespace-nowrap">
-                            {(item.itemPrice * item.quantity).toFixed(2)}
-                        </span>
+                    <div key={item.id}>
+                        <div className="flex justify-between items-start gap-2">
+                            <span className="break-words w-4/5">{item.quantity}x {item.name}</span>
+                            <span className="text-right tabular-nums whitespace-nowrap">
+                                {(item.baseItemPrice * item.quantity).toFixed(2)}
+                            </span>
+                        </div>
+                        {item.selectedAddons && item.selectedAddons.length > 0 && (
+                            <div className="pl-4">
+                                {item.selectedAddons.map(addon => (
+                                     <div key={addon.name} className="flex justify-between items-start gap-2 text-gray-600">
+                                        <span className="break-words w-4/5">+ {addon.name}</span>
+                                        <span className="text-right tabular-nums whitespace-nowrap">
+                                            {(addon.price * item.quantity).toFixed(2)}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        {item.instructions && (
+                             <div className="pl-4 text-gray-600 italic">"{item.instructions}"</div>
+                        )}
                     </div>
                 ))}
             </div>

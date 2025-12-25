@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
-import type { PlacedOrder, Order, OrderItem } from "@/lib/types";
+import type { PlacedOrder, Order, OrderItem, CartItem } from "@/lib/types";
 import { syncOrderToExternalSystem } from "@/ai/flows/sync-order-flow";
 import { useOrders } from "@/context/OrderContext";
 import { useToast } from "@/hooks/use-toast";
@@ -30,14 +30,13 @@ export default function OrderConfirmationPage() {
   const [paymentMethod, setPaymentMethod] = useState<string>('');
 
   useEffect(() => {
-    // When navigating to this page, ensure the cart sheet is closed.
     setIsCartOpen(false);
   }, [setIsCartOpen]);
 
 
   const taxRates: { [key: string]: number } = {
-    'Cash': 0.16, // 16%
-    'Credit/Debit Card': 0.05, // 5%
+    'Cash': 0.16,
+    'Credit/Debit Card': 0.05,
   };
 
   const branch = useMemo(() => settings.branches.find((b) => b.id === branchId), [branchId, settings.branches]);
@@ -45,10 +44,7 @@ export default function OrderConfirmationPage() {
   const floor = useMemo(() => settings.floors.find(f => f.id === floorId), [settings.floors, floorId]);
 
 
-  const taxRate = useMemo(() => {
-    return taxRates[paymentMethod] || 0;
-  }, [paymentMethod]);
-
+  const taxRate = useMemo(() => taxRates[paymentMethod] || 0, [paymentMethod]);
   const taxAmount = useMemo(() => cartTotal * taxRate, [cartTotal, taxRate]);
   const grandTotal = useMemo(() => cartTotal + taxAmount, [cartTotal, taxAmount]);
 
@@ -58,9 +54,7 @@ export default function OrderConfirmationPage() {
         <div className="container mx-auto flex h-[calc(100vh-4rem)] flex-col items-center justify-center text-center">
             <h1 className="font-headline text-2xl font-bold">Something went wrong</h1>
             <p className="mt-2 text-muted-foreground">Please start your order again.</p>
-            <Button asChild className="mt-4">
-                <Link href="/">Go Home</Link>
-            </Button>
+            <Button asChild className="mt-4"><Link href="/">Go Home</Link></Button>
         </div>
     );
   }
@@ -79,13 +73,16 @@ export default function OrderConfirmationPage() {
     const orderId = crypto.randomUUID();
     const orderNumber = `${branch.orderPrefix}-${Date.now().toString().slice(-6)}`;
 
-    const orderItems: OrderItem[] = items.map(item => ({
+    const orderItems: OrderItem[] = items.map((item: CartItem) => ({
         id: crypto.randomUUID(),
         orderId: orderId,
         menuItemId: item.id,
         name: item.name,
         quantity: item.quantity,
-        itemPrice: item.price
+        itemPrice: item.price,
+        baseItemPrice: item.basePrice,
+        selectedAddons: item.selectedAddons.map(a => ({ name: a.name, price: a.price })),
+        instructions: item.instructions
     }));
 
     const newOrder: Order = {
@@ -104,14 +101,16 @@ export default function OrderConfirmationPage() {
         ...(orderType === 'Dine-In' && { floorId, tableId }),
     };
     
-    // Asynchronously sync the order to the external system.
     syncOrderToExternalSystem({
         ...newOrder,
         items: newOrder.items.map(item => ({
             menuItemId: item.menuItemId,
             name: item.name,
             quantity: item.quantity,
-            itemPrice: item.itemPrice
+            itemPrice: item.itemPrice,
+            baseItemPrice: item.baseItemPrice,
+            selectedAddons: item.selectedAddons,
+            instructions: item.instructions
         }))
     }).then(result => {
         if (!result.success) {
@@ -152,14 +151,12 @@ export default function OrderConfirmationPage() {
             <div className="rounded-lg border p-4">
                 <p><strong>Branch:</strong> {branch?.name}</p>
                 <p><strong>Order Type:</strong> {orderType}</p>
-                {orderType === 'Dine-In' && table && (
-                    <p><strong>Table:</strong> {table.name} ({floor?.name})</p>
-                )}
+                {orderType === 'Dine-In' && table && (<p><strong>Table:</strong> {table.name} ({floor?.name})</p>)}
             </div>
 
             {items.map((item, index) => (
-              <div key={item.id}>
-                <div className="flex items-center gap-4 py-2">
+              <div key={item.cartItemId}>
+                <div className="flex items-start gap-4 py-2">
                   <Image
                     src={item.imageUrl || FALLBACK_IMAGE_URL}
                     alt={item.name}
@@ -169,6 +166,10 @@ export default function OrderConfirmationPage() {
                   />
                   <div className="flex-grow">
                     <p className="font-semibold text-left">{item.name}</p>
+                    <div className="text-sm text-muted-foreground text-left">
+                        {item.selectedAddons.map(addon => (<p key={addon.id}>+ {addon.name}</p>))}
+                        {item.instructions && (<p className="italic text-primary">"{item.instructions}"</p>)}
+                    </div>
                     <p className="text-sm text-muted-foreground text-left">
                       {item.quantity} x RS {item.price.toFixed(2)}
                     </p>
@@ -186,50 +187,25 @@ export default function OrderConfirmationPage() {
                 <div className="space-y-2">
                     <Label htmlFor="payment-method" className="font-semibold flex items-center"><CreditCard className="mr-2 h-5 w-5"/>Payment Method</Label>
                     <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                        <SelectTrigger id="payment-method">
-                            <SelectValue placeholder="Select a payment method" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {settings.paymentMethods.map(method => (
-                                <SelectItem key={method.id} value={method.name}>
-                                    {method.name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
+                        <SelectTrigger id="payment-method"><SelectValue placeholder="Select a payment method" /></SelectTrigger>
+                        <SelectContent>{settings.paymentMethods.map(method => (<SelectItem key={method.id} value={method.name}>{method.name}</SelectItem>))}</SelectContent>
                     </Select>
                      {!paymentMethod && <p className="text-xs text-muted-foreground pt-1">Please select a payment method to see the final total.</p>}
                 </div>
             </div>
 
-
             <div className="space-y-1 pt-2">
-                <div className="flex justify-between">
-                    <span>Subtotal</span>
-                    <span>RS {cartTotal.toFixed(2)}</span>
-                </div>
-                {paymentMethod && taxAmount > 0 && (
-                    <div className="flex justify-between text-sm text-muted-foreground">
-                        <span>Tax ({(taxRate * 100).toFixed(0)}%)</span>
-                        <span>RS {taxAmount.toFixed(2)}</span>
-                    </div>
-                )}
-                <div className="flex justify-between pt-2 text-xl font-bold border-t">
-                    <span>Grand Total</span>
-                    <span>RS {paymentMethod ? grandTotal.toFixed(2) : cartTotal.toFixed(2)}</span>
-                </div>
+                <div className="flex justify-between"><span>Subtotal</span><span>RS {cartTotal.toFixed(2)}</span></div>
+                {paymentMethod && taxAmount > 0 && (<div className="flex justify-between text-sm text-muted-foreground"><span>Tax ({(taxRate * 100).toFixed(0)}%)</span><span>RS {taxAmount.toFixed(2)}</span></div>)}
+                <div className="flex justify-between pt-2 text-xl font-bold border-t"><span>Grand Total</span><span>RS {paymentMethod ? grandTotal.toFixed(2) : cartTotal.toFixed(2)}</span></div>
             </div>
           </div>
         </CardContent>
         <CardFooter className="flex flex-col-reverse gap-4 sm:flex-row sm:justify-end sm:gap-2">
-          <Button variant="outline" asChild>
-            <Link href={`/branch/${branchId}/menu?mode=${orderType}&floorId=${floorId}&tableId=${tableId}`}>Cancel</Link>
-          </Button>
+          <Button variant="outline" asChild><Link href={`/branch/${branchId}/menu?mode=${orderType}&floorId=${floorId}&tableId=${tableId}`}>Cancel</Link></Button>
           <Button
             onClick={handleConfirmOrder}
-            className={cn(
-              "w-full sm:w-auto font-bold",
-              paymentMethod && "animate-blink"
-            )}
+            className={cn("w-full sm:w-auto font-bold bg-primary text-primary-foreground hover:bg-primary/90", paymentMethod && "animate-blink")}
             size="lg"
             disabled={items.length === 0}
           >

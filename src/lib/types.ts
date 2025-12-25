@@ -15,6 +15,18 @@ export type MenuCategory = {
   icon: string;
 }
 
+export type Addon = {
+  id: string;
+  name: string;
+  price: number;
+  addonCategoryId: string;
+};
+
+export type AddonCategory = {
+    id: string;
+    name: string;
+}
+
 export type MenuItem = {
   id: string;
   name: string;
@@ -22,6 +34,7 @@ export type MenuItem = {
   price: number;
   categoryId: string;
   imageUrl: string;
+  availableAddonIds?: string[];
 };
 
 export type Deal = {
@@ -32,9 +45,15 @@ export type Deal = {
   imageUrl: string;
 };
 
-export type CartItem = MenuItem & {
+export type CartItem = Omit<MenuItem, 'price' | 'availableAddonIds'> & {
+  cartItemId: string; // Unique ID for the cart instance of an item
   quantity: number;
+  price: number; // Final price including addons
+  basePrice: number; // Original item price
+  selectedAddons: Addon[];
+  instructions?: string;
 };
+
 
 export type OrderType = 'Dine-In' | 'Take-Away';
 
@@ -72,8 +91,11 @@ export type OrderItem = {
     orderId: string;
     menuItemId: string;
     quantity: number;
-    itemPrice: number;
+    itemPrice: number; // Price of the item including addons at time of order
+    baseItemPrice: number; // Base price of the item without addons
     name: string;
+    selectedAddons: { name: string; price: number }[];
+    instructions?: string;
 };
 
 export type PlacedOrder = {
@@ -125,12 +147,20 @@ export type ActivityLog = {
 
 // --- Types for External System Sync ---
 
+const OrderItemAddonSyncSchema = z.object({
+  name: z.string().describe('The name of the add-on.'),
+  price: z.number().describe('The price of the add-on.'),
+});
+
 // Defines the schema for a single item within the order for external sync.
 const OrderItemSyncSchema = z.object({
   menuItemId: z.string().describe('The unique identifier for the menu item.'),
   name: z.string().describe('The name of the menu item.'),
   quantity: z.number().describe('The quantity of this item ordered.'),
-  itemPrice: z.number().describe('The price of a single unit of this item.'),
+  itemPrice: z.number().describe('The final price of a single unit of this item, including add-ons.'),
+  baseItemPrice: z.number().describe('The base price of the item, excluding add-ons.'),
+  selectedAddons: z.array(OrderItemAddonSyncSchema).describe('An array of selected add-ons for this item.'),
+  instructions: z.string().optional().describe('Special preparation instructions for this item.'),
 });
 
 // Defines the schema for the entire order to be sent to the external system.
@@ -138,7 +168,7 @@ export const SyncOrderInputSchema = z.object({
   id: z.string().describe('The unique identifier for the order.'),
   branchId: z.string().describe('The identifier for the branch where the order was placed.'),
   orderDate: z.string().describe('The ISO 8601 timestamp when the order was placed.'),
-  orderType: z.enum(['Dine-In', 'Take Away']).describe('The type of order.'),
+  orderType: z.enum(['Dine-In', 'Take-Away']).describe('The type of order.'),
   status: z.string().describe('The current status of the order (e.g., "Pending").'),
   totalAmount: z.number().describe('The total cost of the order.'),
   orderNumber: z.string().describe('The human-readable order number.'),
