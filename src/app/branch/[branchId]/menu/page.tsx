@@ -41,6 +41,7 @@ export default function MenuPage() {
     const tableId = searchParams.get("tableId") || undefined;
     const dealId = searchParams.get("dealId");
 
+    // This ensures that navigating directly to the menu URL still sets the context.
     if (mode && branchId) {
       setOrderDetails({ branchId: branchId, orderType: mode, floorId, tableId });
     }

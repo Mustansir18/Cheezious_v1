@@ -27,6 +27,7 @@ export default function TableSelectionPage() {
 
     const handleProceedToMenu = () => {
         if (selectedFloorId && selectedTableId) {
+            // This is the critical fix: update the context *before* navigating.
             setOrderDetails({
                 branchId: branchId,
                 orderType: 'Dine-In',
