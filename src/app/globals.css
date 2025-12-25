@@ -89,13 +89,16 @@ body {
 
 @layer utilities {
   @keyframes blink {
+    0%, 100% {
+      box-shadow: 0 0 0 0 hsl(var(--primary) / 0.7);
+    }
     50% {
-      opacity: 0.7;
+      box-shadow: 0 0 0 4px hsl(var(--primary) / 0);
     }
   }
 
   .animate-blink {
-    animation: blink 1.5s ease-in-out infinite;
+    animation: blink 2s ease-in-out infinite;
   }
 }
 
