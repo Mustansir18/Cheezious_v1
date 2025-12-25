@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useSettings } from '@/context/SettingsContext';
 import { useDeals } from '@/context/DealsContext';
-import { Loader, ListChecks, Pizza } from 'lucide-react';
+import { Loader, ListChecks, Pizza, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
@@ -49,8 +49,12 @@ function DealsCarousel() {
           </CarouselItem>
         ))}
       </CarouselContent>
-      <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-background/50 hover:bg-background" />
-      <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-background/50 hover:bg-background" />
+       <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-10 h-10 w-10 bg-green-500/80 text-white border-none hover:bg-green-500">
+        <ChevronLeft className="h-6 w-6" />
+      </CarouselPrevious>
+      <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-10 h-10 w-10 bg-green-500/80 text-white border-none hover:bg-green-500">
+        <ChevronRight className="h-6 w-6" />
+      </CarouselNext>
     </Carousel>
   );
 }
