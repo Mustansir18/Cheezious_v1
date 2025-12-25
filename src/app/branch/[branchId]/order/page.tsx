@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useCart } from "@/context/CartContext";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import type { PlacedOrder, Order, OrderItem } from "@/lib/types";
@@ -229,7 +229,7 @@ export default function OrderConfirmationPage() {
           </Button>
           <Button
             onClick={handleConfirmOrder}
-            className="w-full sm:w-auto bg-accent text-accent-foreground hover:bg-accent/90"
+            className="w-full sm:w-auto bg-muted text-muted-foreground hover:bg-muted/90"
             size="lg"
             disabled={items.length === 0}
           >
