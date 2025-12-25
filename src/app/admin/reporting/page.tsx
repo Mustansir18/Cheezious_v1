@@ -53,6 +53,7 @@ function ReportCardActions({ reportId, onPrint }: { reportId: string; onPrint: (
 export default function ReportingPage() {
   const { orders, isLoading } = useOrders();
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
+  const [selectedOrderType, setSelectedOrderType] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: new Date(new Date().setHours(0, 0, 0, 0)),
     to: new Date(),
@@ -69,9 +70,9 @@ export default function ReportingPage() {
         return orderDate >= dateRange.from && orderDate <= toDate;
     });
 
-    const filteredOrders = selectedPaymentMethod 
-        ? baseFilteredOrders.filter(order => order.paymentMethod === selectedPaymentMethod)
-        : baseFilteredOrders;
+    const filteredOrders = baseFilteredOrders
+      .filter(order => selectedPaymentMethod ? order.paymentMethod === selectedPaymentMethod : true)
+      .filter(order => selectedOrderType ? order.orderType === selectedOrderType : true);
         
     const totalOrders = filteredOrders.length;
     const totalSales = filteredOrders.reduce((sum, order) => sum + order.totalAmount, 0);
@@ -83,32 +84,38 @@ export default function ReportingPage() {
 
     const itemSales: { [key: string]: ItemSale } = {};
     const hourlySales: { [key: number]: number } = {};
-    const dineInOrders = filteredOrders.filter((o) => o.orderType === "Dine-In");
-    const takeAwayOrders = filteredOrders.filter((o) => o.orderType === "Take-Away");
     
-    // Payment method counts should be calculated from the base (unfiltered) list to show the full breakdown
+    // Order type counts and sales should be calculated from the date-filtered list (before other filters)
+    const dineInOrders = baseFilteredOrders.filter((o) => o.orderType === "Dine-In");
+    const takeAwayOrders = baseFilteredOrders.filter((o) => o.orderType === "Take-Away");
+    const dineInSales = dineInOrders.reduce((sum, order) => sum + order.totalAmount, 0);
+    const takeAwaySales = takeAwayOrders.reduce((sum, order) => sum + order.totalAmount, 0);
+
+    
+    // Payment method counts should be calculated from the base (unfiltered by payment) list to show the full breakdown
+    const paymentFilteredOrders = baseFilteredOrders.filter(order => selectedOrderType ? order.orderType === selectedOrderType : true);
     const paymentMethodSales: { [key: string]: number } = {};
-     baseFilteredOrders.forEach(order => {
+     paymentFilteredOrders.forEach(order => {
         if (order.paymentMethod) {
             paymentMethodSales[order.paymentMethod] = (paymentMethodSales[order.paymentMethod] || 0) + order.totalAmount;
         }
     });
 
     // --- Dine In Metrics ---
-    const dineInSales = dineInOrders.reduce((sum, order) => sum + order.totalAmount, 0);
-    const dineInGrossSales = dineInOrders.reduce((sum, order) => sum + order.totalAmount, 0);
-    const dineInNetSales = dineInOrders.reduce((sum, order) => sum + order.subtotal, 0);
-    const dineInTax = dineInOrders.reduce((sum, order) => sum + order.taxAmount, 0);
-    const dineInCashSales = dineInOrders.filter(o => o.paymentMethod === 'Cash').reduce((sum, order) => sum + order.totalAmount, 0);
-    const dineInCardSales = dineInOrders.filter(o => o.paymentMethod?.toLowerCase().includes('card')).reduce((sum, order) => sum + order.totalAmount, 0);
+    const dineInBreakdownOrders = dineInOrders.filter(order => selectedPaymentMethod ? order.paymentMethod === selectedPaymentMethod : true);
+    const dineInGrossSales = dineInBreakdownOrders.reduce((sum, order) => sum + order.totalAmount, 0);
+    const dineInNetSales = dineInBreakdownOrders.reduce((sum, order) => sum + order.subtotal, 0);
+    const dineInTax = dineInBreakdownOrders.reduce((sum, order) => sum + order.taxAmount, 0);
+    const dineInCashSales = dineInBreakdownOrders.filter(o => o.paymentMethod === 'Cash').reduce((sum, order) => sum + order.totalAmount, 0);
+    const dineInCardSales = dineInBreakdownOrders.filter(o => o.paymentMethod?.toLowerCase().includes('card')).reduce((sum, order) => sum + order.totalAmount, 0);
 
     // --- Take Away Metrics ---
-    const takeAwaySales = takeAwayOrders.reduce((sum, order) => sum + order.totalAmount, 0);
-    const takeAwayGrossSales = takeAwayOrders.reduce((sum, order) => sum + order.totalAmount, 0);
-    const takeAwayNetSales = takeAwayOrders.reduce((sum, order) => sum + order.subtotal, 0);
-    const takeAwayTax = takeAwayOrders.reduce((sum, order) => sum + order.taxAmount, 0);
-    const takeAwayCashSales = takeAwayOrders.filter(o => o.paymentMethod === 'Cash').reduce((sum, order) => sum + order.totalAmount, 0);
-    const takeAwayCardSales = takeAwayOrders.filter(o => o.paymentMethod?.toLowerCase().includes('card')).reduce((sum, order) => sum + order.totalAmount, 0);
+    const takeAwayBreakdownOrders = takeAwayOrders.filter(order => selectedPaymentMethod ? order.paymentMethod === selectedPaymentMethod : true);
+    const takeAwayGrossSales = takeAwayBreakdownOrders.reduce((sum, order) => sum + order.totalAmount, 0);
+    const takeAwayNetSales = takeAwayBreakdownOrders.reduce((sum, order) => sum + order.subtotal, 0);
+    const takeAwayTax = takeAwayBreakdownOrders.reduce((sum, order) => sum + order.taxAmount, 0);
+    const takeAwayCashSales = takeAwayBreakdownOrders.filter(o => o.paymentMethod === 'Cash').reduce((sum, order) => sum + order.totalAmount, 0);
+    const takeAwayCardSales = takeAwayBreakdownOrders.filter(o => o.paymentMethod?.toLowerCase().includes('card')).reduce((sum, order) => sum + order.totalAmount, 0);
 
 
     for (const order of filteredOrders) {
@@ -168,7 +175,7 @@ export default function ReportingPage() {
       takeAwayCashSales,
       takeAwayCardSales,
     };
-  }, [orders, dateRange, selectedPaymentMethod]);
+  }, [orders, dateRange, selectedPaymentMethod, selectedOrderType]);
 
     const handlePrint = (reportId: string) => {
         const reportElement = document.getElementById(reportId);
@@ -192,6 +199,11 @@ export default function ReportingPage() {
         document.body.removeChild(printContainer);
         document.body.classList.remove('printing-active');
   };
+
+  const handleOrderTypeSelect = (type: string) => {
+    setSelectedOrderType(prev => (prev === type ? null : type));
+  };
+
 
   useEffect(() => {
     const afterPrint = () => {
@@ -265,8 +277,8 @@ export default function ReportingPage() {
   ];
   
   const orderTypeCards = [
-      { title: "Dine-In Orders", value: dineInCount, icon: Utensils, description: `RS ${dineInSales.toFixed(2)} in sales`},
-      { title: "Take Away Orders", value: takeAwayCount, icon: ShoppingBag, description: `RS ${takeAwaySales.toFixed(2)} in sales`},
+      { title: "Dine-In", value: dineInCount, icon: Utensils, description: `RS ${dineInSales.toFixed(2)} in sales`, type: 'Dine-In'},
+      { title: "Take Away", value: takeAwayCount, icon: ShoppingBag, description: `RS ${takeAwaySales.toFixed(2)} in sales`, type: 'Take-Away'},
   ]
 
   const dineInBreakdown = [
@@ -292,10 +304,9 @@ export default function ReportingPage() {
         <div>
             <h1 className="font-headline text-4xl font-bold">Admin Reports</h1>
             <p className="text-muted-foreground">
-              {selectedPaymentMethod 
-                ? `Displaying sales data for '${selectedPaymentMethod}' transactions.`
-                : `Sales data for the selected period.`
-              }
+              {selectedOrderType ? `Displaying sales data for '${selectedOrderType}' orders.` : 
+              selectedPaymentMethod ? `Displaying sales data for '${selectedPaymentMethod}' transactions.` : 
+              `Sales data for the selected period.`}
             </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
@@ -372,14 +383,21 @@ export default function ReportingPage() {
                     <CardHeader className="flex-row justify-between items-center">
                         <div>
                             <CardTitle className="font-headline flex items-center">Order Type Summary</CardTitle>
-                            <CardDescription>Transaction counts and sales totals by order type.</CardDescription>
+                            <CardDescription>Transaction counts and sales totals by order type. Click to filter.</CardDescription>
                         </div>
                         <ReportCardActions reportId="ordertype-report" onPrint={handlePrint} />
                     </CardHeader>
                     <CardContent>
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             {orderTypeCards.map(card => (
-                                <Card key={card.title}>
+                                <Card 
+                                    key={card.title} 
+                                    className={cn(
+                                        "cursor-pointer transition-all hover:shadow-md",
+                                        selectedOrderType === card.type && "ring-2 ring-primary"
+                                    )}
+                                    onClick={() => handleOrderTypeSelect(card.type)}
+                                >
                                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                         <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
                                         <card.icon className="h-5 w-5 text-muted-foreground" />
@@ -457,3 +475,5 @@ export default function ReportingPage() {
     </TooltipProvider>
   );
 }
+
+    
