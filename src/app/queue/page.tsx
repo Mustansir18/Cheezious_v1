@@ -29,9 +29,9 @@ const StatusColumn = ({ title, orders, status }: { title: string, orders: { orde
     }
 
     const badgeColor = {
-        Pending: "",
-        Preparing: "animate-pulse",
-        Ready: "bg-green-600 text-white hover:bg-green-700 animate-pulse",
+        Pending: "animate-blink",
+        Preparing: "animate-blink",
+        Ready: "bg-green-600 text-white hover:bg-green-700 animate-blink",
     }
 
     return (
@@ -48,7 +48,7 @@ const StatusColumn = ({ title, orders, status }: { title: string, orders: { orde
                  <div className="flex flex-wrap justify-center gap-4">
                     {orders.length > 0 ? (
                         orders.map(order => (
-                            <Badge key={order.orderNumber} variant={badgeVariant[status]} className={cn("text-3xl font-bold p-3 px-6 rounded-lg", status === 'Pending' && 'animate-pulse', badgeColor[status])}>
+                            <Badge key={order.orderNumber} variant={badgeVariant[status]} className={cn("text-3xl font-bold p-3 px-6 rounded-lg", badgeColor[status])}>
                                 {order.orderNumber}
                             </Badge>
                         ))
