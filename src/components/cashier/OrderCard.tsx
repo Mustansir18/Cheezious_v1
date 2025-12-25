@@ -251,28 +251,28 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
   const isModifiable = user?.role === 'admin' || user?.role === 'root';
   const orderDate = useMemo(() => new Date(order.orderDate), [order.orderDate]);
   const table = useMemo(() => settings.tables.find(t => t.id === order.tableId), [settings.tables, order.tableId]);
-  const floor = useMemo(() => settings.floors.find(f => f.id === table?.floorId), [settings.floors, table]);
+  const floor = useMemo(() => settings.floors.find(f => f.id === order.floorId), [settings.floors, order.floorId]);
 
 
   return (
     <Card className="flex h-full flex-col">
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-            <span className="font-headline text-xl">Order #{order.orderNumber}</span>
+        <div className="flex items-center justify-between">
+            <CardTitle className="font-headline text-xl">Order #{order.orderNumber}</CardTitle>
             <div className="flex items-center gap-1">
                 {children}
                 <Button variant="ghost" size="icon" className="h-8 w-8 print-hidden" onClick={handlePrint}><Printer className="h-4 w-4" /></Button>
                 <Badge variant="secondary">{order.orderType === 'Dine-In' ? <Utensils className="mr-1 h-4 w-4"/> : <ShoppingBag className="mr-1 h-4 w-4" />} {order.orderType}</Badge>
             </div>
-        </CardTitle>
-        <div className="flex justify-between items-center text-sm text-muted-foreground">
+        </div>
+        <CardDescription className="flex justify-between items-center text-sm text-muted-foreground">
              <span>{formatDistanceToNow(orderDate, { addSuffix: true })}</span>
              {order.orderType === 'Dine-In' && table && floor && (
                 <span className="font-semibold">{floor.name} - {table.name}</span>
             )}
-        </div>
+        </CardDescription>
         {order.status === 'Cancelled' && order.cancellationReason && (
-            <CardDescription className="text-red-500">Reason: {order.cancellationReason}</CardDescription>
+            <CardDescription className="text-red-500 !mt-1">Reason: {order.cancellationReason}</CardDescription>
         )}
       </CardHeader>
       <CardContent className="flex-grow">
@@ -370,7 +370,13 @@ const OrderItemSkeleton = () => (
 OrderCard.Skeleton = function OrderCardSkeleton() {
     return (
       <Card>
-        <CardHeader><Skeleton className="h-6 w-3/4" /><Skeleton className="h-4 w-1/2" /></CardHeader>
+        <CardHeader>
+            <div className="flex items-center justify-between">
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-6 w-12" />
+            </div>
+            <Skeleton className="h-4 w-1/2" />
+        </CardHeader>
         <CardContent>
           <div className="space-y-3"><OrderItemSkeleton /><OrderItemSkeleton /></div>
           <Separator className="my-4" />
@@ -380,5 +386,3 @@ OrderCard.Skeleton = function OrderCardSkeleton() {
       </Card>
     );
   };
-
-    
