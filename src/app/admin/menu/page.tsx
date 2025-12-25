@@ -33,6 +33,30 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Trash2, Edit, PlusCircle } from 'lucide-react';
 import type { MenuCategory, MenuItem } from '@/lib/types';
+import imageCompression from 'browser-image-compression';
+
+async function handleImageUpload(file: File) {
+  const options = {
+    maxSizeMB: 0.5, // (max file size in MB)
+    maxWidthOrHeight: 800, // (max width or height in pixels)
+    useWebWorker: true,
+  };
+  try {
+    const compressedFile = await imageCompression(file, options);
+    // Convert the compressed file to a Data URL for preview
+    return await imageCompression.getDataUrlFromFile(compressedFile);
+  } catch (error) {
+    console.error('Image compression failed:', error);
+    // Fallback to reading the original file if compression fails
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+}
+
 
 // Category Form Component
 function CategoryForm({
@@ -112,15 +136,15 @@ function ItemForm({
   const [price, setPrice] = useState(item?.price || 0);
   const [categoryId, setCategoryId] = useState(item?.categoryId || '');
   const [imageUrl, setImageUrl] = useState(item?.imageUrl || '');
+  const [isCompressing, setIsCompressing] = useState(false);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImageUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      setIsCompressing(true);
+      const compressedDataUrl = await handleImageUpload(file);
+      setImageUrl(compressedDataUrl);
+      setIsCompressing(false);
     }
   };
 
@@ -164,8 +188,9 @@ function ItemForm({
       <div>
         <Label htmlFor="item-image">Item Image</Label>
         <Input id="item-image" type="file" accept="image/*" onChange={handleImageChange} className="file:text-foreground"/>
-        <p className="text-sm text-muted-foreground mt-1">Select an image from your system.</p>
-        {imageUrl && (
+        <p className="text-sm text-muted-foreground mt-1">Select an image from your system. It will be automatically compressed.</p>
+        {isCompressing && <p className="text-sm text-blue-500 mt-2">Compressing image...</p>}
+        {imageUrl && !isCompressing && (
           <div className="mt-4">
             <p className="text-sm font-medium mb-2">Image Preview:</p>
             <Image src={imageUrl} alt="Image preview" width={100} height={100} className="rounded-md object-cover" />
