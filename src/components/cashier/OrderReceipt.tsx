@@ -79,12 +79,16 @@ export function OrderReceipt({ order }: OrderReceiptProps) {
                                 ))}
                             </div>
                         )}
-                        {item.instructions && (
-                             <div className="pl-4 text-gray-600 italic">"{item.instructions}"</div>
-                        )}
                     </div>
                 ))}
             </div>
+
+            {order.instructions && (
+                <>
+                    <hr className="border-dashed border-black my-2" />
+                    <div className="text-gray-600 italic">"{order.instructions}"</div>
+                </>
+            )}
 
             <hr className="border-dashed border-black my-2" />
 

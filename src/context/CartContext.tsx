@@ -9,7 +9,6 @@ import { useToast } from '@/hooks/use-toast';
 interface AddToCartOptions {
     item: MenuItem;
     selectedAddons?: Addon[];
-    instructions?: string;
 }
 interface CartContextType {
   items: CartItem[];
@@ -83,16 +82,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const addItem = ({ item: itemToAdd, selectedAddons = [], instructions = '' }: AddToCartOptions) => {
+  const addItem = ({ item: itemToAdd, selectedAddons = [] }: AddToCartOptions) => {
     const addonPrice = selectedAddons.reduce((sum, addon) => sum + addon.price, 0);
     const finalPrice = itemToAdd.price + addonPrice;
 
     // Create a unique ID for this specific combination of item + addons
     const addonIds = selectedAddons.map(a => a.id).sort().join('-');
-    const cartItemId = `${itemToAdd.id}${addonIds ? `-${addonIds}` : ''}${instructions ? '-instr' : ''}`;
+    const cartItemId = `${itemToAdd.id}${addonIds ? `-${addonIds}` : ''}`;
 
     setItems((prevItems) => {
-      const existingItem = prevItems.find((item) => item.cartItemId === cartItemId && item.instructions === instructions);
+      const existingItem = prevItems.find((item) => item.cartItemId === cartItemId);
       if (existingItem) {
         // If the exact same item with the same instructions exists, just increase its quantity
         return prevItems.map((item) =>
@@ -106,7 +105,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         price: finalPrice, // Use the price including addons
         basePrice: itemToAdd.price,
         selectedAddons,
-        instructions,
         quantity: 1,
       };
       return [...prevItems, newCartItem];

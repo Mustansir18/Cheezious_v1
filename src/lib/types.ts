@@ -51,7 +51,6 @@ export type CartItem = Omit<MenuItem, 'price' | 'availableAddonIds'> & {
   price: number; // Final price including addons
   basePrice: number; // Original item price
   selectedAddons: Addon[];
-  instructions?: string;
 };
 
 
@@ -69,6 +68,7 @@ export type Order = {
     totalAmount: number;
     items: OrderItem[];
     paymentMethod: string;
+    instructions?: string;
     // New fields for dine-in orders
     floorId?: string;
     tableId?: string;
@@ -95,7 +95,6 @@ export type OrderItem = {
     baseItemPrice: number; // Base price of the item without addons
     name: string;
     selectedAddons: { name: string; price: number }[];
-    instructions?: string;
 };
 
 export type PlacedOrder = {
@@ -160,7 +159,6 @@ const OrderItemSyncSchema = z.object({
   itemPrice: z.number().describe('The final price of a single unit of this item, including add-ons.'),
   baseItemPrice: z.number().describe('The base price of the item, excluding add-ons.'),
   selectedAddons: z.array(OrderItemAddonSyncSchema).describe('An array of selected add-ons for this item.'),
-  instructions: z.string().optional().describe('Special preparation instructions for this item.'),
 });
 
 // Defines the schema for the entire order to be sent to the external system.
@@ -173,6 +171,7 @@ export const SyncOrderInputSchema = z.object({
   totalAmount: z.number().describe('The total cost of the order.'),
   orderNumber: z.string().describe('The human-readable order number.'),
   items: z.array(OrderItemSyncSchema).describe('An array of items included in the order.'),
+  instructions: z.string().optional().describe('Special preparation instructions for the entire order.'),
   // Optional fields for dine-in
   floorId: z.string().optional().describe('The identifier for the floor.'),
   tableId: z.string().optional().describe('The identifier for the table.'),

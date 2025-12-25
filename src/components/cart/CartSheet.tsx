@@ -50,9 +50,6 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                             {item.selectedAddons.map(addon => (
                                 <p key={addon.id}>+ {addon.name}</p>
                             ))}
-                            {item.instructions && (
-                                <p className="italic text-primary">"{item.instructions}"</p>
-                            )}
                         </div>
                         <p className="text-sm">
                           RS {item.price.toFixed(2)}

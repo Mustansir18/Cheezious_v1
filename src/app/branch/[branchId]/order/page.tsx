@@ -16,8 +16,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/context/SettingsContext";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CreditCard } from "lucide-react";
+import { CreditCard, MessageSquarePlus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Textarea } from "@/components/ui/textarea";
 
 const FALLBACK_IMAGE_URL = "https://picsum.photos/seed/placeholder/400/300";
 
@@ -28,6 +29,7 @@ export default function OrderConfirmationPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [paymentMethod, setPaymentMethod] = useState<string>('');
+  const [instructions, setInstructions] = useState('');
 
   useEffect(() => {
     setIsCartOpen(false);
@@ -82,7 +84,6 @@ export default function OrderConfirmationPage() {
         itemPrice: item.price,
         baseItemPrice: item.basePrice,
         selectedAddons: item.selectedAddons.map(a => ({ name: a.name, price: a.price })),
-        instructions: item.instructions
     }));
 
     const newOrder: Order = {
@@ -98,6 +99,7 @@ export default function OrderConfirmationPage() {
         taxAmount: taxAmount,
         items: orderItems,
         paymentMethod,
+        instructions,
         ...(orderType === 'Dine-In' && { floorId, tableId }),
     };
     
@@ -110,7 +112,6 @@ export default function OrderConfirmationPage() {
             itemPrice: item.itemPrice,
             baseItemPrice: item.baseItemPrice,
             selectedAddons: item.selectedAddons,
-            instructions: item.instructions
         }))
     }).then(result => {
         if (!result.success) {
@@ -168,7 +169,6 @@ export default function OrderConfirmationPage() {
                     <p className="font-semibold text-left">{item.name}</p>
                     <div className="text-sm text-muted-foreground text-left">
                         {item.selectedAddons.map(addon => (<p key={addon.id}>+ {addon.name}</p>))}
-                        {item.instructions && (<p className="italic text-primary">"{item.instructions}"</p>)}
                     </div>
                     <p className="text-sm text-muted-foreground text-left">
                       {item.quantity} x RS {item.price.toFixed(2)}
@@ -183,6 +183,17 @@ export default function OrderConfirmationPage() {
             ))}
             <Separator />
             
+            <div className="space-y-2">
+                <Label htmlFor="instructions" className="font-semibold flex items-center"><MessageSquarePlus className="mr-2 h-5 w-5"/>Special Instructions</Label>
+                <Textarea 
+                    id="instructions"
+                    placeholder="e.g., make it extra spicy, no onions..."
+                    value={instructions}
+                    onChange={(e) => setInstructions(e.target.value)}
+                />
+                 <p className="text-xs text-muted-foreground pt-1">Any special requests for the entire order can be added here.</p>
+            </div>
+
             <div className={cn("p-4 rounded-lg bg-muted/50", !paymentMethod && "animate-blink")}>
                 <div className="space-y-2">
                     <Label htmlFor="payment-method" className="font-semibold flex items-center"><CreditCard className="mr-2 h-5 w-5"/>Payment Method</Label>

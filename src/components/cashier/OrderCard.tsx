@@ -265,12 +265,12 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
                 <Badge variant="secondary">{order.orderType === 'Dine-In' ? <Utensils className="mr-1 h-4 w-4"/> : <ShoppingBag className="mr-1 h-4 w-4" />} {order.orderType}</Badge>
             </div>
         </div>
-        <CardDescription className="flex justify-between items-center text-sm text-muted-foreground">
+        <div className="flex justify-between items-center text-sm text-muted-foreground">
              <span>{formatDistanceToNow(orderDate, { addSuffix: true })}</span>
              {order.orderType === 'Dine-In' && table && floor && (
                 <span className="font-semibold">{floor.name} - {table.name}</span>
             )}
-        </CardDescription>
+        </div>
         {order.status === 'Cancelled' && order.cancellationReason && (
             <CardDescription className="text-red-500 !mt-1">Reason: {order.cancellationReason}</CardDescription>
         )}
@@ -294,15 +294,20 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
                             ))}
                         </div>
                     )}
-                    {item.instructions && (
-                        <div className="pl-4 text-xs text-muted-foreground italic flex items-center gap-1">
-                           <MessageSquareText className="h-3 w-3" /> "{item.instructions}"
-                        </div>
-                    )}
                 </div>
             ))}
             </div>
         </ScrollArea>
+        
+        {order.instructions && (
+            <div className="mt-4 border-t pt-4">
+                <div className="text-sm italic text-muted-foreground flex items-start gap-2">
+                    <MessageSquareText className="h-4 w-4 mt-0.5 shrink-0" />
+                    <span>"{order.instructions}"</span>
+                </div>
+            </div>
+        )}
+
         <Separator className="my-4" />
 
         { (order.isComplementary || order.discountAmount) && order.originalTotalAmount && (
