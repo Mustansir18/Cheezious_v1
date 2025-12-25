@@ -28,7 +28,7 @@ export default function Header({ branchId }: { branchId: string }) {
             {branch && <h2 className="font-headline text-lg font-semibold">{branch.name}</h2>}
         </div>
         <CartSheet>
-          <Button variant="outline" className={cn("relative", cartCount > 0 && "animate-blink")}>
+          <Button variant="secondary" className={cn("relative", cartCount > 0 && "animate-blink")}>
             <ShoppingCart className="h-5 w-5" />
             <span className="ml-2">Cart</span>
             {cartCount > 0 && (
