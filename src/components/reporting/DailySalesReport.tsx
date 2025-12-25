@@ -1,0 +1,100 @@
+
+'use client';
+
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Printer, FileDown } from 'lucide-react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
+import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+
+export interface DailySale {
+  date: string;
+  sales: number;
+}
+
+interface DailySalesReportProps {
+  data: DailySale[];
+  onPrint: () => void;
+}
+
+export function DailySalesReport({ data, onPrint }: DailySalesReportProps) {
+  return (
+    <Card>
+      <CardHeader className="flex-row justify-between items-center">
+        <div>
+            <CardTitle className="font-headline">Daily Sales Trend (Last 7 Days)</CardTitle>
+            <CardDescription>Total revenue generated per day for the last week.</CardDescription>
+        </div>
+        <div className="flex items-center gap-2 print-hidden">
+            <UITooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" disabled>
+                        <FileDown className="h-4 w-4"/>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>Download report (coming soon)</p>
+                </TooltipContent>
+            </UITooltip>
+            <Button variant="ghost" size="icon" onClick={onPrint}>
+                <Printer className="h-4 w-4"/>
+            </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="date" fontSize={12} tickLine={false} axisLine={false} />
+            <YAxis
+              stroke="#888888"
+              fontSize={12}
+              tickLine={false}
+              axisLine={false}
+              tickFormatter={(value) => `RS ${value}`}
+            />
+            <Tooltip
+              cursor={{ fill: 'hsl(var(--muted))' }}
+              content={({ active, payload }) => {
+                if (active && payload && payload.length) {
+                  return (
+                    <div className="rounded-lg border bg-background p-2 shadow-sm">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex flex-col">
+                          <span className="text-[0.70rem] uppercase text-muted-foreground">
+                            Date
+                          </span>
+                          <span className="font-bold text-muted-foreground">
+                            {payload[0].payload.date}
+                          </span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[0.70rem] uppercase text-muted-foreground">
+                            Sales
+                          </span>
+                          <span className="font-bold">
+                            RS {payload[0].value?.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              }}
+            />
+            <Bar dataKey="sales" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </CardContent>
+    </Card>
+  );
+}

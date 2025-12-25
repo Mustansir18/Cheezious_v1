@@ -8,13 +8,14 @@ import type { Order } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Calendar as CalendarIcon, ShoppingCart, DollarSign, Utensils, Loader, Printer, CreditCard, ShoppingBag, FileDown } from "lucide-react";
 import { HourlySalesReport } from "@/components/reporting/HourlySalesReport";
+import { DailySalesReport, type DailySale } from "@/components/reporting/DailySalesReport";
 import { TopSellingItems } from "@/components/reporting/TopSellingItems";
 import { PaymentMethodBreakdown, type PaymentData } from "@/components/reporting/PaymentMethodBreakdown";
 import { OrderTypeSummary, type OrderTypeData } from "@/components/reporting/OrderTypeSummary";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from "date-fns";
+import { format, subDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { DateRange } from "react-day-picker";
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -159,6 +160,20 @@ export default function ReportingPage() {
         { type: "Dine-In", count: dineInOrders.length, sales: dineInSales, icon: Utensils, fill: 'hsl(var(--chart-1))' },
         { type: "Take-Away", count: takeAwayOrders.length, sales: takeAwaySales, icon: ShoppingBag, fill: 'hsl(var(--chart-2))' },
     ];
+    
+    const today = new Date();
+    const last8Days = Array.from({ length: 8 }, (_, i) => subDays(today, i)).reverse();
+    const dailySalesChartData: DailySale[] = last8Days.map(date => {
+        const dateString = date.toISOString().split('T')[0];
+        const daySales = filteredOrders
+            .filter(order => new Date(order.orderDate).toISOString().split('T')[0] === dateString)
+            .reduce((sum, order) => sum + order.totalAmount, 0);
+        
+        return {
+            date: format(date, 'MMM d'),
+            sales: daySales
+        };
+    });
 
 
     return {
@@ -167,6 +182,7 @@ export default function ReportingPage() {
       totalItemsSold,
       topSellingItems,
       hourlySalesChartData,
+      dailySalesChartData,
       orderTypeChartData,
       paymentChartData,
       dineInGrossSales,
@@ -253,6 +269,7 @@ export default function ReportingPage() {
     totalItemsSold,
     topSellingItems,
     hourlySalesChartData,
+    dailySalesChartData,
     orderTypeChartData,
     paymentChartData,
     dineInGrossSales,
@@ -387,6 +404,10 @@ export default function ReportingPage() {
                 />
             </div>
         </div>
+        
+        <div id="daily-sales-report">
+            <DailySalesReport data={dailySalesChartData} onPrint={() => handlePrint('daily-sales-report')} />
+        </div>
           
         <div id="dine-in-breakdown">
              <Card>
@@ -441,7 +462,3 @@ export default function ReportingPage() {
     </TooltipProvider>
   );
 }
-
-    
-
-    
