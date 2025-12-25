@@ -50,12 +50,8 @@ function DealsCarousel() {
           </CarouselItem>
         ))}
       </CarouselContent>
-       <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-10 h-10 w-10 bg-green-500/80 text-white border-none hover:bg-green-500">
-        <ChevronLeft className="h-6 w-6" />
-      </CarouselPrevious>
-      <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-10 h-10 w-10 bg-green-500/80 text-white border-none hover:bg-green-500">
-        <ChevronRight className="h-6 w-6" />
-      </CarouselNext>
+       <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-10 h-10 w-10 bg-black/50 text-white border-none hover:bg-black/75" />
+      <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-10 h-10 w-10 bg-black/50 text-white border-none hover:bg-black/75" />
     </Carousel>
   );
 }
