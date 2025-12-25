@@ -30,8 +30,8 @@ const StatusColumn = ({ title, orders, status }: { title: string, orders: { orde
 
     const badgeColor = {
         Pending: "",
-        Preparing: "",
-        Ready: "bg-green-600 text-white hover:bg-green-700",
+        Preparing: "animate-pulse",
+        Ready: "bg-green-600 text-white hover:bg-green-700 animate-pulse",
     }
 
     return (
@@ -48,7 +48,7 @@ const StatusColumn = ({ title, orders, status }: { title: string, orders: { orde
                  <div className="flex flex-wrap justify-center gap-4">
                     {orders.length > 0 ? (
                         orders.map(order => (
-                            <Badge key={order.orderNumber} variant={badgeVariant[status]} className={cn("text-3xl font-bold p-3 px-6 rounded-lg", badgeColor[status])}>
+                            <Badge key={order.orderNumber} variant={badgeVariant[status]} className={cn("text-3xl font-bold p-3 px-6 rounded-lg", status === 'Pending' && 'animate-pulse', badgeColor[status])}>
                                 {order.orderNumber}
                             </Badge>
                         ))
@@ -116,7 +116,7 @@ export default function QueuePage() {
         <div className="h-screen w-full bg-background p-8">
             <header className="text-center mb-8 flex justify-between items-center">
                 <div className="w-16"></div> {/* Spacer */}
-                <h1 className="font-headline text-5xl font-bold">{settings.companyName} Order Status</h1>
+                <h1 className="font-headline text-5xl font-bold">Order Queue status</h1>
                 <Link href="/" passHref>
                     <Button variant="outline" size="icon" aria-label="Back to Home">
                         <Home className="h-6 w-6" />
