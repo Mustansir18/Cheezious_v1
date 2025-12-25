@@ -182,7 +182,10 @@ export default function OrderConfirmationPage() {
             ))}
             <Separator />
             
-            <div className="bg-muted p-4 rounded-lg">
+            <div className={cn(
+                "p-4 rounded-lg bg-muted/50",
+                !paymentMethod && "animate-blink"
+                )}>
                 <div className="space-y-2">
                     <Label htmlFor="payment-method" className="font-semibold flex items-center"><CreditCard className="mr-2 h-5 w-5"/>Payment Method</Label>
                     <Select value={paymentMethod} onValueChange={setPaymentMethod}>
