@@ -12,6 +12,7 @@ export function OrderReceipt({ order }: OrderReceiptProps) {
     const { settings } = useSettings();
     const branch = settings.branches.find(b => b.id === order.branchId);
     const table = settings.tables.find(t => t.id === order.tableId);
+    const floor = settings.floors.find(f => f.id === table?.floorId);
 
     const displayTotal = order.originalTotalAmount ?? order.totalAmount;
 
@@ -42,10 +43,10 @@ export function OrderReceipt({ order }: OrderReceiptProps) {
                     <span>Type:</span>
                     <span className="font-bold">{order.orderType}</span>
                 </div>
-                 {order.orderType === 'Dine-In' && table && (
+                 {order.orderType === 'Dine-In' && table && floor && (
                     <div className="flex justify-between">
                         <span>Table:</span>
-                        <span className="font-bold">{table.name}</span>
+                        <span className="font-bold">{floor.name} - {table.name}</span>
                     </div>
                  )}
             </div>
