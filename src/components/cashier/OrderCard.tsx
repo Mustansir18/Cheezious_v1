@@ -257,7 +257,7 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
   return (
     <Card className="flex h-full flex-col">
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex items-start justify-between">
             <CardTitle className="font-headline text-xl">Order #{order.orderNumber}</CardTitle>
             <div className="flex items-center gap-1">
                 {children}
@@ -265,10 +265,10 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
                 <Badge variant="secondary">{order.orderType === 'Dine-In' ? <Utensils className="mr-1 h-4 w-4"/> : <ShoppingBag className="mr-1 h-4 w-4" />} {order.orderType}</Badge>
             </div>
         </div>
-        <div className="flex justify-between items-center text-sm text-muted-foreground">
-             <span>{formatDistanceToNow(orderDate, { addSuffix: true })}</span>
-             {order.orderType === 'Dine-In' && table && floor && (
-                <span className="font-semibold">{floor.name} - {table.name}</span>
+        <div className="text-sm text-muted-foreground">
+            <div>{formatDistanceToNow(orderDate, { addSuffix: true })}</div>
+            {order.orderType === 'Dine-In' && table && floor && (
+                <div className="font-semibold text-primary">{floor.name} - {table.name}</div>
             )}
         </div>
         {order.status === 'Cancelled' && order.cancellationReason && (
@@ -395,3 +395,4 @@ OrderCard.Skeleton = function OrderCardSkeleton() {
     
 
     
+
