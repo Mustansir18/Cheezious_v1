@@ -81,7 +81,13 @@ export default function Home() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4">
+    <main className="relative flex min-h-screen flex-col items-center justify-center p-4">
+        <div className="absolute top-4 right-4">
+            <Button size="sm" variant="outline" onClick={handleCheckStatus}>
+                Check Order Status
+            </Button>
+        </div>
+
         <div className="flex flex-col items-center justify-center text-center space-y-6">
             <Pizza className="h-24 w-24 text-primary" />
             <div className="space-y-2">
@@ -100,14 +106,8 @@ export default function Home() {
                     <p className="mt-1 text-sm text-muted-foreground">Please log in as an admin to add a branch.</p>
                 </div>
              ) : (
-                <div className="flex flex-col sm:flex-row gap-8 py-6 items-center">
+                <div className="py-6">
                     <Button size="lg" className="px-10 py-6 text-lg font-bold" onClick={handleStartOrder}>Start Your Order</Button>
-                    <div className="flex flex-col items-center gap-2">
-                        <p className="text-sm text-muted-foreground">Already placed an order?</p>
-                        <Button size="default" variant="secondary" onClick={handleCheckStatus}>
-                           Check Order Status
-                        </Button>
-                    </div>
                 </div>
              )}
         </div>
