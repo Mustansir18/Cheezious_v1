@@ -318,18 +318,23 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
 
         <Separator className="my-4" />
 
-        { (order.isComplementary || order.discountAmount) && order.originalTotalAmount && (
-            <div className="text-sm">
-                <div className="flex justify-between"><span>Subtotal</span><span>RS {Math.round(order.subtotal)}</span></div>
-                 <div className="flex justify-between"><span>Tax</span><span>RS {Math.round(order.taxAmount)}</span></div>
-                <div className="flex justify-between"><span>Original Total</span><span className="line-through">RS {Math.round(order.originalTotalAmount)}</span></div>
-                {order.isComplementary ? (
-                    <div className="flex justify-between text-green-600 font-semibold"><span>Complementary</span><span>-RS {order.discountAmount ? Math.round(order.discountAmount) : 0}</span></div>
-                ) : (
-                    <div className="flex justify-between"><span>Discount ({order.discountType === 'percentage' ? `${order.discountValue}%` : 'RS'})</span><span>-RS {order.discountAmount ? Math.round(order.discountAmount) : 0}</span></div>
-                )}
+        <div className="space-y-1 text-sm">
+            <div className="flex justify-between">
+                <span>Subtotal</span>
+                <span>RS {Math.round(order.subtotal)}</span>
             </div>
-        )}
+            <div className="flex justify-between">
+                <span>Tax ({(order.taxRate * 100).toFixed(0)}%)</span>
+                <span>RS {Math.round(order.taxAmount)}</span>
+            </div>
+            {order.discountAmount > 0 && (
+                 <div className="flex justify-between">
+                    <span>Discount</span>
+                    <span>-RS {Math.round(order.discountAmount)}</span>
+                </div>
+            )}
+        </div>
+
 
         <div className="flex justify-between font-bold text-lg mt-2 pt-2 border-t">
             <span>Total</span>
