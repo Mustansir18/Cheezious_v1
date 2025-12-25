@@ -46,11 +46,22 @@ const initialData: MenuData = {
     addonCategories: initialAddonCategories,
 };
 
+function usePrevious<T>(value: T) {
+    const ref = React.useRef<T>();
+    useEffect(() => {
+        ref.current = value;
+    });
+    return ref.current;
+}
+
 export const MenuProvider = ({ children }: { children: ReactNode }) => {
   const [menu, setMenu] = useState<MenuData>(initialData);
   const [isLoading, setIsLoading] = useState(true);
   const { logActivity } = useActivityLog();
   const { user } = useAuth();
+  
+  const prevMenu = usePrevious(menu);
+
 
   useEffect(() => {
     try {
@@ -80,33 +91,51 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [menu, isLoading]);
 
-  // Generic handler to reduce boilerplate
-  const createUpdater = <T extends {id: string, name: string}>(
-    dataType: keyof MenuData, 
-    action: 'add' | 'update' | 'delete', 
-    logMessage: (name: string) => string
-  ) => (itemOrId: T | Omit<T, 'id'> | string, name?: string) => {
+    const createLogger = <T extends {id: string, name: string}>(
+        dataType: keyof MenuData,
+        addMsg: (name: string) => string,
+        updateMsg: (name: string) => string,
+        deleteMsg: (name: string) => string,
+    ) => {
+         useEffect(() => {
+            if (!prevMenu || isLoading) return;
+
+            const oldData = prevMenu[dataType] as T[];
+            const newData = menu[dataType] as T[];
+
+            if (newData.length > oldData.length) {
+                const added = newData.find(n => !oldData.some(o => o.id === n.id));
+                if (added) logActivity(addMsg(added.name), user?.username || 'System');
+            } else if (newData.length < oldData.length) {
+                const deleted = oldData.find(o => !newData.some(n => n.id === o.id));
+                if (deleted) logActivity(deleteMsg(deleted.name), user?.username || 'System');
+            } else {
+                 const updated = newData.find(n => {
+                    const old = oldData.find(o => o.id === n.id);
+                    return old && JSON.stringify(old) !== JSON.stringify(n);
+                });
+                if (updated) logActivity(updateMsg(updated.name), user?.username || 'System');
+            }
+        }, [menu[dataType], prevMenu, isLoading, logActivity, user?.username]);
+    }
+
+    createLogger<MenuCategory>('categories', name => `Added menu category: '${name}'.`, name => `Updated menu category: '${name}'.`, name => `Deleted menu category: '${name}'.`);
+    createLogger<MenuItem>('items', name => `Added menu item: '${name}'.`, name => `Updated menu item: '${name}'.`, name => `Deleted menu item: '${name}'.`);
+    createLogger<Addon>('addons', name => `Added add-on: '${name}'.`, name => `Updated add-on: '${name}'.`, name => `Deleted add-on: '${name}'.`);
+    createLogger<AddonCategory>('addonCategories', name => `Added add-on category: '${name}'.`, name => `Updated add-on category: '${name}'.`, name => `Deleted add-on category: '${name}'.`);
+
+
+  const createUpdater = <T extends {id: string, name: string}>(dataType: keyof MenuData, action: 'add' | 'update' | 'delete') => 
+    (itemOrId: T | Omit<T, 'id'> | string) => {
       setMenu(m => {
           const dataArray = m[dataType] as T[];
           let newArray;
-          let itemName = name || (typeof itemOrId === 'object' && 'name' in itemOrId ? itemOrId.name : 'unknown');
-
           switch (action) {
-              case 'add':
-                  newArray = [...dataArray, { ...(itemOrId as Omit<T, 'id'>), id: crypto.randomUUID() }];
-                  break;
-              case 'update':
-                  const updatedItem = itemOrId as T;
-                  itemName = updatedItem.name;
-                  newArray = dataArray.map(i => i.id === updatedItem.id ? updatedItem : i);
-                  break;
-              case 'delete':
-                  newArray = dataArray.filter(i => i.id !== itemOrId);
-                  break;
-              default:
-                  newArray = dataArray;
+              case 'add': newArray = [...dataArray, { ...(itemOrId as Omit<T, 'id'>), id: crypto.randomUUID() }]; break;
+              case 'update': newArray = dataArray.map(i => i.id === (itemOrId as T).id ? (itemOrId as T) : i); break;
+              case 'delete': newArray = dataArray.filter(i => i.id !== itemOrId); break;
+              default: newArray = dataArray;
           }
-          logActivity(logMessage(itemName), user?.username || 'System');
           return { ...m, [dataType]: newArray };
       });
   };
@@ -139,17 +168,17 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
       value={{
         menu,
         isLoading,
-        addCategory: createUpdater<MenuCategory>('categories', 'add', name => `Added menu category: '${name}'.`),
-        updateCategory: createUpdater<MenuCategory>('categories', 'update', name => `Updated menu category: '${name}'.`),
+        addCategory: createUpdater<MenuCategory>('categories', 'add'),
+        updateCategory: createUpdater<MenuCategory>('categories', 'update'),
         deleteCategory: deleteCategoryAndChildren,
-        addItem: createUpdater<MenuItem>('items', 'add', name => `Added menu item: '${name}'.`),
-        updateItem: createUpdater<MenuItem>('items', 'update', name => `Updated menu item: '${name}'.`),
-        deleteItem: createUpdater<MenuItem>('items', 'delete', name => `Deleted menu item: '${name}'.`),
-        addAddon: createUpdater<Addon>('addons', 'add', name => `Added add-on: '${name}'.`),
-        updateAddon: createUpdater<Addon>('addons', 'update', name => `Updated add-on: '${name}'.`),
-        deleteAddon: createUpdater<Addon>('addons', 'delete', name => `Deleted add-on: '${name}'.`),
-        addAddonCategory: createUpdater<AddonCategory>('addonCategories', 'add', name => `Added add-on category: '${name}'.`),
-        updateAddonCategory: createUpdater<AddonCategory>('addonCategories', 'update', name => `Updated add-on category: '${name}'.`),
+        addItem: createUpdater<MenuItem>('items', 'add'),
+        updateItem: createUpdater<MenuItem>('items', 'update'),
+        deleteItem: createUpdater<MenuItem>('items', 'delete'),
+        addAddon: createUpdater<Addon>('addons', 'add'),
+        updateAddon: createUpdater<Addon>('addons', 'update'),
+        deleteAddon: createUpdater<Addon>('addons', 'delete'),
+        addAddonCategory: createUpdater<AddonCategory>('addonCategories', 'add'),
+        updateAddonCategory: createUpdater<AddonCategory>('addonCategories', 'update'),
         deleteAddonCategory: deleteAddonCategoryAndChildren,
       }}
     >
