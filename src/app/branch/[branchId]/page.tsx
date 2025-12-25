@@ -3,16 +3,13 @@
 
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Utensils, ShoppingBag, ListChecks } from "lucide-react";
+import { Utensils, ShoppingBag } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useMemo } from "react";
-import { notFound, useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { notFound } from "next/navigation";
 
 export default function ModeSelectionPage({ params }: { params: { branchId: string } }) {
   const { settings } = useSettings();
-  const router = useRouter();
   const branch = useMemo(() => settings.branches.find((b) => b.id === params.branchId), [params.branchId, settings.branches]);
 
   if (!branch) {
@@ -23,7 +20,7 @@ export default function ModeSelectionPage({ params }: { params: { branchId: stri
   const isTakeAwayAvailable = branch.takeAwayEnabled;
 
   return (
-    <div className="container mx-auto flex flex-col items-center justify-center px-4 py-12 text-center">
+    <div className="container mx-auto flex flex-col items-center justify-center px-4 py-12 text-center min-h-[calc(100vh-4rem)]">
       <h1 className="font-headline text-3xl font-bold tracking-tight md:text-4xl">
         Welcome to {branch?.name || 'Cheezious'}!
       </h1>
@@ -88,16 +85,6 @@ export default function ModeSelectionPage({ params }: { params: { branchId: stri
             </Card>
          )}
       </div>
-
-       <Separator className="my-8" />
-
-        <div>
-            <h2 className="text-lg font-semibold text-muted-foreground">Already placed an order?</h2>
-             <Button variant="link" className="mt-2 text-lg" size="lg" onClick={() => router.push('/order-status')}>
-                <ListChecks className="mr-2 h-5 w-5" />
-                Check Order Status
-            </Button>
-        </div>
     </div>
   );
 }
