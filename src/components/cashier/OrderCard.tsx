@@ -257,9 +257,9 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
   }, [settings.tables, order.tableId, order.orderType]);
   
   const floor = useMemo(() => {
-    if (!table || !order.floorId) return null;
-    return settings.floors.find(f => f.id === order.floorId);
-  }, [settings.floors, table, order.floorId]);
+    if (!table || !table.floorId) return null;
+    return settings.floors.find(f => f.id === table.floorId);
+  }, [settings.floors, table]);
 
 
   return (
