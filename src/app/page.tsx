@@ -78,7 +78,7 @@ export default function Home() {
   };
   
   const handleCheckStatus = () => {
-    router.push('/admin/queue');
+    router.push('/queue');
   }
 
   return (

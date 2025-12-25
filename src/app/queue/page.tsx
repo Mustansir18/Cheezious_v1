@@ -2,11 +2,17 @@
 "use client";
 
 import { useOrders } from "@/context/OrderContext";
-import { Loader } from "lucide-react";
+import { Loader, Home } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { useSettings } from "@/context/SettingsContext";
+
+const IDLE_TIMEOUT_SECONDS = 30; 
 
 const StatusColumn = ({ title, orders, status }: { title: string, orders: { orderNumber: string }[], status: 'Pending' | 'Preparing' | 'Ready' }) => {
     
@@ -61,6 +67,35 @@ const StatusColumn = ({ title, orders, status }: { title: string, orders: { orde
 export default function QueuePage() {
     const { orders, isLoading: isOrdersLoading } = useOrders();
     const { settings, isLoading: isSettingsLoading } = useSettings();
+    const router = useRouter();
+    const idleTimer = useRef<NodeJS.Timeout>();
+
+    const resetToHome = useCallback(() => {
+        router.push("/");
+    }, [router]);
+
+    const resetIdleTimer = useCallback(() => {
+        if (idleTimer.current) {
+            clearTimeout(idleTimer.current);
+        }
+        idleTimer.current = setTimeout(resetToHome, IDLE_TIMEOUT_SECONDS * 1000);
+    }, [resetToHome]);
+    
+    // Set up idle timer and activity listeners
+    useEffect(() => {
+        resetIdleTimer();
+        
+        const events = ['scroll', 'mousemove', 'mousedown', 'keypress', 'touchstart'];
+        events.forEach(event => window.addEventListener(event, resetIdleTimer));
+
+        // Cleanup
+        return () => {
+            if (idleTimer.current) {
+                clearTimeout(idleTimer.current);
+            }
+            events.forEach(event => window.removeEventListener(event, resetIdleTimer));
+        };
+    }, [resetIdleTimer]);
 
     const pendingOrders = orders.filter(order => order.status === "Pending");
     const preparingOrders = orders.filter(order => order.status === "Preparing");
@@ -79,8 +114,14 @@ export default function QueuePage() {
     
     return (
         <div className="h-screen w-full bg-background p-8">
-            <header className="text-center mb-8">
+            <header className="text-center mb-8 flex justify-between items-center">
+                <div className="w-16"></div> {/* Spacer */}
                 <h1 className="font-headline text-5xl font-bold">{settings.companyName} Order Status</h1>
+                <Link href="/" passHref>
+                    <Button variant="outline" size="icon" aria-label="Back to Home">
+                        <Home className="h-6 w-6" />
+                    </Button>
+                </Link>
             </header>
             <main className="grid grid-cols-3 gap-6 h-[calc(100vh-140px)]">
                 <StatusColumn title="Pending" orders={pendingOrders} status="Pending" />
