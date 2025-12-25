@@ -29,9 +29,9 @@ const StatusColumn = ({ title, orders, status }: { title: string, orders: { orde
     }
 
     const badgeColor = {
-        Pending: "animate-blink",
-        Preparing: "animate-blink",
-        Ready: "bg-green-600 text-white hover:bg-green-700 animate-blink",
+        Pending: "animate-pulse",
+        Preparing: "animate-pulse",
+        Ready: "bg-green-600 text-white hover:bg-green-700 animate-pulse",
     }
 
     return (
