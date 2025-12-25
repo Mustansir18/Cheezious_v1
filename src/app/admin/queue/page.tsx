@@ -3,7 +3,7 @@
 
 import { useOrders } from "@/context/OrderContext";
 import { Loader } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +15,12 @@ const StatusColumn = ({ title, orders, status }: { title: string, orders: { orde
         Ready: "default",
     } as const;
 
+    const headerColor = {
+        Pending: "bg-gray-200 text-gray-800",
+        Preparing: "bg-blue-500 text-white",
+        Ready: "bg-yellow-500 text-black",
+    }
+
     const badgeColor = {
         Pending: "",
         Preparing: "",
@@ -22,11 +28,16 @@ const StatusColumn = ({ title, orders, status }: { title: string, orders: { orde
     }
 
     return (
-        <Card className="flex flex-col h-full">
-            <CardHeader>
-                <CardTitle className="font-headline text-3xl text-center">{title}</CardTitle>
+        <Card className="flex flex-col h-full bg-muted/20">
+            <CardHeader className="p-4">
+                 <Badge className={cn(
+                    "text-2xl font-bold justify-center py-3 rounded-lg shadow-md border-0",
+                    headerColor[status]
+                 )}>
+                    {title}
+                </Badge>
             </CardHeader>
-            <CardContent className="flex-grow p-6">
+            <CardContent className="flex-grow p-4">
                  <div className="flex flex-wrap justify-center gap-4">
                     {orders.length > 0 ? (
                         orders.map(order => (
@@ -70,7 +81,7 @@ export default function QueuePage() {
             <main className="grid grid-cols-3 gap-6 h-[calc(100vh-120px)]">
                 <StatusColumn title="Pending" orders={pendingOrders} status="Pending" />
                 <StatusColumn title="Preparing" orders={preparingOrders} status="Preparing" />
-                <StatusColumn title="Ready for Pickup" orders={readyOrders} status="Ready" />
+                <StatusColumn title="Pickup" orders={readyOrders} status="Ready" />
             </main>
         </div>
     );
