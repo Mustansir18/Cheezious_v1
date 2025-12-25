@@ -181,32 +181,20 @@ export default function OrderConfirmationPage() {
             ))}
             <Separator />
 
-             <div className="flex justify-center py-4">
-                <Card className="mt-2 bg-muted/30 max-w-sm w-full">
-                    <CardHeader>
-                        <CardTitle className="flex items-center text-xl">
-                            <CreditCard className="mr-2 h-5 w-5"/>
-                            Payment
-                        </CardTitle>
-                        <CardDescription>
-                            Please select a payment method.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                            <SelectTrigger id="payment-method">
-                                <SelectValue placeholder="Select a payment method" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {settings.paymentMethods.map(method => (
-                                    <SelectItem key={method.id} value={method.name}>
-                                        {method.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </CardContent>
-                </Card>
+             <div className="space-y-2 py-4">
+                <Label htmlFor="payment-method" className="font-semibold flex items-center"><CreditCard className="mr-2 h-5 w-5"/>Payment Method</Label>
+                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                    <SelectTrigger id="payment-method">
+                        <SelectValue placeholder="Select a payment method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {settings.paymentMethods.map(method => (
+                            <SelectItem key={method.id} value={method.name}>
+                                {method.name}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
              </div>
 
             <div className="space-y-1 pt-2">
