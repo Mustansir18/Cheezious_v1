@@ -23,9 +23,9 @@ const StatusColumn = ({ title, orders, status }: { title: string, orders: { orde
     }
 
     const badgeColor = {
-        Pending: "",
-        Preparing: "",
-        Ready: "bg-green-600 text-white hover:bg-green-700",
+        Pending: "animate-pulse",
+        Preparing: "animate-pulse",
+        Ready: "bg-green-600 text-white hover:bg-green-700 animate-pulse",
     }
 
     return (
@@ -80,7 +80,7 @@ export default function QueuePage() {
     return (
         <div className="h-screen w-full bg-background p-8">
             <header className="text-center mb-8">
-                <h1 className="font-headline text-5xl font-bold">{settings.companyName} Order Status</h1>
+                <h1 className="font-headline text-5xl font-bold">Orders Queue Status</h1>
             </header>
             <main className="grid grid-cols-3 gap-6 h-[calc(100vh-140px)]">
                 <StatusColumn title="Pending" orders={pendingOrders} status="Pending" />
