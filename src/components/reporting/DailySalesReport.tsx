@@ -5,8 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Printer, FileDown } from 'lucide-react';
 import {
-  Bar,
-  BarChart,
+  Line,
+  LineChart,
   CartesianGrid,
   ResponsiveContainer,
   Tooltip,
@@ -51,7 +51,7 @@ export function DailySalesReport({ data, onPrint }: DailySalesReportProps) {
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={data}>
+          <LineChart data={data}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="date" fontSize={12} tickLine={false} axisLine={false} />
             <YAxis
@@ -91,8 +91,8 @@ export function DailySalesReport({ data, onPrint }: DailySalesReportProps) {
                 return null;
               }}
             />
-            <Bar dataKey="sales" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
-          </BarChart>
+            <Line type="monotone" dataKey="sales" stroke="hsl(var(--chart-2))" strokeWidth={2} dot={{ r: 4, fill: "hsl(var(--chart-2))" }} activeDot={{ r: 8, fill: "hsl(var(--chart-2))" }} />
+          </LineChart>
         </ResponsiveContainer>
       </CardContent>
     </Card>
