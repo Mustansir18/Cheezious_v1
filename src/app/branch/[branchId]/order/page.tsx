@@ -182,10 +182,7 @@ export default function OrderConfirmationPage() {
             ))}
             <Separator />
             
-            <div className={cn(
-              "bg-muted p-4 rounded-lg",
-              !paymentMethod && "animate-blink"
-            )}>
+            <div className="bg-muted p-4 rounded-lg">
                 <div className="space-y-2">
                     <Label htmlFor="payment-method" className="font-semibold flex items-center"><CreditCard className="mr-2 h-5 w-5"/>Payment Method</Label>
                     <Select value={paymentMethod} onValueChange={setPaymentMethod}>
@@ -229,7 +226,10 @@ export default function OrderConfirmationPage() {
           </Button>
           <Button
             onClick={handleConfirmOrder}
-            className="w-full sm:w-auto bg-muted text-muted-foreground hover:bg-muted/90"
+            className={cn(
+                "w-full sm:w-auto bg-accent text-accent-foreground hover:bg-accent/90",
+                !!paymentMethod && "animate-blink"
+            )}
             size="lg"
             disabled={items.length === 0}
           >
