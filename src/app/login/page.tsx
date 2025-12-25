@@ -8,7 +8,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader, Eye, EyeOff, Pizza } from 'lucide-react';
+import { Loader, Eye, EyeOff } from 'lucide-react';
+import { Logo } from '@/components/ui/logo';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -48,7 +49,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm">
         <form onSubmit={handleLogin}>
           <CardHeader className="text-center">
-            <Pizza className="mx-auto h-16 w-auto text-primary" />
+            <Logo className="mx-auto h-16 w-auto text-primary" />
             <CardTitle className="font-headline text-2xl">Welcome Back</CardTitle>
             <CardDescription>Enter your credentials to access your dashboard.</CardDescription>
           </CardHeader>
