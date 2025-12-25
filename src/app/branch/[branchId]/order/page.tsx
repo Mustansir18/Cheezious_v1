@@ -180,22 +180,26 @@ export default function OrderConfirmationPage() {
               </div>
             ))}
             <Separator />
+            
+            <div className="bg-muted p-4 rounded-lg">
+                <div className="space-y-2">
+                    <Label htmlFor="payment-method" className="font-semibold flex items-center"><CreditCard className="mr-2 h-5 w-5"/>Payment Method</Label>
+                    <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                        <SelectTrigger id="payment-method">
+                            <SelectValue placeholder="Select a payment method" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {settings.paymentMethods.map(method => (
+                                <SelectItem key={method.id} value={method.name}>
+                                    {method.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                     <p className="text-xs text-muted-foreground pt-1">Please select a payment method to see the final total.</p>
+                </div>
+            </div>
 
-             <div className="space-y-2 py-4">
-                <Label htmlFor="payment-method" className="font-semibold flex items-center"><CreditCard className="mr-2 h-5 w-5"/>Payment Method</Label>
-                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                    <SelectTrigger id="payment-method">
-                        <SelectValue placeholder="Select a payment method" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {settings.paymentMethods.map(method => (
-                            <SelectItem key={method.id} value={method.name}>
-                                {method.name}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-             </div>
 
             <div className="space-y-1 pt-2">
                 <div className="flex justify-between">
