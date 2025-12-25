@@ -2,7 +2,7 @@
 "use client";
 import type { Order } from "@/lib/types";
 import { OrderCard } from "@/components/cashier/OrderCard";
-import { BarChart, Clock, CookingPot, CheckCircle, Loader, Info } from "lucide-react";
+import { BarChart, Clock, CookingPot, CheckCircle, Loader, Info, Monitor } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOrders } from "@/context/OrderContext";
@@ -10,6 +10,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { OrderReceipt } from "@/components/cashier/OrderReceipt";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 function OrderInfoModal({ order }: { order: Order }) {
     return (
@@ -59,9 +60,17 @@ export default function CashierPage() {
 
   return (
     <div className="container mx-auto p-4 lg:p-8">
-      <header className="mb-8">
-        <h1 className="font-headline text-4xl font-bold">Cashier Dashboard</h1>
-        <p className="text-muted-foreground">Manage running, ready, and completed orders.</p>
+      <header className="mb-8 flex justify-between items-start">
+        <div>
+            <h1 className="font-headline text-4xl font-bold">Cashier Dashboard</h1>
+            <p className="text-muted-foreground">Manage running, ready, and completed orders.</p>
+        </div>
+        <Link href="/admin/queue" target="_blank">
+            <Button variant="outline">
+                <Monitor className="mr-2 h-4 w-4" />
+                Open Order Queue
+            </Button>
+        </Link>
       </header>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
