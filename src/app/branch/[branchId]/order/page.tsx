@@ -17,6 +17,7 @@ import { useSettings } from "@/context/SettingsContext";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CreditCard } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const FALLBACK_IMAGE_URL = "https://picsum.photos/seed/placeholder/400/300";
 
@@ -181,7 +182,10 @@ export default function OrderConfirmationPage() {
             ))}
             <Separator />
             
-            <div className="bg-muted p-4 rounded-lg">
+            <div className={cn(
+              "bg-muted p-4 rounded-lg",
+              !paymentMethod && "animate-blink"
+            )}>
                 <div className="space-y-2">
                     <Label htmlFor="payment-method" className="font-semibold flex items-center"><CreditCard className="mr-2 h-5 w-5"/>Payment Method</Label>
                     <Select value={paymentMethod} onValueChange={setPaymentMethod}>
