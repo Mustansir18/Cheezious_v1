@@ -226,7 +226,10 @@ export default function OrderConfirmationPage() {
           </Button>
           <Button
             onClick={handleConfirmOrder}
-            className="w-full sm:w-auto font-bold"
+            className={cn(
+              "w-full sm:w-auto font-bold",
+              paymentMethod && "animate-blink"
+            )}
             size="lg"
             disabled={items.length === 0}
           >
