@@ -399,5 +399,3 @@ OrderCard.Skeleton = function OrderCardSkeleton() {
       </Card>
     );
   };
-
-    
