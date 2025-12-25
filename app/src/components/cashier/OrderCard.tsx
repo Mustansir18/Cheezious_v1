@@ -250,7 +250,6 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
   
   const StatusIcon = statusConfig[order.status]?.icon || Loader;
   const isModifiableByUser = user?.role === 'admin' || user?.role === 'root';
-  const canModify = isMutable && isModifiableByUser;
   
   const orderDate = useMemo(() => new Date(order.orderDate), [order.orderDate]);
   
@@ -361,19 +360,21 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
                 {order.status === 'Preparing' && <Button onClick={() => handleUpdateStatus('Ready')} size="sm" className="w-full bg-yellow-500 hover:bg-yellow-600 text-black"><Check className="mr-2 h-4 w-4" /> Mark as Ready</Button>}
              </div>
          )}
-         {workflow === 'cashier' && (
+         {workflow === 'cashier' && isMutable && (
             <div className="grid grid-cols-1 gap-2 w-full">
                 {order.status === 'Pending' && <Button onClick={() => handleUpdateStatus('Preparing')} size="sm" className="w-full"><CookingPot className="mr-2 h-4 w-4" /> Accept & Prepare</Button>}
                  {order.status === 'Preparing' && <Button onClick={() => handleUpdateStatus('Ready')} size="sm" className="w-full bg-yellow-500 hover:bg-yellow-600 text-black"><Check className="mr-2 h-4 w-4" /> Mark as Ready</Button>}
                 {order.status === 'Ready' && <Button onClick={() => handleUpdateStatus('Completed')} size="sm" className="w-full bg-green-500 hover:bg-green-600"><CheckCircle className="mr-2 h-4 w-4" /> Mark as Completed</Button>}
-                 {(order.status === 'Pending' || order.status === 'Preparing' || order.status === 'Ready') && isMutable && (
+                 {(order.status === 'Pending' || order.status === 'Preparing' || order.status === 'Ready') && (
                      <div className="grid grid-cols-2 gap-2">
                         <CancellationDialog orderId={order.id} onConfirm={handleCancelOrder} />
                         {isModifiableByUser && <OrderModificationDialog order={order} />}
                      </div>
                  )}
-                 {order.status === 'Completed' && canModify && (<div className="grid grid-cols-1 gap-2"><OrderModificationDialog order={order} /></div>)}
-             </div>
+            </div>
+         )}
+         {order.status === 'Completed' && isModifiableByUser && isMutable && (
+             <div className="grid grid-cols-1 gap-2"><OrderModificationDialog order={order} /></div>
          )}
       </CardFooter>
       <div className="hidden"><div id={`printable-receipt-${order.id}`}><OrderReceipt order={order} /></div></div>

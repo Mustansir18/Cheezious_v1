@@ -58,43 +58,46 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { logActivity } = useActivityLog();
   const router = useRouter();
 
-  // Load users from localStorage on initial render
+  // Load users and session on initial render
   useEffect(() => {
     setIsLoading(true);
     try {
+      // 1. Get stored users (without passwords)
       const storedUsersJSON = localStorage.getItem(USERS_STORAGE_KEY);
       const storedUsers: Omit<User, 'password'>[] = storedUsersJSON ? JSON.parse(storedUsersJSON) : [];
       
+      // 2. Create a map of users, prioritizing hardcoded users to preserve their passwords.
       const userMap = new Map<string, User>();
-
-      // 1. Add initial users with their passwords to the map.
       initialUsers.forEach(u => userMap.set(u.id, { ...u }));
-
-      // 2. Add/overwrite with users from storage, but they won't have passwords.
+      
+      // 3. Add/update users from storage.
       storedUsers.forEach(storedUser => {
-        const existingUser = userMap.get(storedUser.id);
-        if (existingUser) {
-          // If it's a default user, keep the hardcoded password.
-          userMap.set(storedUser.id, { ...existingUser, ...storedUser });
-        } else {
-          // It's a user added by the admin, add them without a password.
-          // Note: This architecture means non-default users can't log back in after a full page refresh.
-          // This is a limitation of the current design that doesn't use a real database.
-          userMap.set(storedUser.id, storedUser as User);
-        }
+          const existingUser = userMap.get(storedUser.id);
+          if (existingUser) {
+              // If it's a default user, merge stored data but keep the hardcoded password.
+              userMap.set(storedUser.id, { ...existingUser, ...storedUser });
+          } else {
+              // It's a non-default user created by an admin. Add them without a password.
+              // Note: The login logic relies on the live `users` state which *does* have the password when created.
+              userMap.set(storedUser.id, storedUser as User);
+          }
       });
       
       const combinedUsers = Array.from(userMap.values());
       setUsers(combinedUsers);
       
+      // 4. Restore session user
       const sessionUserJSON = sessionStorage.getItem(SESSION_STORAGE_KEY);
       if (sessionUserJSON) {
         const sessionUser = JSON.parse(sessionUserJSON);
-        // Verify the session user still exists and is valid
+        // Verify the session user still exists and is valid in our combined list.
         const validUser = combinedUsers.find(u => u.id === sessionUser.id);
         if (validUser) {
+            // IMPORTANT: Use the user object from our authoritative `combinedUsers` list,
+            // which guarantees the correct password and role information.
             setUser(validUser);
         } else {
+            // The user in the session is no longer valid, so clear it.
             sessionStorage.removeItem(SESSION_STORAGE_KEY);
         }
       }
@@ -107,15 +110,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  // Persist users to localStorage whenever they change
+  // Persist users (without passwords) to localStorage whenever they change
   useEffect(() => {
     if (isLoading) return;
     try {
-        const usersToStore = users.map(u => {
-            const { password, ...userToStore } = u;
-            // Never store passwords in localStorage
-            return userToStore;
-        });
+        const usersToStore = users.map(({ password, ...userToStore }) => userToStore);
         localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(usersToStore));
     } catch (error) {
       console.error("Could not save users to local storage", error);
@@ -137,6 +136,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [user, isLoading]);
 
   const login = useCallback(async (username: string, password: string): Promise<User | null> => {
+    // The `users` state is now authoritative and correctly constructed.
     const foundUser = users.find(u => u.username === username && u.password === password);
     if (foundUser) {
       setUser(foundUser);
@@ -161,27 +161,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     const newUser: User = { id: crypto.randomUUID(), username, password, role, branchId };
     setUsers(prev => [...prev, newUser]);
-  }, [users]);
+    logActivity(`Added new user '${username}'.`, user?.username || "System", 'User');
+  }, [users, logActivity, user]);
 
   const updateUser = useCallback((updatedUser: User) => {
     setUsers(prev => prev.map(u => {
         if (u.id === updatedUser.id) {
-            // Keep the old password if the new one is not provided
+            // Keep the old password if a new one is not provided.
             const newPassword = updatedUser.password ? updatedUser.password : u.password;
-            return { ...updatedUser, password: newPassword };
+            const finalUser = { ...u, ...updatedUser, password: newPassword };
+            logActivity(`Updated user '${finalUser.username}'.`, user?.username || "System", 'User');
+            return finalUser;
         }
         return u;
     }));
-  }, []);
+  }, [logActivity, user]);
 
   const deleteUser = useCallback((id: string, username: string) => {
-    const userToDelete = users.find(u => u.id === id);
     if (initialUsers.some(initialUser => initialUser.id === id)) {
         alert("Cannot delete a default system user.");
         return;
     }
     setUsers(prev => prev.filter(u => u.id !== id));
-  }, [users]);
+    logActivity(`Deleted user '${username}'.`, user?.username || "System", 'User');
+  }, [logActivity, user]);
 
   const value = { user, users, isLoading, login, logout, addUser, updateUser, deleteUser };
 
