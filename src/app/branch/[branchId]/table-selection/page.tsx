@@ -33,7 +33,7 @@ export default function TableSelectionPage() {
                 floorId: selectedFloorId,
                 tableId: selectedTableId,
             });
-            const menuUrl = `/branch/${branchId}/menu?mode=Dine-In${dealId ? `&dealId=${dealId}` : ''}`;
+            const menuUrl = `/branch/${branchId}/menu?mode=Dine-In&floorId=${selectedFloorId}&tableId=${selectedTableId}${dealId ? `&dealId=${dealId}` : ''}`;
             router.push(menuUrl);
         }
     };

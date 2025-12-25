@@ -100,8 +100,8 @@ export default function OrderConfirmationPage() {
         items: orderItems,
         paymentMethod,
         instructions,
-        floorId: orderType === 'Dine-In' ? floorId || undefined : undefined,
-        tableId: orderType === 'Dine-In' ? tableId || undefined : undefined,
+        floorId: orderType === 'Dine-In' ? floorId : undefined,
+        tableId: orderType === 'Dine-In' ? tableId : undefined,
     };
     
     syncOrderToExternalSystem({
