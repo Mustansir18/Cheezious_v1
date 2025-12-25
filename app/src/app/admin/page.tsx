@@ -86,7 +86,7 @@ export default function AdminDashboardPage() {
     },
   ];
 
-  const visibleSections = adminSections.filter(section => user?.role && section.role.includes(user.role));
+  const visibleSections = adminSections.filter(section => user?.role && section.role.includes(section.role));
 
   // If the user is a branch admin, we show a loading/redirecting state.
   if (user?.role === 'admin') {
