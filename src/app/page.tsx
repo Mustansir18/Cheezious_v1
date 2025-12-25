@@ -12,6 +12,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import Autoplay from "embla-carousel-autoplay";
+import { cn } from '@/lib/utils';
 
 function DealsCarousel() {
   const { deals, isLoading } = useDeals();
@@ -84,7 +85,7 @@ export default function Home() {
     <main className="relative flex min-h-screen flex-col items-center justify-center p-4">
         <div className="absolute top-4 right-4 text-right">
             <p className="text-sm text-muted-foreground mb-1">Already placed an order?</p>
-            <Button size="sm" variant="outline" onClick={handleCheckStatus}>
+            <Button size="sm" variant="secondary" onClick={handleCheckStatus} className="animate-blink">
                 Check Order Status
             </Button>
         </div>
@@ -108,7 +109,7 @@ export default function Home() {
                 </div>
              ) : (
                 <div className="py-6">
-                    <Button size="lg" className="px-10 py-6 text-lg font-bold" onClick={handleStartOrder}>Start Your Order</Button>
+                    <Button size="lg" className="px-10 py-6 text-lg font-bold animate-blink" onClick={handleStartOrder}>Start Your Order</Button>
                 </div>
              )}
         </div>
