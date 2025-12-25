@@ -10,6 +10,7 @@ import { Calendar as CalendarIcon, ShoppingCart, DollarSign, Utensils, Loader, P
 import { HourlySalesReport } from "@/components/reporting/HourlySalesReport";
 import { TopSellingItems } from "@/components/reporting/TopSellingItems";
 import { PaymentMethodBreakdown, type PaymentData } from "@/components/reporting/PaymentMethodBreakdown";
+import { OrderTypeSummary, type OrderTypeData } from "@/components/reporting/OrderTypeSummary";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -86,8 +87,9 @@ export default function ReportingPage() {
     const hourlySales: { [key: number]: number } = {};
     
     // Order type counts and sales should be calculated from the date-filtered list (before other filters)
-    const dineInOrders = baseFilteredOrders.filter((o) => o.orderType === "Dine-In");
-    const takeAwayOrders = baseFilteredOrders.filter((o) => o.orderType === "Take-Away");
+    const orderTypeFilteredOrders = baseFilteredOrders.filter(order => selectedPaymentMethod ? order.paymentMethod === selectedPaymentMethod : true);
+    const dineInOrders = orderTypeFilteredOrders.filter((o) => o.orderType === "Dine-In");
+    const takeAwayOrders = orderTypeFilteredOrders.filter((o) => o.orderType === "Take-Away");
     const dineInSales = dineInOrders.reduce((sum, order) => sum + order.totalAmount, 0);
     const takeAwaySales = takeAwayOrders.reduce((sum, order) => sum + order.totalAmount, 0);
 
@@ -153,16 +155,19 @@ export default function ReportingPage() {
         fill: `hsl(var(--chart-${index + 1}))`
     }));
 
+    const orderTypeChartData: OrderTypeData[] = [
+        { type: "Dine-In", count: dineInOrders.length, sales: dineInSales, icon: Utensils, fill: 'hsl(var(--chart-1))' },
+        { type: "Take-Away", count: takeAwayOrders.length, sales: takeAwaySales, icon: ShoppingBag, fill: 'hsl(var(--chart-2))' },
+    ];
+
+
     return {
       totalOrders,
       totalSales,
       totalItemsSold,
       topSellingItems,
       hourlySalesChartData,
-      dineInCount: dineInOrders.length,
-      takeAwayCount: takeAwayOrders.length,
-      dineInSales,
-      takeAwaySales,
+      orderTypeChartData,
       paymentChartData,
       dineInGrossSales,
       dineInNetSales,
@@ -199,11 +204,6 @@ export default function ReportingPage() {
         document.body.removeChild(printContainer);
         document.body.classList.remove('printing-active');
   };
-
-  const handleOrderTypeSelect = (type: string) => {
-    setSelectedOrderType(prev => (prev === type ? null : type));
-  };
-
 
   useEffect(() => {
     const afterPrint = () => {
@@ -253,10 +253,7 @@ export default function ReportingPage() {
     totalItemsSold,
     topSellingItems,
     hourlySalesChartData,
-    dineInCount,
-    takeAwayCount,
-    dineInSales,
-    takeAwaySales,
+    orderTypeChartData,
     paymentChartData,
     dineInGrossSales,
     dineInNetSales,
@@ -276,11 +273,6 @@ export default function ReportingPage() {
     { title: "Total Items Sold", value: totalItemsSold, icon: Utensils },
   ];
   
-  const orderTypeCards = [
-      { title: "Dine-In", value: dineInCount, icon: Utensils, description: `RS ${dineInSales.toFixed(2)} in sales`, type: 'Dine-In'},
-      { title: "Take Away", value: takeAwayCount, icon: ShoppingBag, description: `RS ${takeAwaySales.toFixed(2)} in sales`, type: 'Take-Away'},
-  ]
-
   const dineInBreakdown = [
       { label: "Gross Sales", value: `RS ${dineInGrossSales.toFixed(2)}` },
       { label: "Net Sales", value: `RS ${dineInNetSales.toFixed(2)}` },
@@ -379,38 +371,12 @@ export default function ReportingPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
              <div className="lg:col-span-3" id="ordertype-report">
-                <Card>
-                    <CardHeader className="flex-row justify-between items-center">
-                        <div>
-                            <CardTitle className="font-headline flex items-center">Order Type Summary</CardTitle>
-                            <CardDescription>Transaction counts and sales totals by order type. Click to filter.</CardDescription>
-                        </div>
-                        <ReportCardActions reportId="ordertype-report" onPrint={handlePrint} />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            {orderTypeCards.map(card => (
-                                <Card 
-                                    key={card.title} 
-                                    className={cn(
-                                        "cursor-pointer transition-all hover:shadow-md",
-                                        selectedOrderType === card.type && "ring-2 ring-primary"
-                                    )}
-                                    onClick={() => handleOrderTypeSelect(card.type)}
-                                >
-                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                        <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
-                                        <card.icon className="h-5 w-5 text-muted-foreground" />
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="text-2xl font-bold">{card.value}</div>
-                                        <p className="text-xs text-muted-foreground">{card.description}</p>
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
+                <OrderTypeSummary
+                    data={orderTypeChartData}
+                    onPrint={() => handlePrint('ordertype-report')}
+                    selectedType={selectedOrderType}
+                    onSelectType={setSelectedOrderType}
+                />
             </div>
              <div className="lg:col-span-2" id="payment-report">
                 <PaymentMethodBreakdown 
@@ -475,5 +441,7 @@ export default function ReportingPage() {
     </TooltipProvider>
   );
 }
+
+    
 
     
