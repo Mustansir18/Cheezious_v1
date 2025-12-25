@@ -200,7 +200,7 @@ export default function OrderConfirmationPage() {
                             ))}
                         </SelectContent>
                     </Select>
-                     <p className="text-xs text-muted-foreground pt-1">Please select a payment method to see the final total.</p>
+                     {!paymentMethod && <p className="text-xs text-muted-foreground pt-1">Please select a payment method to see the final total.</p>}
                 </div>
             </div>
 
