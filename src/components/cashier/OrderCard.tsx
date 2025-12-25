@@ -250,8 +250,16 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
   const StatusIcon = statusConfig[order.status]?.icon || Loader;
   const isModifiable = user?.role === 'admin' || user?.role === 'root';
   const orderDate = useMemo(() => new Date(order.orderDate), [order.orderDate]);
-  const table = useMemo(() => settings.tables.find(t => t.id === order.tableId), [settings.tables, order.tableId]);
-  const floor = useMemo(() => settings.floors.find(f => f.id === order.floorId), [settings.floors, order.floorId]);
+  
+  const table = useMemo(() => {
+    if (order.orderType !== 'Dine-In' || !order.tableId) return null;
+    return settings.tables.find(t => t.id === order.tableId);
+  }, [settings.tables, order.tableId, order.orderType]);
+  
+  const floor = useMemo(() => {
+    if (!table || !table.floorId) return null;
+    return settings.floors.find(f => f.id === table.floorId);
+  }, [settings.floors, table]);
 
 
   return (
@@ -393,9 +401,3 @@ OrderCard.Skeleton = function OrderCardSkeleton() {
   };
 
     
-
-    
-
-
-
-
