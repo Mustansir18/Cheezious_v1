@@ -100,11 +100,10 @@ export default function Home() {
                     <p className="mt-1 text-sm text-muted-foreground">Please log in as an admin to add a branch.</p>
                 </div>
              ) : (
-                <div className="flex flex-col sm:flex-row gap-4 py-6">
-                    <Button size="lg" onClick={handleStartOrder}>Start Your Order</Button>
+                <div className="flex flex-col sm:flex-row gap-4 py-6 items-center">
+                    <Button size="lg" className="px-10 py-6 text-lg font-bold" onClick={handleStartOrder}>Start Your Order</Button>
                     <Button size="lg" variant="secondary" onClick={handleCheckStatus}>
-                        <ListChecks className="mr-2 h-5 w-5" />
-                        Check Order Status
+                        Already placed an order?
                     </Button>
                 </div>
              )}
