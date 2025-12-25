@@ -11,22 +11,18 @@ import { ActivityLogProvider } from '@/context/ActivityLogContext';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col">
-      <main className="flex-grow">
-        <ActivityLogProvider>
-          <AuthProvider>
-            <SettingsProvider>
-              <DealsProvider>
-                <MenuProvider>
-                  <OrderProvider>
-                    <CartProvider>{children}</CartProvider>
-                  </OrderProvider>
-                </MenuProvider>
-              </DealsProvider>
-            </SettingsProvider>
-          </AuthProvider>
-        </ActivityLogProvider>
-      </main>
-    </div>
+    <ActivityLogProvider>
+      <AuthProvider>
+        <SettingsProvider>
+          <DealsProvider>
+            <MenuProvider>
+              <OrderProvider>
+                <CartProvider>{children}</CartProvider>
+              </OrderProvider>
+            </MenuProvider>
+          </DealsProvider>
+        </SettingsProvider>
+      </AuthProvider>
+    </ActivityLogProvider>
   );
 }

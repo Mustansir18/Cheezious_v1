@@ -21,14 +21,14 @@ export default function AdminDashboardPage() {
   }, [user, isLoading, router]);
 
 
-  // If the user is an admin, the useEffect will trigger a redirect.
-  // We return a loading state to prevent the rest of the component from rendering
-  // and causing a race condition with the navigation.
-  if (isLoading || user?.role === 'admin') {
+  // If the user is loading or an admin (who will be redirected),
+  // we return a loading state to prevent the rest of the component from rendering
+  // and causing a flash of incorrect content or a race condition with navigation.
+  if (isLoading || (user && user.role === 'admin')) {
       return (
           <div className="flex h-screen items-center justify-center">
             <Loader className="h-12 w-12 animate-spin text-primary" />
-            <p className="ml-4 text-muted-foreground">Redirecting to your dashboard...</p>
+            <p className="ml-4 text-muted-foreground">Loading Dashboard...</p>
           </div>
       );
   }
