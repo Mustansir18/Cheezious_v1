@@ -328,7 +328,7 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
                 <span>RS {Math.round(order.taxAmount)}</span>
             </div>
             {order.discountAmount > 0 && (
-                 <div className="flex justify-between">
+                 <div className="flex justify-between text-destructive">
                     <span>Discount</span>
                     <span>-RS {Math.round(order.discountAmount)}</span>
                 </div>
@@ -404,3 +404,5 @@ OrderCard.Skeleton = function OrderCardSkeleton() {
       </Card>
     );
   };
+
+    
