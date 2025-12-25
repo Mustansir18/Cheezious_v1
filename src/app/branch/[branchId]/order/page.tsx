@@ -181,38 +181,40 @@ export default function OrderConfirmationPage() {
             ))}
             <Separator />
 
-             <Card className="mt-6 bg-muted/30">
-                <CardHeader>
-                    <CardTitle className="flex items-center text-xl">
-                        <CreditCard className="mr-2 h-5 w-5"/>
-                        Payment
-                    </CardTitle>
-                    <CardDescription>
-                        Please select a payment method to see the final total.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                        <SelectTrigger id="payment-method">
-                            <SelectValue placeholder="Select a payment method" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {settings.paymentMethods.map(method => (
-                                <SelectItem key={method.id} value={method.name}>
-                                    {method.name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </CardContent>
-            </Card>
+             <div className="flex justify-center py-4">
+                <Card className="mt-2 bg-muted/30 max-w-sm w-full">
+                    <CardHeader>
+                        <CardTitle className="flex items-center text-xl">
+                            <CreditCard className="mr-2 h-5 w-5"/>
+                            Payment
+                        </CardTitle>
+                        <CardDescription>
+                            Please select a payment method.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                            <SelectTrigger id="payment-method">
+                                <SelectValue placeholder="Select a payment method" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {settings.paymentMethods.map(method => (
+                                    <SelectItem key={method.id} value={method.name}>
+                                        {method.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </CardContent>
+                </Card>
+             </div>
 
-            <div className="space-y-1 pt-4">
+            <div className="space-y-1 pt-2">
                 <div className="flex justify-between">
                     <span>Subtotal</span>
                     <span>RS {cartTotal.toFixed(2)}</span>
                 </div>
-                {taxAmount > 0 && (
+                {paymentMethod && taxAmount > 0 && (
                     <div className="flex justify-between text-sm text-muted-foreground">
                         <span>Tax ({(taxRate * 100).toFixed(0)}%)</span>
                         <span>RS {taxAmount.toFixed(2)}</span>
@@ -220,7 +222,7 @@ export default function OrderConfirmationPage() {
                 )}
                 <div className="flex justify-between pt-2 text-xl font-bold border-t">
                     <span>Grand Total</span>
-                    <span>RS {grandTotal.toFixed(2)}</span>
+                    <span>RS {paymentMethod ? grandTotal.toFixed(2) : cartTotal.toFixed(2)}</span>
                 </div>
             </div>
           </div>
