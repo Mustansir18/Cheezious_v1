@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import * as Tone from "tone";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { CheckCircle, Loader, Utensils, Printer } from "lucide-react";
+import { CheckCircle, Loader, Utensils, Printer, Info } from "lucide-react";
 import type { Order, PlacedOrder } from "@/lib/types";
 import { useOrders } from "@/context/OrderContext";
 import { useSettings } from "@/context/SettingsContext";
@@ -16,6 +16,7 @@ const IDLE_TIMEOUT_SECONDS = 10; // 10 seconds
 
 export default function OrderStatusPage() {
   const [placedOrder, setPlacedOrder] = useState<PlacedOrder | null>(null);
+  const [hasCheckedStorage, setHasCheckedStorage] = useState(false);
   const router = useRouter();
   const { orders, isLoading: isOrdersLoading } = useOrders();
   const { settings, isLoading: isSettingsLoading } = useSettings();
@@ -41,14 +42,13 @@ export default function OrderStatusPage() {
       const storedOrder = sessionStorage.getItem("placedOrder");
       if (storedOrder) {
         setPlacedOrder(JSON.parse(storedOrder));
-      } else {
-        router.replace('/');
       }
     } catch (error) {
       console.error("Could not load order from session storage", error);
-      router.replace('/');
+    } finally {
+        setHasCheckedStorage(true);
     }
-  }, [router]);
+  }, []);
 
   // 2. Find the full order object from the context
   const order: Order | undefined = useMemo(() => {
@@ -57,7 +57,7 @@ export default function OrderStatusPage() {
   }, [orders, placedOrder]);
 
   const status = order?.status;
-  const isLoading = isOrdersLoading || isSettingsLoading || !placedOrder;
+  const isLoading = isOrdersLoading || isSettingsLoading || !hasCheckedStorage;
 
   // 3. Handle manual printing
   const handlePrint = useCallback(() => {
@@ -111,26 +111,29 @@ export default function OrderStatusPage() {
   
   // 6. Set up idle timer and activity listeners
   useEffect(() => {
-      resetIdleTimer();
-      // Add event listeners for user activity
-      window.addEventListener('scroll', resetIdleTimer);
-      window.addEventListener('mousemove', resetIdleTimer);
-      window.addEventListener('mousedown', resetIdleTimer);
-      window.addEventListener('keypress', resetIdleTimer);
-      window.addEventListener('touchstart', resetIdleTimer);
+      // Only set up timers if there's an order to track
+      if (placedOrder) {
+        resetIdleTimer();
+        
+        window.addEventListener('scroll', resetIdleTimer);
+        window.addEventListener('mousemove', resetIdleTimer);
+        window.addEventListener('mousedown', resetIdleTimer);
+        window.addEventListener('keypress', resetIdleTimer);
+        window.addEventListener('touchstart', resetIdleTimer);
 
-      // Cleanup
-      return () => {
-          if (idleTimer.current) {
-              clearTimeout(idleTimer.current);
-          }
-          window.removeEventListener('scroll', resetIdleTimer);
-          window.removeEventListener('mousemove', resetIdleTimer);
-          window.removeEventListener('mousedown', resetIdleTimer);
-          window.removeEventListener('keypress', resetIdleTimer);
-          window.removeEventListener('touchstart', resetIdleTimer);
-      };
-  }, [resetIdleTimer]);
+        // Cleanup
+        return () => {
+            if (idleTimer.current) {
+                clearTimeout(idleTimer.current);
+            }
+            window.removeEventListener('scroll', resetIdleTimer);
+            window.removeEventListener('mousemove', resetIdleTimer);
+            window.removeEventListener('mousedown', resetIdleTimer);
+            window.removeEventListener('keypress', resetIdleTimer);
+            window.removeEventListener('touchstart', resetIdleTimer);
+        };
+      }
+  }, [resetIdleTimer, placedOrder]);
 
   if (isLoading) {
     return (
@@ -144,9 +147,11 @@ export default function OrderStatusPage() {
   // This check is important for the case where the order is not found
   if (!placedOrder) {
     return (
-       <div className="flex h-screen items-center justify-center">
-         <p className="text-muted-foreground">Could not find order details.</p>
-         <Button onClick={resetToHome} className="ml-4">New Order</Button>
+       <div className="flex h-screen flex-col items-center justify-center gap-4 text-center">
+         <Info className="h-16 w-16 text-muted-foreground" />
+         <h1 className="font-headline text-2xl font-bold">No Active Order Found</h1>
+         <p className="max-w-md text-muted-foreground">This page tracks your order after you've placed it. If you have a pending order, please try again. Otherwise, you can start a new one.</p>
+         <Button onClick={resetToHome} className="mt-4">Start a New Order</Button>
        </div>
     );
   }
@@ -232,3 +237,5 @@ export default function OrderStatusPage() {
     </div>
   );
 }
+
+    
