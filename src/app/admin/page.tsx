@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { BarChart4, Package, Settings, Users, Megaphone, ShoppingCart, QrCode, Monitor } from 'lucide-react';
+import { BarChart4, Package, Settings, Users, Megaphone, ShoppingCart, QrCode, Monitor, ClipboardList } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useEffect } from 'react';
@@ -13,7 +13,7 @@ export default function AdminDashboardPage() {
   const { user } = useAuth();
 
   useEffect(() => {
-    // If user is a branch admin, redirect them directly to the reporting page
+    // If user is a branch admin, redirect them directly to their default page
     if (user?.role === 'admin') {
       router.replace('/admin/orders');
     }
@@ -62,6 +62,13 @@ export default function AdminDashboardPage() {
       href: '/admin/qr-codes',
       icon: QrCode,
       role: ['root'],
+    },
+     {
+      title: 'Activity Log',
+      description: 'A record of all actions taken.',
+      href: '/admin/activity-log',
+      icon: ClipboardList,
+      role: ['root', 'admin'],
     },
     {
       title: 'User Management',
