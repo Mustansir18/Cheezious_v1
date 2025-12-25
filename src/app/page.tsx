@@ -69,7 +69,7 @@ export default function Home() {
   };
   
   const handleCheckStatus = () => {
-    router.push('/order-status');
+    router.push('/admin/queue');
   }
 
   return (
