@@ -1,14 +1,13 @@
 'use client';
 
 import Link from "next/link";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Pizza } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/context/CartContext";
 import { CartSheet } from "@/components/cart/CartSheet";
 import { Badge } from "@/components/ui/badge";
 import { useSettings } from "@/context/SettingsContext";
 import { cn } from "@/lib/utils";
-import { Logo } from "../ui/logo";
 
 export default function Header({ branchId }: { branchId: string }) {
   const { cartCount } = useCart();
@@ -19,7 +18,7 @@ export default function Header({ branchId }: { branchId: string }) {
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-sm">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2">
-          <Logo className="h-8 w-8 text-primary" />
+          <Pizza className="h-8 w-8 text-primary" />
           <span className="hidden font-headline text-xl font-bold text-primary sm:inline-block">
             Cheezious
           </span>

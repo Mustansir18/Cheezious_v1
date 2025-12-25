@@ -7,12 +7,11 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useSettings } from '@/context/SettingsContext';
 import { useDeals } from '@/context/DealsContext';
-import { Loader, ListChecks } from 'lucide-react';
+import { Loader, ListChecks, Pizza } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
 import Autoplay from "embla-carousel-autoplay";
-import { Logo } from '@/components/ui/logo';
 
 function DealsCarousel() {
   const { deals, isLoading } = useDeals();
@@ -78,7 +77,7 @@ export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4">
         <div className="flex flex-col items-center justify-center text-center space-y-6">
-            <Logo className="h-24 w-24 text-primary" />
+            <Pizza className="h-24 w-24 text-primary" />
             <div className="space-y-2">
                 <h1 className="font-headline text-5xl font-bold tracking-tight">Welcome to Cheezious</h1>
                 <p className="text-lg text-muted-foreground">The best place for pizza and fast food lovers.</p>
