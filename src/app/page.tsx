@@ -10,7 +10,7 @@ import { useDeals } from '@/context/DealsContext';
 import { Loader, ListChecks, Pizza } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import Autoplay from "embla-carousel-autoplay";
 
 function DealsCarousel() {
@@ -34,7 +34,7 @@ function DealsCarousel() {
     <Carousel 
         opts={{ align: "start", loop: true }}
         plugins={[Autoplay({ delay: 5000, stopOnInteraction: false })]}
-        className="w-full"
+        className="w-full relative"
     >
       <CarouselContent>
         {deals.map((deal) => (
@@ -49,6 +49,8 @@ function DealsCarousel() {
           </CarouselItem>
         ))}
       </CarouselContent>
+      <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-background/50 hover:bg-background" />
+      <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-background/50 hover:bg-background" />
     </Carousel>
   );
 }
