@@ -272,14 +272,16 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
             <div className="flex items-center gap-1">
                 {children}
                 <Button variant="ghost" size="icon" className="h-8 w-8 print-hidden" onClick={handlePrint}><Printer className="h-4 w-4" /></Button>
-                <Badge variant="secondary">{order.orderType === 'Dine-In' ? <Utensils className="mr-1 h-4 w-4"/> : <ShoppingBag className="mr-1 h-4 w-4" />} {order.orderType}</Badge>
+                 <div className="text-right">
+                    <Badge variant="secondary">{order.orderType === 'Dine-In' ? <Utensils className="mr-1 h-4 w-4"/> : <ShoppingBag className="mr-1 h-4 w-4" />} {order.orderType}</Badge>
+                    {order.orderType === 'Dine-In' && table && (
+                        <div className="text-xs font-semibold text-primary mt-1">{table.name}</div>
+                    )}
+                </div>
             </div>
         </div>
         <div className="text-sm text-muted-foreground">
             <div>{formatDistanceToNow(orderDate, { addSuffix: true })}</div>
-            {order.orderType === 'Dine-In' && table && floor && (
-                <div className="font-semibold text-primary">{floor.name} - {table.name}</div>
-            )}
         </div>
         {order.status === 'Cancelled' && order.cancellationReason && (
             <CardDescription className="text-red-500 !mt-1">Reason: {order.cancellationReason}</CardDescription>
