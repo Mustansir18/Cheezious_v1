@@ -28,6 +28,7 @@ interface SettingsContextType {
   deleteTable: (id: string, name: string) => void;
   addPaymentMethod: (name: string) => void;
   deletePaymentMethod: (id: string, name: string) => void;
+  updatePaymentMethodTaxRate: (id: string, taxRate: number) => void;
   toggleAutoPrint: (enabled: boolean) => void;
   addBranch: (name: string, orderPrefix: string) => void;
   updateBranch: (id: string, name: string, orderPrefix: string) => void;
@@ -43,8 +44,8 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 const SETTINGS_STORAGE_KEY = 'cheeziousSettings';
 
 const defaultPaymentMethods: PaymentMethod[] = [
-    { id: 'cash', name: 'Cash' },
-    { id: 'card', name: 'Credit/Debit Card' }
+    { id: 'cash', name: 'Cash', taxRate: 0.16 },
+    { id: 'card', name: 'Credit/Debit Card', taxRate: 0.05 }
 ];
 
 const initialBranches: Branch[] = [
@@ -95,13 +96,24 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
       if (storedSettings) {
         const parsed = JSON.parse(storedSettings);
         
-        const customMethods = parsed.paymentMethods?.filter((pm: PaymentMethod) => !defaultPaymentMethods.some(dpm => dpm.id === pm.id)) || [];
+        // Ensure default payment methods are always present and up-to-date
+        const parsedMethods = parsed.paymentMethods || [];
+        const paymentMethodMap = new Map<string, PaymentMethod>();
+
+        // Add defaults first
+        defaultPaymentMethods.forEach(dpm => paymentMethodMap.set(dpm.id, dpm));
+        
+        // Overwrite defaults with stored values if they exist, and add custom ones
+        parsedMethods.forEach((pm: PaymentMethod) => {
+            paymentMethodMap.set(pm.id, pm);
+        });
+
         const loadedBranches = parsed.branches && parsed.branches.length > 0 ? parsed.branches : initialBranches;
         
         setSettings({
             floors: parsed.floors && parsed.floors.length > 0 ? parsed.floors : initialFloors,
             tables: parsed.tables && parsed.tables.length > 0 ? parsed.tables : initialTables,
-            paymentMethods: [...defaultPaymentMethods, ...customMethods],
+            paymentMethods: Array.from(paymentMethodMap.values()),
             autoPrintReceipts: parsed.autoPrintReceipts || false,
             companyName: parsed.companyName || "Cheezious",
             branches: loadedBranches,
@@ -158,19 +170,23 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   }, [logActivity, user]);
 
   const addPaymentMethod = useCallback((name: string) => {
-    const newMethod: PaymentMethod = { id: crypto.randomUUID(), name };
+    const newMethod: PaymentMethod = { id: crypto.randomUUID(), name, taxRate: 0 };
     setSettings(s => ({ ...s, paymentMethods: [...s.paymentMethods, newMethod] }));
     logActivity(`Added payment method: '${name}'.`, user?.username || 'System', 'Settings');
   }, [logActivity, user]);
 
   const deletePaymentMethod = useCallback((id: string, name: string) => {
-    if (defaultPaymentMethods.some(pm => pm.id === id)) {
-        toast({ title: "Action Denied", description: "Cannot delete a default payment method.", variant: "destructive" });
-        return;
-    }
     setSettings(s => ({ ...s, paymentMethods: s.paymentMethods.filter(pm => pm.id !== id) }));
     logActivity(`Deleted payment method: '${name}'.`, user?.username || 'System', 'Settings');
-  }, [toast, logActivity, user]);
+  }, [logActivity, user]);
+
+  const updatePaymentMethodTaxRate = useCallback((id: string, taxRate: number) => {
+    if (isNaN(taxRate) || taxRate < 0) return;
+    setSettings(s => ({
+        ...s,
+        paymentMethods: s.paymentMethods.map(pm => pm.id === id ? {...pm, taxRate} : pm)
+    }))
+  }, []);
 
   const toggleAutoPrint = useCallback((enabled: boolean) => {
     setSettings(s => ({...s, autoPrintReceipts: enabled }));
@@ -235,6 +251,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         deleteTable,
         addPaymentMethod,
         deletePaymentMethod,
+        updatePaymentMethodTaxRate,
         toggleAutoPrint,
         addBranch,
         updateBranch,

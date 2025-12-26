@@ -125,6 +125,7 @@ export type Table = {
 export type PaymentMethod = {
     id: string;
     name: string;
+    taxRate?: number;
 }
 
 // --- Auth Types ---

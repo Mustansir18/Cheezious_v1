@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2, Edit, Lock } from "lucide-react";
+import { Trash2, Edit, Lock, Percent } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -77,7 +77,7 @@ function AdvancedSettingsGate({ onUnlock }: { onUnlock: () => void }) {
 }
 
 export default function AdminSettingsPage() {
-    const { settings, addFloor, deleteFloor, addTable, deleteTable, addPaymentMethod, deletePaymentMethod, toggleAutoPrint, updateBranch, toggleService, updateBusinessDayHours, addBranch, deleteBranch, setDefaultBranch, updateCompanyName } = useSettings();
+    const { settings, addFloor, deleteFloor, addTable, deleteTable, addPaymentMethod, deletePaymentMethod, toggleAutoPrint, updateBranch, toggleService, updateBusinessDayHours, addBranch, deleteBranch, setDefaultBranch, updateCompanyName, updatePaymentMethodTaxRate } = useSettings();
     const { user } = useAuth();
     
     const [isAdvancedSettingsUnlocked, setAdvancedSettingsUnlocked] = useState(false);
@@ -157,8 +157,6 @@ export default function AdminSettingsPage() {
         setEditingBranchName(branch.name);
         setEditingBranchPrefix(branch.orderPrefix);
     }
-
-    const defaultPaymentMethodIds = ['cash', 'card'];
 
     const visibleBranches = user?.role === 'admin'
         ? settings.branches.filter(b => b.id === user.branchId)
@@ -486,8 +484,8 @@ export default function AdminSettingsPage() {
                              {/* Payment Methods Management */}
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Manage Payment Methods</CardTitle>
-                                    <CardDescription>Add or remove accepted payment methods.</CardDescription>
+                                    <CardTitle>Manage Payment Methods & Taxes</CardTitle>
+                                    <CardDescription>Add, remove, and set tax rates for payment methods.</CardDescription>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="flex gap-2 mb-4">
@@ -502,6 +500,7 @@ export default function AdminSettingsPage() {
                                         <TableHeader>
                                             <TableRow>
                                                 <TableHead>Method Name</TableHead>
+                                                <TableHead className="w-[150px]">Tax Rate (%)</TableHead>
                                                 <TableHead className="text-right w-[80px]">Actions</TableHead>
                                             </TableRow>
                                         </TableHeader>
@@ -509,22 +508,35 @@ export default function AdminSettingsPage() {
                                             {settings.paymentMethods.map(method => (
                                                 <TableRow key={method.id}>
                                                     <TableCell>{method.name}</TableCell>
+                                                    <TableCell>
+                                                        <div className="relative">
+                                                            <Input
+                                                                type="number"
+                                                                value={method.taxRate ? method.taxRate * 100 : 0}
+                                                                onChange={(e) => updatePaymentMethodTaxRate(method.id, parseFloat(e.target.value) / 100)}
+                                                                className="pl-2 pr-7"
+                                                            />
+                                                            <Percent className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                                        </div>
+                                                    </TableCell>
                                                     <TableCell className="text-right">
-                                                        {!defaultPaymentMethodIds.includes(method.id) && (
-                                                             <AlertDialog>
-                                                                <AlertDialogTrigger asChild><Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button></AlertDialogTrigger>
-                                                                <AlertDialogContent>
-                                                                    <AlertDialogHeader>
-                                                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                                                        <AlertDialogDescription>This action will permanently delete the payment method "{method.name}".</AlertDialogDescription>
-                                                                    </AlertDialogHeader>
-                                                                    <AlertDialogFooter>
-                                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                        <AlertDialogAction onClick={() => deletePaymentMethod(method.id, method.name)}>Delete</AlertDialogAction>
-                                                                    </AlertDialogFooter>
-                                                                </AlertDialogContent>
-                                                            </AlertDialog>
-                                                        )}
+                                                        <AlertDialog>
+                                                            <AlertDialogTrigger asChild>
+                                                                <Button variant="ghost" size="icon">
+                                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                                </Button>
+                                                            </AlertDialogTrigger>
+                                                            <AlertDialogContent>
+                                                                <AlertDialogHeader>
+                                                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                                    <AlertDialogDescription>This action will permanently delete the payment method "{method.name}".</AlertDialogDescription>
+                                                                </AlertDialogHeader>
+                                                                <AlertDialogFooter>
+                                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                    <AlertDialogAction onClick={() => deletePaymentMethod(method.id, method.name)}>Delete</AlertDialogAction>
+                                                                </AlertDialogFooter>
+                                                            </AlertDialogContent>
+                                                        </AlertDialog>
                                                     </TableCell>
                                                 </TableRow>
                                             ))}

@@ -35,18 +35,12 @@ export default function OrderConfirmationPage() {
     setIsCartOpen(false);
   }, [setIsCartOpen]);
 
-
-  const taxRates: { [key: string]: number } = {
-    'Cash': 0.16,
-    'Credit/Debit Card': 0.05,
-  };
-
   const branch = useMemo(() => settings.branches.find((b) => b.id === branchId), [branchId, settings.branches]);
   const table = useMemo(() => settings.tables.find(t => t.id === tableId), [settings.tables, tableId]);
   const floor = useMemo(() => settings.floors.find(f => f.id === floorId), [settings.floors, floorId]);
 
-
-  const taxRate = useMemo(() => taxRates[paymentMethod] || 0, [paymentMethod]);
+  const selectedPaymentMethod = useMemo(() => settings.paymentMethods.find(pm => pm.name === paymentMethod), [paymentMethod, settings.paymentMethods]);
+  const taxRate = useMemo(() => selectedPaymentMethod?.taxRate || 0, [selectedPaymentMethod]);
   const taxAmount = useMemo(() => cartTotal * taxRate, [cartTotal, taxRate]);
   const grandTotal = useMemo(() => cartTotal + taxAmount, [cartTotal, taxAmount]);
 
