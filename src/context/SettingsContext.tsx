@@ -35,6 +35,7 @@ interface SettingsContextType {
   setDefaultBranch: (id: string) => void;
   toggleService: (branchId: string, service: 'dineInEnabled' | 'takeAwayEnabled', enabled: boolean) => void;
   updateBusinessDayHours: (start: string, end: string) => void;
+  updateCompanyName: (name: string) => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -216,6 +217,12 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
       logActivity(`Updated business hours. Start: ${start}, End: ${end}.`, user?.username || 'System', 'Settings');
   }, [toast, logActivity, user]);
 
+  const updateCompanyName = useCallback((name: string) => {
+    setSettings(s => ({...s, companyName: name}));
+    toast({ title: "Success", description: "Company name has been updated." });
+    logActivity(`Updated company name to: '${name}'.`, user?.username || 'System', 'Settings');
+  }, [toast, logActivity, user]);
+
 
   return (
     <SettingsContext.Provider
@@ -235,6 +242,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         setDefaultBranch,
         toggleService,
         updateBusinessDayHours,
+        updateCompanyName,
       }}
     >
       {children}

@@ -77,7 +77,7 @@ function AdvancedSettingsGate({ onUnlock }: { onUnlock: () => void }) {
 }
 
 export default function AdminSettingsPage() {
-    const { settings, addFloor, deleteFloor, addTable, deleteTable, addPaymentMethod, deletePaymentMethod, toggleAutoPrint, updateBranch, toggleService, updateBusinessDayHours, addBranch, deleteBranch, setDefaultBranch } = useSettings();
+    const { settings, addFloor, deleteFloor, addTable, deleteTable, addPaymentMethod, deletePaymentMethod, toggleAutoPrint, updateBranch, toggleService, updateBusinessDayHours, addBranch, deleteBranch, setDefaultBranch, updateCompanyName } = useSettings();
     const { user } = useAuth();
     
     const [isAdvancedSettingsUnlocked, setAdvancedSettingsUnlocked] = useState(false);
@@ -89,6 +89,7 @@ export default function AdminSettingsPage() {
     const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
     const [editingBranchName, setEditingBranchName] = useState("");
     const [editingBranchPrefix, setEditingBranchPrefix] = useState("");
+    const [companyName, setCompanyName] = useState(settings.companyName);
     
     const [businessDayStart, setBusinessDayStart] = useState(settings.businessDayStart);
     const [businessDayEnd, setBusinessDayEnd] = useState(settings.businessDayEnd);
@@ -99,7 +100,8 @@ export default function AdminSettingsPage() {
     useEffect(() => {
         setBusinessDayStart(settings.businessDayStart);
         setBusinessDayEnd(settings.businessDayEnd);
-    }, [settings.businessDayStart, settings.businessDayEnd]);
+        setCompanyName(settings.companyName);
+    }, [settings.businessDayStart, settings.businessDayEnd, settings.companyName]);
 
 
     const handleAddFloor = () => {
@@ -134,6 +136,12 @@ export default function AdminSettingsPage() {
     
     const handleSaveBusinessHours = () => {
         updateBusinessDayHours(businessDayStart, businessDayEnd);
+    };
+
+    const handleSaveCompanyName = () => {
+        if (companyName.trim()) {
+            updateCompanyName(companyName.trim());
+        }
     };
 
     const handleAddBranch = () => {
@@ -282,6 +290,27 @@ export default function AdminSettingsPage() {
                         <AdvancedSettingsGate onUnlock={() => setAdvancedSettingsUnlocked(true)} />
                     ) : (
                         <div className="space-y-8 mt-6">
+                             {/* Company Name Settings */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Company Information</CardTitle>
+                                    <CardDescription>Set the name of your company or restaurant.</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 items-end gap-4">
+                                        <div className="space-y-2 md:col-span-2">
+                                            <Label htmlFor="company-name">Company Name</Label>
+                                            <Input
+                                                id="company-name"
+                                                value={companyName}
+                                                onChange={(e) => setCompanyName(e.target.value)}
+                                            />
+                                        </div>
+                                        <Button onClick={handleSaveCompanyName}>Save Company Name</Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
                             {/* Branch Management */}
                             <Card>
                                 <CardHeader>

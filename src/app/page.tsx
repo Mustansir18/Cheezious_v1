@@ -87,7 +87,7 @@ export default function Home() {
         <div className="flex flex-col items-center justify-center text-center space-y-6">
             <Pizza className="h-24 w-24 text-primary" />
             <div className="space-y-2">
-                <h1 className="font-headline text-5xl font-bold tracking-tight">Welcome to Cheezious</h1>
+                <h1 className="font-headline text-5xl font-bold tracking-tight">Welcome to {settings.companyName}</h1>
                 <p className="text-lg text-muted-foreground">The best place for pizza and fast food lovers.</p>
             </div>
             

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -9,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader, Eye, EyeOff, Pizza } from 'lucide-react';
+import { useSettings } from '@/context/SettingsContext';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -16,6 +18,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
+  const { settings } = useSettings();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -49,7 +52,7 @@ export default function LoginPage() {
         <form onSubmit={handleLogin}>
           <CardHeader className="text-center">
             <Pizza className="mx-auto h-16 w-auto text-primary" />
-            <CardTitle className="font-headline text-2xl">Welcome Back</CardTitle>
+            <CardTitle className="font-headline text-2xl">Welcome to {settings.companyName}</CardTitle>
             <CardDescription>Enter your credentials to access your dashboard.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
