@@ -118,7 +118,7 @@ export default function QueuePage() {
                 <div className="w-16"></div> {/* Spacer */}
                 <h1 className="font-headline text-5xl font-bold">Order Queue status</h1>
                 <Link href="/" passHref>
-                    <Button variant="outline" size="icon" aria-label="Back to Home">
+                    <Button variant="outline" size="icon" aria-label="Back to Home" className="animate-blink">
                         <Home className="h-6 w-6" />
                     </Button>
                 </Link>
@@ -131,3 +131,4 @@ export default function QueuePage() {
         </div>
     );
 }
+
