@@ -69,7 +69,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         <span>Total:</span>
                         <span>RS {Math.round(cartTotal)}</span>
                     </div>
-                    <Button asChild size="lg" className={cn("w-full bg-accent text-accent-foreground hover:bg-accent/90", isCartOpen && cartCount > 0 && "animate-blink")}>
+                    <Button asChild size="lg" className={`w-full bg-accent text-accent-foreground hover:bg-accent/90 ${isCartOpen && cartCount > 0 ? 'animate-blink' : ''}`}>
                         <Link href={`/branch/${branchId}/order`}>Confirm Order</Link>
                     </Button>
                 </div>
