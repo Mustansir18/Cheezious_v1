@@ -23,9 +23,9 @@ const StatusColumn = ({ title, orders, status }: { title: string, orders: { orde
     } as const;
 
     const headerColor = {
-        Pending: "bg-gray-200 text-gray-800",
-        Preparing: "bg-blue-500 text-white",
-        Ready: "bg-yellow-500 text-black",
+        Pending: "bg-green-200 text-green-900",
+        Preparing: "bg-green-200 text-green-900",
+        Ready: "bg-green-200 text-green-900",
     }
 
     const badgeColor = {
@@ -118,7 +118,7 @@ export default function QueuePage() {
                 <div className="w-16"></div> {/* Spacer */}
                 <h1 className="font-headline text-5xl font-bold">Order Queue status</h1>
                 <Link href="/" passHref>
-                    <Button variant="outline" size="icon" aria-label="Back to Home" className="animate-blink">
+                    <Button variant="outline" size="icon" aria-label="Back to Home" className="animate-blink-yellow">
                         <Home className="h-6 w-6" />
                     </Button>
                 </Link>
@@ -131,4 +131,3 @@ export default function QueuePage() {
         </div>
     );
 }
-

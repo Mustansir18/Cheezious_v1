@@ -90,7 +90,7 @@ body {
 @layer utilities {
   @keyframes blink {
     0%, 100% {
-      box-shadow: 0 0 5px 2px #90ee90; /* lightgreen with transparency */
+      box-shadow: 0 0 5px 2px #90ee90; /* lightgreen */
     }
     50% {
       box-shadow: 0 0 10px 5px #90ee9066; /* lighter green with more transparency */
@@ -100,6 +100,20 @@ body {
   .animate-blink {
     animation: blink 2s ease-in-out infinite;
   }
+
+  @keyframes blink-yellow {
+    0%, 100% {
+      box-shadow: 0 0 5px 2px #FFFFE0; /* lightyellow */
+    }
+    50% {
+      box-shadow: 0 0 10px 5px #FFFFE066; /* lighter yellow with more transparency */
+    }
+  }
+
+  .animate-blink-yellow {
+    animation: blink-yellow 2s ease-in-out infinite;
+  }
+
 
   @keyframes pulse {
     0%, 100% {
