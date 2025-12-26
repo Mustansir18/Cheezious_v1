@@ -100,6 +100,19 @@ body {
   .animate-blink {
     animation: blink 2s ease-in-out infinite;
   }
+  
+  @keyframes blink-neon-green {
+    0%, 100% {
+      box-shadow: 0 0 5px 2px #39FF14; /* Neon Green */
+    }
+    50% {
+      box-shadow: 0 0 10px 5px #39ff1466; /* Neon Green with transparency */
+    }
+  }
+
+  .animate-blink-neon-green {
+    animation: blink-neon-green 2s ease-in-out infinite;
+  }
 
   @keyframes blink-green {
     0%, 100% {
