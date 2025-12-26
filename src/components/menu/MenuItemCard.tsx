@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import type { MenuItem, Addon } from "@/lib/types";
+import type { MenuItem, Addon, CartItem } from "@/lib/types";
 import { useCart } from "@/context/CartContext";
 import { useMenu } from "@/context/MenuContext";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 
 const FALLBACK_IMAGE_URL = "https://picsum.photos/seed/placeholder/400/300";
 
-function AddToCartDialog({ item, onAddToCart }: { item: MenuItem; onAddToCart: (options: { selectedAddons: Addon[] }) => void; }) {
+function AddToCartDialog({ item, onAddToCart, onIncrementQuantity, existingCartItem }: { item: MenuItem; onAddToCart: (options: { selectedAddons: Addon[] }) => void; onIncrementQuantity: (cartItemId: string) => void; existingCartItem: CartItem | undefined; }) {
     const { menu } = useMenu();
     const [selectedAddons, setSelectedAddons] = useState<Addon[]>([]);
     const [isOpen, setIsOpen] = useState(false);
@@ -37,7 +37,16 @@ function AddToCartDialog({ item, onAddToCart }: { item: MenuItem; onAddToCart: (
     const totalAddonPrice = selectedAddons.reduce((sum, addon) => sum + addon.price, 0);
     const finalPrice = item.price + totalAddonPrice;
 
-    // Decide if dialog is needed
+    // If an identical item is already in the cart, show a simple "Add" button to increment it.
+    if (existingCartItem) {
+        return (
+             <Button onClick={() => onIncrementQuantity(existingCartItem.cartItemId)} className="bg-accent text-accent-foreground hover:bg-accent/90">
+                <PlusCircle className="mr-2 h-5 w-5" /> Add to Cart
+            </Button>
+        );
+    }
+    
+    // If there are no addons, the simple button is also used.
     if (!item.availableAddonIds || item.availableAddonIds.length === 0) {
         return (
             <Button onClick={() => onAddToCart({ selectedAddons: [] })} className="bg-accent text-accent-foreground hover:bg-accent/90">
@@ -46,6 +55,7 @@ function AddToCartDialog({ item, onAddToCart }: { item: MenuItem; onAddToCart: (
         );
     }
     
+    // Otherwise, show the full customization dialog.
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
@@ -98,11 +108,25 @@ function AddToCartDialog({ item, onAddToCart }: { item: MenuItem; onAddToCart: (
 
 
 export function MenuItemCard({ item }: { item: MenuItem }) {
-  const { addItem } = useCart();
+  const { addItem, updateQuantity, items: cartItems } = useCart();
 
   const handleAddToCart = (options: { selectedAddons: Addon[] }) => {
     addItem({ item, ...options });
   };
+
+  const handleIncrementQuantity = (cartItemId: string) => {
+    const cartItem = cartItems.find(i => i.cartItemId === cartItemId);
+    if (cartItem) {
+        updateQuantity(cartItemId, cartItem.quantity + 1);
+    }
+  };
+  
+  // Check if an item with NO add-ons already exists in the cart.
+  // This is for the case where an item has available add-ons, but the user adds it with none selected.
+  // We should find that item in the cart if it exists.
+  const existingCartItem = cartItems.find(
+    cartItem => cartItem.id === item.id && cartItem.selectedAddons.length === 0
+  );
   
   return (
     <Card className="flex h-full flex-col overflow-hidden transition-shadow hover:shadow-lg">
@@ -124,7 +148,12 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
       </CardContent>
       <CardFooter className="flex items-center justify-between p-4 pt-0">
         <p className="text-xl font-bold text-primary">RS {Math.round(item.price)}</p>
-        <AddToCartDialog item={item} onAddToCart={handleAddToCart} />
+        <AddToCartDialog 
+            item={item} 
+            onAddToCart={handleAddToCart}
+            onIncrementQuantity={handleIncrementQuantity}
+            existingCartItem={existingCartItem}
+        />
       </CardFooter>
     </Card>
   );
