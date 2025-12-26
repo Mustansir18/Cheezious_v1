@@ -90,6 +90,19 @@ body {
 @layer utilities {
   @keyframes blink {
     0%, 100% {
+      box-shadow: 0 0 5px 2px hsl(var(--primary));
+    }
+    50% {
+      box-shadow: 0 0 10px 5px hsla(var(--primary), 0.4);
+    }
+  }
+
+  .animate-blink {
+    animation: blink 2s ease-in-out infinite;
+  }
+
+  @keyframes blink-green {
+    0%, 100% {
       box-shadow: 0 0 5px 2px #90ee90; /* lightgreen */
     }
     50% {
@@ -97,8 +110,8 @@ body {
     }
   }
 
-  .animate-blink {
-    animation: blink 2s ease-in-out infinite;
+  .animate-blink-green {
+    animation: blink-green 2s ease-in-out infinite;
   }
 
   @keyframes blink-yellow {
