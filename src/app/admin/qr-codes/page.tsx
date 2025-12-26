@@ -1,134 +1,141 @@
 
 "use client";
 
-import { useOrders } from "@/context/OrderContext";
-import { Loader, Home } from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { useEffect, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { useSettings } from "@/context/SettingsContext";
+import { useState } from 'react';
+import { useSettings } from '@/context/SettingsContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Printer, QrCode } from 'lucide-react';
+import { QRCodeGenerator } from '@/components/admin/qr-code-generator';
 
-const IDLE_TIMEOUT_SECONDS = 30; 
+export default function QRCodesPage() {
+    const { settings, isLoading } = useSettings();
+    const [selectedBranchId, setSelectedBranchId] = useState<string | undefined>(settings.branches[0]?.id);
+    const [selectedFloorId, setSelectedFloorId] = useState<string | undefined>();
+    const [selectedTableId, setSelectedTableId] = useState<string | undefined>();
+    const [qrCodeValue, setQrCodeValue] = useState<string | null>(null);
 
-const StatusColumn = ({ title, orders, status }: { title: string, orders: { orderNumber: string }[], status: 'Pending' | 'Preparing' | 'Ready' }) => {
+    const availableTables = settings.tables.filter(table => table.floorId === selectedFloorId);
     
-    const badgeVariant = {
-        Pending: "secondary",
-        Preparing: "default",
-        Ready: "default",
-    } as const;
+    const generateQRCode = () => {
+        if (!selectedBranchId || !selectedTableId) return;
+        const origin = typeof window !== 'undefined' ? window.location.origin : '';
+        const url = `${origin}/branch/${selectedBranchId}?tableId=${selectedTableId}`;
+        setQrCodeValue(url);
+    };
 
-    const headerColor = {
-        Pending: "bg-gray-200 text-gray-800",
-        Preparing: "bg-blue-500 text-white",
-        Ready: "bg-yellow-500 text-black",
-    }
-
-    const badgeColor = {
-        Pending: "animate-pulse",
-        Preparing: "animate-pulse",
-        Ready: "bg-green-600 text-white hover:bg-green-700 animate-pulse",
-    }
-
-    return (
-        <Card className="flex flex-col h-full bg-muted/20">
-            <CardHeader className="p-4">
-                 <Badge className={cn(
-                    "text-2xl font-bold justify-center py-3 rounded-lg shadow-md border-0",
-                    headerColor[status]
-                 )}>
-                    {title}
-                </Badge>
-            </CardHeader>
-            <CardContent className="flex-grow p-4">
-                 <div className="flex flex-wrap justify-center gap-4">
-                    {orders.length > 0 ? (
-                        orders.map(order => (
-                            <Badge key={order.orderNumber} variant={badgeVariant[status]} className={cn("text-3xl font-bold p-3 px-6 rounded-lg", badgeColor[status])}>
-                                {order.orderNumber}
-                            </Badge>
-                        ))
-                    ) : (
-                        <div className="flex items-center justify-center h-full text-muted-foreground">
-                            <p>No orders in this status</p>
-                        </div>
-                    )}
-                 </div>
-            </CardContent>
-        </Card>
-    );
-};
-
-
-export default function QueuePage() {
-    const { orders, isLoading: isOrdersLoading } = useOrders();
-    const { settings, isLoading: isSettingsLoading } = useSettings();
-    const router = useRouter();
-    const idleTimer = useRef<NodeJS.Timeout>();
-
-    const resetToHome = useCallback(() => {
-        router.push("/");
-    }, [router]);
-
-    const resetIdleTimer = useCallback(() => {
-        if (idleTimer.current) {
-            clearTimeout(idleTimer.current);
+    const handlePrint = () => {
+        const printContent = document.getElementById('qr-code-container');
+        if (printContent) {
+            const newWindow = window.open('', '', 'width=400,height=400');
+            newWindow?.document.write(`
+                <html>
+                <head>
+                    <title>Print QR Code</title>
+                    <style>
+                        @media print {
+                            body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
+                            #print-div { text-align: center; }
+                            svg { width: 80mm; height: 80mm; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div id="print-div">
+                        ${printContent.innerHTML}
+                    </div>
+                    <script>
+                        window.onload = function() {
+                            window.print();
+                            window.close();
+                        }
+                    </script>
+                </body>
+                </html>
+            `);
+            newWindow?.document.close();
         }
-        idleTimer.current = setTimeout(resetToHome, IDLE_TIMEOUT_SECONDS * 1000);
-    }, [resetToHome]);
-    
-    // Set up idle timer and activity listeners
-    useEffect(() => {
-        resetIdleTimer();
-        
-        const events = ['scroll', 'mousemove', 'mousedown', 'keypress', 'touchstart'];
-        events.forEach(event => window.addEventListener(event, resetIdleTimer));
-
-        // Cleanup
-        return () => {
-            if (idleTimer.current) {
-                clearTimeout(idleTimer.current);
-            }
-            events.forEach(event => window.removeEventListener(event, resetIdleTimer));
-        };
-    }, [resetIdleTimer]);
-
-    const pendingOrders = orders.filter(order => order.status === "Pending");
-    const preparingOrders = orders.filter(order => order.status === "Preparing");
-    const readyOrders = orders.filter(order => order.status === "Ready");
-
-    const isLoading = isOrdersLoading || isSettingsLoading;
-
-    if (isLoading) {
-        return (
-            <div className="flex h-screen items-center justify-center">
-                <Loader className="h-12 w-12 animate-spin text-primary" />
-                <p className="ml-4 text-muted-foreground">Loading Queue...</p>
-            </div>
-        );
-    }
+    };
     
     return (
-        <div className="h-screen w-full bg-background p-8">
-            <header className="text-center mb-8 flex justify-between items-center">
-                <div className="w-16"></div> {/* Spacer */}
-                <h1 className="font-headline text-5xl font-bold">Order Queue status</h1>
-                <Link href="/" passHref>
-                    <Button variant="outline" size="icon" aria-label="Back to Home">
-                        <Home className="h-6 w-6" />
-                    </Button>
-                </Link>
-            </header>
-            <main className="grid grid-cols-3 gap-6 h-[calc(100vh-140px)]">
-                <StatusColumn title="Pending" orders={pendingOrders} status="Pending" />
-                <StatusColumn title="Preparing" orders={preparingOrders} status="Preparing" />
-                <StatusColumn title="Pickup" orders={readyOrders} status="Ready" />
-            </main>
+        <div className="container mx-auto p-4 lg:p-8 space-y-8">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline text-4xl font-bold">QR Code Generator</CardTitle>
+                    <CardDescription>Generate and print QR codes for your tables to allow customers to order directly.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                        {/* Branch Select */}
+                        <div className="space-y-2">
+                            <label>Branch</label>
+                            <Select value={selectedBranchId} onValueChange={setSelectedBranchId} disabled={settings.branches.length <= 1}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a branch" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {settings.branches.map(branch => (
+                                        <SelectItem key={branch.id} value={branch.id}>{branch.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        {/* Floor Select */}
+                        <div className="space-y-2">
+                             <label>Floor</label>
+                            <Select value={selectedFloorId} onValueChange={(value) => { setSelectedFloorId(value); setSelectedTableId(undefined); setQrCodeValue(null); }}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a floor" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {settings.floors.map(floor => (
+                                        <SelectItem key={floor.id} value={floor.id}>{floor.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        {/* Table Select */}
+                         <div className="space-y-2">
+                             <label>Table</label>
+                            <Select value={selectedTableId} onValueChange={(value) => { setSelectedTableId(value); setQrCodeValue(null); }} disabled={!selectedFloorId}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a table" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {availableTables.map(table => (
+                                        <SelectItem key={table.id} value={table.id}>{table.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        
+                        <Button onClick={generateQRCode} disabled={!selectedBranchId || !selectedTableId}>
+                           <QrCode className="mr-2 h-4 w-4"/> Generate QR Code
+                        </Button>
+                    </div>
+
+                    {qrCodeValue && (
+                        <Card className="mt-8 pt-6 flex flex-col items-center justify-center">
+                            <CardContent id="qr-code-container" className="flex flex-col items-center text-center">
+                                <QRCodeGenerator value={qrCodeValue} />
+                                <div className="mt-4">
+                                    <p className="font-bold text-lg">{settings.branches.find(b => b.id === selectedBranchId)?.name}</p>
+                                    <p className="text-xl font-headline font-bold">
+                                        {settings.floors.find(f => f.id === selectedFloorId)?.name} - {settings.tables.find(t => t.id === selectedTableId)?.name}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground mt-1">Scan to order</p>
+                                </div>
+                            </CardContent>
+                            <CardHeader>
+                                <Button onClick={handlePrint} size="lg">
+                                    <Printer className="mr-2 h-4 w-4"/> Print QR Code
+                                </Button>
+                            </CardHeader>
+                        </Card>
+                    )}
+                </CardContent>
+            </Card>
         </div>
     );
 }
-
