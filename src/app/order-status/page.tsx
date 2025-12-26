@@ -11,6 +11,7 @@ import type { Order, PlacedOrder } from "@/lib/types";
 import { useOrders } from "@/context/OrderContext";
 import { useSettings } from "@/context/SettingsContext";
 import { OrderReceipt } from "@/components/cashier/OrderReceipt";
+import { cn } from "@/lib/utils";
 
 const IDLE_TIMEOUT_SECONDS = 10; // 10 seconds
 
@@ -162,7 +163,7 @@ export default function OrderStatusPage() {
 
   return (
     <div className="container mx-auto flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-md text-center shadow-2xl">
+      <Card className={cn("w-full max-w-md text-center shadow-2xl", isOrderActive && "animate-blink")}>
         <CardHeader>
           {isOrderActive || !status ? (
             <>
