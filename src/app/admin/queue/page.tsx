@@ -32,7 +32,7 @@ const StatusColumn = ({ title, orders, status }: { title: string, orders: { orde
         <Card className="flex flex-col h-full bg-muted/20">
             <CardHeader className="p-4">
                  <Badge className={cn(
-                    "text-2xl font-bold justify-center py-3 rounded-lg shadow-md border-0",
+                    "text-2xl font-bold justify-center py-3 rounded-lg shadow-md border-0 animate-blink",
                     headerColor[status]
                  )}>
                     {title}
