@@ -195,7 +195,7 @@ export default function OrderConfirmationPage() {
                  <p className="text-xs text-muted-foreground pt-1">Any special requests for the entire order can be added here.</p>
             </div>
 
-            <div className={cn("p-4 rounded-lg bg-muted/50", !paymentMethod && "animate-blink")}>
+            <div className={cn("p-4 rounded-lg bg-muted/50", !paymentMethod && "animate-pulse")}>
                 <div className="space-y-2">
                     <Label htmlFor="payment-method" className="font-semibold flex items-center"><CreditCard className="mr-2 h-5 w-5"/>Payment Method</Label>
                     <Select value={paymentMethod} onValueChange={setPaymentMethod}>
@@ -217,7 +217,7 @@ export default function OrderConfirmationPage() {
           <Button variant="outline" asChild><Link href={`/branch/${branchId}/menu?mode=${orderType}&floorId=${floorId}&tableId=${tableId}`}>Cancel</Link></Button>
           <Button
             onClick={handleConfirmOrder}
-            className={cn("w-full sm:w-auto font-bold bg-primary text-primary-foreground hover:bg-primary/90", paymentMethod && "animate-blink")}
+            className={cn("w-full sm:w-auto font-bold bg-primary text-primary-foreground hover:bg-primary/90", !!paymentMethod && "animate-blink")}
             size="lg"
             disabled={items.length === 0}
           >
