@@ -7,6 +7,7 @@ import { Utensils, ShoppingBag } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useMemo } from "react";
 import { notFound, useParams, useSearchParams } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 export default function ModeSelectionPage() {
   const params = useParams();
@@ -40,7 +41,7 @@ export default function ModeSelectionPage() {
       <div className="mt-10 grid w-full max-w-2xl grid-cols-1 gap-8 md:grid-cols-2">
         {isDineInAvailable ? (
             <Link href={dineInUrl}>
-                <Card className="transform transition-transform duration-300 hover:scale-105 hover:shadow-xl">
+                <Card className={cn("transform transition-transform duration-300 hover:scale-105 hover:shadow-xl", "animate-blink")}>
                     <CardHeader>
                     <Utensils className="mx-auto h-16 w-16 text-primary" />
                     </CardHeader>
@@ -68,7 +69,7 @@ export default function ModeSelectionPage() {
 
         {isTakeAwayAvailable ? (
             <Link href={takeAwayUrl}>
-                <Card className="transform transition-transform duration-300 hover:scale-105 hover:shadow-xl">
+                <Card className={cn("transform transition-transform duration-300 hover:scale-105 hover:shadow-xl", "animate-blink")}>
                     <CardHeader>
                     <ShoppingBag className="mx-auto h-16 w-16 text-primary" />
                     </CardHeader>
