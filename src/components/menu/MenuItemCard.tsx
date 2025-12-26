@@ -22,7 +22,6 @@ function AddToCartDialog({ item, onAddToCart }: { item: MenuItem; onAddToCart: (
     const [isOpen, setIsOpen] = useState(false);
 
     const availableAddons = menu.addons.filter(addon => item.availableAddonIds?.includes(addon.id));
-    const addonCategories = menu.addonCategories.filter(cat => availableAddons.some(a => a.addonCategoryId === cat.id));
 
     const handleAddonToggle = (addon: Addon) => {
         setSelectedAddons(prev => {
@@ -93,11 +92,11 @@ function AddToCartDialog({ item, onAddToCart }: { item: MenuItem; onAddToCart: (
                     </div>
                     
                     {/* Add-ons */}
-                    {addonCategories.map(cat => (
-                        <div key={cat.id} className="mb-4">
-                            <h4 className="font-semibold mb-2">{cat.name}</h4>
+                    {availableAddons.length > 0 && (
+                        <div>
+                            <h4 className="font-semibold mb-2">Available Add-ons</h4>
                             <div className="space-y-2">
-                                {availableAddons.filter(a => a.addonCategoryId === cat.id).map(addon => {
+                                {availableAddons.map(addon => {
                                     const isSelected = selectedAddons.has(addon.id);
                                     const selectedInfo = selectedAddons.get(addon.id);
 
@@ -132,7 +131,7 @@ function AddToCartDialog({ item, onAddToCart }: { item: MenuItem; onAddToCart: (
                                 })}
                             </div>
                         </div>
-                    ))}
+                    )}
                 </div>
 
                 <DialogFooter className="mt-auto pt-4 border-t">

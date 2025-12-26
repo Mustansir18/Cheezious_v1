@@ -19,7 +19,6 @@ export type Addon = {
   id: string;
   name: string;
   price: number;
-  addonCategoryId: string;
 };
 
 export type AddonCategory = {

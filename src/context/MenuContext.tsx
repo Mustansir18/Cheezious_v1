@@ -2,8 +2,8 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
-import { menuItems as initialMenuItems, menuCategories as initialMenuCategories, addons as initialAddons, addonCategories as initialAddonCategories } from '@/lib/data';
-import type { MenuItem, MenuCategory, Addon, AddonCategory } from '@/lib/types';
+import { menuItems as initialMenuItems, menuCategories as initialMenuCategories, addons as initialAddons } from '@/lib/data';
+import type { MenuItem, MenuCategory, Addon } from '@/lib/types';
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
 
@@ -11,7 +11,6 @@ interface MenuData {
     items: MenuItem[];
     categories: MenuCategory[];
     addons: Addon[];
-    addonCategories: AddonCategory[];
 }
 
 interface MenuContextType {
@@ -29,10 +28,6 @@ interface MenuContextType {
   addAddon: (addon: Omit<Addon, 'id'>) => void;
   updateAddon: (addon: Addon) => void;
   deleteAddon: (id: string, name: string) => void;
-  // Addon Categories
-  addAddonCategory: (category: Omit<AddonCategory, 'id'>) => void;
-  updateAddonCategory: (category: AddonCategory) => void;
-  deleteAddonCategory: (id: string, name: string) => void;
 }
 
 const MenuContext = createContext<MenuContextType | undefined>(undefined);
@@ -43,7 +38,6 @@ const initialData: MenuData = {
     items: initialMenuItems,
     categories: initialMenuCategories,
     addons: initialAddons,
-    addonCategories: initialAddonCategories,
 };
 
 function usePrevious<T>(value: T) {
@@ -65,8 +59,9 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
       const storedMenu = localStorage.getItem(MENU_STORAGE_KEY);
       if (storedMenu) {
         const parsed = JSON.parse(storedMenu);
-        if (parsed.items && parsed.categories && parsed.addons && parsed.addonCategories) {
-            setMenu(parsed);
+        // Add a check for the simplified structure
+        if (parsed.items && parsed.categories && parsed.addons) {
+            setMenu({ ...parsed, addonCategories: parsed.addonCategories || [] });
         } else {
              setMenu(initialData); // Fallback to initial if structure is wrong
         }
@@ -81,7 +76,8 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     try {
         if (!isLoading) {
-            localStorage.setItem(MENU_STORAGE_KEY, JSON.stringify(menu));
+            const { addonCategories, ...menuToSave } = menu;
+            localStorage.setItem(MENU_STORAGE_KEY, JSON.stringify(menuToSave));
         }
     } catch (error) {
       console.error("Could not save menu to local storage", error);
@@ -124,31 +120,6 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
     logActivity(`Deleted menu item: '${name}'.`, user?.username || 'System', 'Menu');
   };
 
-  const addAddonCategory = (category: Omit<AddonCategory, 'id'>) => {
-    const newCategory = { ...category, id: crypto.randomUUID() };
-    setMenu(m => ({ ...m, addonCategories: [...m.addonCategories, newCategory] }));
-    logActivity(`Added add-on category: '${category.name}'.`, user?.username || 'System', 'Menu');
-  };
-  
-  const updateAddonCategory = (category: AddonCategory) => {
-    setMenu(m => ({ ...m, addonCategories: m.addonCategories.map(c => c.id === category.id ? category : c) }));
-    logActivity(`Updated add-on category: '${category.name}'.`, user?.username || 'System', 'Menu');
-  };
-  
-  const deleteAddonCategory = (id: string, name: string) => {
-    setMenu(m => {
-      const addonsToDelete = m.addons.filter(a => a.addonCategoryId === id).map(a => a.id);
-      const newAddons = m.addons.filter(a => a.addonCategoryId !== id);
-      const newItems = m.items.map(item => ({
-        ...item,
-        availableAddonIds: item.availableAddonIds?.filter(addonId => !addonsToDelete.includes(addonId))
-      }));
-      const newAddonCategories = m.addonCategories.filter(c => c.id !== id);
-      return { ...m, addonCategories: newAddonCategories, addons: newAddons, items: newItems };
-    });
-    logActivity(`Deleted add-on category: '${name}' and associated add-ons.`, user?.username || 'System', 'Menu');
-  };
-
   const addAddon = (addon: Omit<Addon, 'id'>) => {
     const newAddon = { ...addon, id: crypto.randomUUID() };
     setMenu(m => ({ ...m, addons: [...m.addons, newAddon] }));
@@ -186,9 +157,6 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
         addAddon,
         updateAddon,
         deleteAddon,
-        addAddonCategory,
-        updateAddonCategory,
-        deleteAddonCategory,
       }}
     >
       {children}

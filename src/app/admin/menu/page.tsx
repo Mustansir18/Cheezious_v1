@@ -21,7 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Trash2, Edit, PlusCircle } from 'lucide-react';
-import type { MenuCategory, MenuItem, Addon, AddonCategory } from '@/lib/types';
+import type { MenuCategory, MenuItem, Addon } from '@/lib/types';
 import imageCompression from 'browser-image-compression';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -143,24 +143,19 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
       <div>
         <Label>Available Add-ons</Label>
         <ScrollArea className="h-40 rounded-md border p-4">
-            {menu.addonCategories.map(cat => (
-                <div key={cat.id} className="mb-4">
-                    <p className="font-semibold mb-2">{cat.name}</p>
-                    <div className="space-y-2">
-                        {menu.addons.filter(a => a.addonCategoryId === cat.id).map(addon => (
-                            <div key={addon.id} className="flex items-center space-x-2">
-                                <Checkbox
-                                    id={`addon-${addon.id}`}
-                                    checked={selectedAddonIds.includes(addon.id)}
-                                    onCheckedChange={() => handleAddonToggle(addon.id)}
-                                />
-                                <Label htmlFor={`addon-${addon.id}`} className="font-normal flex-grow">{addon.name}</Label>
-                                <span className="text-sm text-muted-foreground">+RS {Math.round(addon.price)}</span>
-                            </div>
-                        ))}
+            <div className="space-y-2">
+                {menu.addons.map(addon => (
+                    <div key={addon.id} className="flex items-center space-x-2">
+                        <Checkbox
+                            id={`addon-${addon.id}`}
+                            checked={selectedAddonIds.includes(addon.id)}
+                            onCheckedChange={() => handleAddonToggle(addon.id)}
+                        />
+                        <Label htmlFor={`addon-${addon.id}`} className="font-normal flex-grow">{addon.name}</Label>
+                        <span className="text-sm text-muted-foreground">+RS {Math.round(addon.price)}</span>
                     </div>
-                </div>
-            ))}
+                ))}
+            </div>
         </ScrollArea>
       </div>
       <div>
@@ -180,33 +175,14 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
   );
 }
 
-// Addon Category Form
-function AddonCategoryForm({ category, onSave }: { category?: AddonCategory; onSave: (cat: Omit<AddonCategory, 'id'> | AddonCategory) => void; }) {
-    const [name, setName] = useState(category?.name || '');
-    
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        onSave(category ? { ...category, name } : { name });
-    };
-
-    return (
-        <form onSubmit={handleSubmit} className="space-y-4">
-            <div><Label htmlFor="addon-cat-name">Category Name</Label><Input id="addon-cat-name" value={name} onChange={e => setName(e.target.value)} required /></div>
-            <DialogFooter><DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose><Button type="submit">Save</Button></DialogFooter>
-        </form>
-    );
-}
-
 // Addon Form
 function AddonForm({ addon, onSave }: { addon?: Addon; onSave: (addon: Omit<Addon, 'id'> | Addon) => void; }) {
-    const { menu } = useMenu();
     const [name, setName] = useState(addon?.name || '');
     const [price, setPrice] = useState(addon?.price || 0);
-    const [addonCategoryId, setAddonCategoryId] = useState(addon?.addonCategoryId || '');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        const data = { name, price, addonCategoryId };
+        const data = { name, price };
         onSave(addon ? { ...addon, ...data } : data);
     };
 
@@ -214,13 +190,6 @@ function AddonForm({ addon, onSave }: { addon?: Addon; onSave: (addon: Omit<Addo
         <form onSubmit={handleSubmit} className="space-y-4">
             <div><Label htmlFor="addon-name">Add-on Name</Label><Input id="addon-name" value={name} onChange={e => setName(e.target.value)} required /></div>
             <div><Label htmlFor="addon-price">Price</Label><Input id="addon-price" type="number" value={price} onChange={e => setPrice(Number(e.target.value))} required /></div>
-            <div>
-                <Label htmlFor="addon-category-select">Category</Label>
-                <Select value={addonCategoryId} onValueChange={setAddonCategoryId} required>
-                    <SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger>
-                    <SelectContent>{menu.addonCategories.map(cat => (<SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>))}</SelectContent>
-                </Select>
-            </div>
             <DialogFooter><DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose><Button type="submit">Save</Button></DialogFooter>
         </form>
     );
@@ -228,16 +197,14 @@ function AddonForm({ addon, onSave }: { addon?: Addon; onSave: (addon: Omit<Addo
 
 // Main Page Component
 export default function MenuManagementPage() {
-  const { menu, isLoading, addCategory, updateCategory, deleteCategory, addItem, updateItem, deleteItem, addAddon, updateAddon, deleteAddon, addAddonCategory, updateAddonCategory, deleteAddonCategory } = useMenu();
+  const { menu, isLoading, addCategory, updateCategory, deleteCategory, addItem, updateItem, deleteItem, addAddon, updateAddon, deleteAddon } = useMenu();
   const [isCategoryOpen, setCategoryOpen] = useState(false);
   const [isItemOpen, setItemOpen] = useState(false);
   const [isAddonOpen, setAddonOpen] = useState(false);
-  const [isAddonCatOpen, setAddonCatOpen] = useState(false);
   
   const [editingCategory, setEditingCategory] = useState<MenuCategory | undefined>();
   const [editingItem, setEditingItem] = useState<MenuItem | undefined>();
   const [editingAddon, setEditingAddon] = useState<Addon | undefined>();
-  const [editingAddonCat, setEditingAddonCat] = useState<AddonCategory | undefined>();
 
   const handleSave = (setter: (val: boolean) => void, saveFn: (data: any) => void) => (data: any) => {
     saveFn(data);
@@ -275,28 +242,6 @@ export default function MenuManagementPage() {
             </CardContent>
         </Card>
 
-        {/* Addon Categories */}
-        <Card>
-            <CardHeader className="flex-row justify-between items-center">
-                <div><CardTitle>Add-on Categories</CardTitle><CardDescription>Groups for add-ons (e.g., "Sauces", "Extra Toppings").</CardDescription></div>
-                <Dialog open={isAddonCatOpen} onOpenChange={setAddonCatOpen}><DialogTrigger asChild><Button onClick={() => setEditingAddonCat(undefined)}><PlusCircle/> Add Category</Button></DialogTrigger>
-                    <DialogContent><DialogHeader><DialogTitle>{editingAddonCat ? 'Edit' : 'Add'} Add-on Category</DialogTitle></DialogHeader><AddonCategoryForm category={editingAddonCat} onSave={handleSave(setAddonCatOpen, editingAddonCat ? updateAddonCategory : addAddonCategory)}/></DialogContent>
-                </Dialog>
-            </CardHeader>
-            <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
-                <TableBody>{menu.addonCategories.map(cat => (<TableRow key={cat.id}><TableCell>{cat.name}</TableCell>
-                    <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" onClick={() => { setEditingAddonCat(cat); setAddonCatOpen(true); }}><Edit/></Button>
-                        <DeleteConfirmationDialog
-                            title={`Delete Add-on Category "${cat.name}"?`}
-                            description={<>This will delete the category and all associated add-ons. This action is permanent.</>}
-                            onConfirm={() => deleteAddonCategory(cat.id, cat.name)}
-                        />
-                    </TableCell></TableRow>))}
-                </TableBody></Table>
-            </CardContent>
-        </Card>
-
         {/* Addons */}
         <Card>
             <CardHeader className="flex-row justify-between items-center">
@@ -305,8 +250,8 @@ export default function MenuManagementPage() {
                     <DialogContent><DialogHeader><DialogTitle>{editingAddon ? 'Edit' : 'Add'} Add-on</DialogTitle></DialogHeader><AddonForm addon={editingAddon} onSave={handleSave(setAddonOpen, editingAddon ? updateAddon : addAddon)}/></DialogContent>
                 </Dialog>
             </CardHeader>
-            <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Category</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
-                <TableBody>{menu.addons.map(addon => (<TableRow key={addon.id}><TableCell>{addon.name}</TableCell><TableCell>{menu.addonCategories.find(c => c.id === addon.addonCategoryId)?.name || 'N/A'}</TableCell><TableCell className="text-right">RS {Math.round(addon.price)}</TableCell>
+            <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
+                <TableBody>{menu.addons.map(addon => (<TableRow key={addon.id}><TableCell>{addon.name}</TableCell><TableCell className="text-right">RS {Math.round(addon.price)}</TableCell>
                     <TableCell className="text-right">
                         <Button variant="ghost" size="icon" onClick={() => { setEditingAddon(addon); setAddonOpen(true); }}><Edit/></Button>
                         <DeleteConfirmationDialog
@@ -343,5 +288,3 @@ export default function MenuManagementPage() {
     </div>
   );
 }
-
-    

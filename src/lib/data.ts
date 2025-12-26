@@ -1,5 +1,5 @@
 
-import type { MenuCategory, MenuItem, Addon, AddonCategory } from './types';
+import type { MenuCategory, MenuItem, Addon } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
 export const menuCategories: MenuCategory[] = [
@@ -12,22 +12,13 @@ export const menuCategories: MenuCategory[] = [
     { id: 'drinks', name: 'Drinks', icon: 'GlassWater' },
 ];
 
-export const addonCategories: AddonCategory[] = [
-    { id: 'addon-cat-cheese', name: 'Extra Cheese' },
-    { id: 'addon-cat-toppings', name: 'Extra Toppings' },
-    { id: 'addon-cat-sauces', name: 'Sauces' },
-];
-
 export const addons: Addon[] = [
-    // Cheese
-    { id: 'addon-extra-cheese', name: 'Extra Cheese', price: 50, addonCategoryId: 'addon-cat-cheese' },
-    // Toppings
-    { id: 'addon-olives', name: 'Olives', price: 30, addonCategoryId: 'addon-cat-toppings' },
-    { id: 'addon-jalapenos', name: 'Jalapenos', price: 30, addonCategoryId: 'addon-cat-toppings' },
-    { id: 'addon-mushrooms', name: 'Mushrooms', price: 30, addonCategoryId: 'addon-cat-toppings' },
-    // Sauces
-    { id: 'addon-dip-sauce', name: 'Dip Sauce', price: 20, addonCategoryId: 'addon-cat-sauces' },
-    { id: 'addon-spicy-sauce', name: 'Spicy Mayo Sauce', price: 25, addonCategoryId: 'addon-cat-sauces' },
+    { id: 'addon-extra-cheese', name: 'Extra Cheese', price: 50 },
+    { id: 'addon-olives', name: 'Olives', price: 30 },
+    { id: 'addon-jalapenos', name: 'Jalapenos', price: 30 },
+    { id: 'addon-mushrooms', name: 'Mushrooms', price: 30 },
+    { id: 'addon-dip-sauce', name: 'Dip Sauce', price: 20 },
+    { id: 'addon-spicy-sauce', name: 'Spicy Mayo Sauce', price: 25 },
 ];
 
 const getImage = (id: string) => PlaceHolderImages.find(i => i.id === id)?.imageUrl || `https://picsum.photos/seed/${id}/400/300`;
