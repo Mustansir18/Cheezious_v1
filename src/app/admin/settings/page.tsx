@@ -20,6 +20,7 @@ import {
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import type { Branch } from "@/lib/types";
@@ -278,7 +279,23 @@ export default function AdminSettingsPage() {
                                                 onChange={(e) => setCompanyName(e.target.value)}
                                             />
                                         </div>
-                                        <Button onClick={handleSaveCompanyName}>Save Company Name</Button>
+                                         <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button>Save Company Name</Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This will change the company name displayed across the entire application.
+                                                </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={handleSaveCompanyName}>Save</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -409,7 +426,24 @@ export default function AdminSettingsPage() {
                                                 onChange={(e) => setBusinessDayEnd(e.target.value)}
                                             />
                                         </div>
-                                        <Button onClick={handleSaveBusinessHours}>Save Business Hours</Button>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button>Save Business Hours</Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This will change the business hours used for all reports.
+                                                </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={handleSaveBusinessHours}>Save</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+
                                     </div>
                                     <p className="text-sm text-muted-foreground">
                                         For a business day that spans across midnight (e.g., 11:00 AM to 4:00 AM), reports will include sales from the start time on the selected date to the end time on the following day.
@@ -533,5 +567,3 @@ export default function AdminSettingsPage() {
         </div>
     );
 }
-
-    
