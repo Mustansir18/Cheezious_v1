@@ -23,9 +23,9 @@ const StatusColumn = ({ title, orders, status }: { title: string, orders: { orde
     } as const;
 
     const headerColor = {
-        Pending: "bg-green-200 text-green-900",
-        Preparing: "bg-green-200 text-green-900",
-        Ready: "bg-green-200 text-green-900",
+        Pending: "bg-gray-200 text-gray-800",
+        Preparing: "bg-blue-500 text-white",
+        Ready: "bg-yellow-500 text-black",
     }
 
     const badgeColor = {
