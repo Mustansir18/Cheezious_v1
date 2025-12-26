@@ -8,7 +8,8 @@ import { useToast } from '@/hooks/use-toast';
 
 interface AddToCartOptions {
     item: MenuItem;
-    selectedAddons?: Addon[];
+    selectedAddons?: { addon: Addon; quantity: number }[];
+    itemQuantity: number;
 }
 interface CartContextType {
   items: CartItem[];
@@ -82,37 +83,36 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const addItem = ({ item: itemToAdd, selectedAddons = [] }: AddToCartOptions) => {
-    const addonPrice = selectedAddons.reduce((sum, addon) => sum + addon.price, 0);
+  const addItem = ({ item: itemToAdd, selectedAddons = [], itemQuantity }: AddToCartOptions) => {
+    const addonPrice = selectedAddons.reduce((sum, { addon, quantity }) => sum + (addon.price * quantity), 0);
     const finalPrice = itemToAdd.price + addonPrice;
 
-    // Create a unique ID for this specific combination of item + addons
-    const addonIds = selectedAddons.map(a => a.id).sort().join('-');
+    const addonIds = selectedAddons.map(({ addon, quantity }) => `${addon.id}x${quantity}`).sort().join('-');
     const cartItemId = `${itemToAdd.id}${addonIds ? `-${addonIds}` : ''}`;
-
+    
     setItems((prevItems) => {
       const existingItem = prevItems.find((item) => item.cartItemId === cartItemId);
+
       if (existingItem) {
-        // If the exact same item with the same instructions exists, just increase its quantity
         return prevItems.map((item) =>
-          item.cartItemId === cartItemId ? { ...item, quantity: item.quantity + 1 } : item
+          item.cartItemId === cartItemId ? { ...item, quantity: item.quantity + itemQuantity } : item
         );
       }
       
       const newCartItem: CartItem = { 
         ...itemToAdd,
         cartItemId: cartItemId,
-        price: finalPrice, // Use the price including addons
+        price: finalPrice,
         basePrice: itemToAdd.price,
-        selectedAddons,
-        quantity: 1,
+        selectedAddons: selectedAddons.map(({ addon, quantity }) => ({ ...addon, quantity })),
+        quantity: itemQuantity,
       };
       return [...prevItems, newCartItem];
     });
 
     toast({
         title: "Added to Cart",
-        description: `${itemToAdd.name} is now in your order.`,
+        description: `${itemQuantity}x ${itemToAdd.name} is now in your order.`,
     });
   };
 

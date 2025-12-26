@@ -83,7 +83,7 @@ export default function OrderConfirmationPage() {
         quantity: item.quantity,
         itemPrice: item.price,
         baseItemPrice: item.basePrice,
-        selectedAddons: item.selectedAddons.map(a => ({ name: a.name, price: a.price })),
+        selectedAddons: item.selectedAddons.map(a => ({ name: a.name, price: a.price, quantity: a.quantity })),
     }));
 
     const newOrder: Order = {
@@ -167,12 +167,12 @@ export default function OrderConfirmationPage() {
                     className="rounded-md object-cover"
                   />
                   <div className="flex-grow">
-                    <p className="font-semibold text-left">{item.name}</p>
+                    <p className="font-semibold text-left">{item.quantity}x {item.name}</p>
                     <div className="text-sm text-muted-foreground text-left">
-                        {item.selectedAddons.map(addon => (<p key={addon.id}>+ {addon.name}</p>))}
+                        {item.selectedAddons.map(addon => (<p key={addon.id}>+ {addon.quantity}x {addon.name}</p>))}
                     </div>
                     <p className="text-sm text-muted-foreground text-left">
-                      {item.quantity} x RS {Math.round(item.price)}
+                      Item price: RS {Math.round(item.price)}
                     </p>
                   </div>
                   <p className="font-semibold shrink-0">

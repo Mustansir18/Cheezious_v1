@@ -71,9 +71,9 @@ export function OrderReceipt({ order }: OrderReceiptProps) {
                             <div className="pl-4">
                                 {item.selectedAddons.map(addon => (
                                      <div key={addon.name} className="flex justify-between items-start gap-2 text-gray-600">
-                                        <span className="break-words w-4/5">+ {addon.name}</span>
+                                        <span className="break-words w-4/5">+ {addon.quantity}x {addon.name}</span>
                                         <span className="text-right tabular-nums whitespace-nowrap">
-                                            {Math.round(addon.price * item.quantity)}
+                                            {Math.round(addon.price * addon.quantity * item.quantity)}
                                         </span>
                                     </div>
                                 ))}

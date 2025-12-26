@@ -48,7 +48,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                         <p className="font-semibold">{item.name}</p>
                         <div className="text-sm text-muted-foreground">
                             {item.selectedAddons.map(addon => (
-                                <p key={addon.id}>+ {addon.name}</p>
+                                <p key={addon.id}>+ {addon.quantity}x {addon.name}</p>
                             ))}
                         </div>
                         <p className="text-sm">

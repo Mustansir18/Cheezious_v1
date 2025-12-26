@@ -9,33 +9,59 @@ import { useMenu } from "@/context/MenuContext";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Plus, Minus, Trash2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 const FALLBACK_IMAGE_URL = "https://picsum.photos/seed/placeholder/400/300";
 
-function AddToCartDialog({ item, onAddToCart, onIncrementQuantity, existingCartItem }: { item: MenuItem; onAddToCart: (options: { selectedAddons: Addon[] }) => void; onIncrementQuantity: (cartItemId: string) => void; existingCartItem: CartItem | undefined; }) {
+function AddToCartDialog({ item, onAddToCart, onIncrementQuantity, existingCartItem }: { item: MenuItem; onAddToCart: (options: { selectedAddons: { addon: Addon; quantity: number }[], itemQuantity: number }) => void; onIncrementQuantity: (cartItemId: string) => void; existingCartItem: CartItem | undefined; }) {
     const { menu } = useMenu();
-    const [selectedAddons, setSelectedAddons] = useState<Addon[]>([]);
+    const [selectedAddons, setSelectedAddons] = useState<Map<string, { addon: Addon; quantity: number }>>(new Map());
+    const [itemQuantity, setItemQuantity] = useState(1);
     const [isOpen, setIsOpen] = useState(false);
 
     const availableAddons = menu.addons.filter(addon => item.availableAddonIds?.includes(addon.id));
     const addonCategories = menu.addonCategories.filter(cat => availableAddons.some(a => a.addonCategoryId === cat.id));
 
     const handleAddonToggle = (addon: Addon) => {
-        setSelectedAddons(prev => prev.some(a => a.id === addon.id) ? prev.filter(a => a.id !== addon.id) : [...prev, addon]);
+        setSelectedAddons(prev => {
+            const newMap = new Map(prev);
+            if (newMap.has(addon.id)) {
+                newMap.delete(addon.id);
+            } else {
+                newMap.set(addon.id, { addon, quantity: 1 });
+            }
+            return newMap;
+        });
+    };
+    
+    const handleAddonQuantityChange = (addonId: string, change: number) => {
+        setSelectedAddons(prev => {
+            const newMap = new Map(prev);
+            const existing = newMap.get(addonId);
+            if (existing) {
+                const newQuantity = existing.quantity + change;
+                if (newQuantity > 0) {
+                    newMap.set(addonId, { ...existing, quantity: newQuantity });
+                } else {
+                    newMap.delete(addonId);
+                }
+            }
+            return newMap;
+        });
     };
 
     const handleConfirm = () => {
-        onAddToCart({ selectedAddons });
+        const addonsArray = Array.from(selectedAddons.values());
+        onAddToCart({ selectedAddons: addonsArray, itemQuantity });
         setIsOpen(false);
         // Reset state for next time
-        setSelectedAddons([]);
+        setSelectedAddons(new Map());
+        setItemQuantity(1);
     };
     
-    const totalAddonPrice = selectedAddons.reduce((sum, addon) => sum + addon.price, 0);
-    const finalPrice = item.price + totalAddonPrice;
+    const totalAddonPrice = Array.from(selectedAddons.values()).reduce((sum, { addon, quantity }) => sum + (addon.price * quantity), 0);
+    const finalPrice = (item.price + totalAddonPrice) * itemQuantity;
 
     // If an identical item is already in the cart, show a simple "Add" button to increment it.
     if (existingCartItem) {
@@ -49,7 +75,7 @@ function AddToCartDialog({ item, onAddToCart, onIncrementQuantity, existingCartI
     // If there are no addons, the simple button is also used.
     if (!item.availableAddonIds || item.availableAddonIds.length === 0) {
         return (
-            <Button onClick={() => onAddToCart({ selectedAddons: [] })} className="bg-accent text-accent-foreground hover:bg-accent/90">
+            <Button onClick={() => onAddToCart({ selectedAddons: [], itemQuantity: 1 })} className="bg-accent text-accent-foreground hover:bg-accent/90">
                 <PlusCircle className="mr-2 h-5 w-5" /> Add
             </Button>
         );
@@ -66,27 +92,62 @@ function AddToCartDialog({ item, onAddToCart, onIncrementQuantity, existingCartI
             <DialogContent className="max-h-[90vh] flex flex-col">
                 <DialogHeader>
                     <DialogTitle className="font-headline text-2xl">{item.name}</DialogTitle>
-                    <DialogDescription>Customize your item with add-ons.</DialogDescription>
+                    <DialogDescription>Customize your item with add-ons and set quantities.</DialogDescription>
                 </DialogHeader>
                 
-                <div className="flex-grow overflow-y-auto pr-2">
+                <div className="flex-grow overflow-y-auto pr-2 space-y-6">
+                    {/* Main Item Quantity */}
+                     <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                        <Label className="font-semibold text-lg">Quantity</Label>
+                        <div className="flex items-center gap-2">
+                            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setItemQuantity(q => Math.max(1, q - 1))} disabled={itemQuantity <= 1}>
+                                <Minus className="h-4 w-4" />
+                            </Button>
+                            <span className="w-8 text-center font-bold text-lg">{itemQuantity}</span>
+                            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setItemQuantity(q => q + 1)}>
+                                <Plus className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
+                    
+                    {/* Add-ons */}
                     {addonCategories.map(cat => (
                         <div key={cat.id} className="mb-4">
                             <h4 className="font-semibold mb-2">{cat.name}</h4>
                             <div className="space-y-2">
-                                {availableAddons.filter(a => a.addonCategoryId === cat.id).map(addon => (
-                                    <div key={addon.id} className="flex items-center space-x-3 p-2 rounded-md hover:bg-muted/50">
-                                        <Checkbox
-                                            id={`addon-dialog-${addon.id}`}
-                                            checked={selectedAddons.some(a => a.id === addon.id)}
-                                            onCheckedChange={() => handleAddonToggle(addon)}
-                                        />
-                                        <Label htmlFor={`addon-dialog-${addon.id}`} className="flex-grow font-normal cursor-pointer">
-                                            {addon.name}
-                                        </Label>
-                                        <span className="text-sm text-muted-foreground">+RS {Math.round(addon.price)}</span>
-                                    </div>
-                                ))}
+                                {availableAddons.filter(a => a.addonCategoryId === cat.id).map(addon => {
+                                    const isSelected = selectedAddons.has(addon.id);
+                                    const selectedInfo = selectedAddons.get(addon.id);
+
+                                    return (
+                                        <div key={addon.id} className="flex flex-col p-2 rounded-md hover:bg-muted/50">
+                                            <div className="flex items-center space-x-3">
+                                                <input
+                                                    type="checkbox"
+                                                    id={`addon-dialog-${addon.id}`}
+                                                    checked={isSelected}
+                                                    onChange={() => handleAddonToggle(addon)}
+                                                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                                />
+                                                <Label htmlFor={`addon-dialog-${addon.id}`} className="flex-grow font-normal cursor-pointer">
+                                                    {addon.name}
+                                                </Label>
+                                                <span className="text-sm text-muted-foreground">+RS {Math.round(addon.price)}</span>
+                                            </div>
+                                            {isSelected && selectedInfo && (
+                                                <div className="flex items-center justify-end gap-2 mt-2">
+                                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleAddonQuantityChange(addon.id, -1)}>
+                                                        {selectedInfo.quantity === 1 ? <Trash2 className="h-4 w-4 text-destructive" /> : <Minus className="h-4 w-4" />}
+                                                    </Button>
+                                                    <span className="w-6 text-center font-bold">{selectedInfo.quantity}</span>
+                                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleAddonQuantityChange(addon.id, 1)}>
+                                                        <Plus className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     ))}
@@ -110,7 +171,7 @@ function AddToCartDialog({ item, onAddToCart, onIncrementQuantity, existingCartI
 export function MenuItemCard({ item }: { item: MenuItem }) {
   const { addItem, updateQuantity, items: cartItems } = useCart();
 
-  const handleAddToCart = (options: { selectedAddons: Addon[] }) => {
+  const handleAddToCart = (options: { selectedAddons: { addon: Addon; quantity: number }[], itemQuantity: number }) => {
     addItem({ item, ...options });
   };
 
@@ -121,9 +182,8 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
     }
   };
   
-  // Check if an item with NO add-ons already exists in the cart.
-  // This is for the case where an item has available add-ons, but the user adds it with none selected.
-  // We should find that item in the cart if it exists.
+  // Find an item in the cart that matches the menu item ID and has the *exact same* set of addons.
+  // This is used to offer a simple "Add one more" button instead of the full customization dialog.
   const existingCartItem = cartItems.find(
     cartItem => cartItem.id === item.id && cartItem.selectedAddons.length === 0
   );

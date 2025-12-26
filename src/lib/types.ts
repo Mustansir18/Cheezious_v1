@@ -45,12 +45,14 @@ export type Deal = {
   imageUrl: string;
 };
 
+export type SelectedAddon = Addon & { quantity: number };
+
 export type CartItem = Omit<MenuItem, 'price' | 'availableAddonIds'> & {
   cartItemId: string; // Unique ID for the cart instance of an item
   quantity: number;
-  price: number; // Final price including addons
+  price: number; // Final price including addons (for one unit)
   basePrice: number; // Original item price
-  selectedAddons: Addon[];
+  selectedAddons: SelectedAddon[];
 };
 
 
@@ -94,7 +96,7 @@ export type OrderItem = {
     itemPrice: number; // Price of the item including addons at time of order
     baseItemPrice: number; // Base price of the item without addons
     name: string;
-    selectedAddons: { name: string; price: number }[];
+    selectedAddons: { name: string; price: number; quantity: number }[];
 };
 
 export type PlacedOrder = {
@@ -152,6 +154,7 @@ export type ActivityLog = {
 const OrderItemAddonSyncSchema = z.object({
   name: z.string().describe('The name of the add-on.'),
   price: z.number().describe('The price of the add-on.'),
+  quantity: z.number().describe('The quantity of the add-on.'),
 });
 
 // Defines the schema for a single item within the order for external sync.

@@ -298,8 +298,8 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
                         <div className="pl-4 text-xs text-muted-foreground">
                             {item.selectedAddons.map(addon => (
                                 <div key={addon.name} className="flex justify-between">
-                                  <span>+ {addon.name}</span>
-                                  <span>RS {Math.round(addon.price * item.quantity)}</span>
+                                  <span>+ {addon.quantity}x {addon.name}</span>
+                                  <span>RS {Math.round(addon.price * addon.quantity * item.quantity)}</span>
                                 </div>
                             ))}
                         </div>
