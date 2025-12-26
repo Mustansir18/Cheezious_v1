@@ -1,14 +1,18 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { useSettings } from "@/context/SettingsContext";
 import { useCart } from "@/context/CartContext";
+import { useOrders } from "@/context/OrderContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { OrderStatus } from "@/lib/types";
+
+const ACTIVE_STATUSES: OrderStatus[] = ['Pending', 'Preparing', 'Ready'];
 
 export default function TableSelectionPage() {
     const params = useParams();
@@ -17,6 +21,7 @@ export default function TableSelectionPage() {
     const dealId = searchParams.get('dealId');
 
     const { settings, isLoading } = useSettings();
+    const { orders } = useOrders();
     const { setOrderDetails } = useCart();
     const router = useRouter();
 
@@ -24,6 +29,12 @@ export default function TableSelectionPage() {
     const [selectedTableId, setSelectedTableId] = useState<string>("");
     
     const availableTables = settings.tables.filter(table => table.floorId === selectedFloorId);
+    
+    const occupiedTableIds = useMemo(() => {
+        const activeOrders = orders.filter(order => ACTIVE_STATUSES.includes(order.status));
+        return new Set(activeOrders.map(order => order.tableId));
+    }, [orders]);
+
 
     const handleProceedToMenu = () => {
         if (selectedFloorId && selectedTableId) {
@@ -74,8 +85,12 @@ export default function TableSelectionPage() {
                             </SelectTrigger>
                             <SelectContent>
                                 {availableTables.map(table => (
-                                    <SelectItem key={table.id} value={table.id}>
-                                        {table.name}
+                                    <SelectItem 
+                                        key={table.id} 
+                                        value={table.id}
+                                        disabled={occupiedTableIds.has(table.id)}
+                                    >
+                                        {table.name} {occupiedTableIds.has(table.id) && '(Occupied)'}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
