@@ -11,10 +11,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Label } from "@/components/ui/label";
 import { PlusCircle, Plus, Minus, Trash2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { UpdateQuantity } from "../cart/UpdateQuantity";
 
 const FALLBACK_IMAGE_URL = "https://picsum.photos/seed/placeholder/400/300";
 
-function AddToCartDialog({ item, onAddToCart, onIncrementQuantity, existingCartItem }: { item: MenuItem; onAddToCart: (options: { selectedAddons: { addon: Addon; quantity: number }[], itemQuantity: number }) => void; onIncrementQuantity: (cartItemId: string) => void; existingCartItem: CartItem | undefined; }) {
+function AddToCartDialog({ item, onAddToCart }: { item: MenuItem; onAddToCart: (options: { selectedAddons: { addon: Addon; quantity: number }[], itemQuantity: number }) => void; }) {
     const { menu } = useMenu();
     const [selectedAddons, setSelectedAddons] = useState<Map<string, { addon: Addon; quantity: number }>>(new Map());
     const [itemQuantity, setItemQuantity] = useState(1);
@@ -62,26 +63,7 @@ function AddToCartDialog({ item, onAddToCart, onIncrementQuantity, existingCartI
     
     const totalAddonPrice = Array.from(selectedAddons.values()).reduce((sum, { addon, quantity }) => sum + (addon.price * quantity), 0);
     const finalPrice = (item.price + totalAddonPrice) * itemQuantity;
-
-    // If an identical item is already in the cart, show a simple "Add" button to increment it.
-    if (existingCartItem) {
-        return (
-             <Button onClick={() => onIncrementQuantity(existingCartItem.cartItemId)} className="bg-accent text-accent-foreground hover:bg-accent/90">
-                <PlusCircle className="mr-2 h-5 w-5" /> Add to Cart
-            </Button>
-        );
-    }
     
-    // If there are no addons, the simple button is also used.
-    if (!item.availableAddonIds || item.availableAddonIds.length === 0) {
-        return (
-            <Button onClick={() => onAddToCart({ selectedAddons: [], itemQuantity: 1 })} className="bg-accent text-accent-foreground hover:bg-accent/90">
-                <PlusCircle className="mr-2 h-5 w-5" /> Add
-            </Button>
-        );
-    }
-    
-    // Otherwise, show the full customization dialog.
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
@@ -169,24 +151,18 @@ function AddToCartDialog({ item, onAddToCart, onIncrementQuantity, existingCartI
 
 
 export function MenuItemCard({ item }: { item: MenuItem }) {
-  const { addItem, updateQuantity, items: cartItems } = useCart();
+  const { addItem, items: cartItems } = useCart();
 
   const handleAddToCart = (options: { selectedAddons: { addon: Addon; quantity: number }[], itemQuantity: number }) => {
     addItem({ item, ...options });
   };
-
-  const handleIncrementQuantity = (cartItemId: string) => {
-    const cartItem = cartItems.find(i => i.cartItemId === cartItemId);
-    if (cartItem) {
-        updateQuantity(cartItemId, cartItem.quantity + 1);
-    }
-  };
   
-  // Find an item in the cart that matches the menu item ID and has the *exact same* set of addons.
-  // This is used to offer a simple "Add one more" button instead of the full customization dialog.
+  // Find an item in the cart that matches the menu item ID and has no addons.
   const existingCartItem = cartItems.find(
     cartItem => cartItem.id === item.id && cartItem.selectedAddons.length === 0
   );
+
+  const hasAddons = item.availableAddonIds && item.availableAddonIds.length > 0;
   
   return (
     <Card className="flex h-full flex-col overflow-hidden transition-shadow hover:shadow-lg">
@@ -208,12 +184,19 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
       </CardContent>
       <CardFooter className="flex items-center justify-between p-4 pt-0">
         <p className="text-xl font-bold text-primary">RS {Math.round(item.price)}</p>
-        <AddToCartDialog 
+        
+        {existingCartItem && !hasAddons ? (
+          <UpdateQuantity cartItemId={existingCartItem.cartItemId} quantity={existingCartItem.quantity} />
+        ) : hasAddons ? (
+          <AddToCartDialog 
             item={item} 
             onAddToCart={handleAddToCart}
-            onIncrementQuantity={handleIncrementQuantity}
-            existingCartItem={existingCartItem}
-        />
+          />
+        ) : (
+          <Button onClick={() => handleAddToCart({ selectedAddons: [], itemQuantity: 1 })} className="bg-accent text-accent-foreground hover:bg-accent/90">
+            <PlusCircle className="mr-2 h-5 w-5" /> Add
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );
