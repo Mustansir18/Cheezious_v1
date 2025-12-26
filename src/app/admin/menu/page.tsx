@@ -14,17 +14,6 @@ import {
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -36,6 +25,7 @@ import type { MenuCategory, MenuItem, Addon, AddonCategory } from '@/lib/types';
 import imageCompression from 'browser-image-compression';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 
 async function handleImageUpload(file: File) {
   const options = {
@@ -275,11 +265,11 @@ export default function MenuManagementPage() {
                 <TableBody>{menu.categories.map(cat => (<TableRow key={cat.id}><TableCell>{cat.name}</TableCell><TableCell className="font-mono">{cat.icon}</TableCell>
                     <TableCell className="text-right">
                         <Button variant="ghost" size="icon" onClick={() => { setEditingCategory(cat); setCategoryOpen(true); }}><Edit/></Button>
-                        <AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon"><Trash2 className="text-destructive"/></Button></AlertDialogTrigger>
-                            <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will delete the category "{cat.name}" and all associated items.</AlertDialogDescription></AlertDialogHeader>
-                                <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => deleteCategory(cat.id, cat.name)}>Delete</AlertDialogAction></AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
+                        <DeleteConfirmationDialog
+                            title={`Delete Category "${cat.name}"?`}
+                            description={<>This will delete the category and all associated items. This action is permanent.</>}
+                            onConfirm={() => deleteCategory(cat.id, cat.name)}
+                        />
                     </TableCell></TableRow>))}
                 </TableBody></Table>
             </CardContent>
@@ -297,11 +287,11 @@ export default function MenuManagementPage() {
                 <TableBody>{menu.addonCategories.map(cat => (<TableRow key={cat.id}><TableCell>{cat.name}</TableCell>
                     <TableCell className="text-right">
                         <Button variant="ghost" size="icon" onClick={() => { setEditingAddonCat(cat); setAddonCatOpen(true); }}><Edit/></Button>
-                        <AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon"><Trash2 className="text-destructive"/></Button></AlertDialogTrigger>
-                            <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will delete the add-on category "{cat.name}" and all associated add-ons.</AlertDialogDescription></AlertDialogHeader>
-                                <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => deleteAddonCategory(cat.id, cat.name)}>Delete</AlertDialogAction></AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
+                        <DeleteConfirmationDialog
+                            title={`Delete Add-on Category "${cat.name}"?`}
+                            description={<>This will delete the category and all associated add-ons. This action is permanent.</>}
+                            onConfirm={() => deleteAddonCategory(cat.id, cat.name)}
+                        />
                     </TableCell></TableRow>))}
                 </TableBody></Table>
             </CardContent>
@@ -319,11 +309,11 @@ export default function MenuManagementPage() {
                 <TableBody>{menu.addons.map(addon => (<TableRow key={addon.id}><TableCell>{addon.name}</TableCell><TableCell>{menu.addonCategories.find(c => c.id === addon.addonCategoryId)?.name || 'N/A'}</TableCell><TableCell className="text-right">RS {Math.round(addon.price)}</TableCell>
                     <TableCell className="text-right">
                         <Button variant="ghost" size="icon" onClick={() => { setEditingAddon(addon); setAddonOpen(true); }}><Edit/></Button>
-                        <AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon"><Trash2 className="text-destructive"/></Button></AlertDialogTrigger>
-                            <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will delete the add-on "{addon.name}".</AlertDialogDescription></AlertDialogHeader>
-                                <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => deleteAddon(addon.id, addon.name)}>Delete</AlertDialogAction></AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
+                        <DeleteConfirmationDialog
+                            title={`Delete Add-on "${addon.name}"?`}
+                            description={<>This will permanently delete the add-on <strong>{addon.name}</strong>.</>}
+                            onConfirm={() => deleteAddon(addon.id, addon.name)}
+                        />
                     </TableCell></TableRow>))}
                 </TableBody></Table>
             </CardContent>
@@ -341,11 +331,11 @@ export default function MenuManagementPage() {
                 <TableBody>{menu.items.map(item => (<TableRow key={item.id}><TableCell>{item.name}</TableCell><TableCell>{menu.categories.find(c => c.id === item.categoryId)?.name || 'N/A'}</TableCell><TableCell className="text-right">RS {Math.round(item.price)}</TableCell>
                     <TableCell className="text-right">
                         <Button variant="ghost" size="icon" onClick={() => { setEditingItem(item); setItemOpen(true); }}><Edit/></Button>
-                        <AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon"><Trash2 className="text-destructive"/></Button></AlertDialogTrigger>
-                            <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will delete the item "{item.name}".</AlertDialogDescription></AlertDialogHeader>
-                                <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => deleteItem(item.id, item.name)}>Delete</AlertDialogAction></AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
+                        <DeleteConfirmationDialog
+                            title={`Delete Item "${item.name}"?`}
+                            description={<>This will permanently delete the item <strong>{item.name}</strong>.</>}
+                            onConfirm={() => deleteItem(item.id, item.name)}
+                        />
                     </TableCell></TableRow>))}
                 </TableBody></Table>
             </CardContent>
@@ -353,3 +343,5 @@ export default function MenuManagementPage() {
     </div>
   );
 }
+
+    

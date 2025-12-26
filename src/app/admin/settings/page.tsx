@@ -20,20 +20,10 @@ import {
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import type { Branch } from "@/lib/types";
+import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
 
 
 function AdvancedSettingsGate({ onUnlock }: { onUnlock: () => void }) {
@@ -202,19 +192,11 @@ export default function AdminSettingsPage() {
                                         <TableRow key={floor.id}>
                                             <TableCell>{floor.name}</TableCell>
                                             <TableCell className="text-right">
-                                                <AlertDialog>
-                                                    <AlertDialogTrigger asChild><Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button></AlertDialogTrigger>
-                                                    <AlertDialogContent>
-                                                        <AlertDialogHeader>
-                                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                                            <AlertDialogDescription>This action will permanently delete the floor "{floor.name}" and all of its tables.</AlertDialogDescription>
-                                                        </AlertDialogHeader>
-                                                        <AlertDialogFooter>
-                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                            <AlertDialogAction onClick={() => deleteFloor(floor.id, floor.name)}>Delete</AlertDialogAction>
-                                                        </AlertDialogFooter>
-                                                    </AlertDialogContent>
-                                                </AlertDialog>
+                                                <DeleteConfirmationDialog
+                                                    title={`Delete Floor "${floor.name}"?`}
+                                                    description={<>This action cannot be undone. This will permanently delete the floor <strong>{floor.name}</strong> and all of its tables.</>}
+                                                    onConfirm={() => deleteFloor(floor.id, floor.name)}
+                                                />
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -262,19 +244,11 @@ export default function AdminSettingsPage() {
                                             <TableCell>{table.name}</TableCell>
                                             <TableCell>{settings.floors.find(f => f.id === table.floorId)?.name || 'N/A'}</TableCell>
                                             <TableCell className="text-right">
-                                                 <AlertDialog>
-                                                    <AlertDialogTrigger asChild><Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button></AlertDialogTrigger>
-                                                    <AlertDialogContent>
-                                                        <AlertDialogHeader>
-                                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                                            <AlertDialogDescription>This action will permanently delete table "{table.name}".</AlertDialogDescription>
-                                                        </AlertDialogHeader>
-                                                        <AlertDialogFooter>
-                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                            <AlertDialogAction onClick={() => deleteTable(table.id, table.name)}>Delete</AlertDialogAction>
-                                                        </AlertDialogFooter>
-                                                    </AlertDialogContent>
-                                                </AlertDialog>
+                                                 <DeleteConfirmationDialog
+                                                    title={`Delete Table "${table.name}"?`}
+                                                    description={<>This action cannot be undone. This will permanently delete table <strong>{table.name}</strong>.</>}
+                                                    onConfirm={() => deleteTable(table.id, table.name)}
+                                                 />
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -367,25 +341,11 @@ export default function AdminSettingsPage() {
                                                         <Button variant="ghost" size="icon" onClick={() => openEditDialog(branch)}>
                                                             <Edit className="h-4 w-4" />
                                                         </Button>
-                                                        <AlertDialog>
-                                                            <AlertDialogTrigger asChild>
-                                                                <Button variant="ghost" size="icon">
-                                                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                                                </Button>
-                                                            </AlertDialogTrigger>
-                                                            <AlertDialogContent>
-                                                                <AlertDialogHeader>
-                                                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                                                    <AlertDialogDescription>
-                                                                        This action cannot be undone. This will permanently delete the branch "{branch.name}" and any associated user access.
-                                                                    </AlertDialogDescription>
-                                                                </AlertDialogHeader>
-                                                                <AlertDialogFooter>
-                                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                    <AlertDialogAction onClick={() => deleteBranch(branch.id, branch.name)}>Delete</AlertDialogAction>
-                                                                </AlertDialogFooter>
-                                                            </AlertDialogContent>
-                                                        </AlertDialog>
+                                                        <DeleteConfirmationDialog
+                                                            title={`Delete Branch "${branch.name}"?`}
+                                                            description={<>This action cannot be undone. This will permanently delete the branch <strong>{branch.name}</strong> and any associated user access.</>}
+                                                            onConfirm={() => deleteBranch(branch.id, branch.name)}
+                                                        />
                                                     </TableCell>
                                                 </TableRow>
                                             ))}
@@ -520,23 +480,11 @@ export default function AdminSettingsPage() {
                                                         </div>
                                                     </TableCell>
                                                     <TableCell className="text-right">
-                                                        <AlertDialog>
-                                                            <AlertDialogTrigger asChild>
-                                                                <Button variant="ghost" size="icon">
-                                                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                                                </Button>
-                                                            </AlertDialogTrigger>
-                                                            <AlertDialogContent>
-                                                                <AlertDialogHeader>
-                                                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                                                    <AlertDialogDescription>This action will permanently delete the payment method "{method.name}".</AlertDialogDescription>
-                                                                </AlertDialogHeader>
-                                                                <AlertDialogFooter>
-                                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                    <AlertDialogAction onClick={() => deletePaymentMethod(method.id, method.name)}>Delete</AlertDialogAction>
-                                                                </AlertDialogFooter>
-                                                            </AlertDialogContent>
-                                                        </AlertDialog>
+                                                         <DeleteConfirmationDialog
+                                                            title={`Delete Method "${method.name}"?`}
+                                                            description={<>This action will permanently delete the payment method <strong>{method.name}</strong>.</>}
+                                                            onConfirm={() => deletePaymentMethod(method.id, method.name)}
+                                                        />
                                                     </TableCell>
                                                 </TableRow>
                                             ))}
@@ -585,3 +533,5 @@ export default function AdminSettingsPage() {
         </div>
     );
 }
+
+    

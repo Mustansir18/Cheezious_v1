@@ -14,17 +14,6 @@ import {
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -33,6 +22,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Trash2, Edit, PlusCircle, Loader } from 'lucide-react';
 import type { Deal } from '@/lib/types';
 import imageCompression from 'browser-image-compression';
+import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 
 
 async function handleImageUpload(file: File) {
@@ -197,25 +187,11 @@ export default function DealsManagementPage() {
                     <Button variant="ghost" size="icon" onClick={() => { setEditingDeal(deal); setDialogOpen(true); }}>
                         <Edit className="h-4 w-4" />
                     </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the deal "{deal.name}".
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => deleteDeal(deal.id, deal.name)}>Delete</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                    <DeleteConfirmationDialog
+                        title={`Delete Deal "${deal.name}"?`}
+                        description={<>This action cannot be undone. This will permanently delete the deal <strong>{deal.name}</strong>.</>}
+                        onConfirm={() => deleteDeal(deal.id, deal.name)}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
@@ -226,3 +202,5 @@ export default function DealsManagementPage() {
     </div>
   );
 }
+
+    

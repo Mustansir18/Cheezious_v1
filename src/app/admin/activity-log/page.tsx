@@ -8,21 +8,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Loader, Trash2, Filter } from "lucide-react";
 import { format } from 'date-fns';
 import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { ActivityLogCategory } from "@/lib/types";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
 
 const categoryColors: Record<ActivityLogCategory, string> = {
     Order: "bg-blue-100 text-blue-800",
@@ -95,25 +85,16 @@ export default function ActivityLogPage() {
                             </DropdownMenuContent>
                         </DropdownMenu>
 
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
+                        <DeleteConfirmationDialog
+                            title="Are you absolutely sure?"
+                            description="This action cannot be undone. This will permanently delete all activity log entries."
+                            onConfirm={clearLogs}
+                            triggerButton={
                                 <Button variant="destructive" disabled={logs.length === 0}>
                                     <Trash2 className="mr-2 h-4 w-4" /> Clear Log
                                 </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        This action cannot be undone. This will permanently delete all activity log entries.
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={clearLogs}>Delete All</AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
+                            }
+                        />
                     </div>
                 </CardHeader>
                 <CardContent>
@@ -155,3 +136,5 @@ export default function ActivityLogPage() {
         </div>
     );
 }
+
+    

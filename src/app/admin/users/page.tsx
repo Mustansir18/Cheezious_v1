@@ -13,17 +13,6 @@ import {
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -33,6 +22,7 @@ import type { User as UserType } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSettings } from '@/context/SettingsContext';
 import { Badge } from '@/components/ui/badge';
+import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 
 function UserForm({
   user,
@@ -200,25 +190,11 @@ export default function UserManagementPage() {
                                     <Button variant="ghost" size="icon" onClick={() => openEditDialog(u)}>
                                         <Edit className="h-4 w-4" />
                                     </Button>
-                                    <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                            <Button variant="ghost" size="icon">
-                                                <Trash2 className="h-4 w-4 text-destructive" />
-                                            </Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                   This action cannot be undone. This will permanently delete the user "{u.username}".
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={() => deleteUser(u.id, u.username)}>Delete</AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
+                                    <DeleteConfirmationDialog
+                                        title={`Delete User "${u.username}"?`}
+                                        description={<>This action cannot be undone. This will permanently delete the user <strong>{u.username}</strong>.</>}
+                                        onConfirm={() => deleteUser(u.id, u.username)}
+                                    />
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -235,3 +211,5 @@ export default function UserManagementPage() {
         </div>
     );
 }
+
+    
