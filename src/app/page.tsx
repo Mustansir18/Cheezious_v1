@@ -41,7 +41,7 @@ function DealsCarousel() {
           {deals.map((deal) => (
             <CarouselItem key={deal.id} className="md:basis-1/2 lg:basis-1/3 pl-4">
               <Link href={`/branch/${defaultBranchId}?dealId=${deal.id}`} className="block p-1 group">
-                  <Card className="overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:scale-105 animate-blink">
+                  <Card className="overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:scale-105 animate-blink-neon-green">
                     <CardContent className="flex aspect-video items-center justify-center p-0">
                       <Image src={deal.imageUrl} alt={deal.name} width={600} height={400} className="object-cover w-full h-full" />
                     </CardContent>
