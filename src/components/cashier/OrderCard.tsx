@@ -272,11 +272,14 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
             <div className="flex items-center gap-1">
                 {children}
                 <Button variant="ghost" size="icon" className="h-8 w-8 print-hidden" onClick={handlePrint}><Printer className="h-4 w-4" /></Button>
-                 <div className="text-right">
-                    <Badge variant="secondary">{order.orderType === 'Dine-In' ? <Utensils className="mr-1 h-4 w-4"/> : <ShoppingBag className="mr-1 h-4 w-4" />} {order.orderType}</Badge>
-                    {order.orderType === 'Dine-In' && table && (
-                        <div className="text-xs font-semibold text-primary mt-1">{table.name}</div>
-                    )}
+                 <div className="flex flex-col items-center">
+                    <Badge variant="secondary">
+                        {order.orderType === 'Dine-In' ? <Utensils className="mr-1 h-4 w-4"/> : <ShoppingBag className="mr-1 h-4 w-4" />} 
+                        {order.orderType}
+                        {order.orderType === 'Dine-In' && table && (
+                            <span className="font-bold ml-2">{table.name}</span>
+                        )}
+                    </Badge>
                 </div>
             </div>
         </div>
@@ -410,3 +413,5 @@ OrderCard.Skeleton = function OrderCardSkeleton() {
       </Card>
     );
   };
+
+    
