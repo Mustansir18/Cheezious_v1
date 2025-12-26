@@ -84,18 +84,17 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
   }, [logActivity, user]);
 
   const updateOrderStatus = useCallback((orderId: string, status: OrderStatus, reason?: string) => {
-    setOrders((prevOrders) => {
-        const orderToUpdate = prevOrders.find(o => o.id === orderId);
-        if (!orderToUpdate) return prevOrders;
-        if (orderToUpdate.status === status) return prevOrders;
+    const orderToUpdate = orders.find(o => o.id === orderId);
+    if (!orderToUpdate || orderToUpdate.status === status) return;
 
-        if (status === 'Cancelled') {
-            logActivity(`Cancelled Order #${orderToUpdate.orderNumber}. Reason: ${reason}`, user?.username || 'System', 'Order');
-        } else {
-            logActivity(`Updated Order #${orderToUpdate.orderNumber} status from '${orderToUpdate.status}' to '${status}'.`, user?.username || 'System', 'Order');
-        }
+    if (status === 'Cancelled') {
+        logActivity(`Cancelled Order #${orderToUpdate.orderNumber}. Reason: ${reason}`, user?.username || 'System', 'Order');
+    } else {
+        logActivity(`Updated Order #${orderToUpdate.orderNumber} status from '${orderToUpdate.status}' to '${status}'.`, user?.username || 'System', 'Order');
+    }
 
-        return prevOrders.map(order => 
+    setOrders(prevOrders =>
+        prevOrders.map(order => 
             order.id === orderId 
             ? { 
                 ...order, 
@@ -103,9 +102,9 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
                 ...(status === 'Cancelled' && { cancellationReason: reason }) 
               }
             : order
-        );
-    });
-  }, [logActivity, user]);
+        )
+    );
+  }, [orders, logActivity, user]);
 
 
    const applyDiscountOrComplementary = useCallback((orderId: string, details: { discountType?: 'percentage' | 'amount', discountValue?: number, isComplementary?: boolean, complementaryReason?: string }) => {
