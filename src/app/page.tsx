@@ -4,7 +4,7 @@
 import { useRouter } from 'next/navigation';
 import { useSettings } from '@/context/SettingsContext';
 import { useDeals } from '@/context/DealsContext';
-import { Loader, Pizza, Utensils, ShoppingBag } from 'lucide-react';
+import { Loader, Pizza } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
@@ -15,45 +15,32 @@ import { cn } from '@/lib/utils';
 import { RatingDialog } from '@/components/ui/rating-dialog';
 import Header from '@/components/layout/Header';
 import { useState } from 'react';
-import type { Deal, MenuItem } from '@/lib/types';
-import { useCart } from '@/context/CartContext';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import type { Deal } from '@/lib/types';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 
-function DealSelectionDialog({ deal, onSelectMode, isOpen, onOpenChange }: { deal: Deal | null; onSelectMode: (mode: 'Dine-In' | 'Take-Away') => void; isOpen: boolean; onOpenChange: (open: boolean) => void; }) {
+function DealConfirmationDialog({ deal, onConfirm, isOpen, onOpenChange }: { deal: Deal | null; onConfirm: () => void; isOpen: boolean; onOpenChange: (open: boolean) => void; }) {
     if (!deal) return null;
 
-    const { settings } = useSettings();
-    const branch = settings.branches.find(b => b.id === settings.defaultBranchId);
-    
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle className="font-headline text-2xl">How will you be dining?</DialogTitle>
-                    <DialogDescription>Select an option to add "{deal.name}" to your cart.</DialogDescription>
+                    <DialogTitle className="font-headline text-2xl">Add Deal to Order?</DialogTitle>
+                    <DialogDescription>You are about to add the "{deal.name}" deal to your order.</DialogDescription>
                 </DialogHeader>
-                <div className="grid grid-cols-2 gap-4 py-4">
-                     <Button
-                        variant={branch?.dineInEnabled ? "outline" : "secondary"}
-                        className="h-24 flex-col gap-2"
-                        onClick={() => onSelectMode('Dine-In')}
-                        disabled={!branch?.dineInEnabled}
-                     >
-                        <Utensils className="h-8 w-8" />
-                        <span className="font-semibold">Dine-In</span>
-                     </Button>
-                     <Button
-                        variant={branch?.takeAwayEnabled ? "outline" : "secondary"}
-                        className="h-24 flex-col gap-2"
-                        onClick={() => onSelectMode('Take-Away')}
-                        disabled={!branch?.takeAwayEnabled}
-                     >
-                        <ShoppingBag className="h-8 w-8" />
-                        <span className="font-semibold">Take Away</span>
-                     </Button>
+                <div className="py-4">
+                    <div className="relative h-48 w-full rounded-md overflow-hidden">
+                        <Image src={deal.imageUrl} alt={deal.name} layout="fill" objectFit="cover" />
+                    </div>
+                    <h3 className="font-semibold mt-4 text-lg">{deal.name}</h3>
+                    <p className="text-sm text-muted-foreground">{deal.description}</p>
+                    <p className="font-bold text-lg mt-2">RS {Math.round(deal.price)}</p>
                 </div>
-                 <DialogFooter className="sm:justify-center">
-                    <p className="text-xs text-muted-foreground">You can continue ordering after making a selection.</p>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button type="button" variant="outline">Cancel</Button>
+                    </DialogClose>
+                    <Button onClick={onConfirm}>Add to Cart</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -65,7 +52,6 @@ function DealsCarousel() {
   const { deals, isLoading } = useDeals();
   const { settings } = useSettings();
   const router = useRouter();
-  const { setOrderDetails, addItem } = useCart();
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const [isDialogOpen, setDialogOpen] = useState(false);
   const defaultBranchId = settings.defaultBranchId || (settings.branches.length > 0 ? settings.branches[0].id : null);
@@ -75,26 +61,13 @@ function DealsCarousel() {
     setDialogOpen(true);
   };
 
-  const handleModeSelection = (mode: 'Dine-In' | 'Take-Away') => {
+  const handleConfirmDeal = () => {
     if (!selectedDeal || !defaultBranchId) return;
-
-    setOrderDetails({ branchId: defaultBranchId, orderType: mode });
-
-    const dealAsMenuItem: MenuItem = {
-      id: selectedDeal.id,
-      name: selectedDeal.name,
-      description: selectedDeal.description,
-      price: selectedDeal.price,
-      imageUrl: selectedDeal.imageUrl,
-      categoryId: 'deals',
-    };
     
-    addItem({ item: dealAsMenuItem, itemQuantity: 1 });
-
     setDialogOpen(false);
-    setSelectedDeal(null);
-
-    router.push(`/branch/${defaultBranchId}/menu?mode=${mode}`);
+    
+    // Redirect to the branch selection page with the dealId as a query parameter
+    router.push(`/branch/${defaultBranchId}?dealId=${selectedDeal.id}`);
   };
 
 
@@ -133,9 +106,9 @@ function DealsCarousel() {
         <CarouselPrevious className="absolute left-[-50px] top-1/2 -translate-y-1/2 z-10 h-10 w-10 bg-background/80 text-foreground border hover:bg-accent" />
         <CarouselNext className="absolute right-[-50px] top-1/2 -translate-y-1/2 z-10 h-10 w-10 bg-background/80 text-foreground border hover:bg-accent" />
       </Carousel>
-      <DealSelectionDialog 
+      <DealConfirmationDialog 
         deal={selectedDeal}
-        onSelectMode={handleModeSelection}
+        onConfirm={handleConfirmDeal}
         isOpen={isDialogOpen}
         onOpenChange={setDialogOpen}
       />
