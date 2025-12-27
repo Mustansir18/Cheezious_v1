@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -110,7 +111,7 @@ function RoleManagement() {
     };
 
     const handleSave = (role: Omit<Role, 'id'> | Role) => {
-        if ('id' in editingRole || role.id) {
+        if ('id' in role) {
             updateRole(role as Role);
         } else {
             addRole(role);
@@ -146,7 +147,7 @@ function RoleManagement() {
                                     <div className="flex flex-wrap gap-2 max-w-md">
                                         {role.permissions.map(permission => (
                                             <span key={permission} className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded-full">
-                                                {permission === 'admin:*' ? 'All Admin Pages' : permission}
+                                                {ALL_PERMISSIONS.find(p => p.id === permission)?.name || permission}
                                             </span>
                                         ))}
                                     </div>
@@ -727,3 +728,5 @@ export default function AdminSettingsPage() {
         </div>
     );
 }
+
+    
