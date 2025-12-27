@@ -78,43 +78,42 @@ export default function Home() {
   return (
     <>
     <Header />
-    <main className="relative flex h-[calc(100vh-4rem)] flex-col items-center justify-center p-4 overflow-hidden">
+    <main className="container mx-auto px-4">
+      <div className="flex flex-col items-center justify-center space-y-6 pt-20 text-center">
+        <Pizza className="h-24 w-24 text-primary animate-icon-blink" />
+        <div className="space-y-2">
+            <h1 className="font-headline text-5xl font-bold tracking-tight">Welcome to {settings.companyName}</h1>
+            <p className="text-lg text-muted-foreground">The best place for pizza and fast food lovers.</p>
+        </div>
         
-        <div className="flex flex-col items-center justify-center text-center space-y-6">
-            <Pizza className="h-24 w-24 text-primary animate-icon-blink" />
-            <div className="space-y-2">
-                <h1 className="font-headline text-5xl font-bold tracking-tight">Welcome to {settings.companyName}</h1>
-                <p className="text-lg text-muted-foreground">The best place for pizza and fast food lovers.</p>
+        {isLoading ? (
+            <div className="flex items-center gap-2 py-10">
+                <Loader className="h-8 w-8 animate-spin text-primary" />
+                <span className="text-muted-foreground">Loading restaurant settings...</span>
             </div>
-            
-             {isLoading ? (
-                <div className="flex items-center gap-2 py-10">
-                    <Loader className="h-8 w-8 animate-spin text-primary" />
-                    <span className="text-muted-foreground">Loading restaurant settings...</span>
-                </div>
-             ) : settings.branches.length === 0 ? (
-                 <div className="py-10 text-center">
-                    <p className="mt-2 text-muted-foreground">No branches have been configured yet.</p>
-                    <p className="mt-1 text-sm text-muted-foreground">Please log in as an admin to add a branch.</p>
-                </div>
-             ) : (
-                <div className="py-6">
-                    <Button 
-                        onClick={handleStartOrder} 
-                        className="rounded-full h-16 w-auto px-8 text-lg font-bold shadow-lg transition-transform duration-300 hover:scale-105 bg-gradient-to-r from-primary to-amber-400 text-primary-foreground animate-pulse"
-                    >
-                        Start Your Order
-                    </Button>
-                </div>
-             )}
-        </div>
-        
-        <div className="absolute bottom-8 w-full max-w-6xl px-14">
-            <h2 className="text-2xl font-bold font-headline mb-4 text-center">Today's Hot Deals</h2>
-            <DealsCarousel />
-        </div>
+        ) : settings.branches.length === 0 ? (
+              <div className="py-10 text-center">
+                <p className="mt-2 text-muted-foreground">No branches have been configured yet.</p>
+                <p className="mt-1 text-sm text-muted-foreground">Please log in as an admin to add a branch.</p>
+            </div>
+        ) : (
+            <div className="py-6">
+                <Button 
+                    onClick={handleStartOrder} 
+                    className="rounded-full h-16 w-auto px-8 text-lg font-bold shadow-lg transition-transform duration-300 hover:scale-105 bg-gradient-to-r from-primary to-amber-400 text-primary-foreground animate-pulse"
+                >
+                    Start Your Order
+                </Button>
+            </div>
+        )}
+      </div>
 
-        <div className="absolute bottom-8 right-8">
+      <div className="mt-12 mb-20 px-10">
+        <h2 className="text-2xl font-bold font-headline mb-4 text-center">Today's Hot Deals</h2>
+        <DealsCarousel />
+      </div>
+
+       <div className="fixed bottom-8 right-8">
             <RatingDialog />
         </div>
     </main>
