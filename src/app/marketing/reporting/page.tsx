@@ -1,6 +1,6 @@
 
 
-"use client";
+'use client';
 
 import { useOrders } from "@/context/OrderContext";
 import { useMenu } from "@/context/MenuContext";
@@ -16,7 +16,7 @@ import { CategorySalesTable } from "@/components/reporting/CategorySalesTable";
 import { PaymentMethodBreakdown, type PaymentData } from "@/components/reporting/PaymentMethodBreakdown";
 import { OrderAdjustmentsSummary, type OrderAdjustmentData } from "@/components/reporting/OrderAdjustmentsSummary";
 import { OrderTypeSummary, type OrderTypeData } from "@/components/reporting/OrderTypeSummary";
-import { CompletionTimeReport, type CompletionTimeData } from "@/components/reporting/CompletionTimeReport";
+import { CompletionTimeReport } from "@/components/reporting/CompletionTimeReport";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -37,7 +37,7 @@ export interface HourlySale {
 function ReportCardActions({ reportId, onPrint, onDownloadPdf, onDownloadCsv }: { reportId: string; onPrint: (id: string) => void, onDownloadPdf: () => void, onDownloadCsv: () => void }) {
     return (
         <div className="flex items-center gap-2 print-hidden">
-            <UITooltip>
+            <Tooltip>
                 <TooltipTrigger asChild>
                     <Button variant="ghost" size="icon" onClick={onDownloadCsv}>
                         <FileDown className="h-4 w-4"/>
@@ -46,8 +46,8 @@ function ReportCardActions({ reportId, onPrint, onDownloadPdf, onDownloadCsv }: 
                 <TooltipContent>
                     <p>Download as CSV</p>
                 </TooltipContent>
-            </UITooltip>
-            <UITooltip>
+            </Tooltip>
+            <Tooltip>
                 <TooltipTrigger asChild>
                     <Button variant="ghost" size="icon" onClick={onDownloadPdf}>
                         <FileDown className="h-4 w-4 text-red-500"/>
@@ -56,7 +56,7 @@ function ReportCardActions({ reportId, onPrint, onDownloadPdf, onDownloadCsv }: 
                 <TooltipContent>
                     <p>Download as PDF</p>
                 </TooltipContent>
-            </UITooltip>
+            </Tooltip>
             <Button variant="ghost" size="icon" onClick={() => onPrint(reportId)}>
                 <Printer className="h-4 w-4"/>
             </Button>
@@ -222,9 +222,9 @@ export default function ReportingPage() {
         };
     });
 
-    const completionTimeData: CompletionTimeData = {
-        baseOrders: baseFilteredOrders,
-        filteredOrders: filteredOrders,
+    const completionTimeData = {
+        baseOrders,
+        filteredOrders,
     };
     
     const categoryChartData: CategorySale[] = Object.entries(categorySales).map(([categoryId, sales], index) => {
