@@ -13,10 +13,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { format, startOfDay, endOfDay, setHours, startOfHour, endOfHour } from 'date-fns';
-import { Calendar as CalendarIcon, Printer, DollarSign, ShoppingCart } from 'lucide-react';
+import { Calendar as CalendarIcon, Printer, DollarSign, ShoppingCart, FileText, FileDown } from 'lucide-react';
 import type { Order } from '@/lib/types';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { saveAs } from 'file-saver';
+
 
 const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
 
@@ -51,7 +53,7 @@ export default function HourlyReportPage() {
         };
     }, [orders, date, startHour, endHour]);
     
-    const handlePrint = () => {
+    const generatePdf = useCallback(() => {
         if (!reportData) return;
         const doc = new jsPDF();
         
@@ -96,7 +98,25 @@ export default function HourlyReportPage() {
         });
 
         doc.save(`hourly-report-${format(reportData.reportDate, 'yyyy-MM-dd')}-${startHour}-${endHour}.pdf`);
-    };
+    }, [reportData, settings]);
+
+    const generateCsv = useCallback(() => {
+        if (!reportData) return;
+        
+        let csvContent = `Hourly Sales Report\n`;
+        csvContent += `Date: ${format(reportData.reportDate, 'PPP')}\n`;
+        csvContent += `Time Range: ${reportData.reportHours}\n\n`;
+        csvContent += `Total Sales,RS ${Math.round(reportData.totalSales)}\n`;
+        csvContent += `Total Orders,${reportData.totalOrders}\n\n`;
+        
+        csvContent += `Time,Order #,Type,Payment,Amount (RS)\n`;
+        reportData.orders.forEach(order => {
+            csvContent += `${format(new Date(order.orderDate), 'p')},${order.orderNumber},${order.orderType},${order.paymentMethod},${Math.round(order.totalAmount)}\n`;
+        });
+        
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        saveAs(blob, `hourly-report-${format(reportData.reportDate, 'yyyy-MM-dd')}-${startHour}-${endHour}.csv`);
+    }, [reportData]);
     
     return (
         <div className="container mx-auto p-4 lg:p-8">
@@ -163,9 +183,14 @@ export default function HourlyReportPage() {
                                 <CardTitle className="font-headline text-2xl">Report for {format(reportData.reportDate, 'PPP')}</CardTitle>
                                 <CardDescription>Showing sales from {reportData.reportHours}</CardDescription>
                             </div>
-                            <Button onClick={handlePrint} variant="outline" className="print-hidden">
-                                <Printer className="mr-2 h-4 w-4" /> Print Report
-                            </Button>
+                            <div className="flex items-center gap-2 print-hidden">
+                                <Button onClick={generateCsv} variant="outline">
+                                    <FileDown className="mr-2 h-4 w-4" /> CSV
+                                </Button>
+                                <Button onClick={generatePdf} variant="outline">
+                                    <FileText className="mr-2 h-4 w-4" /> PDF
+                                </Button>
+                            </div>
                         </div>
                     </CardHeader>
                     <CardContent>
@@ -224,3 +249,5 @@ export default function HourlyReportPage() {
         </div>
     );
 }
+
+    
