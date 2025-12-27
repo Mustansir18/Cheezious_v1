@@ -59,7 +59,8 @@ export function OrderAdjustmentsSummary({ data, selectedType, onSelectType, onPr
                         key={entry.type}
                         className={cn(
                             "cursor-pointer transition-all hover:shadow-md",
-                            selectedType === entry.type && "ring-2 ring-primary"
+                            selectedType === entry.type ? "ring-2 ring-primary" :
+                            selectedType ? "blur-out" : ""
                         )}
                         onClick={() => handleSelect(entry.type)}
                     >

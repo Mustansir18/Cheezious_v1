@@ -170,6 +170,9 @@ body {
       appearance: none;
       display: none;
   }
+  .blur-out {
+    @apply opacity-30 blur-sm transition-all;
+  }
 }
 
 

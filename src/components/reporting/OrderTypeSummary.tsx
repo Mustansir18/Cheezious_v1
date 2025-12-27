@@ -35,7 +35,7 @@ export function OrderTypeSummary({ data, onPrint, selectedType, onSelectType }: 
       <CardHeader className="flex-row justify-between items-center">
         <div>
           <CardTitle className="font-headline">Order Type Summary</CardTitle>
-          <CardDescription>Sales and transaction counts by order type. Click to filter.</CardDescription>
+          <CardDescription>Click to filter the entire report.</CardDescription>
         </div>
         <div className="flex items-center gap-2 print-hidden">
             <UITooltip>
@@ -85,7 +85,6 @@ export function OrderTypeSummary({ data, onPrint, selectedType, onSelectType }: 
                             cx="50%"
                             cy="50%"
                             innerRadius={40}
-                            outerRadius={60}
                             paddingAngle={5}
                             onClick={(payload) => handleSelect(payload.name)}
                             className="cursor-pointer"
@@ -93,9 +92,12 @@ export function OrderTypeSummary({ data, onPrint, selectedType, onSelectType }: 
                             {data.map((entry) => (
                                 <Cell 
                                     key={`cell-${entry.type}`} 
-                                    fill={entry.fill} 
-                                    stroke={selectedType === entry.type ? 'hsl(var(--ring))' : entry.fill}
-                                    strokeWidth={selectedType === entry.type ? 3 : 1}
+                                    fill={entry.fill}
+                                    outerRadius={selectedType === entry.type ? 70 : 60}
+                                    className={cn(
+                                        "transition-all",
+                                        selectedType && selectedType !== entry.type && "blur-out"
+                                    )}
                                 />
                             ))}
                         </Pie>
@@ -107,7 +109,8 @@ export function OrderTypeSummary({ data, onPrint, selectedType, onSelectType }: 
                             key={entry.type}
                             className={cn(
                                 "cursor-pointer transition-all hover:shadow-md",
-                                selectedType === entry.type && "ring-2 ring-primary"
+                                selectedType === entry.type ? "ring-2 ring-primary" : 
+                                selectedType ? "blur-out" : ""
                             )}
                             onClick={() => handleSelect(entry.type)}
                         >

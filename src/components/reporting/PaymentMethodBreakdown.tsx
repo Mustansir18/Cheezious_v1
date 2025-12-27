@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Printer, FileDown } from 'lucide-react';
 import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
+
 
 export interface PaymentData {
   method: string;
@@ -24,7 +26,6 @@ export function PaymentMethodBreakdown({ data, selectedMethod, onSelectMethod, o
   
   const handlePieClick = (payload: any) => {
     const clickedMethod = payload.name;
-    // If the clicked method is already selected, deselect it. Otherwise, select it.
     onSelectMethod(selectedMethod === clickedMethod ? null : clickedMethod);
   }
 
@@ -92,8 +93,10 @@ export function PaymentMethodBreakdown({ data, selectedMethod, onSelectMethod, o
                                 <Cell 
                                     key={`cell-${index}`} 
                                     fill={entry.fill} 
-                                    stroke={selectedMethod === entry.method ? 'hsl(var(--ring))' : entry.fill}
-                                    strokeWidth={selectedMethod === entry.method ? 3 : 1}
+                                    className={cn(
+                                        "transition-opacity",
+                                        selectedMethod && selectedMethod !== entry.method && "blur-out"
+                                    )}
                                 />
                             ))}
                         </Pie>
@@ -101,7 +104,14 @@ export function PaymentMethodBreakdown({ data, selectedMethod, onSelectMethod, o
                 </ResponsiveContainer>
                  <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-4">
                     {data.map((entry) => (
-                        <div key={entry.method} className="flex items-center gap-2">
+                        <div 
+                            key={entry.method} 
+                            className={cn(
+                                "flex items-center gap-2 cursor-pointer transition-opacity",
+                                selectedMethod && selectedMethod !== entry.method && "opacity-50"
+                            )}
+                            onClick={() => onSelectMethod(selectedMethod === entry.method ? null : entry.method)}
+                        >
                             <span className="h-3 w-3 rounded-full" style={{ backgroundColor: entry.fill }} />
                             <span className="text-sm font-medium">{entry.method}</span>
                         </div>
