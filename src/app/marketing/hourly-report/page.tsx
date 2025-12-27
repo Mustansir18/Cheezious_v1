@@ -13,11 +13,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { format, startOfDay, endOfDay, setHours, startOfHour, endOfHour } from 'date-fns';
-import { Calendar as CalendarIcon, Printer, DollarSign, ShoppingCart, FileText, FileDown } from 'lucide-react';
+import { Calendar as CalendarIcon, Printer, DollarSign, ShoppingCart, FileText, FileDown, X } from 'lucide-react';
 import type { Order } from '@/lib/types';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { saveAs } from 'file-saver';
+import { Input } from '@/components/ui/input';
 
 
 const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
@@ -29,15 +30,27 @@ export default function HourlyReportPage() {
     const [startHour, setStartHour] = useState<string>('00');
     const [endHour, setEndHour] = useState<string>('23');
 
+    // Filters
+    const [orderNumberFilter, setOrderNumberFilter] = useState('');
+    const [orderTypeFilter, setOrderTypeFilter] = useState('');
+    const [paymentMethodFilter, setPaymentMethodFilter] = useState('');
+
     const reportData = useMemo(() => {
         if (!date || !startHour || !endHour) return null;
 
         const reportStartDate = startOfHour(setHours(date, parseInt(startHour)));
         const reportEndDate = endOfHour(setHours(date, parseInt(endHour)));
 
-        const filteredOrders = orders.filter(order => {
+        const timeFilteredOrders = orders.filter(order => {
             const orderDate = new Date(order.orderDate);
             return order.status === 'Completed' && orderDate >= reportStartDate && orderDate <= reportEndDate;
+        });
+
+        const filteredOrders = timeFilteredOrders.filter(order => {
+            const orderNumberMatch = !orderNumberFilter || order.orderNumber.toLowerCase().includes(orderNumberFilter.toLowerCase());
+            const orderTypeMatch = !orderTypeFilter || order.orderType === orderTypeFilter;
+            const paymentMethodMatch = !paymentMethodFilter || order.paymentMethod === paymentMethodFilter;
+            return orderNumberMatch && orderTypeMatch && paymentMethodMatch;
         });
         
         filteredOrders.sort((a, b) => new Date(a.orderDate).getTime() - new Date(b.orderDate).getTime());
@@ -51,7 +64,7 @@ export default function HourlyReportPage() {
             reportDate: date,
             reportHours: `${startHour}:00 - ${endHour}:59`,
         };
-    }, [orders, date, startHour, endHour]);
+    }, [orders, date, startHour, endHour, orderNumberFilter, orderTypeFilter, paymentMethodFilter]);
     
     const generatePdf = useCallback(() => {
         if (!reportData) return;
@@ -98,7 +111,7 @@ export default function HourlyReportPage() {
         });
 
         doc.save(`hourly-report-${format(reportData.reportDate, 'yyyy-MM-dd')}-${startHour}-${endHour}.pdf`);
-    }, [reportData, settings]);
+    }, [reportData, settings, startHour, endHour]);
 
     const generateCsv = useCallback(() => {
         if (!reportData) return;
@@ -116,7 +129,7 @@ export default function HourlyReportPage() {
         
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         saveAs(blob, `hourly-report-${format(reportData.reportDate, 'yyyy-MM-dd')}-${startHour}-${endHour}.csv`);
-    }, [reportData]);
+    }, [reportData, startHour, endHour]);
     
     return (
         <div className="container mx-auto p-4 lg:p-8">
@@ -219,9 +232,39 @@ export default function HourlyReportPage() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Time</TableHead>
-                                    <TableHead>Order #</TableHead>
-                                    <TableHead>Type</TableHead>
-                                    <TableHead>Payment</TableHead>
+                                    <TableHead className="w-[200px]">
+                                        <Input 
+                                            placeholder="Filter Order #"
+                                            value={orderNumberFilter}
+                                            onChange={(e) => setOrderNumberFilter(e.target.value)}
+                                            className="h-8"
+                                        />
+                                    </TableHead>
+                                    <TableHead className="w-[150px]">
+                                         <Select value={orderTypeFilter} onValueChange={setOrderTypeFilter}>
+                                            <SelectTrigger className="h-8">
+                                                <SelectValue placeholder="All Types" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="">All Types</SelectItem>
+                                                <SelectItem value="Dine-In">Dine-In</SelectItem>
+                                                <SelectItem value="Take-Away">Take-Away</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </TableHead>
+                                    <TableHead className="w-[180px]">
+                                         <Select value={paymentMethodFilter} onValueChange={setPaymentMethodFilter}>
+                                            <SelectTrigger className="h-8">
+                                                <SelectValue placeholder="All Payment Methods" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="">All Methods</SelectItem>
+                                                {settings.paymentMethods.map(pm => (
+                                                    <SelectItem key={pm.id} value={pm.name}>{pm.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </TableHead>
                                     <TableHead className="text-right">Amount (RS)</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -239,7 +282,7 @@ export default function HourlyReportPage() {
                         </Table>
                          {reportData.orders.length === 0 && (
                             <div className="text-center py-12 text-muted-foreground">
-                                No completed orders found in the selected time range.
+                                No completed orders found with the current filters.
                             </div>
                         )}
                     </CardContent>
@@ -249,5 +292,3 @@ export default function HourlyReportPage() {
         </div>
     );
 }
-
-    
