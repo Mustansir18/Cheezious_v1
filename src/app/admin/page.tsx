@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Package, Settings, Users, Megaphone, ShoppingCart, QrCode, Monitor, ClipboardList, Star, BarChart } from 'lucide-react';
+import { Package, Settings, Users, Megaphone, ShoppingCart, QrCode, Monitor, ClipboardList, Star, BarChart, Clock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useEffect } from 'react';
@@ -54,6 +54,13 @@ export default function AdminDashboardPage() {
       description: 'View sales analytics and trends.',
       href: '/admin/reporting',
       icon: BarChart,
+      role: ['root'],
+    },
+    {
+      title: 'Hourly Report',
+      description: 'Generate sales reports for specific hours.',
+      href: '/admin/hourly-report',
+      icon: Clock,
       role: ['root'],
     },
     {

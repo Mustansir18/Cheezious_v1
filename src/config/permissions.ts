@@ -26,6 +26,11 @@ export const ALL_PERMISSIONS = [
         description: 'View sales analytics and performance reports.'
     },
     {
+        id: '/admin/hourly-report',
+        name: 'Admin - Hourly Report',
+        description: 'Generate sales reports for specific hours.'
+    },
+    {
         id: '/admin/menu',
         name: 'Menu Management',
         description: 'Create, edit, and delete menu items and categories.'
