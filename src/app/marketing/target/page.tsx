@@ -3,6 +3,7 @@
 
 import { useState, useMemo } from 'react';
 import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { useOrders } from '@/context/OrderContext';
@@ -20,6 +21,13 @@ import { format } from 'date-fns';
 import { Calendar as CalendarIcon, Target, DollarSign, FileDown, FileText, Utensils, ShoppingBag } from 'lucide-react';
 import type { DateRange } from 'react-day-picker';
 import { Pie, PieChart, ResponsiveContainer, Cell, Tooltip } from 'recharts';
+
+declare module 'jspdf' {
+    interface jsPDF {
+      autoTable: (options: any) => jsPDF;
+    }
+}
+
 
 export default function SalesTargetPage() {
     const { orders } = useOrders();
@@ -108,19 +116,34 @@ export default function SalesTargetPage() {
     const handleDownloadPDF = () => {
         if (!targetData) return;
         const doc = new jsPDF();
+        
         doc.setFontSize(18);
         doc.text(`Sales Target Report: ${targetData.name}`, 14, 22);
-
         doc.setFontSize(11);
-        doc.text(`Period: ${dateDisplay}`, 14, 32);
+        doc.setTextColor(100);
+        doc.text(`Period: ${dateDisplay}`, 14, 30);
 
-        doc.setFontSize(12);
-        doc.text(`Target Amount: RS ${targetData.targetAmount.toLocaleString()}`, 14, 45);
-        doc.text(`Achieved Sales: RS ${targetData.actualSales.toLocaleString()}`, 14, 52);
-        doc.text(`Percentage Reached: ${targetData.percentage.toFixed(2)}%`, 14, 59);
-        
-        doc.text(`Dine-In Orders: ${targetData.dineInOrders} (Sales: RS ${Math.round(targetData.dineInSales).toLocaleString()})`, 14, 66);
-        doc.text(`Take-Away Orders: ${targetData.takeAwayOrders} (Sales: RS ${Math.round(targetData.takeAwaySales).toLocaleString()})`, 14, 73);
+        doc.autoTable({
+            startY: 40,
+            head: [['Metric', 'Value']],
+            body: [
+                ['Target Amount', `RS ${targetData.targetAmount.toLocaleString()}`],
+                ['Achieved Sales', `RS ${targetData.actualSales.toLocaleString()}`],
+                ['Percentage Reached', `${targetData.percentage.toFixed(2)}%`],
+            ],
+            theme: 'striped',
+        });
+
+        doc.autoTable({
+            startY: (doc as any).autoTable.previous.finalY + 10,
+            head: [['Order Type', 'Orders', 'Sales']],
+            body: [
+                ['Dine-In', targetData.dineInOrders.toString(), `RS ${Math.round(targetData.dineInSales).toLocaleString()}`],
+                ['Take-Away', targetData.takeAwayOrders.toString(), `RS ${Math.round(targetData.takeAwaySales).toLocaleString()}`],
+            ],
+            theme: 'grid',
+        });
+
 
         doc.save(`sales-target-report-${targetData.name}.pdf`);
     };
