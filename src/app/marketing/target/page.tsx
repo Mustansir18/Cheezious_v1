@@ -2,9 +2,12 @@
 "use client";
 
 import { useState, useMemo } from 'react';
+import jsPDF from 'jspdf';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
 import { useOrders } from '@/context/OrderContext';
 import { useMenu } from '@/context/MenuContext';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,7 +17,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Target, DollarSign } from 'lucide-react';
+import { Calendar as CalendarIcon, Target, DollarSign, FileDown, FileText } from 'lucide-react';
 import type { DateRange } from 'react-day-picker';
 
 export default function SalesTargetPage() {
@@ -73,6 +76,38 @@ export default function SalesTargetPage() {
             name: targetName,
         };
     }, [orders, menu, targetType, selectedId, targetAmount, dateRange]);
+    
+    const handleDownloadPDF = () => {
+        if (!targetData) return;
+        const doc = new jsPDF();
+        doc.setFontSize(18);
+        doc.text(`Sales Target Report: ${targetData.name}`, 14, 22);
+
+        doc.setFontSize(11);
+        doc.text(`Period: ${dateDisplay}`, 14, 32);
+
+        doc.setFontSize(12);
+        doc.text(`Target Amount: RS ${targetData.targetAmount.toLocaleString()}`, 14, 45);
+        doc.text(`Achieved Sales: RS ${targetData.actualSales.toLocaleString()}`, 14, 52);
+        doc.text(`Percentage Reached: ${targetData.percentage.toFixed(2)}%`, 14, 59);
+
+        doc.save(`sales-target-report-${targetData.name}.pdf`);
+    };
+
+    const handleDownloadExcel = () => {
+        if (!targetData) return;
+        const zip = new JSZip();
+        let content = "Sales Target Report\n\n";
+        content += `Target Name: ${targetData.name}\n`;
+        content += `Period: ${dateDisplay}\n\n`;
+        content += `Target Amount,Achieved Sales,Percentage\n`;
+        content += `${targetData.targetAmount},${targetData.actualSales},${targetData.percentage.toFixed(2)}%\n`;
+
+        zip.file("report.txt", content);
+        zip.generateAsync({ type: "blob" }).then(function(content) {
+            saveAs(content, `sales-target-report-${targetData.name}.zip`);
+        });
+    };
 
     const selectionOptions = targetType === 'item' ? menu.items : menu.categories;
     const dateDisplay = dateRange?.from
@@ -172,6 +207,14 @@ export default function SalesTargetPage() {
                             <span className="text-sm font-normal text-muted-foreground ml-1">of target reached</span>
                         </div>
                     </CardContent>
+                    <CardFooter className="justify-end gap-2">
+                        <Button variant="outline" onClick={handleDownloadPDF}>
+                            <FileText className="mr-2 h-4 w-4" /> Download PDF
+                        </Button>
+                        <Button variant="outline" onClick={handleDownloadExcel}>
+                            <FileDown className="mr-2 h-4 w-4" /> Download Excel
+                        </Button>
+                    </CardFooter>
                 </Card>
             )}
         </div>

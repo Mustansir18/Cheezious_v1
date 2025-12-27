@@ -6,7 +6,7 @@ import { useSettings } from "@/context/SettingsContext";
 import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader, Star, Trash2, Calendar as CalendarIcon } from "lucide-react";
+import { Loader, Star, Trash2, Calendar as CalendarIcon, FileDown, FileText } from "lucide-react";
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,10 @@ import { Calendar } from "@/components/ui/calendar";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
 import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
 
 
 const StarRating = ({ rating }: { rating: number }) => (
@@ -82,6 +86,52 @@ export default function FeedbackPage() {
     }, [filteredRatings]);
     
     const isLoading = isRatingsLoading || isSettingsLoading;
+    
+    const dateDisplay = dateRange?.from
+      ? dateRange.to
+        ? `${format(dateRange.from, "LLL dd, y")} - ${format(dateRange.to, "LLL dd, y")}`
+        : format(dateRange.from, "LLL dd, y")
+      : "Pick a date range";
+
+    const handleDownloadPDF = () => {
+        const doc = new jsPDF();
+        doc.setFontSize(18);
+        doc.text(`Customer Feedback Report`, 14, 22);
+        doc.setFontSize(11);
+        doc.text(`Period: ${dateDisplay}`, 14, 30);
+        
+        doc.setFontSize(12);
+        doc.text(`Average Rating: ${ratingSummary.average.toFixed(2)}`, 14, 40);
+        doc.text(`Total Reviews: ${ratingSummary.total}`, 14, 47);
+
+        (doc as any).autoTable({
+            startY: 60,
+            head: [['Date', 'Rating', 'Comment']],
+            body: filteredRatings.map(r => [
+                format(new Date(r.timestamp), 'PPpp'),
+                r.rating,
+                r.comment || 'N/A'
+            ]),
+        });
+
+        doc.save(`feedback-report-${dateDisplay}.pdf`);
+    };
+
+    const handleDownloadExcel = () => {
+        const zip = new JSZip();
+        let content = "Customer Feedback Report\n\n";
+        content += `Period: ${dateDisplay}\n\n`;
+        content += "Date,Time,Rating,Comment\n";
+        filteredRatings.forEach(r => {
+            const date = new Date(r.timestamp);
+            content += `${format(date, 'yyyy-MM-dd')},${format(date, 'HH:mm:ss')},${r.rating},"${r.comment?.replace(/"/g, '""') || ''}"\n`;
+        });
+
+        zip.file("feedback_report.txt", content);
+        zip.generateAsync({ type: "blob" }).then(function(content) {
+            saveAs(content, `feedback-report-${dateDisplay}.zip`);
+        });
+    };
 
     if (isLoading) {
         return (
@@ -91,12 +141,6 @@ export default function FeedbackPage() {
             </div>
         );
     }
-    
-    const dateDisplay = dateRange?.from
-      ? dateRange.to
-        ? `${format(dateRange.from, "LLL dd, y")} - ${format(dateRange.to, "LLL dd, y")}`
-        : format(dateRange.from, "LLL dd, y")
-      : "Pick a date range";
 
     return (
         <div className="container mx-auto p-4 lg:p-8 space-y-8">
@@ -202,8 +246,18 @@ export default function FeedbackPage() {
             </Card>
 
             <Card>
-                <CardHeader>
-                    <CardTitle>All Ratings for {dateDisplay}</CardTitle>
+                <CardHeader className="flex flex-row justify-between items-start">
+                    <div>
+                        <CardTitle>All Ratings for {dateDisplay}</CardTitle>
+                    </div>
+                     <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={handleDownloadPDF} disabled={filteredRatings.length === 0}>
+                            <FileText className="mr-2 h-4 w-4" /> PDF
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={handleDownloadExcel} disabled={filteredRatings.length === 0}>
+                            <FileDown className="mr-2 h-4 w-4" /> Excel
+                        </Button>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <ScrollArea className="h-[50vh]">
