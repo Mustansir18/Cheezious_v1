@@ -65,6 +65,7 @@ export type Order = {
     orderNumber: string;
     branchId: string;
     orderDate: string; // ISO string
+    completionDate?: string; // ISO string, set when order moves to 'Ready'
     orderType: OrderType;
     status: OrderStatus;
     totalAmount: number;
@@ -159,6 +160,21 @@ export type Rating = {
 };
 
 
+// --- Reporting Types ---
+export interface ItemSale {
+  name: string;
+  quantity: number;
+  totalRevenue: number;
+}
+
+export interface DealSale extends ItemSale {}
+
+export interface CategorySale {
+  name: string;
+  sales: number;
+  fill: string;
+}
+
 // --- Types for External System Sync ---
 
 const OrderItemAddonSyncSchema = z.object({
@@ -202,3 +218,5 @@ export const SyncOrderOutputSchema = z.object({
   message: z.string().describe('A message detailing the result of the operation.'),
 });
 export type SyncOrderOutput = z.infer<typeof SyncOrderOutputSchema>;
+
+    
