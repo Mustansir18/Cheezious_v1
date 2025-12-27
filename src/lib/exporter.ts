@@ -63,6 +63,24 @@ function arrayToCsv(data: any[], columns: { key: string, label: string }[]): str
 
 // --- Individual Report Generators ---
 
+export const exportListDataAs = (format: 'pdf' | 'csv', data: any[], columns: { key: string; label: string }[], title: string, headerInfo: ReportHeaderInfo) => {
+    if (format === 'pdf') {
+        const doc = new jsPDF();
+        addReportHeader(doc, title, headerInfo);
+        doc.autoTable({
+            head: [columns.map(c => c.label)],
+            body: data.map(row => columns.map(col => row[col.key])),
+            startY: 55,
+        });
+        doc.save(`${title.toLowerCase().replace(/\s/g, '-')}.pdf`);
+    } else {
+        const csv = arrayToCsv(data, columns);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        saveAs(blob, `${title.toLowerCase().replace(/\s/g, '-')}.csv`);
+    }
+};
+
+
 export const exportOrderTypeDetailsAs = (format: 'pdf' | 'csv', orders: Order[], titleSuffix: string, headerInfo: ReportHeaderInfo) => {
     const title = `${titleSuffix} Order Details`;
     const columns = [

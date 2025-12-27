@@ -20,13 +20,15 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2, Edit, PlusCircle, Loader } from 'lucide-react';
+import { Trash2, Edit, PlusCircle, Loader, FileText, FileDown } from 'lucide-react';
 import type { Deal } from '@/lib/types';
 import imageCompression from 'browser-image-compression';
 import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useMenu } from '@/context/MenuContext';
 import { cn } from '@/lib/utils';
+import { exportListDataAs } from '@/lib/exporter';
+import { useSettings } from '@/context/SettingsContext';
 
 
 async function handleImageUpload(file: File) {
@@ -58,7 +60,7 @@ function DealForm({
   deal?: Deal;
   onSave: (deal: Omit<Deal, 'id'> | Deal, id?: string) => void;
 }) {
-  const [id, setId] = useState('');
+  const [id, setId] = useState(deal?.id || '');
   const [name, setName] = useState(deal?.name || '');
   const [description, setDescription] = useState(deal?.description || '');
   const [price, setPrice] = useState(deal?.price || 0);
@@ -80,7 +82,7 @@ function DealForm({
   };
   
   const validateId = (value: string) => {
-    if (menu.items.some(item => item.id === value) || deals.some(d => d.id === value)) {
+    if (menu.items.some(item => item.id === value) || deals.some(d => d.id === value && d.id !== deal?.id)) {
         toast({
             variant: 'destructive',
             title: 'Duplicate Code',
@@ -122,7 +124,7 @@ function DealForm({
             value={id} 
             onChange={(e) => { setId(e.target.value); setIsIdInvalid(false); }} 
             onBlur={(e) => validateId(e.target.value)}
-            required placeholder="e.g. D-00001" 
+            required placeholder="e.g., D-00001" 
           />
         </div>
       )}
@@ -164,16 +166,29 @@ function DealForm({
 
 export default function DealsManagementPage() {
   const { deals, isLoading, addDeal, updateDeal, deleteDeal } = useDeals();
+  const { settings } = useSettings();
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [editingDeal, setEditingDeal] = useState<Deal | undefined>();
 
   const handleSaveDeal = (dealData: Omit<Deal, 'id'> | Deal, id?: string) => {
     if ('id' in dealData) {
-      updateDeal(dealData);
+      updateDeal(dealData as Deal);
     } else if (id) {
       addDeal({ id, ...dealData });
     }
     setDialogOpen(false);
+  };
+  
+  const handleExport = (format: 'pdf' | 'csv') => {
+        const title = "Deals List";
+        const columns = [
+            { key: 'id', label: 'Code' },
+            { key: 'name', label: 'Name' },
+            { key: 'price', label: 'Price (RS)' },
+        ];
+        const data = deals.map(d => ({ ...d, price: Math.round(d.price) }));
+        const headerInfo = { companyName: settings.companyName, branchName: "All Branches" };
+        exportListDataAs(format, data, columns, title, headerInfo);
   };
 
   if (isLoading) {
@@ -193,22 +208,26 @@ export default function DealsManagementPage() {
             <CardTitle className="font-headline text-4xl font-bold">Deals & Discounts</CardTitle>
             <CardDescription>Create and manage promotional deals for the homepage carousel.</CardDescription>
           </div>
-           <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button onClick={() => { setEditingDeal(undefined); setDialogOpen(true); }}>
-                    <PlusCircle className="mr-2 h-4 w-4" /> Add Deal
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>{editingDeal ? 'Edit' : 'Add'} Deal</DialogTitle>
-                  </DialogHeader>
-                  <DealForm
-                    deal={editingDeal}
-                    onSave={handleSaveDeal}
-                  />
-                </DialogContent>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => handleExport('csv')}><FileDown className="mr-2 h-4 w-4" /> CSV</Button>
+            <Button variant="outline" onClick={() => handleExport('pdf')}><FileText className="mr-2 h-4 w-4" /> PDF</Button>
+            <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button onClick={() => { setEditingDeal(undefined); setDialogOpen(true); }}>
+                      <PlusCircle className="mr-2 h-4 w-4" /> Add Deal
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>{editingDeal ? 'Edit' : 'Add'} Deal</DialogTitle>
+                    </DialogHeader>
+                    <DealForm
+                      deal={editingDeal}
+                      onSave={handleSaveDeal}
+                    />
+                  </DialogContent>
             </Dialog>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>

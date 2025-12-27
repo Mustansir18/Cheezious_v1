@@ -21,7 +21,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2, Edit, PlusCircle } from 'lucide-react';
+import { Trash2, Edit, PlusCircle, FileText, FileDown } from 'lucide-react';
 import type { MenuCategory, MenuItem, Addon } from '@/lib/types';
 import imageCompression from 'browser-image-compression';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -30,6 +30,8 @@ import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-di
 import { useToast } from '@/hooks/use-toast';
 import { useDeals } from '@/context/DealsContext';
 import { cn } from '@/lib/utils';
+import { exportListDataAs } from '@/lib/exporter';
+import { useSettings } from '@/context/SettingsContext';
 
 
 async function handleImageUpload(file: File) {
@@ -54,7 +56,7 @@ async function handleImageUpload(file: File) {
 
 // Category Form
 function CategoryForm({ category, onSave }: { category?: MenuCategory; onSave: (cat: Omit<MenuCategory, 'id'> | MenuCategory, id?: string) => void;}) {
-  const [id, setId] = useState('');
+  const [id, setId] = useState(category?.id || '');
   const [name, setName] = useState(category?.name || '');
   const [icon, setIcon] = useState(category?.icon || 'Package');
   const { menu } = useMenu();
@@ -62,7 +64,7 @@ function CategoryForm({ category, onSave }: { category?: MenuCategory; onSave: (
   const [isIdInvalid, setIsIdInvalid] = useState(false);
   
   const validateId = (value: string) => {
-    if (menu.categories.some(c => c.id === value)) {
+    if (menu.categories.some(c => c.id === value && c.id !== category?.id)) {
         toast({
             variant: 'destructive',
             title: 'Duplicate Code',
@@ -104,7 +106,7 @@ function CategoryForm({ category, onSave }: { category?: MenuCategory; onSave: (
             onChange={(e) => { setId(e.target.value); setIsIdInvalid(false); }}
             onBlur={(e) => validateId(e.target.value)}
             required 
-            placeholder="e.g. C-00001" 
+            placeholder="e.g., C-00001" 
           />
         </div>
       )}
@@ -134,7 +136,7 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
   const { menu } = useMenu();
   const { deals } = useDeals();
   const { toast } = useToast();
-  const [id, setId] = useState('');
+  const [id, setId] = useState(item?.id || '');
   const [name, setName] = useState(item?.name || '');
   const [description, setDescription] = useState(item?.description || '');
   const [price, setPrice] = useState(item?.price || 0);
@@ -160,7 +162,7 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
   }
 
   const validateId = (value: string) => {
-    if (menu.items.some(item => item.id === value) || deals.some(deal => deal.id === value)) {
+    if (menu.items.some(item => item.id === value && item.id !== item?.id) || deals.some(deal => deal.id === value)) {
         toast({
             variant: 'destructive',
             title: 'Duplicate Code',
@@ -203,7 +205,7 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
             onChange={(e) => { setId(e.target.value); setIsIdInvalid(false); }}
             onBlur={(e) => validateId(e.target.value)}
             required 
-            placeholder="e.g. I-00001" 
+            placeholder="e.g., I-00001" 
           />
         </div>
       )}
@@ -268,7 +270,7 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
 
 // Addon Form
 function AddonForm({ addon, onSave }: { addon?: Addon; onSave: (addon: Omit<Addon, 'id'> | Addon, id?: string) => void; }) {
-    const [id, setId] = useState('');
+    const [id, setId] = useState(addon?.id || '');
     const [name, setName] = useState(addon?.name || '');
     const [price, setPrice] = useState(addon?.price || 0);
 
@@ -292,7 +294,7 @@ function AddonForm({ addon, onSave }: { addon?: Addon; onSave: (addon: Omit<Addo
             ) : (
               <div>
                 <Label htmlFor="addon-id">Add-on Code</Label>
-                <Input id="addon-id" value={id} onChange={(e) => setId(e.target.value)} required placeholder="e.g. A-00001" />
+                <Input id="addon-id" value={id} onChange={(e) => setId(e.target.value)} required placeholder="e.g., A-00001" />
               </div>
             )}
             <div><Label htmlFor="addon-name">Add-on Name</Label><Input id="addon-name" value={name} onChange={e => setName(e.target.value)} required /></div>
@@ -305,6 +307,7 @@ function AddonForm({ addon, onSave }: { addon?: Addon; onSave: (addon: Omit<Addo
 // Main Page Component
 export default function MenuManagementPage() {
   const { menu, isLoading, addCategory, updateCategory, deleteCategory, addItem, updateItem, deleteItem, addAddon, updateAddon, deleteAddon } = useMenu();
+  const { settings } = useSettings();
   const [isCategoryOpen, setCategoryOpen] = useState(false);
   const [isItemOpen, setItemOpen] = useState(false);
   const [isAddonOpen, setAddonOpen] = useState(false);
@@ -315,7 +318,7 @@ export default function MenuManagementPage() {
 
   const handleSaveCategory = (categoryData: Omit<MenuCategory, 'id'> | MenuCategory, id?: string) => {
       if ('id' in categoryData) {
-          updateCategory(categoryData);
+          updateCategory(categoryData as MenuCategory);
       } else if(id) {
           addCategory({ id, ...categoryData });
       }
@@ -324,7 +327,7 @@ export default function MenuManagementPage() {
 
   const handleSaveItem = (itemData: Omit<MenuItem, 'id'> | MenuItem, id?: string) => {
       if ('id' in itemData) {
-          updateItem(itemData);
+          updateItem(itemData as MenuItem);
       } else if (id) {
           addItem({ id, ...itemData });
       }
@@ -333,12 +336,45 @@ export default function MenuManagementPage() {
 
   const handleSaveAddon = (addonData: Omit<Addon, 'id'> | Addon, id?: string) => {
       if ('id' in addonData) {
-          updateAddon(addonData);
+          updateAddon(addonData as Addon);
       } else if (id) {
           addAddon({ id, ...addonData });
       }
       setAddonOpen(false);
   }
+
+  const handleExport = (list: 'categories' | 'addons' | 'items', format: 'pdf' | 'csv') => {
+        let data: any[], columns: any[], title: string;
+        const headerInfo = { companyName: settings.companyName, branchName: "All Branches" };
+
+        switch (list) {
+            case 'categories':
+                title = "Menu Categories";
+                columns = [{ key: 'id', label: 'Code' }, { key: 'name', label: 'Name' }];
+                data = menu.categories;
+                break;
+            case 'addons':
+                title = "Add-ons Library";
+                columns = [{ key: 'id', label: 'Code' }, { key: 'name', label: 'Name' }, { key: 'price', label: 'Price (RS)' }];
+                data = menu.addons.map(a => ({...a, price: Math.round(a.price)}));
+                break;
+            case 'items':
+                title = "Menu Items";
+                columns = [
+                    { key: 'id', label: 'Code' }, 
+                    { key: 'name', label: 'Name' }, 
+                    { key: 'categoryName', label: 'Category' },
+                    { key: 'price', label: 'Price (RS)' }
+                ];
+                data = menu.items.map(i => ({
+                    ...i, 
+                    price: Math.round(i.price),
+                    categoryName: menu.categories.find(c => c.id === i.categoryId)?.name || 'N/A'
+                }));
+                break;
+        }
+        exportListDataAs(format, data, columns, title, headerInfo);
+    };
 
 
   if (isLoading) return <div>Loading menu...</div>;
@@ -354,9 +390,13 @@ export default function MenuManagementPage() {
         <Card>
             <CardHeader className="flex-row justify-between items-center">
                 <div><CardTitle>Menu Categories</CardTitle><CardDescription>High-level groups for your menu items.</CardDescription></div>
-                <Dialog open={isCategoryOpen} onOpenChange={setCategoryOpen}><DialogTrigger asChild><Button onClick={() => { setEditingCategory(undefined); setCategoryOpen(true); }}><PlusCircle className="mr-2 h-4 w-4" /> Add Category</Button></DialogTrigger>
-                    <DialogContent><DialogHeader><DialogTitle>{editingCategory ? 'Edit' : 'Add'} Category</DialogTitle></DialogHeader><CategoryForm category={editingCategory} onSave={handleSaveCategory}/></DialogContent>
-                </Dialog>
+                <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => handleExport('categories', 'csv')}><FileDown className="mr-2 h-4 w-4" /> CSV</Button>
+                    <Button variant="outline" onClick={() => handleExport('categories', 'pdf')}><FileText className="mr-2 h-4 w-4" /> PDF</Button>
+                    <Dialog open={isCategoryOpen} onOpenChange={setCategoryOpen}><DialogTrigger asChild><Button onClick={() => { setEditingCategory(undefined); setCategoryOpen(true); }}><PlusCircle className="mr-2 h-4 w-4" /> Add Category</Button></DialogTrigger>
+                        <DialogContent><DialogHeader><DialogTitle>{editingCategory ? 'Edit' : 'Add'} Category</DialogTitle></DialogHeader><CategoryForm category={editingCategory} onSave={handleSaveCategory}/></DialogContent>
+                    </Dialog>
+                </div>
             </CardHeader>
             <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Code</TableHead><TableHead>Icon</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
                 <TableBody>{menu.categories.map(cat => (<TableRow key={cat.id}><TableCell>{cat.name}</TableCell><TableCell className="font-mono text-xs">{cat.id}</TableCell><TableCell className="font-mono">{cat.icon}</TableCell>
@@ -376,9 +416,13 @@ export default function MenuManagementPage() {
         <Card>
             <CardHeader className="flex-row justify-between items-center">
                 <div><CardTitle>Add-ons Library</CardTitle><CardDescription>All available add-ons for your menu items.</CardDescription></div>
-                <Dialog open={isAddonOpen} onOpenChange={setAddonOpen}><DialogTrigger asChild><Button onClick={() => { setEditingAddon(undefined); setAddonOpen(true); }}><PlusCircle className="mr-2 h-4 w-4" /> Add Add-on</Button></DialogTrigger>
-                    <DialogContent><DialogHeader><DialogTitle>{editingAddon ? 'Edit' : 'Add'} Add-on</DialogTitle></DialogHeader><AddonForm addon={editingAddon} onSave={handleSaveAddon}/></DialogContent>
-                </Dialog>
+                 <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => handleExport('addons', 'csv')}><FileDown className="mr-2 h-4 w-4" /> CSV</Button>
+                    <Button variant="outline" onClick={() => handleExport('addons', 'pdf')}><FileText className="mr-2 h-4 w-4" /> PDF</Button>
+                    <Dialog open={isAddonOpen} onOpenChange={setAddonOpen}><DialogTrigger asChild><Button onClick={() => { setEditingAddon(undefined); setAddonOpen(true); }}><PlusCircle className="mr-2 h-4 w-4" /> Add Add-on</Button></DialogTrigger>
+                        <DialogContent><DialogHeader><DialogTitle>{editingAddon ? 'Edit' : 'Add'} Add-on</DialogTitle></DialogHeader><AddonForm addon={editingAddon} onSave={handleSaveAddon}/></DialogContent>
+                    </Dialog>
+                </div>
             </CardHeader>
             <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Code</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
                 <TableBody>{menu.addons.map(addon => (<TableRow key={addon.id}><TableCell>{addon.name}</TableCell><TableCell className="font-mono text-xs">{addon.id}</TableCell><TableCell className="text-right">RS {Math.round(addon.price)}</TableCell>
@@ -398,9 +442,13 @@ export default function MenuManagementPage() {
         <Card>
             <CardHeader className="flex-row justify-between items-center">
                 <div><CardTitle>Menu Items</CardTitle><CardDescription>The main dishes and products you offer.</CardDescription></div>
-                <Dialog open={isItemOpen} onOpenChange={setItemOpen}><DialogTrigger asChild><Button onClick={() => { setEditingItem(undefined); setItemOpen(true); }}><PlusCircle className="mr-2 h-4 w-4" /> Add Item</Button></DialogTrigger>
-                    <DialogContent className="max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{editingItem ? 'Edit' : 'Add'} Item</DialogTitle></DialogHeader><ItemForm item={editingItem} onSave={handleSaveItem}/></DialogContent>
-                </Dialog>
+                <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => handleExport('items', 'csv')}><FileDown className="mr-2 h-4 w-4" /> CSV</Button>
+                    <Button variant="outline" onClick={() => handleExport('items', 'pdf')}><FileText className="mr-2 h-4 w-4" /> PDF</Button>
+                    <Dialog open={isItemOpen} onOpenChange={setItemOpen}><DialogTrigger asChild><Button onClick={() => { setEditingItem(undefined); setItemOpen(true); }}><PlusCircle className="mr-2 h-4 w-4" /> Add Item</Button></DialogTrigger>
+                        <DialogContent className="max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{editingItem ? 'Edit' : 'Add'} Item</DialogTitle></DialogHeader><ItemForm item={editingItem} onSave={handleSaveItem}/></DialogContent>
+                    </Dialog>
+                </div>
             </CardHeader>
             <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Code</TableHead><TableHead>Category</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
                 <TableBody>{menu.items.map(item => (<TableRow key={item.id}><TableCell>{item.name}</TableCell><TableCell className="font-mono text-xs">{item.id}</TableCell><TableCell>{menu.categories.find(c => c.id === item.categoryId)?.name || 'N/A'}</TableCell><TableCell className="text-right">RS {Math.round(item.price)}</TableCell>
