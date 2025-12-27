@@ -5,9 +5,9 @@ import { useMemo } from 'react';
 import type { Order } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Printer, FileDown, Clock } from 'lucide-react';
+import { Printer, FileDown, Clock, TrendingUp, TrendingDown } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid, Legend } from 'recharts';
+import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid } from 'recharts';
 
 export interface CompletionTimeData {
   orders: Order[];
@@ -19,13 +19,13 @@ interface CompletionTimeReportProps {
 }
 
 export function CompletionTimeReport({ data, onPrint }: CompletionTimeReportProps) {
-  const { avgCompletionTime, timeDistribution } = useMemo(() => {
+  const { avgCompletionTime, maxCompletionTime, minCompletionTime, timeDistribution } = useMemo(() => {
     const completedOrders = data.orders.filter(
       (order) => order.orderDate && order.completionDate
     );
 
     if (completedOrders.length === 0) {
-      return { avgCompletionTime: 0, timeDistribution: [] };
+      return { avgCompletionTime: 0, maxCompletionTime: 0, minCompletionTime: 0, timeDistribution: [] };
     }
 
     const completionTimes = completedOrders.map((order) => {
@@ -36,6 +36,8 @@ export function CompletionTimeReport({ data, onPrint }: CompletionTimeReportProp
 
     const totalMinutes = completionTimes.reduce((sum, time) => sum + time, 0);
     const avgCompletionTime = totalMinutes / completedOrders.length;
+    const maxCompletionTime = Math.max(...completionTimes);
+    const minCompletionTime = Math.min(...completionTimes);
     
     const distribution = [
       { name: '< 5 min', count: 0 },
@@ -53,15 +55,21 @@ export function CompletionTimeReport({ data, onPrint }: CompletionTimeReportProp
         else distribution[4].count++;
     });
 
-    return { avgCompletionTime, timeDistribution: distribution };
+    return { avgCompletionTime, maxCompletionTime, minCompletionTime, timeDistribution: distribution };
   }, [data.orders]);
+
+  const summaryStats = [
+    { title: "Average Time", value: `${avgCompletionTime.toFixed(1)} min`, icon: Clock, color: "text-primary" },
+    { title: "Minimum Time", value: `${minCompletionTime.toFixed(1)} min`, icon: TrendingDown, color: "text-green-500" },
+    { title: "Maximum Time", value: `${maxCompletionTime.toFixed(1)} min`, icon: TrendingUp, color: "text-red-500" },
+  ];
 
   return (
     <Card>
       <CardHeader className="flex-row justify-between items-center">
         <div>
           <CardTitle className="font-headline">Order Completion Time</CardTitle>
-          <CardDescription>Average time from order placement to completion.</CardDescription>
+          <CardDescription>Time from order placement to completion for finalized orders.</CardDescription>
         </div>
         <div className="flex items-center gap-2 print-hidden">
             <Tooltip>
@@ -79,13 +87,21 @@ export function CompletionTimeReport({ data, onPrint }: CompletionTimeReportProp
             </Button>
         </div>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="flex flex-col items-center justify-center text-center space-y-2">
-            <Clock className="h-12 w-12 text-primary" />
-            <p className="text-4xl font-bold">{avgCompletionTime.toFixed(1)}</p>
-            <p className="text-muted-foreground">Average Minutes</p>
+      <CardContent className="space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {summaryStats.map(stat => (
+            <Card key={stat.title}>
+              <CardContent className="p-4 flex items-center gap-4">
+                <stat.icon className={`h-8 w-8 ${stat.color}`} />
+                <div>
+                  <p className="text-sm text-muted-foreground">{stat.title}</p>
+                  <p className="text-2xl font-bold">{stat.value}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
-        <div className="md:col-span-2 h-64">
+        <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
                  <BarChart data={timeDistribution}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -112,5 +128,3 @@ export function CompletionTimeReport({ data, onPrint }: CompletionTimeReportProp
     </Card>
   );
 }
-
-    
