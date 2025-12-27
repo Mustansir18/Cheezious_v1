@@ -53,30 +53,9 @@ export function OrderTypeSummary({ data, onPrint, selectedType, onSelectType }: 
             </Button>
         </div>
       </CardHeader>
-      <CardContent className="flex-grow flex flex-col md:flex-row items-center justify-around gap-8">
+      <CardContent className="flex-grow flex flex-col items-center justify-center gap-8">
         {data.length > 0 ? (
             <>
-                <div className="grid grid-cols-2 gap-4 w-full md:w-auto">
-                    {data.map(entry => (
-                        <Card 
-                            key={entry.type}
-                            className={cn(
-                                "cursor-pointer transition-all hover:shadow-md",
-                                selectedType === entry.type && "ring-2 ring-primary"
-                            )}
-                            onClick={() => handleSelect(entry.type)}
-                        >
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">{entry.type}</CardTitle>
-                                <entry.icon className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{entry.count}</div>
-                                <p className="text-xs text-muted-foreground">RS {Math.round(entry.sales)}</p>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
                 <ResponsiveContainer width="100%" height={150} className="max-w-[150px]">
                     <PieChart>
                          <Tooltip
@@ -122,6 +101,27 @@ export function OrderTypeSummary({ data, onPrint, selectedType, onSelectType }: 
                         </Pie>
                     </PieChart>
                 </ResponsiveContainer>
+                <div className="grid grid-cols-2 gap-4 w-full">
+                    {data.map(entry => (
+                        <Card 
+                            key={entry.type}
+                            className={cn(
+                                "cursor-pointer transition-all hover:shadow-md",
+                                selectedType === entry.type && "ring-2 ring-primary"
+                            )}
+                            onClick={() => handleSelect(entry.type)}
+                        >
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">{entry.type}</CardTitle>
+                                <entry.icon className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{entry.count}</div>
+                                <p className="text-xs text-muted-foreground">RS {Math.round(entry.sales)}</p>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
             </>
         ) : (
              <div className="flex h-full w-full items-center justify-center">
