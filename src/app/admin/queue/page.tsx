@@ -63,8 +63,11 @@ const StatusColumn = ({ title, orders, status }: { title: string, orders: { orde
     );
 };
 
+interface QueuePageProps {
+    isEmbedded?: boolean;
+}
 
-export default function QueuePage() {
+export default function QueuePage({ isEmbedded = false }: QueuePageProps) {
     const { orders, isLoading: isOrdersLoading } = useOrders();
     const { settings, isLoading: isSettingsLoading } = useSettings();
     const router = useRouter();
@@ -81,8 +84,10 @@ export default function QueuePage() {
         idleTimer.current = setTimeout(resetToHome, IDLE_TIMEOUT_SECONDS * 1000);
     }, [resetToHome]);
     
-    // Set up idle timer and activity listeners
+    // Set up idle timer and activity listeners, but only if not embedded
     useEffect(() => {
+        if (isEmbedded) return;
+
         resetIdleTimer();
         
         const events = ['scroll', 'mousemove', 'mousedown', 'keypress', 'touchstart'];
@@ -95,7 +100,7 @@ export default function QueuePage() {
             }
             events.forEach(event => window.removeEventListener(event, resetIdleTimer));
         };
-    }, [resetIdleTimer]);
+    }, [resetIdleTimer, isEmbedded]);
 
     const pendingOrders = orders.filter(order => order.status === "Pending");
     const preparingOrders = orders.filter(order => order.status === "Preparing");
@@ -113,17 +118,19 @@ export default function QueuePage() {
     }
     
     return (
-        <div className="h-screen w-full bg-background p-8">
+        <div className={cn("w-full bg-background", isEmbedded ? "h-full flex flex-col" : "h-screen p-8")}>
             <header className="text-center mb-8 flex justify-between items-center">
-                <div className="w-16"></div> {/* Spacer */}
+                {!isEmbedded && <div className="w-16"></div>} {/* Spacer */}
                 <h1 className="font-headline text-5xl font-bold">Order Queue status</h1>
-                <Link href="/" passHref>
-                    <Button variant="outline" size="icon" aria-label="Back to Home" className="animate-blink-yellow">
-                        <Home className="h-6 w-6" />
-                    </Button>
-                </Link>
+                {!isEmbedded && (
+                    <Link href="/" passHref>
+                        <Button variant="outline" size="icon" aria-label="Back to Home" className="animate-blink-yellow">
+                            <Home className="h-6 w-6" />
+                        </Button>
+                    </Link>
+                )}
             </header>
-            <main className="grid grid-cols-3 gap-6 h-[calc(100vh-140px)]">
+            <main className={cn("grid grid-cols-3 gap-6", isEmbedded ? "flex-grow" : "h-[calc(100vh-140px)]")}>
                 <StatusColumn title="Pending" orders={pendingOrders} status="Pending" />
                 <StatusColumn title="Preparing" orders={preparingOrders} status="Preparing" />
                 <StatusColumn title="Pickup" orders={readyOrders} status="Ready" />
@@ -131,4 +138,3 @@ export default function QueuePage() {
         </div>
     );
 }
-

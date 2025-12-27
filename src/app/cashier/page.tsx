@@ -7,11 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOrders } from "@/context/OrderContext";
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { OrderReceipt } from "@/components/cashier/OrderReceipt";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import QueuePage from "@/app/admin/queue/page";
 
 function OrderInfoModal({ order }: { order: Order }) {
     return (
@@ -83,12 +83,17 @@ export default function CashierPage() {
                     </div>
                 </CardContent>
             </Card>
-            <Link href="/admin/queue" target="_blank">
-                <Button variant="outline" className="w-full">
-                    <Monitor className="mr-2 h-4 w-4" />
-                    Open Order Queue
-                </Button>
-            </Link>
+            <Dialog>
+                <DialogTrigger asChild>
+                    <Button variant="outline" className="w-full">
+                        <Monitor className="mr-2 h-4 w-4" />
+                        View Order Queue
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-7xl h-[90vh] flex flex-col">
+                    <QueuePage isEmbedded={true} />
+                </DialogContent>
+            </Dialog>
         </div>
       </header>
 
