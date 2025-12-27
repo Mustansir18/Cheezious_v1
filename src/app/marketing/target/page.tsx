@@ -241,7 +241,7 @@ export default function SalesTargetPage() {
                                 <CardTitle>Sales Breakdown by Order Type</CardTitle>
                                 <CardDescription>Dine-In vs. Take-Away sales for the selected target.</CardDescription>
                             </CardHeader>
-                            <CardContent className="flex flex-col md:flex-row items-center justify-center gap-8">
+                            <CardContent className="flex flex-col items-center justify-center gap-8">
                                 <ResponsiveContainer width="100%" height={200} className="max-w-[200px]">
                                     <PieChart>
                                         <Tooltip
@@ -276,9 +276,9 @@ export default function SalesTargetPage() {
                                         </Pie>
                                     </PieChart>
                                 </ResponsiveContainer>
-                                <div className="grid grid-cols-1 gap-4 w-full md:w-auto">
+                                <div className="grid grid-cols-2 gap-4 w-full max-w-md">
                                     {targetData.salesBreakdown.map(entry => (
-                                        <div key={entry.name} className="flex items-center gap-4 rounded-lg border p-3">
+                                        <div key={entry.name} className="flex items-center justify-center gap-4 rounded-lg border p-3">
                                             {entry.name === 'Dine-In' ? <Utensils className="h-6 w-6 text-muted-foreground" /> : <ShoppingBag className="h-6 w-6 text-muted-foreground" />}
                                             <div>
                                                 <p className="text-sm text-muted-foreground">{entry.name}</p>
