@@ -26,7 +26,7 @@ import { cn } from "@/lib/utils";
 import { DateRange } from "react-day-picker";
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { ItemSale, DealSale, CategorySale } from "@/lib/types";
-import { exportSummaryAs, exportAllReportsAsZip } from '@/lib/exporter';
+import { exportSummaryAs, exportAllReportsAsZip, exportOrderTypeDetailsAs } from '@/lib/exporter';
 import { useToast } from "@/hooks/use-toast";
 
 

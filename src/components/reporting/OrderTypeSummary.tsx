@@ -11,7 +11,6 @@ import { cn } from '@/lib/utils';
 import type { ElementType } from 'react';
 import { exportOrderTypeDetailsAs } from '@/lib/exporter';
 import type { Order } from '@/lib/types';
-import { useSettings } from '@/context/SettingsContext';
 
 export interface OrderTypeData {
   type: 'Dine-In' | 'Take-Away';
