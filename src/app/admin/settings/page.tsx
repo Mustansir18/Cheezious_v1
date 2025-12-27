@@ -135,6 +135,7 @@ function RoleManagement() {
                     <TableHeader>
                         <TableRow>
                             <TableHead>Role</TableHead>
+                            <TableHead>Code</TableHead>
                             <TableHead>Permissions</TableHead>
                             <TableHead className="text-right w-[120px]">Actions</TableHead>
                         </TableRow>
@@ -143,6 +144,7 @@ function RoleManagement() {
                         {settings.roles.map(role => (
                             <TableRow key={role.id}>
                                 <TableCell className="font-semibold capitalize">{role.name}</TableCell>
+                                <TableCell className="font-mono text-xs">{role.id}</TableCell>
                                 <TableCell>
                                     <div className="flex flex-wrap gap-2 max-w-md">
                                         {role.permissions.map(permission => (
@@ -343,6 +345,7 @@ export default function AdminSettingsPage() {
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Floor Name</TableHead>
+                                        <TableHead>Code</TableHead>
                                         <TableHead className="text-right w-[80px]">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -350,6 +353,7 @@ export default function AdminSettingsPage() {
                                     {settings.floors.map(floor => (
                                         <TableRow key={floor.id}>
                                             <TableCell>{floor.name}</TableCell>
+                                            <TableCell className="font-mono text-xs">{floor.id}</TableCell>
                                             <TableCell className="text-right">
                                                 <DeleteConfirmationDialog
                                                     title={`Delete Floor "${floor.name}"?`}
@@ -393,6 +397,7 @@ export default function AdminSettingsPage() {
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Table Name</TableHead>
+                                        <TableHead>Code</TableHead>
                                         <TableHead>Floor</TableHead>
                                         <TableHead className="text-right w-[80px]">Actions</TableHead>
                                     </TableRow>
@@ -401,6 +406,7 @@ export default function AdminSettingsPage() {
                                     {settings.tables.map(table => (
                                         <TableRow key={table.id}>
                                             <TableCell>{table.name}</TableCell>
+                                            <TableCell className="font-mono text-xs">{table.id}</TableCell>
                                             <TableCell>{settings.floors.find(f => f.id === table.floorId)?.name || 'N/A'}</TableCell>
                                             <TableCell className="text-right">
                                                  <DeleteConfirmationDialog
@@ -490,6 +496,7 @@ export default function AdminSettingsPage() {
                                         <TableHeader>
                                             <TableRow>
                                                 <TableHead>Branch Name</TableHead>
+                                                <TableHead>Code</TableHead>
                                                 <TableHead>Order Prefix</TableHead>
                                                 <TableHead>Dine-In</TableHead>
                                                 <TableHead>Take Away</TableHead>
@@ -500,6 +507,7 @@ export default function AdminSettingsPage() {
                                             {visibleBranches.map(branch => (
                                                 <TableRow key={branch.id}>
                                                     <TableCell className="font-medium">{branch.name}</TableCell>
+                                                    <TableCell className="font-mono text-xs">{branch.id}</TableCell>
                                                     <TableCell className="font-mono">{branch.orderPrefix}</TableCell>
                                                     <TableCell>
                                                         <Switch
@@ -655,6 +663,7 @@ export default function AdminSettingsPage() {
                                         <TableHeader>
                                             <TableRow>
                                                 <TableHead>Method Name</TableHead>
+                                                <TableHead>Code</TableHead>
                                                 <TableHead className="w-[150px]">Tax Rate (%)</TableHead>
                                                 <TableHead className="text-right w-[80px]">Actions</TableHead>
                                             </TableRow>
@@ -663,6 +672,7 @@ export default function AdminSettingsPage() {
                                             {settings.paymentMethods.map(method => (
                                                 <TableRow key={method.id}>
                                                     <TableCell>{method.name}</TableCell>
+                                                    <TableCell className="font-mono text-xs">{method.id}</TableCell>
                                                     <TableCell>
                                                         <div className="relative">
                                                             <Input
@@ -728,5 +738,7 @@ export default function AdminSettingsPage() {
         </div>
     );
 }
+
+    
 
     

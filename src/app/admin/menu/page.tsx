@@ -228,8 +228,8 @@ export default function MenuManagementPage() {
                     <DialogContent><DialogHeader><DialogTitle>{editingCategory ? 'Edit' : 'Add'} Category</DialogTitle></DialogHeader><CategoryForm category={editingCategory} onSave={handleSave(setCategoryOpen, editingCategory ? updateCategory : addCategory)}/></DialogContent>
                 </Dialog>
             </CardHeader>
-            <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Icon</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
-                <TableBody>{menu.categories.map(cat => (<TableRow key={cat.id}><TableCell>{cat.name}</TableCell><TableCell className="font-mono">{cat.icon}</TableCell>
+            <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Code</TableHead><TableHead>Icon</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
+                <TableBody>{menu.categories.map(cat => (<TableRow key={cat.id}><TableCell>{cat.name}</TableCell><TableCell className="font-mono text-xs">{cat.id}</TableCell><TableCell className="font-mono">{cat.icon}</TableCell>
                     <TableCell className="text-right">
                         <Button variant="ghost" size="icon" onClick={() => { setEditingCategory(cat); setCategoryOpen(true); }}><Edit/></Button>
                         <DeleteConfirmationDialog
@@ -250,8 +250,8 @@ export default function MenuManagementPage() {
                     <DialogContent><DialogHeader><DialogTitle>{editingAddon ? 'Edit' : 'Add'} Add-on</DialogTitle></DialogHeader><AddonForm addon={editingAddon} onSave={handleSave(setAddonOpen, editingAddon ? updateAddon : addAddon)}/></DialogContent>
                 </Dialog>
             </CardHeader>
-            <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
-                <TableBody>{menu.addons.map(addon => (<TableRow key={addon.id}><TableCell>{addon.name}</TableCell><TableCell className="text-right">RS {Math.round(addon.price)}</TableCell>
+            <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Code</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
+                <TableBody>{menu.addons.map(addon => (<TableRow key={addon.id}><TableCell>{addon.name}</TableCell><TableCell className="font-mono text-xs">{addon.id}</TableCell><TableCell className="text-right">RS {Math.round(addon.price)}</TableCell>
                     <TableCell className="text-right">
                         <Button variant="ghost" size="icon" onClick={() => { setEditingAddon(addon); setAddonOpen(true); }}><Edit/></Button>
                         <DeleteConfirmationDialog
@@ -272,8 +272,8 @@ export default function MenuManagementPage() {
                     <DialogContent className="max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{editingItem ? 'Edit' : 'Add'} Item</DialogTitle></DialogHeader><ItemForm item={editingItem} onSave={handleSave(setItemOpen, editingItem ? updateItem : addItem)}/></DialogContent>
                 </Dialog>
             </CardHeader>
-            <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Category</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
-                <TableBody>{menu.items.map(item => (<TableRow key={item.id}><TableCell>{item.name}</TableCell><TableCell>{menu.categories.find(c => c.id === item.categoryId)?.name || 'N/A'}</TableCell><TableCell className="text-right">RS {Math.round(item.price)}</TableCell>
+            <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Code</TableHead><TableHead>Category</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
+                <TableBody>{menu.items.map(item => (<TableRow key={item.id}><TableCell>{item.name}</TableCell><TableCell className="font-mono text-xs">{item.id}</TableCell><TableCell>{menu.categories.find(c => c.id === item.categoryId)?.name || 'N/A'}</TableCell><TableCell className="text-right">RS {Math.round(item.price)}</TableCell>
                     <TableCell className="text-right">
                         <Button variant="ghost" size="icon" onClick={() => { setEditingItem(item); setItemOpen(true); }}><Edit/></Button>
                         <DeleteConfirmationDialog
@@ -288,3 +288,5 @@ export default function MenuManagementPage() {
     </div>
   );
 }
+
+    

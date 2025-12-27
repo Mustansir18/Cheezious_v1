@@ -171,6 +171,7 @@ export default function DealsManagementPage() {
               <TableRow>
                 <TableHead>Image</TableHead>
                 <TableHead>Name</TableHead>
+                <TableHead>Code</TableHead>
                 <TableHead className="text-right">Price</TableHead>
                 <TableHead className="text-right w-[120px]">Actions</TableHead>
               </TableRow>
@@ -182,6 +183,7 @@ export default function DealsManagementPage() {
                      <Image src={deal.imageUrl} alt={deal.name} width={64} height={64} className="rounded-md object-cover" />
                    </TableCell>
                   <TableCell className="font-medium">{deal.name}</TableCell>
+                  <TableCell className="font-mono text-xs">{deal.id}</TableCell>
                   <TableCell className="text-right">RS {Math.round(deal.price)}</TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="icon" onClick={() => { setEditingDeal(deal); setDialogOpen(true); }}>
@@ -202,5 +204,7 @@ export default function DealsManagementPage() {
     </div>
   );
 }
+
+    
 
     

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, type FormEvent } from "react";
@@ -221,6 +222,7 @@ export default function UserManagementPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Username</TableHead>
+                <TableHead>Code</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Branch</TableHead>
                 <TableHead className="text-right w-[120px]">Actions</TableHead>
@@ -233,6 +235,7 @@ export default function UserManagementPage() {
                     <User className="mr-2 h-4 w-4 text-muted-foreground" />
                     {u.username}
                   </TableCell>
+                  <TableCell className="font-mono text-xs">{u.id}</TableCell>
                   <TableCell>
                     <Badge
                       variant={u.role === "admin" ? "secondary" : "outline"}
@@ -278,3 +281,5 @@ export default function UserManagementPage() {
     </div>
   );
 }
+
+    
