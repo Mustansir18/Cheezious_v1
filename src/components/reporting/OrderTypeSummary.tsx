@@ -36,10 +36,14 @@ export function OrderTypeSummary({ data, onPrint, selectedType, onSelectType, he
   }
   
   const selectedData = data.find(d => d.type === selectedType);
+  const allOrders = data.reduce((acc, d) => [...acc, ...d.orders], [] as Order[]);
+
 
   const handleDownload = (format: 'pdf' | 'csv') => {
       if (selectedData) {
           exportOrderTypeDetailsAs(format, selectedData.orders, selectedData.type, headerInfo);
+      } else {
+           exportOrderTypeDetailsAs(format, allOrders, 'All Orders', headerInfo);
       }
   }
 
@@ -48,29 +52,44 @@ export function OrderTypeSummary({ data, onPrint, selectedType, onSelectType, he
       <CardHeader className="flex-row justify-between items-center">
         <div>
           <CardTitle className="font-headline">Order Type Summary</CardTitle>
-          <CardDescription>Click to filter the entire report.</CardDescription>
+          <CardDescription>Click a segment to filter the report.</CardDescription>
         </div>
         <div className="flex items-center gap-2 print-hidden">
-            <UITooltip>
-                <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" onClick={() => handleDownload('csv')} disabled={!selectedType}>
-                        <FileDown className="h-4 w-4"/>
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                    <p>Download CSV of {selectedType || 'selection'}</p>
-                </TooltipContent>
-            </UITooltip>
-             <UITooltip>
-                <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" onClick={() => handleDownload('pdf')} disabled={!selectedType}>
-                        <FileText className="h-4 w-4 text-red-500"/>
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                    <p>Download PDF of {selectedType || 'selection'}</p>
-                </TooltipContent>
-            </UITooltip>
+            {!selectedType ? (
+                <UITooltip>
+                    <TooltipTrigger asChild>
+                         <Button variant="outline" size="sm" onClick={() => handleDownload('pdf')}>
+                            <FileDown className="mr-2 h-4 w-4" /> Download All
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Download PDF of all order types</p>
+                    </TooltipContent>
+                </UITooltip>
+            ) : (
+                <>
+                    <UITooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" onClick={() => handleDownload('csv')}>
+                                <FileDown className="h-4 w-4"/>
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Download CSV of {selectedType}</p>
+                        </TooltipContent>
+                    </UITooltip>
+                    <UITooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" onClick={() => handleDownload('pdf')}>
+                                <FileText className="h-4 w-4 text-red-500"/>
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Download PDF of {selectedType}</p>
+                        </TooltipContent>
+                    </UITooltip>
+                </>
+            )}
             <Button variant="ghost" size="icon" onClick={onPrint}>
                 <Printer className="h-4 w-4"/>
             </Button>
