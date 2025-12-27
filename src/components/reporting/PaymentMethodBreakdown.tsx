@@ -102,18 +102,21 @@ export function PaymentMethodBreakdown({ data, selectedMethod, onSelectMethod, o
                         </Pie>
                     </PieChart>
                 </ResponsiveContainer>
-                 <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-4">
+                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-4">
                     {data.map((entry) => (
                         <div 
                             key={entry.method} 
                             className={cn(
-                                "flex items-center gap-2 cursor-pointer transition-opacity",
+                                "flex flex-col items-center gap-1 cursor-pointer transition-opacity p-2 rounded-lg",
                                 selectedMethod && selectedMethod !== entry.method && "opacity-50"
                             )}
                             onClick={() => onSelectMethod(selectedMethod === entry.method ? null : entry.method)}
                         >
-                            <span className="h-3 w-3 rounded-full" style={{ backgroundColor: entry.fill }} />
-                            <span className="text-sm font-medium">{entry.method}</span>
+                            <div className="flex items-center gap-2">
+                                <span className="h-3 w-3 rounded-full" style={{ backgroundColor: entry.fill }} />
+                                <span className="text-sm font-medium">{entry.method}</span>
+                            </div>
+                            <span className="text-lg font-bold">RS {Math.round(entry.sales).toLocaleString()}</span>
                         </div>
                     ))}
                 </div>
