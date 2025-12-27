@@ -142,7 +142,7 @@ export type User = {
 
 // --- Role Management Types ---
 export type Role = {
-  id: UserRole;
+  id: UserRole | string;
   name: string;
   permissions: string[];
 };
@@ -170,6 +170,7 @@ export type Rating = {
 
 // --- Reporting Types ---
 export interface ItemSale {
+  id: string;
   name: string;
   quantity: number;
   totalRevenue: number;
@@ -178,6 +179,7 @@ export interface ItemSale {
 export interface DealSale extends ItemSale {}
 
 export interface CategorySale {
+  id: string;
   name: string;
   sales: number;
   fill: string;

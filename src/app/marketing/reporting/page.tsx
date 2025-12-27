@@ -113,7 +113,7 @@ export default function ReportingPage() {
     const itemSales: { [key: string]: ItemSale } = {};
     const dealSales: { [key: string]: DealSale } = {};
     const hourlySales: { [key: number]: number } = {};
-    const categorySales: { [key: string]: number } = {};
+    const categorySales: { [key: string]: { sales: number, id: string} } = {};
     const itemsMap = new Map(menu.items.map(item => [item.id, item]));
 
     
@@ -162,17 +162,21 @@ export default function ReportingPage() {
         const revenue = item.quantity * item.itemPrice;
 
         if (menuItem) {
-            categorySales[menuItem.categoryId] = (categorySales[menuItem.categoryId] || 0) + revenue;
+            if (!categorySales[menuItem.categoryId]) {
+              categorySales[menuItem.categoryId] = { sales: 0, id: menuItem.categoryId };
+            }
+            categorySales[menuItem.categoryId].sales += revenue;
+
 
             if (menuItem.categoryId === 'deals') {
                 if (!dealSales[item.menuItemId]) {
-                    dealSales[item.menuItemId] = { name: item.name, quantity: 0, totalRevenue: 0 };
+                    dealSales[item.menuItemId] = { id: item.menuItemId, name: item.name, quantity: 0, totalRevenue: 0 };
                 }
                 dealSales[item.menuItemId].quantity += item.quantity;
                 dealSales[item.menuItemId].totalRevenue += revenue;
             } else {
                  if (!itemSales[item.menuItemId]) {
-                    itemSales[item.menuItemId] = { name: item.name, quantity: 0, totalRevenue: 0 };
+                    itemSales[item.menuItemId] = { id: item.menuItemId, name: item.name, quantity: 0, totalRevenue: 0 };
                 }
                 itemSales[item.menuItemId].quantity += item.quantity;
                 itemSales[item.menuItemId].totalRevenue += revenue;
@@ -229,9 +233,10 @@ export default function ReportingPage() {
         filteredOrders: filteredOrders,
     };
     
-    const categoryChartData: CategorySale[] = Object.entries(categorySales).map(([categoryId, sales], index) => {
+    const categoryChartData: CategorySale[] = Object.entries(categorySales).map(([categoryId, { sales }], index) => {
         const category = menu.categories.find(c => c.id === categoryId);
         return {
+            id: categoryId,
             name: category?.name || 'Uncategorized',
             sales: sales,
             fill: `hsl(var(--chart-${index + 1}))`

@@ -6,6 +6,7 @@ import { menuItems as initialMenuItems, menuCategories as initialMenuCategories,
 import type { MenuItem, MenuCategory, Addon } from '@/lib/types';
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
+import { generateUniqueCode } from '@/lib/utils';
 
 interface MenuData {
     items: MenuItem[];
@@ -85,7 +86,7 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
   }, [menu, isLoading]);
 
   const addCategory = (category: Omit<MenuCategory, 'id'>) => {
-    const newCategory = { ...category, id: crypto.randomUUID() };
+    const newCategory = { ...category, id: generateUniqueCode('cat') };
     setMenu(m => ({ ...m, categories: [...m.categories, newCategory] }));
     logActivity(`Added menu category: '${category.name}'.`, user?.username || 'System', 'Menu');
   };
@@ -105,7 +106,7 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addItem = (item: Omit<MenuItem, 'id'>) => {
-    const newItem = { ...item, id: crypto.randomUUID() };
+    const newItem = { ...item, id: generateUniqueCode('item') };
     setMenu(m => ({ ...m, items: [...m.items, newItem] }));
     logActivity(`Added menu item: '${item.name}'.`, user?.username || 'System', 'Menu');
   };
@@ -121,7 +122,7 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addAddon = (addon: Omit<Addon, 'id'>) => {
-    const newAddon = { ...addon, id: crypto.randomUUID() };
+    const newAddon = { ...addon, id: generateUniqueCode('addon') };
     setMenu(m => ({ ...m, addons: [...m.addons, newAddon] }));
     logActivity(`Added add-on: '${addon.name}'.`, user?.username || 'System', 'Menu');
   };

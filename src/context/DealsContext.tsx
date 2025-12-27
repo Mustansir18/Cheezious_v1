@@ -6,6 +6,7 @@ import type { Deal } from '@/lib/types';
 import { menuItems } from '@/lib/data'; // Using some menu items as initial deals
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
+import { generateUniqueCode } from '@/lib/utils';
 
 interface DealsContextType {
   deals: Deal[];
@@ -58,7 +59,7 @@ export const DealsProvider = ({ children }: { children: ReactNode }) => {
   }, [deals, isLoading]);
 
   const addDeal = useCallback((deal: Omit<Deal, 'id'>) => {
-    const newDeal: Deal = { ...deal, id: crypto.randomUUID() };
+    const newDeal: Deal = { ...deal, id: generateUniqueCode('deal') };
     setDeals(d => [...d, newDeal]);
     logActivity(`Added new deal: '${deal.name}'.`, user?.username || 'System', 'Deal');
   }, [logActivity, user]);

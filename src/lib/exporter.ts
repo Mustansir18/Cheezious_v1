@@ -7,7 +7,7 @@ import 'jspdf-autotable';
 import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
 import type { DailySale } from '@/components/reporting/DailySalesReport';
-import type { HourlySale } from '@/components/reporting/HourlySalesReport';
+import type { HourlySale } from '@/app/marketing/reporting/page';
 import type { ItemSale, DealSale, CategorySale, Order } from '@/lib/types';
 import type { OrderTypeData } from '@/components/reporting/OrderTypeSummary';
 import type { OrderAdjustmentData } from '@/components/reporting/OrderAdjustmentsSummary';
@@ -63,8 +63,8 @@ function arrayToCsv(data: any[], columns: { key: string, label: string }[]): str
 
 // --- Individual Report Generators ---
 
-export const exportOrderTypeDetailsAs = (format: 'pdf' | 'csv', orders: Order[], orderType: 'Dine-In' | 'Take-Away', headerInfo: ReportHeaderInfo) => {
-    const title = `${orderType} Order Details`;
+export const exportOrderTypeDetailsAs = (format: 'pdf' | 'csv', orders: Order[], titleSuffix: string, headerInfo: ReportHeaderInfo) => {
+    const title = `${titleSuffix} Order Details`;
     const columns = [
         { key: 'orderNumber', label: 'Order #' },
         { key: 'orderType', label: 'Type' },
@@ -102,6 +102,7 @@ export const exportOrderTypeDetailsAs = (format: 'pdf' | 'csv', orders: Order[],
 
 export const exportTopItemsAs = (format: 'pdf' | 'csv', data: (ItemSale | DealSale)[], title: string, headerInfo?: ReportHeaderInfo) => {
     const columns = [
+        { key: 'id', label: 'Unique Code'},
         { key: 'name', label: 'Name' },
         { key: 'quantity', label: 'Quantity Sold' },
         { key: 'totalRevenue', label: 'Total Revenue (RS)' },
@@ -112,7 +113,7 @@ export const exportTopItemsAs = (format: 'pdf' | 'csv', data: (ItemSale | DealSa
         addReportHeader(doc, title, headerInfo);
         doc.autoTable({
             head: [columns.map(c => c.label)],
-            body: data.map(item => [item.name, item.quantity, Math.round(item.totalRevenue)]),
+            body: data.map(item => [item.id, item.name, item.quantity, Math.round(item.totalRevenue)]),
             startY: 55
         });
         doc.save(`${title.toLowerCase().replace(/\s/g, '-')}.pdf`);
@@ -127,6 +128,7 @@ export const exportTopItemsAs = (format: 'pdf' | 'csv', data: (ItemSale | DealSa
 export const exportCategorySalesAs = (format: 'pdf' | 'csv', data: CategorySale[], headerInfo?: ReportHeaderInfo) => {
     const title = 'Sales by Category';
     const columns = [
+        { key: 'id', label: 'Unique Code'},
         { key: 'name', label: 'Category' },
         { key: 'sales', label: 'Total Sales (RS)' },
     ];
@@ -136,7 +138,7 @@ export const exportCategorySalesAs = (format: 'pdf' | 'csv', data: CategorySale[
         addReportHeader(doc, title, headerInfo);
         doc.autoTable({
             head: [columns.map(c => c.label)],
-            body: data.map(item => [item.name, Math.round(item.sales)]),
+            body: data.map(item => [item.id, item.name, Math.round(item.sales)]),
             startY: 55
         });
         doc.save(`${title.toLowerCase().replace(/\s/g, '-')}.pdf`);
@@ -212,20 +214,20 @@ export const exportAllReportsAsZip = async (reportData: any) => {
 
     // Top Items
     reportText += '--- Top Selling Items ---\n';
-    reportText += 'Item,Quantity,Revenue\n';
-    reportData.topSellingItems.forEach((d: any) => reportText += `"${d.name}",${d.quantity},${Math.round(d.totalRevenue)}\n`);
+    reportText += 'Unique Code,Item,Quantity,Revenue\n';
+    reportData.topSellingItems.forEach((d: any) => reportText += `${d.id},"${d.name}",${d.quantity},${Math.round(d.totalRevenue)}\n`);
     reportText += '\n';
     
     // Top Deals
     reportText += '--- Top Selling Deals ---\n';
-    reportText += 'Deal,Quantity,Revenue\n';
-    reportData.topSellingDeals.forEach((d: any) => reportText += `"${d.name}",${d.quantity},${Math.round(d.totalRevenue)}\n`);
+    reportText += 'Unique Code,Deal,Quantity,Revenue\n';
+    reportData.topSellingDeals.forEach((d: any) => reportText += `${d.id},"${d.name}",${d.quantity},${Math.round(d.totalRevenue)}\n`);
     reportText += '\n';
 
     // Category Sales
     reportText += '--- Sales by Category ---\n';
-    reportText += 'Category,Sales\n';
-    reportData.categoryChartData.forEach((d: any) => reportText += `"${d.name}",${Math.round(d.sales)}\n`);
+    reportText += 'Unique Code,Category,Sales\n';
+    reportData.categoryChartData.forEach((d: any) => reportText += `${d.id},"${d.name}",${Math.round(d.sales)}\n`);
     reportText += '\n';
 
     // Hourly Sales
