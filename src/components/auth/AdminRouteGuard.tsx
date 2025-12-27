@@ -13,6 +13,7 @@ const ROOT_ONLY_PAGES = [
     '/admin/deals',
     '/admin/qr-codes',
     '/admin/feedback',
+    '/admin/reporting',
 ];
 
 export function AdminRouteGuard({ children }: { children: React.ReactNode }) {

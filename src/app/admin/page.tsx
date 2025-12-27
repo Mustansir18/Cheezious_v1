@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Package, Settings, Users, Megaphone, ShoppingCart, QrCode, Monitor, ClipboardList, Star } from 'lucide-react';
+import { Package, Settings, Users, Megaphone, ShoppingCart, QrCode, Monitor, ClipboardList, Star, BarChart } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useEffect } from 'react';
@@ -48,6 +48,13 @@ export default function AdminDashboardPage() {
       href: '/admin/queue',
       icon: Monitor,
       role: ['root', 'admin'],
+    },
+     {
+      title: 'Sales Reports',
+      description: 'View sales analytics and trends.',
+      href: '/admin/reporting',
+      icon: BarChart,
+      role: ['root'],
     },
     {
       title: 'Menu Management',

@@ -16,6 +16,7 @@ import {
   ClipboardList,
   Pizza,
   Star,
+  BarChart,
 } from 'lucide-react';
 import {
   Tooltip,
@@ -37,6 +38,7 @@ function AdminSidebar() {
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, role: ['root', 'admin'] },
     { href: '/admin/orders', label: 'Orders', icon: ShoppingCart, role: ['root', 'admin'] },
     { href: '/admin/queue', label: 'Queue', icon: Monitor, role: ['root', 'admin'] },
+    { href: '/admin/reporting', label: 'Sales Reports', icon: BarChart, role: ['root'] },
     { href: '/admin/menu', label: 'Menu', icon: Package, role: ['root'] },
     { href: '/admin/deals', label: 'Deals', icon: Megaphone, role: ['root'] },
     { href: '/admin/qr-codes', label: 'QR Codes', icon: QrCode, role: ['root'] },
