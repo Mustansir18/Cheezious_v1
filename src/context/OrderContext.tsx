@@ -94,16 +94,18 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
     }
 
     setOrders(prevOrders =>
-        prevOrders.map(order => 
-            order.id === orderId 
-            ? { 
+        prevOrders.map(order => {
+            if (order.id !== orderId) return order;
+
+            const isFinalStatus = status === 'Completed' || status === 'Cancelled';
+            
+            return { 
                 ...order, 
                 status, 
-                completionDate: (status === 'Completed' || status === 'Cancelled') && !order.completionDate ? new Date().toISOString() : order.completionDate,
+                completionDate: isFinalStatus && !order.completionDate ? new Date().toISOString() : undefined,
                 ...(status === 'Cancelled' && { cancellationReason: reason }) 
-              }
-            : order
-        )
+            };
+        })
     );
   }, [orders, logActivity, user]);
 
