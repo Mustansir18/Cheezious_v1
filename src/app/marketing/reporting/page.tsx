@@ -8,7 +8,7 @@ import { useSettings } from "@/context/SettingsContext";
 import { useMemo, useState, useEffect } from "react";
 import type { Order } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Calendar as CalendarIcon, ShoppingCart, DollarSign, Utensils, Loader, Printer, Scale, FileDown, Tag, Gift, XCircle, ShoppingBag, FileArchive, FileText } from "lucide-react";
+import { Calendar as CalendarIcon, ShoppingCart, DollarSign, Utensils, Loader, Printer, Scale, FileDown, Tag, Gift, XCircle, ShoppingBag, FileArchive, FileText, Landmark } from "lucide-react";
 import { HourlySalesReport } from "@/components/reporting/HourlySalesReport";
 import { DailySalesReport, type DailySale } from "@/components/reporting/DailySalesReport";
 import { TopSellingItems } from "@/components/reporting/TopSellingItems";
@@ -103,6 +103,8 @@ export default function ReportingPage() {
         
     const totalOrders = filteredOrders.length;
     const totalSales = filteredOrders.reduce((sum, order) => sum + order.totalAmount, 0);
+    const totalTax = filteredOrders.reduce((sum, order) => sum + order.taxAmount, 0);
+    const netSales = totalSales - totalTax;
     const totalItemsSold = filteredOrders.reduce(
       (sum, order) =>
         sum + order.items.reduce((itemSum, item) => itemSum + item.quantity, 0),
@@ -245,6 +247,8 @@ export default function ReportingPage() {
 
     const summaryCards = [
         { title: "Total Sales", value: `RS ${Math.round(totalSales)}` },
+        { title: "Net Sales (w/o Tax)", value: `RS ${Math.round(netSales)}` },
+        { title: "Total Tax", value: `RS ${Math.round(totalTax)}` },
         { title: "Total Orders", value: totalOrders },
         { title: "Avg. Order Size", value: `RS ${Math.round(averageOrderSize)}` },
         { title: "Total Items Sold", value: totalItemsSold },
@@ -371,9 +375,11 @@ export default function ReportingPage() {
 
   const summaryCardsWithIcons = [
     { ...summaryCards[0], icon: DollarSign },
-    { ...summaryCards[1], icon: ShoppingCart },
-    { ...summaryCards[2], icon: Scale },
-    { ...summaryCards[3], icon: Utensils },
+    { ...summaryCards[1], icon: DollarSign },
+    { ...summaryCards[2], icon: Landmark },
+    { ...summaryCards[3], icon: ShoppingCart },
+    { ...summaryCards[4], icon: Scale },
+    { ...summaryCards[5], icon: Utensils },
   ];
   
   const activeFilters = [selectedOrderType, selectedPaymentMethod, selectedAdjustmentType].filter(Boolean);
@@ -441,7 +447,7 @@ export default function ReportingPage() {
                     />
                 </CardHeader>
                 <CardContent>
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {summaryCardsWithIcons.map(card => (
                             <Card key={card.title}>
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -520,3 +526,5 @@ export default function ReportingPage() {
     </TooltipProvider>
   );
 }
+
+    
