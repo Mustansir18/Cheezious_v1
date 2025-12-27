@@ -84,30 +84,32 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
   }, [logActivity, user]);
 
   const updateOrderStatus = useCallback((orderId: string, status: OrderStatus, reason?: string) => {
-    const orderToUpdate = orders.find(o => o.id === orderId);
-    if (!orderToUpdate || orderToUpdate.status === status) return;
+    setOrders(prevOrders => {
+        const orderToUpdate = prevOrders.find(o => o.id === orderId);
+        if (!orderToUpdate || orderToUpdate.status === status) return prevOrders;
 
-    if (status === 'Cancelled') {
-        logActivity(`Cancelled Order #${orderToUpdate.orderNumber}. Reason: ${reason}`, user?.username || 'System', 'Order');
-    } else {
-        logActivity(`Updated Order #${orderToUpdate.orderNumber} status from '${orderToUpdate.status}' to '${status}'.`, user?.username || 'System', 'Order');
-    }
+        if (status === 'Cancelled') {
+            logActivity(`Cancelled Order #${orderToUpdate.orderNumber}. Reason: ${reason}`, user?.username || 'System', 'Order');
+        } else {
+            logActivity(`Updated Order #${orderToUpdate.orderNumber} status from '${orderToUpdate.status}' to '${status}'.`, user?.username || 'System', 'Order');
+        }
 
-    setOrders(prevOrders =>
-        prevOrders.map(order => {
+        return prevOrders.map(order => {
             if (order.id !== orderId) return order;
 
             const isFinalStatus = status === 'Completed' || status === 'Cancelled';
             
+            const newCompletionDate = isFinalStatus ? (order.completionDate || new Date().toISOString()) : undefined;
+
             return { 
                 ...order, 
                 status, 
-                completionDate: isFinalStatus && !order.completionDate ? new Date().toISOString() : undefined,
+                completionDate: newCompletionDate,
                 ...(status === 'Cancelled' && { cancellationReason: reason }) 
             };
-        })
-    );
-  }, [orders, logActivity, user]);
+        });
+    });
+  }, [logActivity, user]);
 
 
    const applyDiscountOrComplementary = useCallback((orderId: string, details: { discountType?: 'percentage' | 'amount', discountValue?: number, isComplementary?: boolean, complementaryReason?: string }) => {
