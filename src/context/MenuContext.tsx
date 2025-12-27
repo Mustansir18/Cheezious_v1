@@ -61,15 +61,19 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
       const storedMenu = localStorage.getItem(MENU_STORAGE_KEY);
       if (storedMenu) {
         const parsed = JSON.parse(storedMenu);
-        // Add a check for the simplified structure
-        if (parsed.items && parsed.categories && parsed.addons) {
-            setMenu({ ...parsed, addonCategories: parsed.addonCategories || [] });
+        
+        const isOldFormat = parsed.categories?.some((c: MenuCategory) => !c.id.startsWith('C-'));
+
+        if (parsed.items && parsed.categories && parsed.addons && !isOldFormat) {
+            setMenu(parsed);
         } else {
-             setMenu(initialData); // Fallback to initial if structure is wrong
+             // If data is in old format or malformed, reset to fresh initial data
+             setMenu(initialData);
         }
       }
     } catch (error) {
       console.error("Could not load menu from local storage", error);
+      setMenu(initialData);
     } finally {
       setIsLoading(false);
     }
@@ -78,8 +82,7 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     try {
         if (!isLoading) {
-            const { addonCategories, ...menuToSave } = menu;
-            localStorage.setItem(MENU_STORAGE_KEY, JSON.stringify(menuToSave));
+            localStorage.setItem(MENU_STORAGE_KEY, JSON.stringify(menu));
         }
     } catch (error) {
       console.error("Could not save menu to local storage", error);
