@@ -73,10 +73,13 @@ export default function AdminOrdersPage() {
     
     const { start: businessDayStart, end: businessDayEnd } = getBusinessDay(date, settings.businessDayStart, settings.businessDayEnd);
 
-    const dateFilteredOrders = orders.filter(order => {
+    let dateFilteredOrders = orders.filter(order => {
         const orderDate = new Date(order.orderDate);
         return orderDate >= businessDayStart && orderDate <= businessDayEnd;
     });
+
+    // Sort all orders by date, newest first
+    dateFilteredOrders.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
 
     if (!searchTerm) {
         return dateFilteredOrders;
