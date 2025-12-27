@@ -16,6 +16,7 @@ import {
 } from 'recharts';
 import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { exportChartDataAs } from '@/lib/exporter';
+import { useSettings } from '@/context/SettingsContext';
 
 
 export interface DailySale {
@@ -29,7 +30,10 @@ interface DailySalesReportProps {
 }
 
 export function DailySalesReport({ data, onPrint }: DailySalesReportProps) {
+  const { settings } = useSettings();
   const title = "Daily Sales Trend (Last 7 Days)";
+  const defaultBranch = settings.branches.find(b => b.id === settings.defaultBranchId) || settings.branches[0];
+
   return (
     <Card>
       <CardHeader className="flex-row justify-between items-center">
@@ -50,7 +54,7 @@ export function DailySalesReport({ data, onPrint }: DailySalesReportProps) {
             </UITooltip>
              <UITooltip>
                 <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" onClick={() => exportChartDataAs('pdf', data, title, 'date', 'sales')}>
+                    <Button variant="ghost" size="icon" onClick={() => exportChartDataAs('pdf', data, title, 'date', 'sales', { companyName: settings.companyName, branchName: defaultBranch.name })}>
                         <FileDown className="h-4 w-4 text-red-500"/>
                     </Button>
                 </TooltipTrigger>

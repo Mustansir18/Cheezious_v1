@@ -1,3 +1,4 @@
+
 'use client';
 
 import jsPDF from 'jspdf';
@@ -18,6 +19,27 @@ declare module 'jspdf' {
     }
 }
 
+interface ReportHeaderInfo {
+    companyName: string;
+    branchName: string;
+    dateDisplay?: string;
+}
+
+function addReportHeader(doc: jsPDF, title: string, headerInfo: ReportHeaderInfo) {
+    doc.setFontSize(18);
+    doc.text(headerInfo.companyName, 14, 22);
+    doc.setFontSize(12);
+    doc.text(headerInfo.branchName, 14, 30);
+    doc.setFontSize(16);
+    doc.text(title, 14, 40);
+    if(headerInfo.dateDisplay) {
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text(`Period: ${headerInfo.dateDisplay}`, 14, 48);
+    }
+}
+
+
 // --- CSV Generation ---
 
 function arrayToCsv(data: any[], columns: { key: string, label: string }[]): string {
@@ -37,20 +59,20 @@ function arrayToCsv(data: any[], columns: { key: string, label: string }[]): str
 
 // --- Individual Report Generators ---
 
-export const exportTopItemsAs = (format: 'pdf' | 'csv', data: (ItemSale | DealSale)[], title: string) => {
+export const exportTopItemsAs = (format: 'pdf' | 'csv', data: (ItemSale | DealSale)[], title: string, headerInfo?: ReportHeaderInfo) => {
     const columns = [
         { key: 'name', label: 'Name' },
         { key: 'quantity', label: 'Quantity Sold' },
         { key: 'totalRevenue', label: 'Total Revenue (RS)' },
     ];
     
-    if (format === 'pdf') {
+    if (format === 'pdf' && headerInfo) {
         const doc = new jsPDF();
-        doc.text(title, 14, 20);
+        addReportHeader(doc, title, headerInfo);
         doc.autoTable({
             head: [columns.map(c => c.label)],
             body: data.map(item => [item.name, item.quantity, Math.round(item.totalRevenue)]),
-            startY: 25
+            startY: 55
         });
         doc.save(`${title.toLowerCase().replace(/\s/g, '-')}.pdf`);
     } else {
@@ -61,20 +83,20 @@ export const exportTopItemsAs = (format: 'pdf' | 'csv', data: (ItemSale | DealSa
 };
 
 
-export const exportCategorySalesAs = (format: 'pdf' | 'csv', data: CategorySale[]) => {
+export const exportCategorySalesAs = (format: 'pdf' | 'csv', data: CategorySale[], headerInfo?: ReportHeaderInfo) => {
     const title = 'Sales by Category';
     const columns = [
         { key: 'name', label: 'Category' },
         { key: 'sales', label: 'Total Sales (RS)' },
     ];
 
-    if (format === 'pdf') {
+    if (format === 'pdf' && headerInfo) {
         const doc = new jsPDF();
-        doc.text(title, 14, 20);
+        addReportHeader(doc, title, headerInfo);
         doc.autoTable({
             head: [columns.map(c => c.label)],
             body: data.map(item => [item.name, Math.round(item.sales)]),
-            startY: 25
+            startY: 55
         });
         doc.save(`${title.toLowerCase().replace(/\s/g, '-')}.pdf`);
     } else {
@@ -84,19 +106,19 @@ export const exportCategorySalesAs = (format: 'pdf' | 'csv', data: CategorySale[
     }
 };
 
-export const exportChartDataAs = (format: 'pdf' | 'csv', data: (HourlySale[] | DailySale[]), title: string, xKey: string, yKey: string) => {
+export const exportChartDataAs = (format: 'pdf' | 'csv', data: (HourlySale[] | DailySale[]), title: string, xKey: string, yKey: string, headerInfo?: ReportHeaderInfo) => {
     const columns = [
         { key: xKey, label: title === 'Hourly Sales' ? 'Hour' : 'Date' },
         { key: yKey, label: 'Sales (RS)' },
     ];
     
-    if (format === 'pdf') {
+    if (format === 'pdf' && headerInfo) {
         const doc = new jsPDF();
-        doc.text(title, 14, 20);
+        addReportHeader(doc, title, headerInfo);
         doc.autoTable({
             head: [columns.map(c => c.label)],
             body: data.map(item => [item[xKey as keyof typeof item], Math.round(item[yKey as keyof typeof item] as number)]),
-            startY: 25
+            startY: 55
         });
         doc.save(`${title.toLowerCase().replace(/\s/g, '-')}.pdf`);
     } else {
@@ -106,20 +128,20 @@ export const exportChartDataAs = (format: 'pdf' | 'csv', data: (HourlySale[] | D
     }
 };
 
-export const exportSummaryAs = (format: 'pdf' | 'csv', data: { title: string, value: string | number }[]) => {
+export const exportSummaryAs = (format: 'pdf' | 'csv', data: { title: string, value: string | number }[], headerInfo?: ReportHeaderInfo) => {
     const title = 'Overall Summary';
     const columns = [
         { key: 'title', label: 'Metric' },
         { key: 'value', label: 'Value' },
     ];
 
-    if (format === 'pdf') {
+    if (format === 'pdf' && headerInfo) {
         const doc = new jsPDF();
-        doc.text(title, 14, 20);
+        addReportHeader(doc, title, headerInfo);
         doc.autoTable({
             head: [columns.map(c => c.label)],
             body: data.map(item => [item.title, item.value]),
-            startY: 25
+            startY: 55
         });
         doc.save(`${title.toLowerCase().replace(/\s/g, '-')}.pdf`);
     } else {
@@ -131,49 +153,71 @@ export const exportSummaryAs = (format: 'pdf' | 'csv', data: { title: string, va
 
 // --- Comprehensive ZIP Exporter ---
 
-export const exportAllReportsAsZip = async (reportData: any, dateDisplay: string) => {
+export const exportAllReportsAsZip = async (reportData: any) => {
+    const { companyName, branchName, dateDisplay } = reportData;
     const zip = new JSZip();
-    const folder = zip.folder(`cheezious-sales-report-${dateDisplay.replace(/ /g, '_')}`);
+    const folderName = `cheezious-report-${branchName.replace(/\s/g, '_')}-${dateDisplay.replace(/ /g, '_')}`;
+    const folder = zip.folder(folderName);
 
     if (!folder) return;
+    
+    let reportText = `${companyName} - ${branchName}\nSales Report for ${dateDisplay}\n\n`;
 
     // Summary
-    const summaryCsv = arrayToCsv(reportData.summaryCards, [{key: 'title', label: 'Metric'}, {key: 'value', label: 'Value'}]);
-    folder.file('01-summary.csv', summaryCsv);
-    
+    reportText += '--- Overall Summary ---\n';
+    reportData.summaryCards.forEach((d: any) => reportText += `${d.title},${d.value}\n`);
+    reportText += '\n';
+
     // Top Items
-    const topItemsCsv = arrayToCsv(reportData.topSellingItems, [{key: 'name', label: 'Item'}, {key: 'quantity', label: 'Quantity'}, {key: 'totalRevenue', label: 'Revenue'}]);
-    folder.file('02-top-selling-items.csv', topItemsCsv);
+    reportText += '--- Top Selling Items ---\n';
+    reportText += 'Item,Quantity,Revenue\n';
+    reportData.topSellingItems.forEach((d: any) => reportText += `${d.name},${d.quantity},${Math.round(d.totalRevenue)}\n`);
+    reportText += '\n';
     
     // Top Deals
-    const topDealsCsv = arrayToCsv(reportData.topSellingDeals, [{key: 'name', label: 'Deal'}, {key: 'quantity', label: 'Quantity'}, {key: 'totalRevenue', label: 'Revenue'}]);
-    folder.file('03-top-selling-deals.csv', topDealsCsv);
+    reportText += '--- Top Selling Deals ---\n';
+    reportText += 'Deal,Quantity,Revenue\n';
+    reportData.topSellingDeals.forEach((d: any) => reportText += `${d.name},${d.quantity},${Math.round(d.totalRevenue)}\n`);
+    reportText += '\n';
 
     // Category Sales
-    const categorySalesCsv = arrayToCsv(reportData.categoryChartData, [{key: 'name', label: 'Category'}, {key: 'sales', label: 'Sales'}]);
-    folder.file('04-category-sales.csv', categorySalesCsv);
+    reportText += '--- Sales by Category ---\n';
+    reportText += 'Category,Sales\n';
+    reportData.categoryChartData.forEach((d: any) => reportText += `${d.name},${Math.round(d.sales)}\n`);
+    reportText += '\n';
 
     // Hourly Sales
-    const hourlySalesCsv = arrayToCsv(reportData.hourlySalesChartData, [{key: 'hour', label: 'Hour'}, {key: 'sales', label: 'Sales'}]);
-    folder.file('05-hourly-sales.csv', hourlySalesCsv);
+    reportText += '--- Hourly Sales ---\n';
+    reportText += 'Hour,Sales\n';
+    reportData.hourlySalesChartData.forEach((d: any) => reportText += `${d.hour},${Math.round(d.sales)}\n`);
+    reportText += '\n';
 
     // Daily Sales
-    const dailySalesCsv = arrayToCsv(reportData.dailySalesChartData, [{key: 'date', label: 'Date'}, {key: 'sales', label: 'Sales'}]);
-    folder.file('06-daily-sales.csv', dailySalesCsv);
+    reportText += '--- Daily Sales ---\n';
+    reportText += 'Date,Sales\n';
+    reportData.dailySalesChartData.forEach((d: any) => reportText += `${d.date},${Math.round(d.sales)}\n`);
+    reportText += '\n';
 
     // Payment Methods
-    const paymentMethodsCsv = arrayToCsv(reportData.paymentChartData, [{key: 'method', label: 'Method'}, {key: 'sales', label: 'Sales'}]);
-    folder.file('07-payment-methods.csv', paymentMethodsCsv);
+    reportText += '--- Sales by Payment Method ---\n';
+    reportText += 'Method,Sales\n';
+    reportData.paymentChartData.forEach((d: any) => reportText += `${d.method},${Math.round(d.sales)}\n`);
+    reportText += '\n';
 
     // Order Types
-    const orderTypesCsv = arrayToCsv(reportData.orderTypeChartData, [{key: 'type', label: 'Type'}, {key: 'count', label: 'Orders'}, {key: 'sales', label: 'Sales'}]);
-    folder.file('08-order-types.csv', orderTypesCsv);
+    reportText += '--- Sales by Order Type ---\n';
+    reportText += 'Type,Orders,Sales\n';
+    reportData.orderTypeChartData.forEach((d: any) => reportText += `${d.type},${d.count},${Math.round(d.sales)}\n`);
+    reportText += '\n';
 
     // Adjustments
-    const adjustmentsCsv = arrayToCsv(reportData.adjustmentChartData, [{key: 'type', label: 'Type'}, {key: 'count', label: 'Count'}]);
-    folder.file('09-order-adjustments.csv', adjustmentsCsv);
+    reportText += '--- Order Adjustments ---\n';
+    reportText += 'Type,Count\n';
+    reportData.adjustmentChartData.forEach((d: any) => reportText += `${d.type},${d.count}\n`);
+    reportText += '\n';
 
+    folder.file('summary_report.txt', reportText);
 
     const content = await zip.generateAsync({ type: 'blob' });
-    saveAs(content, `cheezious-sales-report-${dateDisplay.replace(/ /g, '_')}.zip`);
+    saveAs(content, `${folderName}.zip`);
 }

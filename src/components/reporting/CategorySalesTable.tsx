@@ -16,6 +16,7 @@ import { Printer, FileDown } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Pie, PieChart, ResponsiveContainer, Cell, Tooltip as RechartsTooltip } from 'recharts';
 import { exportCategorySalesAs } from '@/lib/exporter';
+import { useSettings } from '@/context/SettingsContext';
 
 interface CategorySalesTableProps {
   data: CategorySale[];
@@ -23,6 +24,9 @@ interface CategorySalesTableProps {
 }
 
 export function CategorySalesTable({ data, onPrint }: CategorySalesTableProps) {
+    const { settings } = useSettings();
+    const defaultBranch = settings.branches.find(b => b.id === settings.defaultBranchId) || settings.branches[0];
+
   return (
     <Card>
       <CardHeader className="flex-row justify-between items-center">
@@ -45,7 +49,7 @@ export function CategorySalesTable({ data, onPrint }: CategorySalesTableProps) {
             </Tooltip>
             <Tooltip>
                 <TooltipTrigger asChild>
-                     <Button variant="ghost" size="icon" onClick={() => exportCategorySalesAs('pdf', data)}>
+                     <Button variant="ghost" size="icon" onClick={() => exportCategorySalesAs('pdf', data, { companyName: settings.companyName, branchName: defaultBranch.name })}>
                         <FileDown className="h-4 w-4 text-red-500"/>
                     </Button>
                 </TooltipTrigger>

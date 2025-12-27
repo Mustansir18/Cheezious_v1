@@ -1,9 +1,9 @@
 
-
 'use client';
 
 import { useOrders } from "@/context/OrderContext";
 import { useMenu } from "@/context/MenuContext";
+import { useSettings } from "@/context/SettingsContext";
 import { useMemo, useState, useEffect } from "react";
 import type { Order } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -68,6 +68,7 @@ function ReportCardActions({ reportId, onPrint, onDownloadPdf, onDownloadCsv }: 
 export default function ReportingPage() {
   const { orders, isLoading } = useOrders();
   const { menu, isLoading: isMenuLoading } = useMenu();
+  const { settings, isLoading: isSettingsLoading } = useSettings();
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
   const [selectedOrderType, setSelectedOrderType] = useState<string | null>(null);
   const [selectedAdjustmentType, setSelectedAdjustmentType] = useState<string | null>(null);
@@ -224,7 +225,7 @@ export default function ReportingPage() {
 
     const completionTimeData = {
         orders: baseFilteredOrders,
-        filteredOrders,
+        filteredOrders: filteredOrders,
     };
     
     const categoryChartData: CategorySale[] = Object.entries(categorySales).map(([categoryId, sales], index) => {
@@ -306,17 +307,24 @@ export default function ReportingPage() {
         : format(dateRange.from, "LLL dd, y")
       : "Pick a date";
 
+  const defaultBranch = settings.branches.find(b => b.id === settings.defaultBranchId) || settings.branches[0];
+
   const handleExportAll = async () => {
-      if (!reportData) return;
+      if (!reportData || !defaultBranch) return;
       toast({
           title: 'Exporting All Reports',
           description: 'Your download will begin shortly...'
       });
-      await exportAllReportsAsZip(reportData, dateDisplay);
+      await exportAllReportsAsZip({
+          ...reportData,
+          companyName: settings.companyName,
+          branchName: defaultBranch.name,
+          dateDisplay,
+      });
   }
 
 
-  if (isLoading || isMenuLoading) {
+  if (isLoading || isMenuLoading || isSettingsLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <Loader className="h-12 w-12 animate-spin text-primary" />
@@ -325,12 +333,12 @@ export default function ReportingPage() {
     );
   }
   
-  if (!reportData || orders.length === 0) {
+  if (!reportData || orders.length === 0 || !defaultBranch) {
       return (
         <div className="container mx-auto p-4 lg:p-8 text-center">
              <header className="mb-8">
-                <h1 className="font-headline text-4xl font-bold">Admin Reports</h1>
-                <p className="text-muted-foreground">Sales data from the current session.</p>
+                <h1 className="font-headline text-4xl font-bold">{settings.companyName} Reports</h1>
+                <p className="text-muted-foreground">No sales data available for the current session.</p>
             </header>
             <Card className="mt-10">
                 <CardContent className="p-12">
@@ -374,7 +382,8 @@ export default function ReportingPage() {
     <div className="container mx-auto p-4 lg:p-8">
       <header className="mb-8 flex flex-col md:flex-row justify-between items-start gap-4">
         <div>
-            <h1 className="font-headline text-4xl font-bold">Admin Reports</h1>
+            <h1 className="font-headline text-4xl font-bold">{settings.companyName} Reports</h1>
+            <p className="font-semibold text-lg text-primary">{defaultBranch.name}</p>
             <p className="text-muted-foreground">{filterDescription}</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
@@ -416,12 +425,12 @@ export default function ReportingPage() {
                 <CardHeader className="flex-row justify-between items-center">
                     <div>
                         <CardTitle className="font-headline flex items-center">Overall Summary</CardTitle>
-                        <CardDescription>Top-level metrics for the selected period.</CardDescription>
+                        <CardDescription>Top-level metrics for {defaultBranch.name} during the selected period.</CardDescription>
                     </div>
                     <ReportCardActions 
                         reportId="summary-report" 
                         onPrint={handlePrint}
-                        onDownloadPdf={() => exportSummaryAs('pdf', summaryCards)}
+                        onDownloadPdf={() => exportSummaryAs('pdf', summaryCards, { companyName: settings.companyName, branchName: defaultBranch.name, dateDisplay })}
                         onDownloadCsv={() => exportSummaryAs('csv', summaryCards)}
                     />
                 </CardHeader>
@@ -504,5 +513,3 @@ export default function ReportingPage() {
     </TooltipProvider>
   );
 }
-
-    

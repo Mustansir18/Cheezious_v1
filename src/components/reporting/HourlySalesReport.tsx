@@ -17,6 +17,7 @@ import {
 } from 'recharts';
 import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { exportChartDataAs } from '@/lib/exporter';
+import { useSettings } from '@/context/SettingsContext';
 
 
 interface HourlySalesReportProps {
@@ -25,7 +26,10 @@ interface HourlySalesReportProps {
 }
 
 export function HourlySalesReport({ data, onPrint }: HourlySalesReportProps) {
+  const { settings } = useSettings();
   const title = "Hourly Sales";
+  const defaultBranch = settings.branches.find(b => b.id === settings.defaultBranchId) || settings.branches[0];
+
   return (
     <Card className="h-full">
       <CardHeader className="flex-row justify-between items-center">
@@ -46,7 +50,7 @@ export function HourlySalesReport({ data, onPrint }: HourlySalesReportProps) {
             </UITooltip>
             <UITooltip>
                 <TooltipTrigger asChild>
-                     <Button variant="ghost" size="icon" onClick={() => exportChartDataAs('pdf', data, title, 'hour', 'sales')}>
+                     <Button variant="ghost" size="icon" onClick={() => exportChartDataAs('pdf', data, title, 'hour', 'sales', { companyName: settings.companyName, branchName: defaultBranch.name })}>
                         <FileDown className="h-4 w-4 text-red-500"/>
                     </Button>
                 </TooltipTrigger>

@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button';
 import { Printer, FileDown } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { exportTopItemsAs } from '@/lib/exporter';
+import { useSettings } from '@/context/SettingsContext';
 
 
 interface TopSellingDealsProps {
@@ -31,7 +32,10 @@ interface TopSellingDealsProps {
 }
 
 export function TopSellingDeals({ data, onPrint }: TopSellingDealsProps) {
+  const { settings } = useSettings();
   const title = 'Top Selling Deals';
+  const defaultBranch = settings.branches.find(b => b.id === settings.defaultBranchId) || settings.branches[0];
+
   return (
     <Card className="h-full">
       <CardHeader className="flex-row justify-between items-center">
@@ -54,7 +58,7 @@ export function TopSellingDeals({ data, onPrint }: TopSellingDealsProps) {
             </Tooltip>
              <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" onClick={() => exportTopItemsAs('pdf', data, title)}>
+                    <Button variant="ghost" size="icon" onClick={() => exportTopItemsAs('pdf', data, title, { companyName: settings.companyName, branchName: defaultBranch.name })}>
                         <FileDown className="h-4 w-4 text-red-500"/>
                     </Button>
                 </TooltipTrigger>
