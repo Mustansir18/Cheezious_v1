@@ -91,6 +91,12 @@ export default function CashierPage() {
                     </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-7xl h-[90vh] flex flex-col">
+                    <DialogHeader>
+                      <DialogTitle>Order Queue</DialogTitle>
+                      <DialogDescription>
+                        A live view of the public order queue display.
+                      </DialogDescription>
+                    </DialogHeader>
                     <QueuePage isEmbedded={true} />
                 </DialogContent>
             </Dialog>
