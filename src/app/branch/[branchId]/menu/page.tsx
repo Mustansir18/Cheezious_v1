@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { useSettings } from "@/context/SettingsContext";
 
 
 const Icon = ({ name, className }: { name: string, className: string }) => {
