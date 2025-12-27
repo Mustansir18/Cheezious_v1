@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -12,22 +13,7 @@ import { Utensils, ShoppingBag, Download, Image as ImageIcon, File as FileIcon, 
 import jsPDF from "jspdf";
 import JSZip from 'jszip';
 import { useToast } from '@/hooks/use-toast';
-
-const loadHtml2Canvas = () => {
-  return new Promise<any>((resolve, reject) => {
-    const existingScript = document.getElementById('html2canvas-script');
-    if (existingScript && (window as any).html2canvas) {
-      resolve((window as any).html2canvas);
-      return;
-    }
-    const script = document.createElement('script');
-    script.id = 'html2canvas-script';
-    script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
-    script.onload = () => resolve((window as any).html2canvas);
-    script.onerror = reject;
-    document.body.appendChild(script);
-  });
-};
+import { renderToStaticMarkup } from 'react-dom/server';
 
 
 interface QRCodeDisplayProps {
@@ -40,94 +26,136 @@ interface QRCodeDisplayProps {
   qrId: string;
 }
 
-
-function QRCodeDisplay({ title, subtitle, icon: Icon, url, companyName, branchName, qrId }: QRCodeDisplayProps) {
+const QRCodeDisplay = ({ title, subtitle, icon: Icon, url, companyName, branchName, qrId }: QRCodeDisplayProps) => {
   const { Canvas } = useQRCode();
 
-  const captureCardAsCanvas = useCallback(async () => {
-    const html2canvas = await loadHtml2Canvas();
-    const elementToCapture = document.getElementById(qrId);
+  const generatePdf = useCallback(async () => {
+    const doc = new jsPDF({
+      orientation: 'p',
+      unit: 'px',
+      format: [400, 600]
+    });
 
-    if (!elementToCapture || !html2canvas) {
-      console.error("Card element not found or html2canvas not loaded.");
-      return null;
+    // Get QR code as data URL
+    const qrCanvas = document.createElement('canvas');
+    const qrContext = qrCanvas.getContext('2d');
+    const qrImage = new Image();
+    const qrSvg = document.querySelector(`#${qrId} canvas`);
+    if(qrSvg) {
+        const qrDataUrl = (qrSvg as HTMLCanvasElement).toDataURL('image/png');
+        qrImage.src = qrDataUrl;
     }
     
-    const canvas = await html2canvas(elementToCapture, {
-        scale: 5, 
-        useCORS: true,
-        backgroundColor: 'white'
+    qrImage.onload = () => {
+        // Company Name
+        doc.setFontSize(32);
+        doc.setFont('helvetica', 'bold');
+        doc.text(companyName, doc.internal.pageSize.getWidth() / 2, 60, { align: 'center' });
+        
+        // Branch Name
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(153, 101, 21); // Amber-like color
+        doc.text(branchName, doc.internal.pageSize.getWidth() / 2, 90, { align: 'center' });
+
+        // QR Code
+        doc.addImage(qrImage, 'PNG', 75, 120, 250, 250);
+
+        // Icon (as SVG)
+        const iconSvgString = renderToStaticMarkup(<Icon className="h-12 w-12" color="#ffb700" strokeWidth={2}/>);
+        doc.addSvgAsImage(iconSvgString, doc.internal.pageSize.getWidth() / 2 - 24, 400, 48, 48);
+
+        // Title
+        doc.setFontSize(24);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 0, 0);
+        doc.text(title, doc.internal.pageSize.getWidth() / 2, 470, { align: 'center' });
+
+        // Subtitle
+        if (subtitle) {
+            const formattedSubtitle = subtitle?.replace(/\s*-\s*/, ' ').replace(/\s+/g, ' ');
+            doc.setFontSize(20);
+            doc.setFont('helvetica', 'normal');
+            doc.text(formattedSubtitle, doc.internal.pageSize.getWidth() / 2, 500, { align: 'center' });
+        }
+
+        // Footer Text
+        doc.setFontSize(12);
+        doc.setTextColor(100, 100, 100);
+        doc.text('Scan this code to begin your order.', doc.internal.pageSize.getWidth() / 2, 530, { align: 'center' });
+
+        // Save
+        doc.save(`${companyName}-${branchName}-${title}-${subtitle || 'qr'}.pdf`.toLowerCase().replace(/\s/g, '-'));
+    };
+
+  }, [Canvas, qrId, companyName, branchName, title, subtitle, Icon, url]);
+  
+  const generateCanvas = useCallback(async () => {
+    const cardElement = document.getElementById(qrId);
+    if (!cardElement) return null;
+    
+    const { default: html2canvas } = await import('html2canvas');
+    const canvas = await html2canvas(cardElement, {
+      scale: 3,
+      useCORS: true,
+      backgroundColor: '#f9f5ea', // A close approximation of the card background
+      logging: false
     });
     return canvas;
   }, [qrId]);
-
-
+  
   const downloadAsPng = useCallback(async () => {
-    const canvas = await captureCardAsCanvas();
-    if (canvas) {
-        const link = document.createElement('a');
-        link.download = `${companyName}-${branchName}-${title}-${subtitle || 'qr'}.png`.toLowerCase().replace(/\s/g, '-');
-        link.href = canvas.toDataURL('image/png');
-        link.click();
+    const canvas = await generateCanvas();
+    if(canvas) {
+      const link = document.createElement('a');
+      link.download = `${companyName}-${branchName}-${title}-${subtitle || 'qr'}.png`.toLowerCase().replace(/\s/g, '-');
+      link.href = canvas.toDataURL("image/png");
+      link.click();
     }
-  }, [title, subtitle, companyName, branchName, captureCardAsCanvas]);
-
-  const downloadAsPdf = useCallback(async () => {
-     const canvas = await captureCardAsCanvas();
-     if(canvas){
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF({
-            orientation: 'portrait',
-            unit: 'px',
-            format: [canvas.width, canvas.height] 
-        });
-        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-        pdf.save(`${companyName}-${branchName}-${title}-${subtitle || 'qr'}.pdf`.toLowerCase().replace(/\s/g, '-'));
-     }
-  }, [title, subtitle, companyName, branchName, captureCardAsCanvas]);
+  }, [generateCanvas, companyName, branchName, title, subtitle]);
 
   const formattedSubtitle = subtitle?.replace(/\s*-\s*/, ' ').replace(/\s+/g, ' ');
 
   return (
     <div className="flex flex-col items-center p-6 border-2 border-dashed rounded-xl break-inside-avoid bg-card">
-        <div id={qrId} className="text-center w-full bg-card p-8 rounded-lg">
-            <h3 className="text-3xl font-bold font-headline text-center text-primary">{companyName}</h3>
-            <p className="text-amber-800 text-center mb-6 text-lg font-semibold">{branchName}</p>
-            
-            <div className="flex justify-center relative">
-              <Canvas
-                  text={url}
-                  options={{
-                      type: 'image/png',
-                      quality: 1,
-                      errorCorrectionLevel: 'H',
-                      margin: 1,
-                      scale: 8,
-                      width: 256,
-                      color: { dark: '#000000FF', light: '#FFFFFFFF' },
-                  }}
-              />
-            </div>
+      <div id={qrId} className="text-center w-full bg-card p-8 rounded-lg">
+        <h3 className="text-3xl font-bold font-headline text-center text-primary">{companyName}</h3>
+        <p className="text-amber-800 text-center mb-6 text-lg font-semibold">{branchName}</p>
 
-            <div className="text-center mt-6">
-                <Icon className="mx-auto h-12 w-12 text-primary" />
-                <h4 className="mt-2 text-2xl font-bold">{title}</h4>
-                {subtitle && <p className="text-xl font-semibold">{formattedSubtitle}</p>}
-                <p className="text-muted-foreground mt-2">Scan this code to begin your order.</p>
-            </div>
+        <div className="flex justify-center relative">
+          <Canvas
+            text={url}
+            options={{
+              type: 'image/png',
+              quality: 1,
+              errorCorrectionLevel: 'H',
+              margin: 1,
+              scale: 8,
+              width: 256,
+              color: { dark: '#000000FF', light: '#FFFFFFFF' },
+            }}
+          />
         </div>
 
-       <div className="flex gap-2 mt-6 print-hidden w-full">
-            <Button variant="outline" className="w-full" onClick={downloadAsPng}>
-                <ImageIcon className="mr-2 h-4 w-4" /> PNG
-            </Button>
-             <Button variant="outline" className="w-full" onClick={downloadAsPdf}>
-                <Download className="mr-2 h-4 w-4" /> PDF
-            </Button>
+        <div className="text-center mt-6">
+          <Icon className="mx-auto h-12 w-12 text-primary" />
+          <h4 className="mt-2 text-2xl font-bold">{title}</h4>
+          {subtitle && <p className="text-xl font-semibold">{formattedSubtitle}</p>}
+          <p className="text-muted-foreground mt-2">Scan this code to begin your order.</p>
         </div>
+      </div>
+
+      <div className="flex gap-2 mt-6 print-hidden w-full">
+        <Button variant="outline" className="w-full" onClick={downloadAsPng}>
+          <ImageIcon className="mr-2 h-4 w-4" /> PNG
+        </Button>
+        <Button variant="outline" className="w-full" onClick={generatePdf}>
+          <Download className="mr-2 h-4 w-4" /> PDF
+        </Button>
+      </div>
     </div>
   );
-}
+};
 
 
 export default function QRCodesPage() {
@@ -139,7 +167,6 @@ export default function QRCodesPage() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      loadHtml2Canvas(); 
       setOrigin(window.location.origin);
       if (settings.branches.length > 0) {
         setSelectedBranchId(settings.defaultBranchId || settings.branches[0].id);
@@ -174,12 +201,8 @@ export default function QRCodesPage() {
         title: 'Export in Progress...',
         description: `Generating ${format.toUpperCase()} for ${tablesForSelectedFloor.length} tables. Please wait.`,
     });
-
-    const html2canvas = await loadHtml2Canvas();
-    if (!html2canvas) {
-        toast({ variant: 'destructive', title: 'Export Failed', description: 'Could not load rendering library.' });
-        return;
-    }
+    
+    const { default: html2canvas } = await import('html2canvas');
 
     if (format === 'pdf') {
         const pdf = new jsPDF('p', 'px');
@@ -188,7 +211,7 @@ export default function QRCodesPage() {
         for (const table of tablesForSelectedFloor) {
             const element = document.getElementById(`qr-card-${table.id}`);
             if (element) {
-                const canvas = await html2canvas(element, { scale: 5, useCORS: true, backgroundColor: 'white' });
+                const canvas = await html2canvas(element, { scale: 5, useCORS: true, backgroundColor: '#f9f5ea' });
                 const imgData = canvas.toDataURL('image/png');
                 const pdfWidth = pdf.internal.pageSize.getWidth();
                 const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -216,7 +239,7 @@ export default function QRCodesPage() {
             const element = document.getElementById(`qr-card-${table.id}`);
             if (element) {
                  try {
-                    const canvas = await html2canvas(element, { scale: 5, useCORS: true, backgroundColor: 'white' });
+                    const canvas = await html2canvas(element, { scale: 5, useCORS: true, backgroundColor: '#f9f5ea' });
                     const fileName = `${settings.companyName}-${selectedBranch.name}-${selectedFloor.name}-${table.name}-QR.png`.toLowerCase().replace(/\s/g, '-');
                     const imgData = canvas.toDataURL('image/png').split(',')[1];
                     zip.file(fileName, imgData, {base64: true});
@@ -366,5 +389,3 @@ export default function QRCodesPage() {
     </div>
   );
 }
-
-    
