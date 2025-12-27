@@ -53,7 +53,7 @@ export default function Header({ branchId }: { branchId?: string }) {
             </>
         ) : (
              <div className="flex items-center gap-3">
-                <p className="text-sm text-muted-foreground">Already placed an order?</p>
+                <p className="text-sm text-muted-foreground font-bold">Already placed an order?</p>
                 <Button size="sm" variant="secondary" onClick={handleCheckStatus} className="animate-blink">
                     Check Order Status
                 </Button>
