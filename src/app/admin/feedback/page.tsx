@@ -2,15 +2,20 @@
 "use client";
 
 import { useRating } from "@/context/RatingContext";
+import { useSettings } from "@/context/SettingsContext";
+import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader, Star, Trash2 } from "lucide-react";
-import { format } from 'date-fns';
+import { Loader, Star, Trash2, Calendar as CalendarIcon } from "lucide-react";
+import { format, subDays } from 'date-fns';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
+import { cn } from "@/lib/utils";
 
 const StarRating = ({ rating }: { rating: number }) => (
     <div className="flex">
@@ -23,11 +28,43 @@ const StarRating = ({ rating }: { rating: number }) => (
     </div>
 );
 
+function getBusinessDay(date: Date, start: string, end: string): { start: Date, end: Date } {
+  const [startHour, startMinute] = start.split(':').map(Number);
+  const [endHour, endMinute] = end.split(':').map(Number);
+
+  let businessDayStart = new Date(date);
+  businessDayStart.setHours(startHour, startMinute, 0, 0);
+
+  let businessDayEnd = new Date(date);
+  if (startHour > endHour) { // Business day crosses midnight
+    businessDayEnd.setDate(businessDayEnd.getDate() + 1);
+  }
+  businessDayEnd.setHours(endHour, endMinute, 59, 999);
+
+  return { start: businessDayStart, end: businessDayEnd };
+}
+
+
 export default function FeedbackPage() {
-    const { ratings, isLoading, clearRatings } = useRating();
+    const { ratings, isLoading: isRatingsLoading, clearRatings } = useRating();
+    const { settings, isLoading: isSettingsLoading } = useSettings();
+    const { user } = useAuth();
+    const [date, setDate] = useState<Date | undefined>(new Date());
+
+    const filteredRatings = useMemo(() => {
+        if (!date) return ratings;
+        
+        const { start: businessDayStart, end: businessDayEnd } = getBusinessDay(date, settings.businessDayStart, settings.businessDayEnd);
+
+        return ratings.filter(rating => {
+            const ratingDate = new Date(rating.timestamp);
+            return ratingDate >= businessDayStart && ratingDate <= businessDayEnd;
+        });
+
+    }, [ratings, date, settings.businessDayStart, settings.businessDayEnd]);
 
     const ratingSummary = useMemo(() => {
-        if (ratings.length === 0) {
+        if (filteredRatings.length === 0) {
             return {
                 average: 0,
                 total: 0,
@@ -35,12 +72,12 @@ export default function FeedbackPage() {
                 chartData: [],
             };
         }
-        const total = ratings.length;
-        const sum = ratings.reduce((acc, r) => acc + r.rating, 0);
+        const total = filteredRatings.length;
+        const sum = filteredRatings.reduce((acc, r) => acc + r.rating, 0);
         const average = sum / total;
         
         const distribution = [5, 4, 3, 2, 1].map(star => {
-            const count = ratings.filter(r => r.rating === star).length;
+            const count = filteredRatings.filter(r => r.rating === star).length;
             return { star, count, percentage: total > 0 ? (count / total) * 100 : 0 };
         });
 
@@ -53,7 +90,9 @@ export default function FeedbackPage() {
         })).filter(d => d.value > 0);
 
         return { average, total, distribution, chartData };
-    }, [ratings]);
+    }, [filteredRatings]);
+    
+    const isLoading = isRatingsLoading || isSettingsLoading;
 
     if (isLoading) {
         return (
@@ -71,25 +110,53 @@ export default function FeedbackPage() {
                     <h1 className="font-headline text-4xl font-bold">Customer Feedback</h1>
                     <p className="text-muted-foreground">A collection of all user-submitted ratings and comments.</p>
                 </div>
-                <DeleteConfirmationDialog
-                    title="Are you absolutely sure?"
-                    description="This action cannot be undone. This will permanently delete all customer feedback entries. Type DELETE to confirm."
-                    onConfirm={clearRatings}
-                    triggerButton={
-                        <Button variant="destructive" disabled={ratings.length === 0}>
-                            <Trash2 className="mr-2 h-4 w-4" /> Clear All Feedback
+                <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                    <Popover>
+                        <PopoverTrigger asChild>
+                        <Button
+                            id="date"
+                            variant={"outline"}
+                            className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !date && "text-muted-foreground"
+                            )}
+                        >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {date ? format(date, "PPP") : <span>Pick a date</span>}
                         </Button>
-                    }
-                />
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="end">
+                        <Calendar
+                            mode="single"
+                            selected={date}
+                            onSelect={setDate}
+                            initialFocus
+                            disabled={(d) => d > new Date() || d < subDays(new Date(), 90)}
+                        />
+                        </PopoverContent>
+                    </Popover>
+                    {user?.role === 'root' && (
+                        <DeleteConfirmationDialog
+                            title="Are you absolutely sure?"
+                            description="This action cannot be undone. This will permanently delete all customer feedback entries. Type DELETE to confirm."
+                            onConfirm={clearRatings}
+                            triggerButton={
+                                <Button variant="destructive" disabled={ratings.length === 0}>
+                                    <Trash2 className="mr-2 h-4 w-4" /> Clear All Feedback
+                                </Button>
+                            }
+                        />
+                    )}
+                </div>
             </header>
 
             <Card>
                 <CardHeader>
                     <CardTitle>Feedback Summary</CardTitle>
-                    <CardDescription>An overview of all ratings received.</CardDescription>
+                    <CardDescription>An overview of all ratings received for the selected day.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {ratings.length > 0 ? (
+                    {filteredRatings.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                             <div className="flex flex-col items-center justify-center text-center">
                                 <p className="text-6xl font-bold">{ratingSummary.average.toFixed(2)}</p>
@@ -131,7 +198,7 @@ export default function FeedbackPage() {
                         </div>
                     ) : (
                          <div className="text-center py-12">
-                            <p className="text-muted-foreground">No feedback has been submitted yet.</p>
+                            <p className="text-muted-foreground">No feedback has been submitted for the selected day.</p>
                         </div>
                     )}
                 </CardContent>
@@ -139,7 +206,7 @@ export default function FeedbackPage() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>All Ratings</CardTitle>
+                    <CardTitle>All Ratings for {date ? format(date, "PPP") : 'All Time'}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <ScrollArea className="h-[50vh]">
@@ -147,13 +214,12 @@ export default function FeedbackPage() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead className="w-[200px]">Date</TableHead>
-
                                     <TableHead className="w-[150px]">Rating</TableHead>
                                     <TableHead>Comment</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {ratings.map(rating => (
+                                {filteredRatings.map(rating => (
                                     <TableRow key={rating.id}>
                                         <TableCell>{format(new Date(rating.timestamp), 'PPpp')}</TableCell>
                                         <TableCell><StarRating rating={rating.rating} /></TableCell>
@@ -163,9 +229,9 @@ export default function FeedbackPage() {
                             </TableBody>
                         </Table>
                     </ScrollArea>
-                    {ratings.length === 0 && (
+                    {filteredRatings.length === 0 && (
                         <div className="text-center py-12">
-                            <p className="text-muted-foreground">No feedback to display.</p>
+                            <p className="text-muted-foreground">No feedback to display for the selected day.</p>
                         </div>
                     )}
                 </CardContent>
