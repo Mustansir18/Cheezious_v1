@@ -121,11 +121,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [users, isLoading]);
   
-  // Persist current user to sessionStorage
+  // Persist current user to sessionStorage, unless it's the root user
   useEffect(() => {
       if (isLoading) return;
       try {
-          if (user) {
+          if (user && user.role !== 'root') {
               sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(user));
           } else {
               sessionStorage.removeItem(SESSION_STORAGE_KEY);
