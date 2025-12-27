@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useOrders } from "@/context/OrderContext";
@@ -209,7 +210,7 @@ export default function ReportingPage() {
     });
 
     const completionTimeData: CompletionTimeData = {
-        orders: baseFilteredOrders,
+        orders: filteredOrders,
     };
     
     const categoryChartData: CategorySale[] = Object.entries(categorySales).map(([categoryId, sales], index) => {
@@ -471,5 +472,3 @@ export default function ReportingPage() {
     </TooltipProvider>
   );
 }
-
-    
