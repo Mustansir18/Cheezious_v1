@@ -27,6 +27,9 @@ import imageCompression from 'browser-image-compression';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { useDeals } from '@/context/DealsContext';
+
 
 async function handleImageUpload(file: File) {
   const options = {
@@ -98,6 +101,8 @@ function CategoryForm({ category, onSave }: { category?: MenuCategory; onSave: (
 // Item Form
 function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuItem, 'id'> | MenuItem, id?: string) => void; }) {
   const { menu } = useMenu();
+  const { deals } = useDeals();
+  const { toast } = useToast();
   const [id, setId] = useState('');
   const [name, setName] = useState(item?.name || '');
   const [description, setDescription] = useState(item?.description || '');
@@ -121,8 +126,22 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
       setSelectedAddonIds(prev => prev.includes(addonId) ? prev.filter(id => id !== addonId) : [...prev, addonId]);
   }
 
+  const validateId = (value: string) => {
+    if (menu.items.some(item => item.id === value) || deals.some(deal => deal.id === value)) {
+        toast({
+            variant: 'destructive',
+            title: 'Duplicate Code',
+            description: `The code "${value}" is already in use by another item or deal.`,
+        });
+        return false;
+    }
+    return true;
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!item && !validateId(id)) return; // Don't save if validation fails on create
+
     const data = { name, description, price, categoryId, imageUrl, availableAddonIds: selectedAddonIds };
     if (item) {
       onSave({ ...item, ...data });
@@ -141,7 +160,14 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
       ) : (
         <div>
           <Label htmlFor="item-id">Item Code</Label>
-          <Input id="item-id" value={id} onChange={(e) => setId(e.target.value)} required placeholder="e.g. P-001" />
+          <Input 
+            id="item-id" 
+            value={id} 
+            onChange={(e) => setId(e.target.value)} 
+            onBlur={(e) => validateId(e.target.value)}
+            required 
+            placeholder="e.g. P-001" 
+          />
         </div>
       )}
       <div>

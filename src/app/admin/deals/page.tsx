@@ -24,6 +24,8 @@ import { Trash2, Edit, PlusCircle, Loader } from 'lucide-react';
 import type { Deal } from '@/lib/types';
 import imageCompression from 'browser-image-compression';
 import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { useMenu } from '@/context/MenuContext';
 
 
 async function handleImageUpload(file: File) {
@@ -61,7 +63,9 @@ function DealForm({
   const [price, setPrice] = useState(deal?.price || 0);
   const [imageUrl, setImageUrl] = useState(deal?.imageUrl || '');
   const [isCompressing, setIsCompressing] = useState(false);
-
+  const { deals } = useDeals();
+  const { menu } = useMenu();
+  const { toast } = useToast();
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -72,9 +76,23 @@ function DealForm({
       setIsCompressing(false);
     }
   };
+  
+  const validateId = (value: string) => {
+    if (menu.items.some(item => item.id === value) || deals.some(d => d.id === value)) {
+        toast({
+            variant: 'destructive',
+            title: 'Duplicate Code',
+            description: `The code "${value}" is already in use by another deal or menu item.`,
+        });
+        return false;
+    }
+    return true;
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!deal && !validateId(id)) return; // Don't save if validation fails on create
+    
     const data = { name, description, price, imageUrl };
     if (deal) {
       onSave({ ...deal, ...data });
@@ -93,7 +111,13 @@ function DealForm({
       ) : (
         <div>
           <Label htmlFor="deal-id">Deal Code</Label>
-          <Input id="deal-id" value={id} onChange={(e) => setId(e.target.value)} required placeholder="e.g. D-001" />
+          <Input 
+            id="deal-id" 
+            value={id} 
+            onChange={(e) => setId(e.target.value)} 
+            onBlur={(e) => validateId(e.target.value)}
+            required placeholder="e.g. D-001" 
+          />
         </div>
       )}
       <div>
