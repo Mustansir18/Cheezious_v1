@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState } from 'react';
@@ -84,7 +85,12 @@ function DealForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {!deal && (
+      {deal ? (
+        <div>
+          <Label htmlFor="deal-id">Deal Code</Label>
+          <Input id="deal-id" value={deal.id} disabled />
+        </div>
+      ) : (
         <div>
           <Label htmlFor="deal-id">Deal Code</Label>
           <Input id="deal-id" value={id} onChange={(e) => setId(e.target.value)} required placeholder="e.g. D-001" />

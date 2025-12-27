@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, type FormEvent } from "react";
@@ -77,7 +78,12 @@ function UserForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {!user && (
+      {user ? (
+        <div>
+          <Label htmlFor="user-id">User Code</Label>
+          <Input id="user-id" value={user.id} disabled />
+        </div>
+      ) : (
          <div>
           <Label htmlFor="user-id">User Code</Label>
           <Input id="user-id" value={id} onChange={(e) => setId(e.target.value)} required placeholder="e.g. U-001" />

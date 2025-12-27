@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState } from 'react';
@@ -64,7 +65,12 @@ function CategoryForm({ category, onSave }: { category?: MenuCategory; onSave: (
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {!category && (
+      {category ? (
+         <div>
+          <Label htmlFor="category-id">Category Code</Label>
+          <Input id="category-id" value={category.id} disabled />
+        </div>
+      ) : (
         <div>
           <Label htmlFor="category-id">Category Code</Label>
           <Input id="category-id" value={id} onChange={(e) => setId(e.target.value)} required placeholder="e.g. C-01" />
@@ -127,7 +133,12 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {!item && (
+      {item ? (
+        <div>
+          <Label htmlFor="item-id">Item Code</Label>
+          <Input id="item-id" value={item.id} disabled />
+        </div>
+      ) : (
         <div>
           <Label htmlFor="item-id">Item Code</Label>
           <Input id="item-id" value={id} onChange={(e) => setId(e.target.value)} required placeholder="e.g. P-001" />
@@ -207,7 +218,12 @@ function AddonForm({ addon, onSave }: { addon?: Addon; onSave: (addon: Omit<Addo
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
-            {!addon && (
+            {addon ? (
+              <div>
+                <Label htmlFor="addon-id">Add-on Code</Label>
+                <Input id="addon-id" value={addon.id} disabled />
+              </div>
+            ) : (
               <div>
                 <Label htmlFor="addon-id">Add-on Code</Label>
                 <Input id="addon-id" value={id} onChange={(e) => setId(e.target.value)} required placeholder="e.g. A-001" />

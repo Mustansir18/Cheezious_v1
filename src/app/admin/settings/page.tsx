@@ -1,5 +1,6 @@
 
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -61,7 +62,12 @@ function RoleForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {!role && (
+      {role ? (
+        <div>
+          <Label htmlFor="role-id">Role Code</Label>
+          <Input id="role-id" value={role.id as string} disabled />
+        </div>
+      ) : (
         <div>
           <Label htmlFor="role-id">Role Code</Label>
           <Input id="role-id" value={id} onChange={(e) => setId(e.target.value)} required placeholder="e.g. R-001" />
@@ -744,6 +750,14 @@ export default function AdminSettingsPage() {
                         <DialogTitle>Edit Branch</DialogTitle>
                     </DialogHeader>
                     <div className="py-4 space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="branch-id">Branch Code</Label>
+                            <Input
+                                id="branch-id"
+                                value={editingBranch?.id || ''}
+                                disabled
+                            />
+                        </div>
                         <div className="space-y-2">
                             <Label htmlFor="branch-name">Branch Name</Label>
                             <Input
