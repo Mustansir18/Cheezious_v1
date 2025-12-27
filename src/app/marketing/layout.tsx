@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { LogOut, Pizza, Star, BarChart } from 'lucide-react';
+import { LogOut, Pizza, Star, BarChart, Target } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { MarketingRouteGuard } from '@/components/auth/MarketingRouteGuard';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -16,6 +16,7 @@ function MarketingHeader() {
     const navLinks = [
         { href: '/marketing/reporting', label: 'Sales Reports', icon: BarChart },
         { href: '/marketing/feedback', label: 'Customer Feedback', icon: Star },
+        { href: '/marketing/target', label: 'Sales Targets', icon: Target },
     ];
 
     return (
