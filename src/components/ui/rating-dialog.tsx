@@ -64,7 +64,7 @@ export function RatingDialog() {
     <>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogTrigger asChild>
-            <Button variant="outline" className="text-md font-semibold py-6 px-6 rounded-full shadow-sm hover:shadow-lg hover:scale-105 transition-transform duration-300">
+            <Button variant="secondary" size="lg" className="font-semibold shadow-md transition-transform hover:scale-105">
                 <Star className="mr-2 h-5 w-5" /> Rate Your Experience
             </Button>
         </DialogTrigger>
