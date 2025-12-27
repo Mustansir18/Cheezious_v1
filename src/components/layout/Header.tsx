@@ -2,6 +2,7 @@
 'use client';
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ShoppingCart, Pizza } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/context/CartContext";
@@ -10,10 +11,15 @@ import { Badge } from "@/components/ui/badge";
 import { useSettings } from "@/context/SettingsContext";
 import { cn } from "@/lib/utils";
 
-export default function Header({ branchId }: { branchId: string }) {
+export default function Header({ branchId }: { branchId?: string }) {
   const { cartCount } = useCart();
   const { settings } = useSettings();
+  const router = useRouter();
   const branch = settings.branches.find((b) => b.id === branchId);
+
+  const handleCheckStatus = () => {
+    router.push('/queue');
+  }
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-sm">
@@ -24,23 +30,32 @@ export default function Header({ branchId }: { branchId: string }) {
             {settings.companyName}
           </span>
         </Link>
-        <div className="text-center">
-            {branch && <h2 className="font-headline text-lg font-semibold">{branch.name}</h2>}
-        </div>
-        <CartSheet>
-          <Button variant="secondary" className={cn("relative", cartCount > 0 && "animate-blink")}>
-            <ShoppingCart className="h-5 w-5" />
-            <span className="ml-2">Cart</span>
-            {cartCount > 0 && (
-              <Badge
-                variant="destructive"
-                className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-accent p-2 text-xs text-accent-foreground"
-              >
-                {cartCount}
-              </Badge>
-            )}
-          </Button>
-        </CartSheet>
+        
+        {branchId ? (
+            <>
+                <div className="text-center">
+                    {branch && <h2 className="font-headline text-lg font-semibold">{branch.name}</h2>}
+                </div>
+                <CartSheet>
+                <Button variant="secondary" className={cn("relative", cartCount > 0 && "animate-blink")}>
+                    <ShoppingCart className="h-5 w-5" />
+                    <span className="ml-2">Cart</span>
+                    {cartCount > 0 && (
+                    <Badge
+                        variant="destructive"
+                        className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-accent p-2 text-xs text-accent-foreground"
+                    >
+                        {cartCount}
+                    </Badge>
+                    )}
+                </Button>
+                </CartSheet>
+            </>
+        ) : (
+             <Button size="sm" variant="secondary" onClick={handleCheckStatus} className="animate-blink">
+                Check Order Status
+            </Button>
+        )}
       </div>
     </header>
   );

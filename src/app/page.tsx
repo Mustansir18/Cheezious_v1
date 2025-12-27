@@ -12,6 +12,9 @@ import Autoplay from "embla-carousel-autoplay";
 import Link from 'next/link';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+import { RatingDialog } from '@/components/ui/rating-dialog';
+import Header from '@/components/layout/Header';
+
 
 function DealsCarousel() {
   const { deals, isLoading } = useDeals();
@@ -71,20 +74,12 @@ export default function Home() {
         alert("No branches are available at the moment. Please check back later.");
     }
   };
-  
-  const handleCheckStatus = () => {
-    router.push('/queue');
-  }
 
   return (
+    <>
+    <Header />
     <main className="relative flex min-h-screen flex-col items-center justify-center p-4">
-        <div className="absolute top-4 right-4 text-right">
-            <p className="text-sm text-foreground font-semibold mb-1">Already placed an order?</p>
-            <Button size="sm" variant="secondary" onClick={handleCheckStatus} className="animate-blink">
-                Check Order Status
-            </Button>
-        </div>
-
+        
         <div className="flex flex-col items-center justify-center text-center space-y-6">
             <Pizza className="h-24 w-24 text-primary" />
             <div className="space-y-2">
@@ -113,6 +108,11 @@ export default function Home() {
             <h2 className="text-2xl font-bold font-headline mb-4 text-center">Today's Hot Deals</h2>
             <DealsCarousel />
         </div>
+
+        <div className="fixed bottom-6 right-6 z-50">
+            <RatingDialog />
+        </div>
     </main>
+    </>
   );
 }
