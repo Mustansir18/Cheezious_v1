@@ -4,7 +4,6 @@
 import { useState, useMemo } from 'react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { useOrders } from '@/context/OrderContext';
 import { useMenu } from '@/context/MenuContext';
@@ -21,6 +20,9 @@ import { format } from 'date-fns';
 import { Calendar as CalendarIcon, Target, DollarSign, FileDown, FileText, Utensils, ShoppingBag } from 'lucide-react';
 import type { DateRange } from 'react-day-picker';
 import { Pie, PieChart, ResponsiveContainer, Cell, Tooltip } from 'recharts';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import type { Order, OrderItem } from '@/lib/types';
+
 
 declare module 'jspdf' {
     interface jsPDF {
@@ -57,25 +59,25 @@ export default function SalesTargetPage() {
         let takeAwaySales = 0;
         let dineInOrders = 0;
         let takeAwayOrders = 0;
+        const contributingItems: { [key: string]: { name: string; quantity: number; sales: number } } = {};
+
 
         let targetName = "Whole Menu";
 
-        const calculateSales = (order: typeof orders[0]) => {
-            if (targetType === 'item') {
-                return order.items
-                    .filter(item => item.menuItemId === selectedId)
-                    .reduce((itemSum, item) => itemSum + (item.itemPrice * item.quantity), 0);
+        const getContributingItems = (order: Order): OrderItem[] => {
+             if (targetType === 'item') {
+                return order.items.filter(item => item.menuItemId === selectedId);
             } else if (targetType === 'category') {
-                const itemIdsInCategory = menu.items.filter(item => item.categoryId === selectedId).map(item => item.id);
-                return order.items
-                    .filter(item => itemIdsInCategory.includes(item.menuItemId))
-                    .reduce((itemSum, item) => itemSum + (item.itemPrice * item.quantity), 0);
+                const itemIdsInCategory = new Set(menu.items.filter(item => item.categoryId === selectedId).map(item => item.id));
+                return order.items.filter(item => itemIdsInCategory.has(item.menuItemId));
             }
-            return order.totalAmount; // Whole menu
-        };
+            return order.items; // Whole menu
+        }
 
         filteredOrders.forEach(order => {
-            const orderSales = calculateSales(order);
+            const relevantItems = getContributingItems(order);
+            const orderSales = relevantItems.reduce((sum, item) => sum + (item.itemPrice * item.quantity), 0);
+            
             if (orderSales > 0) { // Only count orders that contribute to the target
                 actualSales += orderSales;
                 if (order.orderType === 'Dine-In') {
@@ -85,6 +87,16 @@ export default function SalesTargetPage() {
                     takeAwaySales += orderSales;
                     takeAwayOrders++;
                 }
+
+                // Aggregate top selling items
+                relevantItems.forEach(item => {
+                    const itemSales = item.itemPrice * item.quantity;
+                    if (!contributingItems[item.menuItemId]) {
+                        contributingItems[item.menuItemId] = { name: item.name, quantity: 0, sales: 0 };
+                    }
+                    contributingItems[item.menuItemId].quantity += item.quantity;
+                    contributingItems[item.menuItemId].sales += itemSales;
+                });
             }
         });
         
@@ -100,6 +112,8 @@ export default function SalesTargetPage() {
             { name: 'Take-Away', sales: takeAwaySales, fill: 'hsl(var(--chart-2))' },
         ].filter(item => item.sales > 0);
 
+        const topSellingItems = Object.values(contributingItems).sort((a,b) => b.sales - a.sales).slice(0, 10);
+
         return {
             targetAmount,
             actualSales,
@@ -109,7 +123,8 @@ export default function SalesTargetPage() {
             dineInOrders,
             takeAwayOrders,
             dineInSales,
-            takeAwaySales
+            takeAwaySales,
+            topSellingItems,
         };
     }, [orders, menu, targetType, selectedId, targetAmount, dateRange]);
     
@@ -144,26 +159,52 @@ export default function SalesTargetPage() {
             theme: 'grid',
         });
 
+        if (targetData.topSellingItems.length > 0) {
+             doc.autoTable({
+                startY: (doc as any).autoTable.previous.finalY + 10,
+                head: [['Top Contributing Items', 'Quantity', 'Sales']],
+                body: targetData.topSellingItems.map(item => [
+                    item.name,
+                    item.quantity.toString(),
+                    `RS ${Math.round(item.sales).toLocaleString()}`
+                ]),
+                theme: 'grid',
+            });
+        }
+
 
         doc.save(`sales-target-report-${targetData.name}.pdf`);
     };
 
     const handleDownloadExcel = () => {
         if (!targetData) return;
-        const zip = new JSZip();
-        let content = "Sales Target Report\n\n";
-        content += `Target Name: ${targetData.name}\n`;
-        content += `Period: ${dateDisplay}\n\n`;
-        content += `Target Amount,Achieved Sales,Percentage\n`;
-        content += `${targetData.targetAmount},${targetData.actualSales},${targetData.percentage.toFixed(2)}%\n\n`;
-        content += `Dine-In Orders,Dine-In Sales,Take-Away Orders,Take-Away Sales\n`;
-        content += `${targetData.dineInOrders},${targetData.dineInSales},${targetData.takeAwayOrders},${targetData.takeAwaySales}\n`;
+        
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += `Sales Target Report: ${targetData.name}\n`;
+        csvContent += `Period: ${dateDisplay}\n\n`;
+        csvContent += "Metric,Value\n";
+        csvContent += `Target Amount,RS ${targetData.targetAmount}\n`;
+        csvContent += `Achieved Sales,RS ${targetData.actualSales}\n`;
+        csvContent += `Percentage,${targetData.percentage.toFixed(2)}%\n\n`;
 
-
-        zip.file("report.txt", content);
-        zip.generateAsync({ type: "blob" }).then(function(content) {
-            saveAs(content, `sales-target-report-${targetData.name}.zip`);
-        });
+        csvContent += "Order Type,Orders,Sales (RS)\n";
+        csvContent += `Dine-In,${targetData.dineInOrders},${targetData.dineInSales}\n`;
+        csvContent += `Take-Away,${targetData.takeAwayOrders},${targetData.takeAwaySales}\n\n`;
+        
+        if (targetData.topSellingItems.length > 0) {
+            csvContent += "Top Contributing Items,Quantity,Sales (RS)\n";
+            targetData.topSellingItems.forEach(item => {
+                csvContent += `"${item.name}",${item.quantity},${item.sales}\n`;
+            });
+        }
+        
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `sales-target-report-${targetData.name.replace(/\s/g, '_')}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     const selectionOptions = targetType === 'item' ? menu.items : menu.categories;
@@ -246,90 +287,112 @@ export default function SalesTargetPage() {
             </Card>
 
             {targetData && (
-                <div className="mt-8 space-y-8">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center"><Target className="mr-2 text-primary"/>Target Progress: {targetData.name}</CardTitle>
-                            <CardDescription>Showing progress for the period: {dateDisplay}</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div>
-                                <div className="flex justify-between mb-1 text-sm font-medium">
-                                    <span>Achieved: RS {Math.round(targetData.actualSales).toLocaleString()}</span>
-                                    <span className="text-muted-foreground">Target: RS {targetData.targetAmount.toLocaleString()}</span>
-                                </div>
-                                <Progress value={targetData.percentage} className="h-4" />
-                            </div>
-                            <div className="text-center text-2xl font-bold">
-                                {targetData.percentage.toFixed(2)}%
-                                <span className="text-sm font-normal text-muted-foreground ml-1">of target reached</span>
-                            </div>
-                        </CardContent>
-                        <CardFooter className="justify-end gap-2">
-                            <Button variant="outline" onClick={handleDownloadPDF}>
-                                <FileText className="mr-2 h-4 w-4" /> Download PDF
-                            </Button>
-                            <Button variant="outline" onClick={handleDownloadExcel}>
-                                <FileDown className="mr-2 h-4 w-4" /> Download Excel
-                            </Button>
-                        </CardFooter>
-                    </Card>
-
-                    {targetData.salesBreakdown.length > 0 && (
+                <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="lg:col-span-3 space-y-8">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Sales Breakdown by Order Type</CardTitle>
-                                <CardDescription>Dine-In vs. Take-Away sales for the selected target.</CardDescription>
+                                <CardTitle className="flex items-center"><Target className="mr-2 text-primary"/>Target Progress: {targetData.name}</CardTitle>
+                                <CardDescription>Showing progress for the period: {dateDisplay}</CardDescription>
                             </CardHeader>
-                            <CardContent className="flex flex-col items-center justify-center gap-8">
-                                <ResponsiveContainer width="100%" height={200} className="max-w-[200px]">
-                                    <PieChart>
-                                        <Tooltip
-                                            cursor={{ fill: 'hsl(var(--muted))' }}
-                                            content={({ active, payload }) => {
-                                                if (active && payload && payload.length) {
-                                                return (
-                                                    <div className="rounded-lg border bg-background p-2 shadow-sm">
-                                                        <div className="flex flex-col">
-                                                            <span className="text-[0.70rem] uppercase text-muted-foreground">{payload[0].name}</span>
-                                                            <span className="font-bold">RS {payload[0].value ? Math.round(payload[0].value as number).toLocaleString() : 0}</span>
-                                                        </div>
-                                                    </div>
-                                                );
-                                                }
-                                                return null;
-                                            }}
-                                        />
-                                        <Pie
-                                            data={targetData.salesBreakdown}
-                                            dataKey="sales"
-                                            nameKey="name"
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={40}
-                                            outerRadius={70}
-                                            paddingAngle={5}
-                                        >
-                                            {targetData.salesBreakdown.map((entry) => (
-                                                <Cell key={`cell-${entry.name}`} fill={entry.fill} />
-                                            ))}
-                                        </Pie>
-                                    </PieChart>
-                                </ResponsiveContainer>
-                                <div className="grid grid-cols-2 gap-4 w-full max-w-md">
-                                    {targetData.salesBreakdown.map(entry => (
-                                        <div key={entry.name} className="flex items-center justify-center gap-4 rounded-lg border p-3">
-                                            {entry.name === 'Dine-In' ? <Utensils className="h-6 w-6 text-muted-foreground" /> : <ShoppingBag className="h-6 w-6 text-muted-foreground" />}
-                                            <div>
-                                                <p className="text-sm text-muted-foreground">{entry.name}</p>
-                                                <p className="text-lg font-bold">RS {Math.round(entry.sales).toLocaleString()}</p>
-                                            </div>
-                                        </div>
-                                    ))}
+                            <CardContent className="space-y-4">
+                                <div>
+                                    <div className="flex justify-between mb-1 text-sm font-medium">
+                                        <span>Achieved: RS {Math.round(targetData.actualSales).toLocaleString()}</span>
+                                        <span className="text-muted-foreground">Target: RS {targetData.targetAmount.toLocaleString()}</span>
+                                    </div>
+                                    <Progress value={targetData.percentage} className="h-4" />
+                                </div>
+                                <div className="text-center text-2xl font-bold">
+                                    {targetData.percentage.toFixed(2)}%
+                                    <span className="text-sm font-normal text-muted-foreground ml-1">of target reached</span>
                                 </div>
                             </CardContent>
+                            <CardFooter className="justify-end gap-2">
+                                <Button variant="outline" onClick={handleDownloadPDF}>
+                                    <FileText className="mr-2 h-4 w-4" /> Download PDF
+                                </Button>
+                                <Button variant="outline" onClick={handleDownloadExcel}>
+                                    <FileDown className="mr-2 h-4 w-4" /> Download CSV
+                                </Button>
+                            </CardFooter>
                         </Card>
-                    )}
+                    </div>
+                     <div className="lg:col-span-1">
+                        {targetData.salesBreakdown.length > 0 && (
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Sales by Order Type</CardTitle>
+                                    <CardDescription>Breakdown for '{targetData.name}'</CardDescription>
+                                </CardHeader>
+                                <CardContent className="flex flex-col items-center justify-center gap-4">
+                                    <ResponsiveContainer width="100%" height={150}>
+                                        <PieChart>
+                                            <Tooltip
+                                                cursor={{ fill: 'hsl(var(--muted))' }}
+                                                content={({ active, payload }) => {
+                                                    if (active && payload && payload.length) {
+                                                    return (
+                                                        <div className="rounded-lg border bg-background p-2 shadow-sm">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[0.70rem] uppercase text-muted-foreground">{payload[0].name}</span>
+                                                                <span className="font-bold">RS {payload[0].value ? Math.round(payload[0].value as number).toLocaleString() : 0}</span>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                    }
+                                                    return null;
+                                                }}
+                                            />
+                                            <Pie data={targetData.salesBreakdown} dataKey="sales" nameKey="name" cx="50%" cy="50%" innerRadius={30} outerRadius={50} paddingAngle={5}>
+                                                {targetData.salesBreakdown.map((entry) => ( <Cell key={`cell-${entry.name}`} fill={entry.fill} /> ))}
+                                            </Pie>
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                    <div className="grid grid-cols-2 gap-2 w-full">
+                                        {targetData.salesBreakdown.map(entry => (
+                                            <div key={entry.name} className="flex items-center justify-center gap-2 rounded-lg border p-2">
+                                                {entry.name === 'Dine-In' ? <Utensils className="h-5 w-5 text-muted-foreground" /> : <ShoppingBag className="h-5 w-5 text-muted-foreground" />}
+                                                <div>
+                                                    <p className="text-xs text-muted-foreground">{entry.name}</p>
+                                                    <p className="text-md font-bold">RS {Math.round(entry.sales).toLocaleString()}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
+                    </div>
+                    <div className="lg:col-span-2">
+                         {targetData.topSellingItems.length > 0 && (
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Top Contributing Items</CardTitle>
+                                    <CardDescription>Top 10 items contributing to the '{targetData.name}' target.</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Item</TableHead>
+                                                <TableHead className="text-center">Quantity</TableHead>
+                                                <TableHead className="text-right">Sales (RS)</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {targetData.topSellingItems.map(item => (
+                                                <TableRow key={item.name}>
+                                                    <TableCell className="font-medium">{item.name}</TableCell>
+                                                    <TableCell className="text-center">{item.quantity}</TableCell>
+                                                    <TableCell className="text-right">{Math.round(item.sales).toLocaleString()}</TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </CardContent>
+                            </Card>
+                        )}
+                    </div>
                 </div>
             )}
         </div>
