@@ -12,6 +12,7 @@ import { useOrders } from "@/context/OrderContext";
 import { useSettings } from "@/context/SettingsContext";
 import { OrderReceipt } from "@/components/cashier/OrderReceipt";
 import { cn } from "@/lib/utils";
+import { RatingDialog } from "@/components/ui/rating-dialog";
 
 const IDLE_TIMEOUT_SECONDS = 10; // 10 seconds
 
@@ -203,27 +204,32 @@ export default function OrderStatusPage() {
           </div>
 
         </CardContent>
-        <CardFooter className="grid gap-2 grid-cols-2">
-          <Button
-            size="lg"
-            variant="outline"
-            onClick={handlePrint}
-            className="w-full"
-            disabled={!order}
-          >
-            <Printer className="mr-2 h-4 w-4" /> Print Receipt
-          </Button>
-          <Button
-            size="lg"
-            className="w-full"
-            onClick={() => {
-              // Also reset timer on explicit click
-              if (idleTimer.current) clearTimeout(idleTimer.current);
-              resetToHome();
-            }}
-          >
-            New Order
-          </Button>
+        <CardFooter className="flex flex-col gap-4">
+          <div className="w-full">
+            <RatingDialog />
+          </div>
+          <div className="grid gap-2 grid-cols-2 w-full">
+            <Button
+                size="lg"
+                variant="outline"
+                onClick={handlePrint}
+                className="w-full"
+                disabled={!order}
+            >
+                <Printer className="mr-2 h-4 w-4" /> Print Receipt
+            </Button>
+            <Button
+                size="lg"
+                className="w-full"
+                onClick={() => {
+                // Also reset timer on explicit click
+                if (idleTimer.current) clearTimeout(idleTimer.current);
+                resetToHome();
+                }}
+            >
+                New Order
+            </Button>
+          </div>
         </CardFooter>
       </Card>
       
