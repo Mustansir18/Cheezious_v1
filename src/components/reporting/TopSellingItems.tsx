@@ -77,6 +77,7 @@ export function TopSellingItems({ data, onPrint }: TopSellingItemsProps) {
             <TableHeader>
               <TableRow>
                 <TableHead>Item</TableHead>
+                <TableHead>Code</TableHead>
                 <TableHead className="text-center">Qty</TableHead>
                 <TableHead className="text-right">Revenue</TableHead>
               </TableRow>
@@ -85,6 +86,7 @@ export function TopSellingItems({ data, onPrint }: TopSellingItemsProps) {
               {data.map((item) => (
                 <TableRow key={item.name}>
                   <TableCell className="font-medium">{item.name}</TableCell>
+                  <TableCell className="font-mono text-xs">{item.id}</TableCell>
                   <TableCell className="text-center">{item.quantity}</TableCell>
                   <TableCell className="text-right">
                     RS {Math.round(item.totalRevenue)}

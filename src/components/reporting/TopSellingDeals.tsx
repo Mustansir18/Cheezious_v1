@@ -77,6 +77,7 @@ export function TopSellingDeals({ data, onPrint }: TopSellingDealsProps) {
             <TableHeader>
               <TableRow>
                 <TableHead>Deal</TableHead>
+                <TableHead>Code</TableHead>
                 <TableHead className="text-center">Qty</TableHead>
                 <TableHead className="text-right">Revenue</TableHead>
               </TableRow>
@@ -85,6 +86,7 @@ export function TopSellingDeals({ data, onPrint }: TopSellingDealsProps) {
               {data.map((deal) => (
                 <TableRow key={deal.name}>
                   <TableCell className="font-medium">{deal.name}</TableCell>
+                  <TableCell className="font-mono text-xs">{deal.id}</TableCell>
                   <TableCell className="text-center">{deal.quantity}</TableCell>
                   <TableCell className="text-right">
                     RS {Math.round(deal.totalRevenue)}

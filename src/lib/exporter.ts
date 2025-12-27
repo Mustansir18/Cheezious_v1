@@ -149,7 +149,7 @@ export const exportOrderTypeDetailsAs = (format: 'pdf' | 'csv', orders: Order[],
 
 export const exportTopItemsAs = (format: 'pdf' | 'csv', data: (ItemSale | DealSale)[], title: string, headerInfo?: ReportHeaderInfo) => {
     const columns = [
-        { key: 'id', label: 'Unique Code'},
+        { key: 'id', label: 'Code'},
         { key: 'name', label: 'Name' },
         { key: 'quantity', label: 'Quantity Sold' },
         { key: 'totalRevenue', label: 'Total Revenue (RS)' },
@@ -175,7 +175,7 @@ export const exportTopItemsAs = (format: 'pdf' | 'csv', data: (ItemSale | DealSa
 export const exportCategorySalesAs = (format: 'pdf' | 'csv', data: CategorySale[], headerInfo?: ReportHeaderInfo) => {
     const title = 'Sales by Category';
     const columns = [
-        { key: 'id', label: 'Unique Code'},
+        { key: 'id', label: 'Code'},
         { key: 'name', label: 'Category' },
         { key: 'sales', label: 'Total Sales (RS)' },
     ];
@@ -261,19 +261,19 @@ export const exportAllReportsAsZip = async (reportData: any) => {
 
     // Top Items
     reportText += '--- Top Selling Items ---\n';
-    reportText += 'Unique Code,Item,Quantity,Revenue\n';
+    reportText += 'Code,Item,Quantity,Revenue\n';
     reportData.topSellingItems.forEach((d: any) => reportText += `${d.id},"${d.name}",${d.quantity},${Math.round(d.totalRevenue)}\n`);
     reportText += '\n';
     
     // Top Deals
     reportText += '--- Top Selling Deals ---\n';
-    reportText += 'Unique Code,Deal,Quantity,Revenue\n';
+    reportText += 'Code,Deal,Quantity,Revenue\n';
     reportData.topSellingDeals.forEach((d: any) => reportText += `${d.id},"${d.name}",${d.quantity},${Math.round(d.totalRevenue)}\n`);
     reportText += '\n';
 
     // Category Sales
     reportText += '--- Sales by Category ---\n';
-    reportText += 'Unique Code,Category,Sales\n';
+    reportText += 'Code,Category,Sales\n';
     reportData.categoryChartData.forEach((d: any) => reportText += `${d.id},"${d.name}",${Math.round(d.sales)}\n`);
     reportText += '\n';
 
