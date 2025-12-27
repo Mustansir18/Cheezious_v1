@@ -56,9 +56,24 @@ function CategoryForm({ category, onSave }: { category?: MenuCategory; onSave: (
   const [id, setId] = useState('');
   const [name, setName] = useState(category?.name || '');
   const [icon, setIcon] = useState(category?.icon || 'Package');
+  const { menu } = useMenu();
+  const { toast } = useToast();
+  
+  const validateId = (value: string) => {
+    if (menu.categories.some(c => c.id === value)) {
+        toast({
+            variant: 'destructive',
+            title: 'Duplicate Code',
+            description: `The code "${value}" is already in use by another category.`,
+        });
+        return false;
+    }
+    return true;
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+     if (!category && !validateId(id)) return;
     if (category) {
       onSave({ ...category, name, icon });
     } else {
@@ -76,7 +91,14 @@ function CategoryForm({ category, onSave }: { category?: MenuCategory; onSave: (
       ) : (
         <div>
           <Label htmlFor="category-id">Category Code</Label>
-          <Input id="category-id" value={id} onChange={(e) => setId(e.target.value)} required placeholder="e.g. C-01" />
+          <Input 
+            id="category-id" 
+            value={id} 
+            onChange={(e) => setId(e.target.value)} 
+            onBlur={(e) => validateId(e.target.value)}
+            required 
+            placeholder="e.g. C-01" 
+          />
         </div>
       )}
       <div>
