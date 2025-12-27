@@ -122,7 +122,7 @@ function DealForm({
             value={id} 
             onChange={(e) => { setId(e.target.value); setIsIdInvalid(false); }} 
             onBlur={(e) => validateId(e.target.value)}
-            required placeholder="e.g. D-001" 
+            required placeholder="e.g. D-00001" 
           />
         </div>
       )}

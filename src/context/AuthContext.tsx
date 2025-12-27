@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
@@ -22,32 +23,32 @@ interface AuthContextType {
 // Create the context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const defaultBranchId = 'j3-johar-town-lahore';
+const defaultBranchId = 'B-00001';
 
 // --- Hardcoded Default Users ---
 const initialUsers: User[] = [
     {
-        id: 'root-user',
+        id: 'CH-00001',
         username: 'root',
         password: 'Faith123$$',
         role: 'root',
     },
     {
-        id: 'admin-user',
+        id: 'CH-00002',
         username: 'admin',
         password: 'admin',
         role: 'admin',
         branchId: defaultBranchId,
     },
     {
-        id: 'cashier-user',
+        id: 'CH-00003',
         username: 'cashier',
         password: 'cashier',
         role: 'cashier',
         branchId: defaultBranchId,
     },
     {
-        id: 'marketing-user',
+        id: 'CH-00004',
         username: 'markeeting',
         password: 'markeeting',
         role: 'marketing',

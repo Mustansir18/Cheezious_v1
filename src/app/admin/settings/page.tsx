@@ -1,6 +1,5 @@
 
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -70,7 +69,7 @@ function RoleForm({
       ) : (
         <div>
           <Label htmlFor="role-id">Role Code</Label>
-          <Input id="role-id" value={id} onChange={(e) => setId(e.target.value)} required placeholder="e.g. R-001" />
+          <Input id="role-id" value={id} onChange={(e) => setId(e.target.value)} required placeholder="e.g. R-00001" />
         </div>
       )}
       <div>

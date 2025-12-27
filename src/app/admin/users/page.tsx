@@ -86,7 +86,7 @@ function UserForm({
       ) : (
          <div>
           <Label htmlFor="user-id">User Code</Label>
-          <Input id="user-id" value={id} onChange={(e) => setId(e.target.value)} required placeholder="e.g. U-001" />
+          <Input id="user-id" value={id} onChange={(e) => setId(e.target.value)} required placeholder="e.g. CH-00001" />
         </div>
       )}
       <div>

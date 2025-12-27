@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
@@ -10,12 +11,12 @@ import { ALL_PERMISSIONS } from '@/config/permissions';
 
 const defaultRoles: Role[] = [
     {
-        id: "root",
+        id: "R-00001",
         name: "Root",
         permissions: ["admin:*"]
     },
     {
-        id: "admin",
+        id: "R-00002",
         name: "Branch Admin",
         permissions: [
             "/admin",
@@ -24,14 +25,14 @@ const defaultRoles: Role[] = [
         ]
     },
     {
-        id: "cashier",
+        id: "R-00003",
         name: "Cashier",
         permissions: [
             "/cashier"
         ]
     },
     {
-        id: "marketing",
+        id: "R-00004",
         name: "Marketing",
         permissions: [
             "/marketing/reporting",
@@ -83,27 +84,27 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 const SETTINGS_STORAGE_KEY = 'cheeziousSettings';
 
 const defaultPaymentMethods: PaymentMethod[] = [
-    { id: 'cash', name: 'Cash', taxRate: 0.16 },
-    { id: 'card', name: 'Credit/Debit Card', taxRate: 0.05 }
+    { id: 'PM-00001', name: 'Cash', taxRate: 0.16 },
+    { id: 'PM-00002', name: 'Credit/Debit Card', taxRate: 0.05 }
 ];
 
 const initialBranches: Branch[] = [
-    { id: 'j3-johar-town-lahore', name: 'CHZ J3, JOHAR TOWN LAHORE', dineInEnabled: true, takeAwayEnabled: true, orderPrefix: 'G3' }
+    { id: 'B-00001', name: 'CHZ J3, JOHAR TOWN LAHORE', dineInEnabled: true, takeAwayEnabled: true, orderPrefix: 'G3' }
 ];
 
 const floorsData: { id: string, name: string, prefix: string }[] = [
-    { id: 'floor-basement', name: 'Basement', prefix: 'B' },
-    { id: 'floor-ground', name: 'Ground', prefix: 'G' },
-    { id: 'floor-first', name: 'First', prefix: 'F' },
-    { id: 'floor-second', name: 'Second', prefix: 'S' },
-    { id: 'floor-rooftop', name: 'Roof Top', prefix: 'R' }
+    { id: 'F-00001', name: 'Basement', prefix: 'B' },
+    { id: 'F-00002', name: 'Ground', prefix: 'G' },
+    { id: 'F-00003', name: 'First', prefix: 'F' },
+    { id: 'F-00004', name: 'Second', prefix: 'S' },
+    { id: 'F-00005', name: 'Roof Top', prefix: 'R' }
 ];
 
 const initialFloors: Floor[] = floorsData.map(({ id, name }) => ({ id, name }));
 
 const initialTables: Table[] = floorsData.flatMap(floor => 
     Array.from({ length: 10 }, (_, i) => ({
-        id: `table-${floor.prefix.toLowerCase()}-${i + 1}`,
+        id: `T-${floor.prefix.toLowerCase()}-${i + 1}`,
         name: `${floor.prefix}-${i + 1}`,
         floorId: floor.id,
     }))
@@ -340,7 +341,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   }, [logActivity, user]);
 
   const deleteRole = useCallback((roleId: UserRole) => {
-    if (['root', 'admin', 'cashier', 'marketing'].includes(roleId)) {
+    if (['R-00001', 'R-00002', 'R-00003', 'R-00004'].includes(roleId)) {
         toast({ variant: 'destructive', title: 'Error', description: 'Cannot delete a default system role.' });
         return;
     }

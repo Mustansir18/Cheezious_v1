@@ -104,7 +104,7 @@ function CategoryForm({ category, onSave }: { category?: MenuCategory; onSave: (
             onChange={(e) => { setId(e.target.value); setIsIdInvalid(false); }}
             onBlur={(e) => validateId(e.target.value)}
             required 
-            placeholder="e.g. C-01" 
+            placeholder="e.g. C-00001" 
           />
         </div>
       )}
@@ -203,7 +203,7 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
             onChange={(e) => { setId(e.target.value); setIsIdInvalid(false); }}
             onBlur={(e) => validateId(e.target.value)}
             required 
-            placeholder="e.g. P-001" 
+            placeholder="e.g. I-00001" 
           />
         </div>
       )}
@@ -292,7 +292,7 @@ function AddonForm({ addon, onSave }: { addon?: Addon; onSave: (addon: Omit<Addo
             ) : (
               <div>
                 <Label htmlFor="addon-id">Add-on Code</Label>
-                <Input id="addon-id" value={id} onChange={(e) => setId(e.target.value)} required placeholder="e.g. A-001" />
+                <Input id="addon-id" value={id} onChange={(e) => setId(e.target.value)} required placeholder="e.g. A-00001" />
               </div>
             )}
             <div><Label htmlFor="addon-name">Add-on Name</Label><Input id="addon-name" value={name} onChange={e => setName(e.target.value)} required /></div>
