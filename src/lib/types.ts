@@ -1,4 +1,5 @@
 
+
 import { z } from 'zod';
 
 export type Branch = {
@@ -148,6 +149,15 @@ export type ActivityLog = {
     message: string;
     category: ActivityLogCategory;
 };
+
+// --- Rating Type ---
+export type Rating = {
+    id: string;
+    timestamp: string; // ISO string
+    rating: number; // 1-5
+    comment: string;
+};
+
 
 // --- Types for External System Sync ---
 

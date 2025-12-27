@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Package, Settings, Users, Megaphone, ShoppingCart, QrCode, Monitor, ClipboardList } from 'lucide-react';
+import { Package, Settings, Users, Megaphone, ShoppingCart, QrCode, Monitor, ClipboardList, Star } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useEffect } from 'react';
@@ -70,12 +70,12 @@ export default function AdminDashboardPage() {
       icon: QrCode,
       role: ['root'],
     },
-     {
-      title: 'Activity Log',
-      description: 'A record of all actions taken.',
-      href: '/admin/activity-log',
-      icon: ClipboardList,
-      role: ['root'],
+    {
+        title: 'Customer Feedback',
+        description: 'View customer ratings and comments.',
+        href: '/admin/feedback',
+        icon: Star,
+        role: ['root'],
     },
     {
       title: 'User Management',

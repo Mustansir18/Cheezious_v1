@@ -8,6 +8,7 @@ import { MenuProvider } from '@/context/MenuContext';
 import { OrderProvider } from '@/context/OrderContext';
 import { SettingsProvider } from '@/context/SettingsContext';
 import { ActivityLogProvider } from '@/context/ActivityLogContext';
+import { RatingProvider } from '@/context/RatingContext';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -17,7 +18,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <DealsProvider>
             <MenuProvider>
               <OrderProvider>
-                <CartProvider>{children}</CartProvider>
+                <RatingProvider>
+                  <CartProvider>{children}</CartProvider>
+                </RatingProvider>
               </OrderProvider>
             </MenuProvider>
           </DealsProvider>

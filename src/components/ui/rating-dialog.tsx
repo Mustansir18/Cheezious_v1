@@ -12,10 +12,20 @@ import {
   DialogFooter,
   DialogClose,
   DialogDescription,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { useRating } from '@/context/RatingContext';
+
+const ratingDescriptions: { [key: number]: string } = {
+  1: "Poor",
+  2: "Fair",
+  3: "Average",
+  4: "Good",
+  5: "Excellent!",
+};
 
 export function RatingDialog() {
   const [rating, setRating] = useState(0);
@@ -23,14 +33,23 @@ export function RatingDialog() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [comments, setComments] = useState('');
   const { toast } = useToast();
+  const { addRating } = useRating();
 
   const handleRatingClick = (newRating: number) => {
     setRating(newRating);
-    setIsDialogOpen(true);
+    setHoverRating(0); // Clear hover state when a rating is clicked
   };
 
   const handleSubmit = () => {
-    console.log('Feedback submitted:', { rating, comments });
+    if (rating === 0) {
+      toast({
+        variant: "destructive",
+        title: "No Rating Selected",
+        description: "Please select a star rating before submitting.",
+      });
+      return;
+    }
+    addRating({ rating, comment: comments });
     toast({
       title: 'Feedback Submitted!',
       description: 'Thank you for helping us improve.',
@@ -44,18 +63,45 @@ export function RatingDialog() {
   return (
     <>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <Button className="rounded-full h-14 w-auto px-6 shadow-lg animate-pulse">
-            <Star className="mr-2 h-5 w-5" /> Rate Us
-        </Button>
+        <DialogTrigger asChild>
+            <div className="fixed bottom-6 right-6 z-50">
+                <Button className="rounded-full h-14 w-auto px-6 shadow-lg animate-pulse">
+                    <Star className="mr-2 h-5 w-5" /> Rate Us
+                </Button>
+            </div>
+        </DialogTrigger>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Thank you for your rating!</DialogTitle>
+            <DialogTitle>How was your experience?</DialogTitle>
             <DialogDescription>
-              You gave us {rating} out of 5 stars. Please leave any comments or suggestions below.
+              Your feedback helps us improve.
             </DialogDescription>
           </DialogHeader>
+          
+          <div className="py-4">
+              <div 
+                className="flex items-center justify-center gap-2"
+                onMouseLeave={() => setHoverRating(0)}
+              >
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={cn(
+                      'h-10 w-10 cursor-pointer transition-all',
+                      (hoverRating || rating) >= star ? 'text-yellow-400 fill-yellow-400 scale-110' : 'text-muted-foreground/30'
+                    )}
+                    onClick={() => handleRatingClick(star)}
+                    onMouseEnter={() => setHoverRating(star)}
+                  />
+                ))}
+              </div>
+              <p className="text-center text-sm font-medium text-muted-foreground mt-2 min-h-[20px]">
+                {ratingDescriptions[hoverRating] || ratingDescriptions[rating] || 'Select a rating'}
+              </p>
+          </div>
+
           <Textarea
-            placeholder="Tell us how we can improve..."
+            placeholder="Tell us more about your experience (optional)..."
             value={comments}
             onChange={(e) => setComments(e.target.value)}
             className="min-h-[120px]"
@@ -68,23 +114,6 @@ export function RatingDialog() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
-      <div className="fixed bottom-6 right-6 z-50">
-        <div className="bg-background/80 backdrop-blur-sm border rounded-full p-2 flex items-center gap-1 shadow-lg">
-            {[1, 2, 3, 4, 5].map((star) => (
-            <Star
-                key={star}
-                className={cn(
-                'h-8 w-8 cursor-pointer transition-colors',
-                (hoverRating || rating) >= star ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground/50'
-                )}
-                onClick={() => handleRatingClick(star)}
-                onMouseEnter={() => setHoverRating(star)}
-                onMouseLeave={() => setHoverRating(0)}
-            />
-            ))}
-        </div>
-      </div>
     </>
   );
 }
