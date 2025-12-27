@@ -11,12 +11,12 @@ import { ALL_PERMISSIONS } from '@/config/permissions';
 
 const defaultRoles: Role[] = [
     {
-        id: "R-00001",
+        id: "root",
         name: "Root",
         permissions: ["admin:*"]
     },
     {
-        id: "R-00002",
+        id: "admin",
         name: "Branch Admin",
         permissions: [
             "/admin",
@@ -25,17 +25,18 @@ const defaultRoles: Role[] = [
         ]
     },
     {
-        id: "R-00003",
+        id: "cashier",
         name: "Cashier",
         permissions: [
             "/cashier"
         ]
     },
     {
-        id: "R-00004",
+        id: "marketing",
         name: "Marketing",
         permissions: [
             "/marketing/reporting",
+            "/marketing/hourly-report",
             "/marketing/feedback",
             "/marketing/target"
         ]
@@ -341,7 +342,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   }, [logActivity, user]);
 
   const deleteRole = useCallback((roleId: UserRole) => {
-    if (['R-00001', 'R-00002', 'R-00003', 'R-00004'].includes(roleId)) {
+    if (['root', 'admin', 'cashier', 'marketing'].includes(roleId)) {
         toast({ variant: 'destructive', title: 'Error', description: 'Cannot delete a default system role.' });
         return;
     }

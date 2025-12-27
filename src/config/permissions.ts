@@ -66,6 +66,11 @@ export const ALL_PERMISSIONS = [
         description: 'Access to sales reports for marketing analysis.'
     },
     {
+        id: '/marketing/hourly-report',
+        name: 'Marketing - Hourly Report',
+        description: 'Generate sales reports for specific hours.'
+    },
+    {
         id: '/marketing/feedback',
         name: 'Marketing - Customer Feedback',
         description: 'Access to customer feedback for marketing insights.'
