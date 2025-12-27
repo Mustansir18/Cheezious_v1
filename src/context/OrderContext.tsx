@@ -99,7 +99,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
             ? { 
                 ...order, 
                 status, 
-                completionDate: (status === 'Ready' || status === 'Completed' || status === 'Cancelled') && !order.completionDate ? new Date().toISOString() : order.completionDate,
+                completionDate: (status === 'Completed' || status === 'Cancelled') && !order.completionDate ? new Date().toISOString() : order.completionDate,
                 ...(status === 'Cancelled' && { cancellationReason: reason }) 
               }
             : order

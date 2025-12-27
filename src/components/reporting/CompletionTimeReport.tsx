@@ -21,7 +21,7 @@ interface CompletionTimeReportProps {
 export function CompletionTimeReport({ data, onPrint }: CompletionTimeReportProps) {
   const { avgCompletionTime, timeDistribution } = useMemo(() => {
     const completedOrders = data.orders.filter(
-      (order) => order.status === 'Completed' && order.completionDate
+      (order) => order.completionDate
     );
 
     if (completedOrders.length === 0) {
