@@ -78,7 +78,7 @@ export default function Home() {
   return (
     <>
     <Header />
-    <main className="relative flex min-h-screen flex-col items-center justify-center p-4">
+    <main className="relative flex h-[calc(100vh-4rem)] flex-col items-center justify-center p-4 overflow-hidden">
         
         <div className="flex flex-col items-center justify-center text-center space-y-6">
             <Pizza className="h-24 w-24 text-primary animate-icon-blink" />
@@ -109,12 +109,12 @@ export default function Home() {
              )}
         </div>
         
-        <div className="w-full max-w-6xl mt-12 px-14">
+        <div className="absolute bottom-8 w-full max-w-6xl px-14">
             <h2 className="text-2xl font-bold font-headline mb-4 text-center">Today's Hot Deals</h2>
             <DealsCarousel />
         </div>
 
-        <div className="mt-8">
+        <div className="absolute bottom-8 right-8">
             <RatingDialog />
         </div>
     </main>
