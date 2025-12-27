@@ -7,7 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader, Star, Trash2, Calendar as CalendarIcon } from "lucide-react";
-import { format, subDays } from 'date-fns';
+import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
@@ -16,6 +16,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
 import { cn } from "@/lib/utils";
+import type { DateRange } from "react-day-picker";
+
 
 const StarRating = ({ rating }: { rating: number }) => (
     <div className="flex">
@@ -28,40 +30,27 @@ const StarRating = ({ rating }: { rating: number }) => (
     </div>
 );
 
-function getBusinessDay(date: Date, start: string, end: string): { start: Date, end: Date } {
-  const [startHour, startMinute] = start.split(':').map(Number);
-  const [endHour, endMinute] = end.split(':').map(Number);
-
-  let businessDayStart = new Date(date);
-  businessDayStart.setHours(startHour, startMinute, 0, 0);
-
-  let businessDayEnd = new Date(date);
-  if (startHour > endHour) { // Business day crosses midnight
-    businessDayEnd.setDate(businessDayEnd.getDate() + 1);
-  }
-  businessDayEnd.setHours(endHour, endMinute, 59, 999);
-
-  return { start: businessDayStart, end: businessDayEnd };
-}
-
 
 export default function FeedbackPage() {
     const { ratings, isLoading: isRatingsLoading, clearRatings } = useRating();
-    const { settings, isLoading: isSettingsLoading } = useSettings();
+    const { isLoading: isSettingsLoading } = useSettings();
     const { user } = useAuth();
-    const [date, setDate] = useState<Date | undefined>(new Date());
+    const [dateRange, setDateRange] = useState<DateRange | undefined>({
+      from: new Date(),
+      to: new Date(),
+    });
 
     const filteredRatings = useMemo(() => {
-        if (!date) return ratings;
-        
-        const { start: businessDayStart, end: businessDayEnd } = getBusinessDay(date, settings.businessDayStart, settings.businessDayEnd);
+        if (!dateRange || !dateRange.from) return ratings;
+
+        const fromDate = startOfDay(dateRange.from);
+        const toDate = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
 
         return ratings.filter(rating => {
             const ratingDate = new Date(rating.timestamp);
-            return ratingDate >= businessDayStart && ratingDate <= businessDayEnd;
+            return ratingDate >= fromDate && ratingDate <= toDate;
         });
-
-    }, [ratings, date, settings.businessDayStart, settings.businessDayEnd]);
+    }, [ratings, dateRange]);
 
     const ratingSummary = useMemo(() => {
         if (filteredRatings.length === 0) {
@@ -102,6 +91,12 @@ export default function FeedbackPage() {
             </div>
         );
     }
+    
+    const dateDisplay = dateRange?.from
+      ? dateRange.to
+        ? `${format(dateRange.from, "LLL dd, y")} - ${format(dateRange.to, "LLL dd, y")}`
+        : format(dateRange.from, "LLL dd, y")
+      : "Pick a date range";
 
     return (
         <div className="container mx-auto p-4 lg:p-8 space-y-8">
@@ -117,20 +112,22 @@ export default function FeedbackPage() {
                             id="date"
                             variant={"outline"}
                             className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !date && "text-muted-foreground"
+                            "w-full sm:w-[300px] justify-start text-left font-normal",
+                            !dateRange && "text-muted-foreground"
                             )}
                         >
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {date ? format(date, "PPP") : <span>Pick a date</span>}
+                            <span>{dateDisplay}</span>
                         </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="end">
                         <Calendar
-                            mode="single"
-                            selected={date}
-                            onSelect={setDate}
                             initialFocus
+                            mode="range"
+                            defaultMonth={dateRange?.from}
+                            selected={dateRange}
+                            onSelect={setDateRange}
+                            numberOfMonths={2}
                             disabled={(d) => d > new Date() || d < subDays(new Date(), 90)}
                         />
                         </PopoverContent>
@@ -153,7 +150,7 @@ export default function FeedbackPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Feedback Summary</CardTitle>
-                    <CardDescription>An overview of all ratings received for the selected day.</CardDescription>
+                    <CardDescription>An overview of all ratings received for the selected period.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     {filteredRatings.length > 0 ? (
@@ -198,7 +195,7 @@ export default function FeedbackPage() {
                         </div>
                     ) : (
                          <div className="text-center py-12">
-                            <p className="text-muted-foreground">No feedback has been submitted for the selected day.</p>
+                            <p className="text-muted-foreground">No feedback has been submitted for the selected period.</p>
                         </div>
                     )}
                 </CardContent>
@@ -206,7 +203,7 @@ export default function FeedbackPage() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>All Ratings for {date ? format(date, "PPP") : 'All Time'}</CardTitle>
+                    <CardTitle>All Ratings for {dateDisplay}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <ScrollArea className="h-[50vh]">
@@ -231,7 +228,7 @@ export default function FeedbackPage() {
                     </ScrollArea>
                     {filteredRatings.length === 0 && (
                         <div className="text-center py-12">
-                            <p className="text-muted-foreground">No feedback to display for the selected day.</p>
+                            <p className="text-muted-foreground">No feedback to display for the selected period.</p>
                         </div>
                     )}
                 </CardContent>
