@@ -272,14 +272,14 @@ export default function MenuManagementPage() {
         <Card>
             <CardHeader className="flex-row justify-between items-center">
                 <div><CardTitle>Menu Categories</CardTitle><CardDescription>High-level groups for your menu items.</CardDescription></div>
-                <Dialog open={isCategoryOpen} onOpenChange={setCategoryOpen}><DialogTrigger asChild><Button onClick={() => setEditingCategory(undefined)}><PlusCircle/> Add Category</Button></DialogTrigger>
+                <Dialog open={isCategoryOpen} onOpenChange={setCategoryOpen}><DialogTrigger asChild><Button onClick={() => { setEditingCategory(undefined); setCategoryOpen(true); }}><PlusCircle className="mr-2 h-4 w-4" /> Add Category</Button></DialogTrigger>
                     <DialogContent><DialogHeader><DialogTitle>{editingCategory ? 'Edit' : 'Add'} Category</DialogTitle></DialogHeader><CategoryForm category={editingCategory} onSave={handleSaveCategory}/></DialogContent>
                 </Dialog>
             </CardHeader>
             <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Code</TableHead><TableHead>Icon</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
                 <TableBody>{menu.categories.map(cat => (<TableRow key={cat.id}><TableCell>{cat.name}</TableCell><TableCell className="font-mono text-xs">{cat.id}</TableCell><TableCell className="font-mono">{cat.icon}</TableCell>
                     <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" onClick={() => { setEditingCategory(cat); setCategoryOpen(true); }}><Edit/></Button>
+                        <Button variant="ghost" size="icon" onClick={() => { setEditingCategory(cat); setCategoryOpen(true); }}><Edit className="h-4 w-4" /></Button>
                         <DeleteConfirmationDialog
                             title={`Delete Category "${cat.name}"?`}
                             description={<>This will delete the category and all associated items. This action is permanent.</>}
@@ -294,14 +294,14 @@ export default function MenuManagementPage() {
         <Card>
             <CardHeader className="flex-row justify-between items-center">
                 <div><CardTitle>Add-ons Library</CardTitle><CardDescription>All available add-ons for your menu items.</CardDescription></div>
-                <Dialog open={isAddonOpen} onOpenChange={setAddonOpen}><DialogTrigger asChild><Button onClick={() => setEditingAddon(undefined)}><PlusCircle/> Add Add-on</Button></DialogTrigger>
+                <Dialog open={isAddonOpen} onOpenChange={setAddonOpen}><DialogTrigger asChild><Button onClick={() => { setEditingAddon(undefined); setAddonOpen(true); }}><PlusCircle className="mr-2 h-4 w-4" /> Add Add-on</Button></DialogTrigger>
                     <DialogContent><DialogHeader><DialogTitle>{editingAddon ? 'Edit' : 'Add'} Add-on</DialogTitle></DialogHeader><AddonForm addon={editingAddon} onSave={handleSaveAddon}/></DialogContent>
                 </Dialog>
             </CardHeader>
             <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Code</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
                 <TableBody>{menu.addons.map(addon => (<TableRow key={addon.id}><TableCell>{addon.name}</TableCell><TableCell className="font-mono text-xs">{addon.id}</TableCell><TableCell className="text-right">RS {Math.round(addon.price)}</TableCell>
                     <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" onClick={() => { setEditingAddon(addon); setAddonOpen(true); }}><Edit/></Button>
+                        <Button variant="ghost" size="icon" onClick={() => { setEditingAddon(addon); setAddonOpen(true); }}><Edit className="h-4 w-4" /></Button>
                         <DeleteConfirmationDialog
                             title={`Delete Add-on "${addon.name}"?`}
                             description={<>This will permanently delete the add-on <strong>{addon.name}</strong>.</>}
@@ -316,14 +316,14 @@ export default function MenuManagementPage() {
         <Card>
             <CardHeader className="flex-row justify-between items-center">
                 <div><CardTitle>Menu Items</CardTitle><CardDescription>The main dishes and products you offer.</CardDescription></div>
-                <Dialog open={isItemOpen} onOpenChange={setItemOpen}><DialogTrigger asChild><Button onClick={() => setEditingItem(undefined)}><PlusCircle/> Add Item</Button></DialogTrigger>
+                <Dialog open={isItemOpen} onOpenChange={setItemOpen}><DialogTrigger asChild><Button onClick={() => { setEditingItem(undefined); setItemOpen(true); }}><PlusCircle className="mr-2 h-4 w-4" /> Add Item</Button></DialogTrigger>
                     <DialogContent className="max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{editingItem ? 'Edit' : 'Add'} Item</DialogTitle></DialogHeader><ItemForm item={editingItem} onSave={handleSaveItem}/></DialogContent>
                 </Dialog>
             </CardHeader>
             <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Code</TableHead><TableHead>Category</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
                 <TableBody>{menu.items.map(item => (<TableRow key={item.id}><TableCell>{item.name}</TableCell><TableCell className="font-mono text-xs">{item.id}</TableCell><TableCell>{menu.categories.find(c => c.id === item.categoryId)?.name || 'N/A'}</TableCell><TableCell className="text-right">RS {Math.round(item.price)}</TableCell>
                     <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" onClick={() => { setEditingItem(item); setItemOpen(true); }}><Edit/></Button>
+                        <Button variant="ghost" size="icon" onClick={() => { setEditingItem(item); setItemOpen(true); }}><Edit className="h-4 w-4" /></Button>
                         <DeleteConfirmationDialog
                             title={`Delete Item "${item.name}"?`}
                             description={<>This will permanently delete the item <strong>{item.name}</strong>.</>}
