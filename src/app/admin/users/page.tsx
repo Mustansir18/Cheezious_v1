@@ -37,7 +37,6 @@ function UserForm({
   const [branchId, setBranchId] = useState<string | undefined>(user?.branchId);
   const { settings } = useSettings();
 
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (user) { // Editing existing user
@@ -57,13 +56,13 @@ function UserForm({
       </div>
       <div>
         <Label htmlFor="password">Password</Label>
-        <Input 
-          id="password" 
-          type="password" 
-          value={password} 
-          onChange={(e) => setPassword(e.target.value)} 
+        <Input
+          id="password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
           placeholder={user ? "Leave blank to keep current password" : ""}
-          required={!user} 
+          required={!user}
         />
       </div>
        <div>
@@ -120,7 +119,7 @@ export default function UserManagementPage() {
         setDialogOpen(false);
         setEditingUser(undefined);
     };
-    
+
     // Filter users: root user sees all, branch admin sees only their branch's users
     const displayableUsers = users.filter(u => {
         if (user?.role === 'root') {
@@ -140,7 +139,7 @@ export default function UserManagementPage() {
       setEditingUser(undefined);
       setDialogOpen(true);
     }
-    
+
     const openEditDialog = (userToEdit: UserType) => {
         setEditingUser(userToEdit);
         setDialogOpen(true);
@@ -216,5 +215,3 @@ export default function UserManagementPage() {
         </div>
     );
 }
-
-    
