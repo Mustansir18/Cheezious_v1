@@ -24,17 +24,28 @@ import { Printer, FileDown } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { exportTopItemsAs } from '@/lib/exporter';
 import { useSettings } from '@/context/SettingsContext';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 
 interface TopSellingItemsProps {
   data: ItemSale[];
   onPrint: () => void;
+  limit: number;
+  onLimitChange: (limit: number) => void;
 }
 
-export function TopSellingItems({ data, onPrint }: TopSellingItemsProps) {
+export function TopSellingItems({ data, onPrint, limit, onLimitChange }: TopSellingItemsProps) {
   const { settings } = useSettings();
   const title = "Top Selling Items";
   const defaultBranch = settings.branches.find(b => b.id === settings.defaultBranchId) || settings.branches[0];
+
+  const limitedData = limit > 0 ? data.slice(0, limit) : data;
 
   return (
     <Card className="h-full">
@@ -46,9 +57,20 @@ export function TopSellingItems({ data, onPrint }: TopSellingItemsProps) {
             </CardDescription>
         </div>
          <div className="flex items-center gap-2 print-hidden">
+            <Select value={String(limit)} onValueChange={(value) => onLimitChange(Number(value))}>
+                <SelectTrigger className="w-[120px]">
+                    <SelectValue placeholder="Show..." />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="5">Top 5</SelectItem>
+                    <SelectItem value="10">Top 10</SelectItem>
+                    <SelectItem value="20">Top 20</SelectItem>
+                    <SelectItem value="0">Show All</SelectItem>
+                </SelectContent>
+            </Select>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" onClick={() => exportTopItemsAs('csv', data, title)}>
+                    <Button variant="ghost" size="icon" onClick={() => exportTopItemsAs('csv', limitedData, title)}>
                         <FileDown className="h-4 w-4"/>
                     </Button>
                 </TooltipTrigger>
@@ -58,7 +80,7 @@ export function TopSellingItems({ data, onPrint }: TopSellingItemsProps) {
             </Tooltip>
             <Tooltip>
                 <TooltipTrigger asChild>
-                     <Button variant="ghost" size="icon" onClick={() => exportTopItemsAs('pdf', data, title, { companyName: settings.companyName, branchName: defaultBranch.name })}>
+                     <Button variant="ghost" size="icon" onClick={() => exportTopItemsAs('pdf', limitedData, title, { companyName: settings.companyName, branchName: defaultBranch.name })}>
                         <FileDown className="h-4 w-4 text-red-500"/>
                     </Button>
                 </TooltipTrigger>
@@ -83,7 +105,7 @@ export function TopSellingItems({ data, onPrint }: TopSellingItemsProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.map((item) => (
+              {limitedData.map((item) => (
                 <TableRow key={item.name}>
                   <TableCell className="font-medium">{item.name}</TableCell>
                   <TableCell className="font-mono text-xs">{item.id}</TableCell>

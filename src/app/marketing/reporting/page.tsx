@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useOrders } from "@/context/OrderContext";
@@ -73,6 +72,7 @@ export default function ReportingPage() {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
   const [selectedOrderType, setSelectedOrderType] = useState<string | null>(null);
   const [selectedAdjustmentType, setSelectedAdjustmentType] = useState<string | null>(null);
+  const [topItemsLimit, setTopItemsLimit] = useState(5);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: new Date(new Date().setHours(0, 0, 0, 0)),
     to: new Date(),
@@ -510,7 +510,12 @@ export default function ReportingPage() {
               </div>
               <div className="lg:col-span-2 grid grid-cols-1 gap-8">
                 <div id="top-items-report">
-                  <TopSellingItems data={topSellingItems} onPrint={() => handlePrint('top-items-report')} />
+                  <TopSellingItems 
+                    data={topSellingItems} 
+                    onPrint={() => handlePrint('top-items-report')} 
+                    limit={topItemsLimit}
+                    onLimitChange={setTopItemsLimit}
+                  />
                 </div>
                 <div id="top-deals-report">
                   <TopSellingDeals data={topSellingDeals} onPrint={() => handlePrint('top-deals-report')} />
@@ -526,5 +531,3 @@ export default function ReportingPage() {
     </TooltipProvider>
   );
 }
-
-    
