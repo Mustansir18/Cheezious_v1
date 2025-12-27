@@ -12,8 +12,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { format, startOfDay, endOfDay, setHours, startOfHour, endOfHour } from 'date-fns';
-import { Calendar as CalendarIcon, Printer, DollarSign, ShoppingCart, FileText, FileDown, X } from 'lucide-react';
+import { format, startOfHour, endOfHour, setHours } from 'date-fns';
+import { Calendar as CalendarIcon, Printer, DollarSign, ShoppingCart, FileText, FileDown } from 'lucide-react';
 import type { Order } from '@/lib/types';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -32,8 +32,8 @@ export default function HourlyReportPage() {
 
     // Filters
     const [orderNumberFilter, setOrderNumberFilter] = useState('');
-    const [orderTypeFilter, setOrderTypeFilter] = useState('');
-    const [paymentMethodFilter, setPaymentMethodFilter] = useState('');
+    const [orderTypeFilter, setOrderTypeFilter] = useState('all');
+    const [paymentMethodFilter, setPaymentMethodFilter] = useState('all');
 
     const reportData = useMemo(() => {
         if (!date || !startHour || !endHour) return null;
@@ -48,8 +48,8 @@ export default function HourlyReportPage() {
 
         const filteredOrders = timeFilteredOrders.filter(order => {
             const orderNumberMatch = !orderNumberFilter || order.orderNumber.toLowerCase().includes(orderNumberFilter.toLowerCase());
-            const orderTypeMatch = !orderTypeFilter || order.orderType === orderTypeFilter;
-            const paymentMethodMatch = !paymentMethodFilter || order.paymentMethod === paymentMethodFilter;
+            const orderTypeMatch = orderTypeFilter === 'all' || order.orderType === orderTypeFilter;
+            const paymentMethodMatch = paymentMethodFilter === 'all' || order.paymentMethod === paymentMethodFilter;
             return orderNumberMatch && orderTypeMatch && paymentMethodMatch;
         });
         
@@ -85,7 +85,7 @@ export default function HourlyReportPage() {
         doc.text(`Time: ${reportData.reportHours}`, 14, 54);
 
         // Summary
-        doc.autoTable({
+        (doc as any).autoTable({
             startY: 65,
             head: [['Metric', 'Value']],
             body: [
@@ -98,7 +98,7 @@ export default function HourlyReportPage() {
         const finalY = (doc as any).autoTable.previous.finalY;
 
         // Order Details
-        doc.autoTable({
+        (doc as any).autoTable({
             startY: finalY + 10,
             head: [['Time', 'Order #', 'Type', 'Amount (RS)']],
             body: reportData.orders.map(order => [
@@ -130,6 +130,18 @@ export default function HourlyReportPage() {
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         saveAs(blob, `hourly-report-${format(reportData.reportDate, 'yyyy-MM-dd')}-${startHour}-${endHour}.csv`);
     }, [reportData, startHour, endHour]);
+
+    const handlePrint = () => {
+        const reportElement = document.getElementById('printable-report');
+        if (reportElement) {
+            const printContents = reportElement.innerHTML;
+            const originalContents = document.body.innerHTML;
+            document.body.innerHTML = printContents;
+            window.print();
+            document.body.innerHTML = originalContents;
+            window.location.reload();
+        }
+    };
     
     return (
         <div className="container mx-auto p-4 lg:p-8">
@@ -203,6 +215,9 @@ export default function HourlyReportPage() {
                                 <Button onClick={generatePdf} variant="outline">
                                     <FileText className="mr-2 h-4 w-4" /> PDF
                                 </Button>
+                                <Button onClick={handlePrint} variant="outline">
+                                    <Printer className="mr-2 h-4 w-4" /> Print
+                                </Button>
                             </div>
                         </div>
                     </CardHeader>
@@ -246,7 +261,7 @@ export default function HourlyReportPage() {
                                                 <SelectValue placeholder="All Types" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="">All Types</SelectItem>
+                                                <SelectItem value="all">All Types</SelectItem>
                                                 <SelectItem value="Dine-In">Dine-In</SelectItem>
                                                 <SelectItem value="Take-Away">Take-Away</SelectItem>
                                             </SelectContent>
@@ -258,7 +273,7 @@ export default function HourlyReportPage() {
                                                 <SelectValue placeholder="All Payment Methods" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="">All Methods</SelectItem>
+                                                <SelectItem value="all">All Methods</SelectItem>
                                                 {settings.paymentMethods.map(pm => (
                                                     <SelectItem key={pm.id} value={pm.name}>{pm.name}</SelectItem>
                                                 ))}
