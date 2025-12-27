@@ -5,11 +5,14 @@ import { useMemo } from 'react';
 import type { Order } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Printer, FileDown, Clock, TrendingUp, TrendingDown } from 'lucide-react';
+import { Printer, FileDown, Clock, TrendingUp, TrendingDown, FileText } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { exportCompletionTimeAs } from '@/lib/exporter';
+import { useSettings } from '@/context/SettingsContext';
 
 export interface CompletionTimeData {
   orders: Order[];
+  filteredOrders: Order[]; // This might be used if filtering is applied
 }
 
 interface CompletionTimeReportProps {
@@ -18,28 +21,32 @@ interface CompletionTimeReportProps {
 }
 
 export function CompletionTimeReport({ data, onPrint }: CompletionTimeReportProps) {
-  const { avgCompletionTime, maxCompletionTime, minCompletionTime } = useMemo(() => {
-    const completedOrders = data.orders.filter(
-      (order) => order.orderDate && order.completionDate
+  const { settings } = useSettings();
+  const title = "Order Completion Time";
+  const defaultBranch = settings.branches.find(b => b.id === settings.defaultBranchId) || settings.branches[0];
+
+  const { completedOrders, avgCompletionTime, maxCompletionTime, minCompletionTime } = useMemo(() => {
+    const ordersToAnalyze = data.filteredOrders.filter(
+      (order) => order.status === 'Completed' && order.orderDate && order.completionDate
     );
 
-    if (completedOrders.length === 0) {
-      return { avgCompletionTime: 0, maxCompletionTime: 0, minCompletionTime: 0 };
+    if (ordersToAnalyze.length === 0) {
+      return { completedOrders: [], avgCompletionTime: 0, maxCompletionTime: 0, minCompletionTime: 0 };
     }
 
-    const completionTimes = completedOrders.map((order) => {
+    const completionTimes = ordersToAnalyze.map((order) => {
       const startTime = new Date(order.orderDate).getTime();
       const endTime = new Date(order.completionDate!).getTime();
       return (endTime - startTime) / (1000 * 60); // in minutes
     });
 
     const totalMinutes = completionTimes.reduce((sum, time) => sum + time, 0);
-    const avgCompletionTime = totalMinutes / completedOrders.length;
+    const avgCompletionTime = totalMinutes / ordersToAnalyze.length;
     const maxCompletionTime = Math.max(...completionTimes);
     const minCompletionTime = Math.min(...completionTimes);
     
-    return { avgCompletionTime, maxCompletionTime, minCompletionTime };
-  }, [data.orders]);
+    return { completedOrders: ordersToAnalyze, avgCompletionTime, maxCompletionTime, minCompletionTime };
+  }, [data.filteredOrders]);
 
   const summaryStats = [
     { title: "Average Time", value: `${avgCompletionTime.toFixed(1)} min`, icon: Clock, color: "text-primary" },
@@ -47,7 +54,12 @@ export function CompletionTimeReport({ data, onPrint }: CompletionTimeReportProp
     { title: "Maximum Time", value: `${maxCompletionTime.toFixed(1)} min`, icon: TrendingUp, color: "text-red-500" },
   ];
 
-  const hasData = avgCompletionTime > 0 || maxCompletionTime > 0 || minCompletionTime > 0;
+  const hasData = completedOrders.length > 0;
+  
+  const handleDownload = (format: 'pdf' | 'csv') => {
+      if (!defaultBranch) return;
+      exportCompletionTimeAs(format, completedOrders, title, { companyName: settings.companyName, branchName: defaultBranch.name });
+  }
 
   return (
     <Card>
@@ -59,12 +71,22 @@ export function CompletionTimeReport({ data, onPrint }: CompletionTimeReportProp
         <div className="flex items-center gap-2 print-hidden">
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" disabled>
+                    <Button variant="ghost" size="icon" disabled={!hasData} onClick={() => handleDownload('csv')}>
                         <FileDown className="h-4 w-4"/>
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                    <p>Download report (coming soon)</p>
+                    <p>Download as CSV</p>
+                </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" disabled={!hasData} onClick={() => handleDownload('pdf')}>
+                        <FileText className="h-4 w-4 text-red-500"/>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>Download as PDF</p>
                 </TooltipContent>
             </Tooltip>
             <Button variant="ghost" size="icon" onClick={onPrint}>

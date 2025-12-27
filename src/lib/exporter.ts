@@ -63,6 +63,35 @@ function arrayToCsv(data: any[], columns: { key: string, label: string }[]): str
 
 // --- Individual Report Generators ---
 
+export const exportCompletionTimeAs = (format: 'pdf' | 'csv', data: Order[], title: string, headerInfo: ReportHeaderInfo) => {
+    const columns = [
+        { key: 'orderNumber', label: 'Order #' },
+        { key: 'orderDate', label: 'Created Time' },
+        { key: 'completionDate', label: 'Completion Time' },
+    ];
+
+    const mappedData = data.map(order => ({
+        orderNumber: order.orderNumber,
+        orderDate: new Date(order.orderDate).toLocaleString(),
+        completionDate: order.completionDate ? new Date(order.completionDate).toLocaleString() : 'N/A',
+    }));
+
+    if (format === 'pdf') {
+        const doc = new jsPDF();
+        addReportHeader(doc, title, headerInfo);
+        doc.autoTable({
+            head: [columns.map(c => c.label)],
+            body: mappedData.map(row => columns.map(col => row[col.key as keyof typeof row])),
+            startY: 55,
+        });
+        doc.save(`${title.toLowerCase().replace(/\s/g, '-')}.pdf`);
+    } else {
+        const csv = arrayToCsv(mappedData, columns);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        saveAs(blob, `${title.toLowerCase().replace(/\s/g, '-')}.csv`);
+    }
+};
+
 export const exportListDataAs = (format: 'pdf' | 'csv', data: any[], columns: { key: string; label: string }[], title: string, headerInfo: ReportHeaderInfo) => {
     if (format === 'pdf') {
         const doc = new jsPDF();
