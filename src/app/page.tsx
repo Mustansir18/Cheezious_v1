@@ -99,7 +99,12 @@ export default function Home() {
                 </div>
              ) : (
                 <div className="py-6">
-                    <Button size="lg" className="px-10 py-6 text-lg font-bold animate-blink" onClick={handleStartOrder}>Start Your Order</Button>
+                    <Button 
+                        onClick={handleStartOrder} 
+                        className="rounded-full h-16 w-auto px-8 text-lg font-bold shadow-lg transition-transform duration-300 hover:scale-105 bg-gradient-to-r from-primary to-amber-400 text-primary-foreground animate-pulse"
+                    >
+                        Start Your Order
+                    </Button>
                 </div>
              )}
         </div>
