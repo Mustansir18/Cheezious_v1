@@ -72,17 +72,6 @@ export default function CashierPage() {
             <p className="text-muted-foreground">Manage running, ready, and completed orders.</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total Completed Sales</CardTitle>
-                    <BarChart className="h-5 w-5 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">
-                        {isLoading ? <Skeleton className="h-8 w-24" /> : `RS ${Math.round(totalSales)}`}
-                    </div>
-                </CardContent>
-            </Card>
             <Dialog>
                 <DialogTrigger asChild>
                     <Button variant="outline" className="w-full">
