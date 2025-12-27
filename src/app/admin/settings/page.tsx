@@ -36,9 +36,10 @@ function RoleForm({
   onClose,
 }: {
   role?: Role;
-  onSave: (role: Omit<Role, 'id'> | Role) => void;
+  onSave: (role: Omit<Role, 'id'> | Role, id?: string) => void;
   onClose: () => void;
 }) {
+  const [id, setId] = useState<UserRole | string>('');
   const [name, setName] = useState(role?.name || '');
   const [permissions, setPermissions] = useState<string[]>(role?.permissions || []);
 
@@ -54,17 +55,22 @@ function RoleForm({
     if (role) {
       onSave({ ...role, ...data });
     } else {
-      const id = name.toLowerCase().replace(/\s+/g, '-') as UserRole;
-      onSave({ id, ...data });
+      onSave({ ...data }, id);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {!role && (
+        <div>
+          <Label htmlFor="role-id">Role Code</Label>
+          <Input id="role-id" value={id} onChange={(e) => setId(e.target.value)} required placeholder="e.g. R-001" />
+        </div>
+      )}
       <div>
         <Label htmlFor="role-name">Role Name</Label>
-        <Input id="role-name" value={name} onChange={(e) => setName(e.target.value)} required disabled={!!role?.id && ['root', 'admin', 'cashier', 'marketing'].includes(role.id)} />
-        {role?.id && ['root', 'admin', 'cashier', 'marketing'].includes(role.id) && <p className="text-xs text-muted-foreground mt-1">Default role names cannot be changed.</p>}
+        <Input id="role-name" value={name} onChange={(e) => setName(e.target.value)} required disabled={!!role?.id && ['root', 'admin', 'cashier', 'marketing'].includes(role.id as string)} />
+        {role?.id && ['root', 'admin', 'cashier', 'marketing'].includes(role.id as string) && <p className="text-xs text-muted-foreground mt-1">Default role names cannot be changed.</p>}
       </div>
       <div>
         <Label>Permissions</Label>
@@ -110,11 +116,11 @@ function RoleManagement() {
         setDialogOpen(false);
     };
 
-    const handleSave = (role: Omit<Role, 'id'> | Role) => {
-        if ('id' in role) {
-            updateRole(role as Role);
-        } else {
-            addRole(role);
+    const handleSave = (roleData: Omit<Role, 'id'> | Role, id?: string) => {
+        if ('id' in roleData) {
+            updateRole(roleData as Role);
+        } else if (id) {
+            addRole({ id, ...roleData });
         }
         closeDialog();
     };
@@ -161,9 +167,9 @@ function RoleManagement() {
                                      <DeleteConfirmationDialog
                                         title={`Delete Role "${role.name}"?`}
                                         description={<>This will permanently delete the role. Users with this role will lose access.</>}
-                                        onConfirm={() => deleteRole(role.id)}
+                                        onConfirm={() => deleteRole(role.id as UserRole)}
                                         triggerButton={
-                                            <Button variant="ghost" size="icon" disabled={['root', 'admin', 'cashier', 'marketing'].includes(role.id)}>
+                                            <Button variant="ghost" size="icon" disabled={['root', 'admin', 'cashier', 'marketing'].includes(role.id as string)}>
                                                 <Trash2 className="h-4 w-4 text-destructive" />
                                             </Button>
                                         }
@@ -232,9 +238,12 @@ export default function AdminSettingsPage() {
     
     const [isAdvancedSettingsUnlocked, setAdvancedSettingsUnlocked] = useState(false);
 
+    const [newFloorId, setNewFloorId] = useState("");
     const [newFloorName, setNewFloorName] = useState("");
+    const [newTableId, setNewTableId] = useState("");
     const [newTableName, setNewTableName] = useState("");
     const [selectedFloorForNewTable, setSelectedFloorForNewTable] = useState("");
+    const [newPaymentMethodId, setNewPaymentMethodId] = useState("");
     const [newPaymentMethodName, setNewPaymentMethodName] = useState("");
     const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
     const [editingBranchName, setEditingBranchName] = useState("");
@@ -244,6 +253,7 @@ export default function AdminSettingsPage() {
     const [businessDayStart, setBusinessDayStart] = useState(settings.businessDayStart);
     const [businessDayEnd, setBusinessDayEnd] = useState(settings.businessDayEnd);
 
+    const [newBranchId, setNewBranchId] = useState('');
     const [newBranchName, setNewBranchName] = useState('');
     const [newBranchPrefix, setNewBranchPrefix] = useState('');
 
@@ -255,22 +265,25 @@ export default function AdminSettingsPage() {
 
 
     const handleAddFloor = () => {
-        if (newFloorName.trim()) {
-            addFloor(newFloorName.trim());
+        if (newFloorId.trim() && newFloorName.trim()) {
+            addFloor(newFloorId.trim(), newFloorName.trim());
+            setNewFloorId("");
             setNewFloorName("");
         }
     };
 
     const handleAddTable = () => {
-        if (newTableName.trim() && selectedFloorForNewTable) {
-            addTable(newTableName.trim(), selectedFloorForNewTable);
+        if (newTableId.trim() && newTableName.trim() && selectedFloorForNewTable) {
+            addTable(newTableId.trim(), newTableName.trim(), selectedFloorForNewTable);
+            setNewTableId("");
             setNewTableName("");
         }
     };
 
     const handleAddPaymentMethod = () => {
-        if (newPaymentMethodName.trim()) {
-            addPaymentMethod(newPaymentMethodName.trim());
+        if (newPaymentMethodId.trim() && newPaymentMethodName.trim()) {
+            addPaymentMethod(newPaymentMethodId.trim(), newPaymentMethodName.trim());
+            setNewPaymentMethodId("");
             setNewPaymentMethodName("");
         }
     };
@@ -295,8 +308,9 @@ export default function AdminSettingsPage() {
     };
 
     const handleAddBranch = () => {
-        if (newBranchName.trim() && newBranchPrefix.trim()) {
-            addBranch(newBranchName.trim(), newBranchPrefix.trim());
+        if (newBranchId.trim() && newBranchName.trim() && newBranchPrefix.trim()) {
+            addBranch(newBranchId.trim(), newBranchName.trim(), newBranchPrefix.trim());
+            setNewBranchId('');
             setNewBranchName('');
             setNewBranchPrefix('');
         }
@@ -333,13 +347,18 @@ export default function AdminSettingsPage() {
                             <CardDescription>Add or remove floors for your restaurant.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div className="flex gap-2 mb-4">
+                            <div className="flex flex-col md:flex-row gap-2 mb-4">
+                                <Input
+                                    placeholder="New floor code (e.g., F-01)"
+                                    value={newFloorId}
+                                    onChange={(e) => setNewFloorId(e.target.value)}
+                                />
                                 <Input
                                     placeholder="New floor name (e.g., Ground Floor)"
                                     value={newFloorName}
                                     onChange={(e) => setNewFloorName(e.target.value)}
                                 />
-                                <Button onClick={handleAddFloor}>Add Floor</Button>
+                                <Button onClick={handleAddFloor} className="w-full md:w-auto">Add Floor</Button>
                             </div>
                             <Table>
                                 <TableHeader>
@@ -375,9 +394,14 @@ export default function AdminSettingsPage() {
                             <CardDescription>Add tables and assign them to a floor.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div className="grid md:grid-cols-3 gap-2 mb-4">
+                            <div className="grid md:grid-cols-4 gap-2 mb-4">
                                 <Input
-                                    placeholder="New table name (e.g., T1)"
+                                    placeholder="New table code (e.g., T-01)"
+                                    value={newTableId}
+                                    onChange={(e) => setNewTableId(e.target.value)}
+                                />
+                                <Input
+                                    placeholder="New table name (e.g., Table 1)"
                                     value={newTableName}
                                     onChange={(e) => setNewTableName(e.target.value)}
                                 />
@@ -477,7 +501,12 @@ export default function AdminSettingsPage() {
                                     {user?.role === 'root' && (
                                         <div className="mb-6 p-4 border rounded-lg space-y-4">
                                             <h4 className="font-semibold">Add New Branch</h4>
-                                            <div className="grid md:grid-cols-3 gap-2">
+                                            <div className="grid md:grid-cols-4 gap-2">
+                                                <Input
+                                                    placeholder="Branch Code (e.g., B-01)"
+                                                    value={newBranchId}
+                                                    onChange={(e) => setNewBranchId(e.target.value)}
+                                                />
                                                 <Input
                                                     placeholder="New branch name"
                                                     value={newBranchName}
@@ -651,13 +680,18 @@ export default function AdminSettingsPage() {
                                     <CardDescription>Add, remove, and set tax rates for payment methods.</CardDescription>
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="flex gap-2 mb-4">
+                                    <div className="flex flex-col md:flex-row gap-2 mb-4">
                                         <Input
-                                            placeholder="New payment method (e.g., QR Pay)"
+                                            placeholder="New method code (e.g., PM-01)"
+                                            value={newPaymentMethodId}
+                                            onChange={(e) => setNewPaymentMethodId(e.target.value)}
+                                        />
+                                        <Input
+                                            placeholder="New payment method name (e.g., QR Pay)"
                                             value={newPaymentMethodName}
                                             onChange={(e) => setNewPaymentMethodName(e.target.value)}
                                         />
-                                        <Button onClick={handleAddPaymentMethod}>Add Method</Button>
+                                        <Button onClick={handleAddPaymentMethod} className="w-full md:w-auto">Add Method</Button>
                                     </div>
                                     <Table>
                                         <TableHeader>
@@ -738,7 +772,3 @@ export default function AdminSettingsPage() {
         </div>
     );
 }
-
-    
-
-    

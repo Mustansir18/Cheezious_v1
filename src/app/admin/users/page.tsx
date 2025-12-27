@@ -48,11 +48,12 @@ function UserForm({
   onSave,
 }: {
   user?: UserType;
-  onSave: (user: Omit<UserType, "id"> | UserType) => void;
+  onSave: (user: Omit<UserType, "id"> | UserType, id?: string) => void;
 }) {
+  const [id, setId] = useState('');
   const [username, setUsername] = useState(user?.username ?? "");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<UserRole>(user?.role ?? "cashier");
+  const [role, setRole] = useState<UserRole | string>(user?.role ?? "cashier");
   const [branchId, setBranchId] = useState<string | undefined>(user?.branchId);
   const { settings } = useSettings();
 
@@ -63,19 +64,25 @@ function UserForm({
       onSave({
         ...user,
         username,
-        role,
+        role: role as UserRole,
         branchId,
         ...(password && { password }),
       });
     } else {
-      if (username && password) {
-        onSave({ username, password, role, branchId });
+      if (id && username && password) {
+        onSave({ username, password, role: role as UserRole, branchId }, id);
       }
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {!user && (
+         <div>
+          <Label htmlFor="user-id">User Code</Label>
+          <Input id="user-id" value={id} onChange={(e) => setId(e.target.value)} required placeholder="e.g. U-001" />
+        </div>
+      )}
       <div>
         <Label htmlFor="username">Username</Label>
         <Input
@@ -108,7 +115,7 @@ function UserForm({
             {settings.roles
               .filter((r) => r.id !== "root")
               .map((r) => (
-                <SelectItem key={r.id} value={r.id}>
+                <SelectItem key={r.id} value={r.id as string}>
                   {r.name}
                 </SelectItem>
               ))}
@@ -152,16 +159,17 @@ export default function UserManagementPage() {
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserType>();
 
-  const handleSaveUser = (userToSave: Omit<UserType, "id"> | UserType) => {
+  const handleSaveUser = (userToSave: Omit<UserType, "id"> | UserType, id?: string) => {
     if ("id" in userToSave) {
       updateUser(userToSave);
-    } else {
-      addUser(
-        userToSave.username,
-        userToSave.password!,
-        userToSave.role,
-        userToSave.branchId
-      );
+    } else if (id){
+      addUser({
+        id,
+        username: userToSave.username,
+        password: userToSave.password!,
+        role: userToSave.role,
+        branchId: userToSave.branchId,
+      });
     }
     setDialogOpen(false);
     setEditingUser(undefined);
@@ -173,7 +181,7 @@ export default function UserManagementPage() {
     return false;
   });
 
-  const getRoleName = (roleId: UserRole) =>
+  const getRoleName = (roleId: UserRole | string) =>
     settings.roles.find((r) => r.id === roleId)?.name ?? roleId;
     
   const openAddDialog = () => {
@@ -281,5 +289,3 @@ export default function UserManagementPage() {
     </div>
   );
 }
-
-    

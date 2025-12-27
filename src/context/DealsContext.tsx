@@ -6,12 +6,12 @@ import type { Deal } from '@/lib/types';
 import { menuItems } from '@/lib/data'; // Using some menu items as initial deals
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
-import { generateUniqueCode } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface DealsContextType {
   deals: Deal[];
   isLoading: boolean;
-  addDeal: (deal: Omit<Deal, 'id'>) => void;
+  addDeal: (deal: Deal) => void;
   updateDeal: (deal: Deal) => void;
   deleteDeal: (id: string, name: string) => void;
 }
@@ -31,6 +31,7 @@ export const DealsProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const { logActivity } = useActivityLog();
   const { user } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
     try {
@@ -58,11 +59,18 @@ export const DealsProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [deals, isLoading]);
 
-  const addDeal = useCallback((deal: Omit<Deal, 'id'>) => {
-    const newDeal: Deal = { ...deal, id: generateUniqueCode('D') };
+  const addDeal = useCallback((newDeal: Deal) => {
+    if (!newDeal.id) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Deal Code is required.' });
+      return;
+    }
+    if (deals.some(deal => deal.id === newDeal.id)) {
+      toast({ variant: 'destructive', title: 'Error', description: `A deal with the code '${newDeal.id}' already exists.` });
+      return;
+    }
     setDeals(d => [...d, newDeal]);
-    logActivity(`Added new deal: '${deal.name}'.`, user?.username || 'System', 'Deal');
-  }, [logActivity, user]);
+    logActivity(`Added new deal: '${newDeal.name}'.`, user?.username || 'System', 'Deal');
+  }, [logActivity, user, deals, toast]);
 
   const updateDeal = useCallback((updatedDeal: Deal) => {
     setDeals(d => d.map(deal => deal.id === updatedDeal.id ? updatedDeal : deal));

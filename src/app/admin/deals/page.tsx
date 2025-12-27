@@ -52,8 +52,9 @@ function DealForm({
   onSave,
 }: {
   deal?: Deal;
-  onSave: (deal: Omit<Deal, 'id'> | Deal) => void;
+  onSave: (deal: Omit<Deal, 'id'> | Deal, id?: string) => void;
 }) {
+  const [id, setId] = useState('');
   const [name, setName] = useState(deal?.name || '');
   const [description, setDescription] = useState(deal?.description || '');
   const [price, setPrice] = useState(deal?.price || 0);
@@ -77,12 +78,18 @@ function DealForm({
     if (deal) {
       onSave({ ...deal, ...data });
     } else {
-      onSave(data);
+      onSave(data, id);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {!deal && (
+        <div>
+          <Label htmlFor="deal-id">Deal Code</Label>
+          <Input id="deal-id" value={id} onChange={(e) => setId(e.target.value)} required placeholder="e.g. D-001" />
+        </div>
+      )}
       <div>
         <Label htmlFor="deal-name">Deal Name</Label>
         <Input id="deal-name" value={name} onChange={(e) => setName(e.target.value)} required />
@@ -122,11 +129,11 @@ export default function DealsManagementPage() {
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [editingDeal, setEditingDeal] = useState<Deal | undefined>();
 
-  const handleSaveDeal = (deal: Omit<Deal, 'id'> | Deal) => {
-    if ('id' in deal) {
-      updateDeal(deal);
-    } else {
-      addDeal(deal);
+  const handleSaveDeal = (dealData: Omit<Deal, 'id'> | Deal, id?: string) => {
+    if ('id' in dealData) {
+      updateDeal(dealData);
+    } else if (id) {
+      addDeal({ id, ...dealData });
     }
     setDialogOpen(false);
   };
@@ -204,7 +211,3 @@ export default function DealsManagementPage() {
     </div>
   );
 }
-
-    
-
-    

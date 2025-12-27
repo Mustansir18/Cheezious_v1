@@ -7,7 +7,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
 import { ALL_PERMISSIONS } from '@/config/permissions';
-import { generateUniqueCode } from '@/lib/utils';
 
 const defaultRoles: Role[] = [
     {
@@ -58,15 +57,15 @@ interface Settings {
 interface SettingsContextType {
   settings: Settings;
   isLoading: boolean;
-  addFloor: (name: string) => void;
+  addFloor: (id: string, name: string) => void;
   deleteFloor: (id: string, name: string) => void;
-  addTable: (name: string, floorId: string) => void;
+  addTable: (id: string, name: string, floorId: string) => void;
   deleteTable: (id: string, name: string) => void;
-  addPaymentMethod: (name: string) => void;
+  addPaymentMethod: (id: string, name: string) => void;
   deletePaymentMethod: (id: string, name: string) => void;
   updatePaymentMethodTaxRate: (id: string, taxRate: number) => void;
   toggleAutoPrint: (enabled: boolean) => void;
-  addBranch: (name: string, orderPrefix: string) => void;
+  addBranch: (id: string, name: string, orderPrefix: string) => void;
   updateBranch: (id: string, name: string, orderPrefix: string) => void;
   deleteBranch: (id: string, name: string) => void;
   setDefaultBranch: (id: string) => void;
@@ -74,7 +73,7 @@ interface SettingsContextType {
   updateBusinessDayHours: (start: string, end: string) => void;
   updateCompanyName: (name: string) => void;
   // Role management
-  addRole: (role: Omit<Role, 'id'>) => void;
+  addRole: (role: Role) => void;
   updateRole: (role: Role) => void;
   deleteRole: (id: UserRole) => void;
 }
@@ -190,11 +189,19 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [settings, isLoading]);
 
-  const addFloor = useCallback((name: string) => {
-    const newFloor: Floor = { id: crypto.randomUUID(), name };
+  const addFloor = useCallback((id: string, name: string) => {
+    if (!id || !name) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Floor Code and Name are required.' });
+      return;
+    }
+    if (settings.floors.some(f => f.id === id)) {
+      toast({ variant: 'destructive', title: 'Error', description: `A floor with the code '${id}' already exists.` });
+      return;
+    }
+    const newFloor: Floor = { id, name };
     setSettings(s => ({ ...s, floors: [...s.floors, newFloor] }));
     logActivity(`Added floor: '${name}'.`, user?.username || 'System', 'Settings');
-  }, [logActivity, user]);
+  }, [logActivity, user, settings.floors, toast]);
 
   const deleteFloor = useCallback((id: string, name: string) => {
     setSettings(s => ({ 
@@ -205,23 +212,39 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     logActivity(`Deleted floor: '${name}' and its tables.`, user?.username || 'System', 'Settings');
   }, [logActivity, user]);
 
-  const addTable = useCallback((name: string, floorId: string) => {
-    const newTable: Table = { id: crypto.randomUUID(), name, floorId };
+  const addTable = useCallback((id: string, name: string, floorId: string) => {
+    if (!id || !name || !floorId) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Table Code, Name, and Floor are required.' });
+      return;
+    }
+    if (settings.tables.some(t => t.id === id)) {
+      toast({ variant: 'destructive', title: 'Error', description: `A table with the code '${id}' already exists.` });
+      return;
+    }
+    const newTable: Table = { id, name, floorId };
     setSettings(s => ({ ...s, tables: [...s.tables, newTable] }));
     const floorName = settings.floors.find(f => f.id === floorId)?.name || 'N/A';
     logActivity(`Added table: '${name}' to floor '${floorName}'.`, user?.username || 'System', 'Settings');
-  }, [logActivity, settings.floors, user]);
+  }, [logActivity, settings.floors, user, settings.tables, toast]);
 
   const deleteTable = useCallback((id: string, name: string) => {
     setSettings(s => ({ ...s, tables: s.tables.filter(t => t.id !== id) }));
     logActivity(`Deleted table: '${name}'.`, user?.username || 'System', 'Settings');
   }, [logActivity, user]);
 
-  const addPaymentMethod = useCallback((name: string) => {
-    const newMethod: PaymentMethod = { id: crypto.randomUUID(), name, taxRate: 0 };
+  const addPaymentMethod = useCallback((id: string, name: string) => {
+     if (!id || !name) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Method Code and Name are required.' });
+      return;
+    }
+    if (settings.paymentMethods.some(pm => pm.id === id)) {
+      toast({ variant: 'destructive', title: 'Error', description: `A payment method with the code '${id}' already exists.` });
+      return;
+    }
+    const newMethod: PaymentMethod = { id, name, taxRate: 0 };
     setSettings(s => ({ ...s, paymentMethods: [...s.paymentMethods, newMethod] }));
     logActivity(`Added payment method: '${name}'.`, user?.username || 'System', 'Settings');
-  }, [logActivity, user]);
+  }, [logActivity, user, settings.paymentMethods, toast]);
 
   const deletePaymentMethod = useCallback((id: string, name: string) => {
     setSettings(s => ({ ...s, paymentMethods: s.paymentMethods.filter(pm => pm.id !== id) }));
@@ -241,11 +264,19 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     logActivity(`Toggled auto-print receipts to: ${enabled ? 'ON' : 'OFF'}.`, user?.username || 'System', 'Settings');
   }, [logActivity, user]);
 
-  const addBranch = useCallback((name: string, orderPrefix: string) => {
-    const newBranch: Branch = { id: crypto.randomUUID(), name, orderPrefix, dineInEnabled: true, takeAwayEnabled: true };
+  const addBranch = useCallback((id: string, name: string, orderPrefix: string) => {
+    if (!id || !name || !orderPrefix) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Branch Code, Name, and Order Prefix are required.' });
+      return;
+    }
+    if (settings.branches.some(b => b.id === id)) {
+      toast({ variant: 'destructive', title: 'Error', description: `A branch with the code '${id}' already exists.` });
+      return;
+    }
+    const newBranch: Branch = { id, name, orderPrefix, dineInEnabled: true, takeAwayEnabled: true };
     setSettings(s => ({...s, branches: [...s.branches, newBranch]}));
     logActivity(`Added branch: '${name}'.`, user?.username || 'System', 'Settings');
-  }, [logActivity, user]);
+  }, [logActivity, user, settings.branches, toast]);
 
   const updateBranch = useCallback((id: string, name: string, orderPrefix: string) => {
     setSettings(s => ({...s, branches: s.branches.map(b => b.id === id ? {...b, name, orderPrefix} : b)}));
@@ -287,14 +318,17 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     logActivity(`Updated company name to: '${name}'.`, user?.username || 'System', 'Settings');
   }, [toast, logActivity, user]);
 
-  const addRole = useCallback((role: Omit<Role, 'id'>) => {
-    const newRole: Role = { ...role, id: generateUniqueCode('R') };
+  const addRole = useCallback((newRole: Role) => {
+    if (!newRole.id) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Role Code is required.' });
+        return;
+    }
     if (settings.roles.some(r => r.id === newRole.id)) {
-        toast({ variant: 'destructive', title: 'Error', description: `A role with the ID '${newRole.id}' already exists.` });
+        toast({ variant: 'destructive', title: 'Error', description: `A role with the code '${newRole.id}' already exists.` });
         return;
     }
     setSettings(s => ({ ...s, roles: [...s.roles, newRole] }));
-    logActivity(`Added new role: '${role.name}'.`, user?.username || 'System', 'Settings');
+    logActivity(`Added new role: '${newRole.name}'.`, user?.username || 'System', 'Settings');
   }, [settings.roles, toast, logActivity, user]);
 
   const updateRole = useCallback((updatedRole: Role) => {

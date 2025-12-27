@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, ReactNode, useEffect, useCa
 import { useRouter } from 'next/navigation';
 import type { User, UserRole } from '@/lib/types';
 import { useActivityLog } from './ActivityLogContext';
-import { generateUniqueCode } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 // Define the shape of the context
 interface AuthContextType {
@@ -14,7 +14,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (username: string, password: string) => Promise<User | null>;
   logout: () => void;
-  addUser: (username: string, password: string, role: UserRole, branchId?: string) => void;
+  addUser: (user: Omit<User, 'username' | 'role'> & { username: string; role: UserRole | string; }) => void;
   updateUser: (user: User) => void;
   deleteUser: (id: string, username: string) => void;
 }
@@ -63,6 +63,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [isLoading, setIsLoading] = useState(true);
   const { logActivity } = useActivityLog();
+  const { toast } = useToast();
   const router = useRouter();
 
   // Load users and session on initial render
@@ -161,15 +162,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     router.push('/login');
   }, [router, user, logActivity]);
 
-  const addUser = useCallback((username: string, password: string, role: UserRole, branchId?: string) => {
-    if (users.some(u => u.username === username)) {
-      alert('Username already exists.');
+  const addUser = useCallback((newUser: Omit<User, 'username' | 'role'> & { username: string; role: UserRole | string; }) => {
+    if (!newUser.id) {
+        toast({ variant: 'destructive', title: 'Error', description: 'User Code is required.' });
+        return;
+    }
+    if (users.some(u => u.id === newUser.id || u.username === newUser.username)) {
+      toast({ variant: 'destructive', title: 'Error', description: 'A user with this ID or username already exists.' });
       return;
     }
-    const newUser: User = { id: generateUniqueCode('U'), username, password, role, branchId };
-    setUsers(prev => [...prev, newUser]);
-    logActivity(`Added new user '${username}'.`, user?.username || "System", 'User');
-  }, [users, logActivity, user]);
+    const userToAdd: User = { ...newUser, role: newUser.role as UserRole };
+    setUsers(prev => [...prev, userToAdd]);
+    logActivity(`Added new user '${newUser.username}'.`, user?.username || "System", 'User');
+  }, [users, logActivity, user, toast]);
 
   const updateUser = useCallback((updatedUser: User) => {
     setUsers(prev => prev.map(u => {
@@ -186,12 +191,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const deleteUser = useCallback((id: string, username: string) => {
     if (initialUsers.some(initialUser => initialUser.id === id)) {
-        alert("Cannot delete a default system user.");
+        toast({ variant: 'destructive', title: 'Error', description: "Cannot delete a default system user." });
         return;
     }
     setUsers(prev => prev.filter(u => u.id !== id));
     logActivity(`Deleted user '${username}'.`, user?.username || "System", 'User');
-  }, [logActivity, user]);
+  }, [logActivity, user, toast]);
 
   const value = { user, users, isLoading, login, logout, addUser, updateUser, deleteUser };
 

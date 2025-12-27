@@ -6,7 +6,7 @@ import { menuItems as initialMenuItems, menuCategories as initialMenuCategories,
 import type { MenuItem, MenuCategory, Addon } from '@/lib/types';
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
-import { generateUniqueCode } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface MenuData {
     items: MenuItem[];
@@ -18,15 +18,15 @@ interface MenuContextType {
   menu: MenuData;
   isLoading: boolean;
   // Categories
-  addCategory: (category: Omit<MenuCategory, 'id'>) => void;
+  addCategory: (category: MenuCategory) => void;
   updateCategory: (category: MenuCategory) => void;
   deleteCategory: (id: string, name: string) => void;
   // Items
-  addItem: (item: Omit<MenuItem, 'id'>) => void;
+  addItem: (item: MenuItem) => void;
   updateItem: (item: MenuItem) => void;
   deleteItem: (id: string, name: string) => void;
   // Addons
-  addAddon: (addon: Omit<Addon, 'id'>) => void;
+  addAddon: (addon: Addon) => void;
   updateAddon: (addon: Addon) => void;
   deleteAddon: (id: string, name: string) => void;
 }
@@ -54,6 +54,7 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const { logActivity } = useActivityLog();
   const { user } = useAuth();
+  const { toast } = useToast();
   
   useEffect(() => {
     try {
@@ -85,10 +86,17 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [menu, isLoading]);
 
-  const addCategory = (category: Omit<MenuCategory, 'id'>) => {
-    const newCategory = { ...category, id: generateUniqueCode('C') };
+  const addCategory = (newCategory: MenuCategory) => {
+    if (!newCategory.id) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Category Code is required.' });
+      return;
+    }
+    if (menu.categories.some(c => c.id === newCategory.id)) {
+      toast({ variant: 'destructive', title: 'Error', description: `A category with the code '${newCategory.id}' already exists.` });
+      return;
+    }
     setMenu(m => ({ ...m, categories: [...m.categories, newCategory] }));
-    logActivity(`Added menu category: '${category.name}'.`, user?.username || 'System', 'Menu');
+    logActivity(`Added menu category: '${newCategory.name}'.`, user?.username || 'System', 'Menu');
   };
 
   const updateCategory = (category: MenuCategory) => {
@@ -105,10 +113,17 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
     logActivity(`Deleted menu category: '${name}' and its items.`, user?.username || 'System', 'Menu');
   };
 
-  const addItem = (item: Omit<MenuItem, 'id'>) => {
-    const newItem = { ...item, id: generateUniqueCode('P') };
+  const addItem = (newItem: MenuItem) => {
+     if (!newItem.id) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Item Code is required.' });
+      return;
+    }
+    if (menu.items.some(i => i.id === newItem.id)) {
+      toast({ variant: 'destructive', title: 'Error', description: `An item with the code '${newItem.id}' already exists.` });
+      return;
+    }
     setMenu(m => ({ ...m, items: [...m.items, newItem] }));
-    logActivity(`Added menu item: '${item.name}'.`, user?.username || 'System', 'Menu');
+    logActivity(`Added menu item: '${newItem.name}'.`, user?.username || 'System', 'Menu');
   };
 
   const updateItem = (item: MenuItem) => {
@@ -121,10 +136,17 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
     logActivity(`Deleted menu item: '${name}'.`, user?.username || 'System', 'Menu');
   };
 
-  const addAddon = (addon: Omit<Addon, 'id'>) => {
-    const newAddon = { ...addon, id: generateUniqueCode('A') };
+  const addAddon = (newAddon: Addon) => {
+    if (!newAddon.id) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Add-on Code is required.' });
+      return;
+    }
+    if (menu.addons.some(a => a.id === newAddon.id)) {
+      toast({ variant: 'destructive', title: 'Error', description: `An add-on with the code '${newAddon.id}' already exists.` });
+      return;
+    }
     setMenu(m => ({ ...m, addons: [...m.addons, newAddon] }));
-    logActivity(`Added add-on: '${addon.name}'.`, user?.username || 'System', 'Menu');
+    logActivity(`Added add-on: '${newAddon.name}'.`, user?.username || 'System', 'Menu');
   };
   
   const updateAddon = (addon: Addon) => {

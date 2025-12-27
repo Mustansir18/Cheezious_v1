@@ -48,7 +48,8 @@ async function handleImageUpload(file: File) {
 }
 
 // Category Form
-function CategoryForm({ category, onSave }: { category?: MenuCategory; onSave: (cat: Omit<MenuCategory, 'id'> | MenuCategory) => void;}) {
+function CategoryForm({ category, onSave }: { category?: MenuCategory; onSave: (cat: Omit<MenuCategory, 'id'> | MenuCategory, id?: string) => void;}) {
+  const [id, setId] = useState('');
   const [name, setName] = useState(category?.name || '');
   const [icon, setIcon] = useState(category?.icon || 'Package');
 
@@ -57,12 +58,18 @@ function CategoryForm({ category, onSave }: { category?: MenuCategory; onSave: (
     if (category) {
       onSave({ ...category, name, icon });
     } else {
-      onSave({ name, icon });
+      onSave({ name, icon }, id);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {!category && (
+        <div>
+          <Label htmlFor="category-id">Category Code</Label>
+          <Input id="category-id" value={id} onChange={(e) => setId(e.target.value)} required placeholder="e.g. C-01" />
+        </div>
+      )}
       <div>
         <Label htmlFor="category-name">Category Name</Label>
         <Input id="category-name" value={name} onChange={(e) => setName(e.target.value)} required />
@@ -83,8 +90,9 @@ function CategoryForm({ category, onSave }: { category?: MenuCategory; onSave: (
 }
 
 // Item Form
-function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuItem, 'id'> | MenuItem) => void; }) {
+function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuItem, 'id'> | MenuItem, id?: string) => void; }) {
   const { menu } = useMenu();
+  const [id, setId] = useState('');
   const [name, setName] = useState(item?.name || '');
   const [description, setDescription] = useState(item?.description || '');
   const [price, setPrice] = useState(item?.price || 0);
@@ -113,12 +121,18 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
     if (item) {
       onSave({ ...item, ...data });
     } else {
-      onSave(data);
+      onSave(data, id);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {!item && (
+        <div>
+          <Label htmlFor="item-id">Item Code</Label>
+          <Input id="item-id" value={id} onChange={(e) => setId(e.target.value)} required placeholder="e.g. P-001" />
+        </div>
+      )}
       <div>
         <Label htmlFor="item-name">Item Name</Label>
         <Input id="item-name" value={name} onChange={(e) => setName(e.target.value)} required />
@@ -176,18 +190,29 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
 }
 
 // Addon Form
-function AddonForm({ addon, onSave }: { addon?: Addon; onSave: (addon: Omit<Addon, 'id'> | Addon) => void; }) {
+function AddonForm({ addon, onSave }: { addon?: Addon; onSave: (addon: Omit<Addon, 'id'> | Addon, id?: string) => void; }) {
+    const [id, setId] = useState('');
     const [name, setName] = useState(addon?.name || '');
     const [price, setPrice] = useState(addon?.price || 0);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const data = { name, price };
-        onSave(addon ? { ...addon, ...data } : data);
+        if (addon) {
+          onSave({ ...addon, ...data });
+        } else {
+          onSave(data, id);
+        }
     };
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
+            {!addon && (
+              <div>
+                <Label htmlFor="addon-id">Add-on Code</Label>
+                <Input id="addon-id" value={id} onChange={(e) => setId(e.target.value)} required placeholder="e.g. A-001" />
+              </div>
+            )}
             <div><Label htmlFor="addon-name">Add-on Name</Label><Input id="addon-name" value={name} onChange={e => setName(e.target.value)} required /></div>
             <div><Label htmlFor="addon-price">Price</Label><Input id="addon-price" type="number" value={price} onChange={e => setPrice(Number(e.target.value))} required /></div>
             <DialogFooter><DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose><Button type="submit">Save</Button></DialogFooter>
@@ -206,10 +231,33 @@ export default function MenuManagementPage() {
   const [editingItem, setEditingItem] = useState<MenuItem | undefined>();
   const [editingAddon, setEditingAddon] = useState<Addon | undefined>();
 
-  const handleSave = (setter: (val: boolean) => void, saveFn: (data: any) => void) => (data: any) => {
-    saveFn(data);
-    setter(false);
-  };
+  const handleSaveCategory = (categoryData: Omit<MenuCategory, 'id'> | MenuCategory, id?: string) => {
+      if ('id' in categoryData) {
+          updateCategory(categoryData);
+      } else if(id) {
+          addCategory({ id, ...categoryData });
+      }
+      setCategoryOpen(false);
+  }
+
+  const handleSaveItem = (itemData: Omit<MenuItem, 'id'> | MenuItem, id?: string) => {
+      if ('id' in itemData) {
+          updateItem(itemData);
+      } else if (id) {
+          addItem({ id, ...itemData });
+      }
+      setItemOpen(false);
+  }
+
+  const handleSaveAddon = (addonData: Omit<Addon, 'id'> | Addon, id?: string) => {
+      if ('id' in addonData) {
+          updateAddon(addonData);
+      } else if (id) {
+          addAddon({ id, ...addonData });
+      }
+      setAddonOpen(false);
+  }
+
 
   if (isLoading) return <div>Loading menu...</div>;
 
@@ -225,7 +273,7 @@ export default function MenuManagementPage() {
             <CardHeader className="flex-row justify-between items-center">
                 <div><CardTitle>Menu Categories</CardTitle><CardDescription>High-level groups for your menu items.</CardDescription></div>
                 <Dialog open={isCategoryOpen} onOpenChange={setCategoryOpen}><DialogTrigger asChild><Button onClick={() => setEditingCategory(undefined)}><PlusCircle/> Add Category</Button></DialogTrigger>
-                    <DialogContent><DialogHeader><DialogTitle>{editingCategory ? 'Edit' : 'Add'} Category</DialogTitle></DialogHeader><CategoryForm category={editingCategory} onSave={handleSave(setCategoryOpen, editingCategory ? updateCategory : addCategory)}/></DialogContent>
+                    <DialogContent><DialogHeader><DialogTitle>{editingCategory ? 'Edit' : 'Add'} Category</DialogTitle></DialogHeader><CategoryForm category={editingCategory} onSave={handleSaveCategory}/></DialogContent>
                 </Dialog>
             </CardHeader>
             <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Code</TableHead><TableHead>Icon</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
@@ -247,7 +295,7 @@ export default function MenuManagementPage() {
             <CardHeader className="flex-row justify-between items-center">
                 <div><CardTitle>Add-ons Library</CardTitle><CardDescription>All available add-ons for your menu items.</CardDescription></div>
                 <Dialog open={isAddonOpen} onOpenChange={setAddonOpen}><DialogTrigger asChild><Button onClick={() => setEditingAddon(undefined)}><PlusCircle/> Add Add-on</Button></DialogTrigger>
-                    <DialogContent><DialogHeader><DialogTitle>{editingAddon ? 'Edit' : 'Add'} Add-on</DialogTitle></DialogHeader><AddonForm addon={editingAddon} onSave={handleSave(setAddonOpen, editingAddon ? updateAddon : addAddon)}/></DialogContent>
+                    <DialogContent><DialogHeader><DialogTitle>{editingAddon ? 'Edit' : 'Add'} Add-on</DialogTitle></DialogHeader><AddonForm addon={editingAddon} onSave={handleSaveAddon}/></DialogContent>
                 </Dialog>
             </CardHeader>
             <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Code</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
@@ -269,7 +317,7 @@ export default function MenuManagementPage() {
             <CardHeader className="flex-row justify-between items-center">
                 <div><CardTitle>Menu Items</CardTitle><CardDescription>The main dishes and products you offer.</CardDescription></div>
                 <Dialog open={isItemOpen} onOpenChange={setItemOpen}><DialogTrigger asChild><Button onClick={() => setEditingItem(undefined)}><PlusCircle/> Add Item</Button></DialogTrigger>
-                    <DialogContent className="max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{editingItem ? 'Edit' : 'Add'} Item</DialogTitle></DialogHeader><ItemForm item={editingItem} onSave={handleSave(setItemOpen, editingItem ? updateItem : addItem)}/></DialogContent>
+                    <DialogContent className="max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{editingItem ? 'Edit' : 'Add'} Item</DialogTitle></DialogHeader><ItemForm item={editingItem} onSave={handleSaveItem}/></DialogContent>
                 </Dialog>
             </CardHeader>
             <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Code</TableHead><TableHead>Category</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
@@ -288,5 +336,3 @@ export default function MenuManagementPage() {
     </div>
   );
 }
-
-    
