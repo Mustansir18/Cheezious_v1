@@ -23,8 +23,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useSettings } from '@/context/SettingsContext';
 import { Badge } from '@/components/ui/badge';
 import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
-import rolesConfig from '@/config/roles.json';
-
 
 function UserForm({
   user,
@@ -75,7 +73,7 @@ function UserForm({
                 <SelectValue placeholder="Select a role" />
             </SelectTrigger>
             <SelectContent>
-                {rolesConfig.roles.filter(r => r.id !== 'root').map(r => (
+                {settings.roles.filter(r => r.id !== 'root').map(r => (
                   <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
                 ))}
             </SelectContent>
@@ -87,7 +85,7 @@ function UserForm({
             <Select value={branchId} onValueChange={setBranchId} required>
                 <SelectTrigger id="branch">
                     <SelectValue placeholder="Select a branch" />
-                </SelectTrigger>
+                </Trigger>
                 <SelectContent>
                     {settings.branches.map(branch => (
                         <SelectItem key={branch.id} value={branch.id}>{branch.name}</SelectItem>
@@ -135,7 +133,7 @@ export default function UserManagementPage() {
     });
 
     const getRoleName = (roleId: UserRole) => {
-        return rolesConfig.roles.find(r => r.id === roleId)?.name || roleId;
+        return settings.roles.find(r => r.id === roleId)?.name || roleId;
     }
 
     const openAddDialog = () => {

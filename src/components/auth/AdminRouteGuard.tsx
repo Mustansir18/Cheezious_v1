@@ -5,15 +5,15 @@ import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Loader } from 'lucide-react';
-import rolesConfig from '@/config/roles.json';
-import type { Role } from '@/lib/types';
-
-const allRoles: Role[] = rolesConfig.roles;
+import { useSettings } from '@/context/SettingsContext';
 
 export function AdminRouteGuard({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const { settings, isLoading: isSettingsLoading } = useSettings();
   const router = useRouter();
   const pathname = usePathname();
+
+  const isLoading = isAuthLoading || isSettingsLoading;
 
   useEffect(() => {
     if (isLoading) return;
@@ -23,7 +23,7 @@ export function AdminRouteGuard({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const userRole = allRoles.find(role => role.id === user.role);
+    const userRole = settings.roles.find(role => role.id === user.role);
 
     if (!userRole) {
         router.push('/login'); // Role not found, deny access
@@ -31,12 +31,11 @@ export function AdminRouteGuard({ children }: { children: React.ReactNode }) {
     }
 
     // Check if the user's role grants access to the current path.
-    // The 'admin' role is a special case which gives access to all admin pages.
+    // The 'admin:*' permission gives access to all admin pages.
     const hasAccess = userRole.permissions.includes('admin:*') || userRole.permissions.includes(pathname);
 
     if (!hasAccess) {
         // If no access, redirect to a default page.
-        // This could be the user's primary dashboard or the main login page.
         if (user.role === 'cashier') {
              router.push('/cashier');
         } else if (user.role === 'marketing') {
@@ -47,7 +46,7 @@ export function AdminRouteGuard({ children }: { children: React.ReactNode }) {
         return;
     }
 
-  }, [user, isLoading, router, pathname]);
+  }, [user, isLoading, router, pathname, settings.roles]);
 
   // Initial loading state or if redirection is about to happen
   if (isLoading || !user) {
@@ -59,7 +58,7 @@ export function AdminRouteGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const userRole = allRoles.find(role => role.id === user.role);
+  const userRole = settings.roles.find(role => role.id === user.role);
   const hasAccess = userRole && (userRole.permissions.includes('admin:*') || userRole.permissions.includes(pathname));
 
   if (!hasAccess) {

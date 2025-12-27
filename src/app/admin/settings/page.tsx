@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2, Edit, Lock, Percent, ShieldCheck, CheckSquare, Square } from "lucide-react";
+import { Trash2, Edit, Lock, Percent, PlusCircle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -23,10 +23,165 @@ import {
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import type { Branch, Role } from "@/lib/types";
+import type { Branch, Role, UserRole } from "@/lib/types";
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
-import rolesConfig from '@/config/roles.json';
+import { ALL_PERMISSIONS } from '@/config/permissions';
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Checkbox } from "@/components/ui/checkbox";
 
+function RoleForm({
+  role,
+  onSave,
+  onClose,
+}: {
+  role?: Role;
+  onSave: (role: Omit<Role, 'id'> | Role) => void;
+  onClose: () => void;
+}) {
+  const [name, setName] = useState(role?.name || '');
+  const [permissions, setPermissions] = useState<string[]>(role?.permissions || []);
+
+  const handlePermissionToggle = (permission: string) => {
+    setPermissions(prev =>
+      prev.includes(permission) ? prev.filter(p => p !== permission) : [...prev, permission]
+    );
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const data = { name, permissions };
+    if (role) {
+      onSave({ ...role, ...data });
+    } else {
+      const id = name.toLowerCase().replace(/\s+/g, '-') as UserRole;
+      onSave({ id, ...data });
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <Label htmlFor="role-name">Role Name</Label>
+        <Input id="role-name" value={name} onChange={(e) => setName(e.target.value)} required disabled={!!role?.id && ['root', 'admin', 'cashier', 'marketing'].includes(role.id)} />
+        {role?.id && ['root', 'admin', 'cashier', 'marketing'].includes(role.id) && <p className="text-xs text-muted-foreground mt-1">Default role names cannot be changed.</p>}
+      </div>
+      <div>
+        <Label>Permissions</Label>
+        <ScrollArea className="h-60 rounded-md border p-4">
+            <div className="space-y-2">
+                {ALL_PERMISSIONS.map(permission => (
+                     <div key={permission.id} className="flex items-start space-x-2">
+                        <Checkbox
+                            id={`perm-${permission.id}`}
+                            checked={permissions.includes(permission.id)}
+                            onCheckedChange={() => handlePermissionToggle(permission.id)}
+                            disabled={role?.id === 'root'}
+                        />
+                         <div className="grid gap-1.5 leading-none">
+                            <Label htmlFor={`perm-${permission.id}`} className="font-normal cursor-pointer">{permission.name}</Label>
+                            <p className="text-xs text-muted-foreground">{permission.description}</p>
+                        </div>
+                     </div>
+                ))}
+            </div>
+        </ScrollArea>
+      </div>
+      <DialogFooter>
+        <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+        <Button type="submit">Save Role</Button>
+      </DialogFooter>
+    </form>
+  );
+}
+
+function RoleManagement() {
+    const { settings, addRole, updateRole, deleteRole } = useSettings();
+    const [isDialogOpen, setDialogOpen] = useState(false);
+    const [editingRole, setEditingRole] = useState<Role | undefined>();
+
+    const openDialog = (role?: Role) => {
+        setEditingRole(role);
+        setDialogOpen(true);
+    };
+
+    const closeDialog = () => {
+        setEditingRole(undefined);
+        setDialogOpen(false);
+    };
+
+    const handleSave = (role: Omit<Role, 'id'> | Role) => {
+        if ('id' in editingRole || role.id) {
+            updateRole(role as Role);
+        } else {
+            addRole(role);
+        }
+        closeDialog();
+    };
+
+    return (
+        <Card>
+            <CardHeader className="flex-row justify-between items-center">
+                 <div>
+                    <CardTitle>Role Management</CardTitle>
+                    <CardDescription>Define roles and their access permissions across the application.</CardDescription>
+                </div>
+                <Button onClick={() => openDialog()}>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Role
+                </Button>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Role</TableHead>
+                            <TableHead>Permissions</TableHead>
+                            <TableHead className="text-right w-[120px]">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {settings.roles.map(role => (
+                            <TableRow key={role.id}>
+                                <TableCell className="font-semibold capitalize">{role.name}</TableCell>
+                                <TableCell>
+                                    <div className="flex flex-wrap gap-2 max-w-md">
+                                        {role.permissions.map(permission => (
+                                            <span key={permission} className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded-full">
+                                                {permission === 'admin:*' ? 'All Admin Pages' : permission}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <Button variant="ghost" size="icon" onClick={() => openDialog(role)}>
+                                        <Edit className="h-4 w-4"/>
+                                    </Button>
+                                     <DeleteConfirmationDialog
+                                        title={`Delete Role "${role.name}"?`}
+                                        description={<>This will permanently delete the role. Users with this role will lose access.</>}
+                                        onConfirm={() => deleteRole(role.id)}
+                                        triggerButton={
+                                            <Button variant="ghost" size="icon" disabled={['root', 'admin', 'cashier', 'marketing'].includes(role.id)}>
+                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                            </Button>
+                                        }
+                                    />
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </CardContent>
+             <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
+                <DialogContent className="max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>{editingRole ? `Edit Role: ${editingRole.name}` : 'Add New Role'}</DialogTitle>
+                    </DialogHeader>
+                    <RoleForm role={editingRole} onSave={handleSave} onClose={closeDialog} />
+                </DialogContent>
+            </Dialog>
+        </Card>
+    );
+}
 
 function AdvancedSettingsGate({ onUnlock }: { onUnlock: () => void }) {
     const [username, setUsername] = useState('');
@@ -67,46 +222,6 @@ function AdvancedSettingsGate({ onUnlock }: { onUnlock: () => void }) {
         </Card>
     );
 }
-
-function RoleManagement() {
-    const [roles] = useState<Role[]>(rolesConfig.roles);
-
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Role Management</CardTitle>
-                <CardDescription>Define roles and their access permissions across the application.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Role</TableHead>
-                            <TableHead>Permissions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {roles.map(role => (
-                            <TableRow key={role.id}>
-                                <TableCell className="font-semibold capitalize">{role.name}</TableCell>
-                                <TableCell>
-                                    <div className="flex flex-wrap gap-2">
-                                        {role.permissions.map(permission => (
-                                            <span key={permission} className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded-full">
-                                                {permission}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </CardContent>
-        </Card>
-    );
-}
-
 
 export default function AdminSettingsPage() {
     const { settings, addFloor, deleteFloor, addTable, deleteTable, addPaymentMethod, deletePaymentMethod, toggleAutoPrint, updateBranch, toggleService, updateBusinessDayHours, addBranch, deleteBranch, setDefaultBranch, updateCompanyName, updatePaymentMethodTaxRate } = useSettings();

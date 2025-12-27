@@ -2,10 +2,44 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
-import type { Floor, Table, PaymentMethod, Branch } from '@/lib/types';
+import type { Floor, Table, PaymentMethod, Branch, Role, UserRole } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
+import { ALL_PERMISSIONS } from '@/config/permissions';
+
+const defaultRoles: Role[] = [
+    {
+        id: "root",
+        name: "Root",
+        permissions: ["admin:*"]
+    },
+    {
+        id: "admin",
+        name: "Branch Admin",
+        permissions: [
+            "/admin",
+            "/admin/orders",
+            "/admin/queue",
+        ]
+    },
+    {
+        id: "cashier",
+        name: "Cashier",
+        permissions: [
+            "/cashier"
+        ]
+    },
+    {
+        id: "marketing",
+        name: "Marketing",
+        permissions: [
+            "/marketing/reporting",
+            "/marketing/feedback",
+            "/marketing/target"
+        ]
+    }
+];
 
 interface Settings {
     floors: Floor[];
@@ -17,6 +51,7 @@ interface Settings {
     defaultBranchId: string | null;
     businessDayStart: string; // "HH:MM"
     businessDayEnd: string; // "HH:MM"
+    roles: Role[];
 }
 
 interface SettingsContextType {
@@ -37,6 +72,10 @@ interface SettingsContextType {
   toggleService: (branchId: string, service: 'dineInEnabled' | 'takeAwayEnabled', enabled: boolean) => void;
   updateBusinessDayHours: (start: string, end: string) => void;
   updateCompanyName: (name: string) => void;
+  // Role management
+  addRole: (role: Omit<Role, 'id'>) => void;
+  updateRole: (role: Role) => void;
+  deleteRole: (id: UserRole) => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -81,6 +120,7 @@ const initialSettings: Settings = {
     defaultBranchId: initialBranches[0]?.id || null,
     businessDayStart: "11:00",
     businessDayEnd: "04:00",
+    roles: defaultRoles,
 };
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
@@ -110,6 +150,12 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
 
         const loadedBranches = parsed.branches && parsed.branches.length > 0 ? parsed.branches : initialBranches;
         
+        const loadedRoles = parsed.roles && parsed.roles.length > 0 ? parsed.roles : defaultRoles;
+        const roleMap = new Map<string, Role>();
+        defaultRoles.forEach(r => roleMap.set(r.id, r));
+        loadedRoles.forEach((r: Role) => roleMap.set(r.id, r));
+
+
         setSettings({
             floors: parsed.floors && parsed.floors.length > 0 ? parsed.floors : initialFloors,
             tables: parsed.tables && parsed.tables.length > 0 ? parsed.tables : initialTables,
@@ -120,6 +166,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
             defaultBranchId: parsed.defaultBranchId || loadedBranches[0]?.id || null,
             businessDayStart: parsed.businessDayStart || "11:00",
             businessDayEnd: parsed.businessDayEnd || "04:00",
+            roles: Array.from(roleMap.values()),
         });
       } else {
         setSettings(initialSettings);
@@ -239,6 +286,37 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     logActivity(`Updated company name to: '${name}'.`, user?.username || 'System', 'Settings');
   }, [toast, logActivity, user]);
 
+  const addRole = useCallback((role: Omit<Role, 'id'>) => {
+    const newRole: Role = { ...role, id: role.name.toLowerCase().replace(/\s+/g, '-') as UserRole };
+    if (settings.roles.some(r => r.id === newRole.id)) {
+        toast({ variant: 'destructive', title: 'Error', description: `A role with the ID '${newRole.id}' already exists.` });
+        return;
+    }
+    setSettings(s => ({ ...s, roles: [...s.roles, newRole] }));
+    logActivity(`Added new role: '${role.name}'.`, user?.username || 'System', 'Settings');
+  }, [settings.roles, toast, logActivity, user]);
+
+  const updateRole = useCallback((updatedRole: Role) => {
+    setSettings(s => ({
+      ...s,
+      roles: s.roles.map(r => r.id === updatedRole.id ? updatedRole : r),
+    }));
+    logActivity(`Updated role: '${updatedRole.name}'.`, user?.username || 'System', 'Settings');
+  }, [logActivity, user]);
+
+  const deleteRole = useCallback((roleId: UserRole) => {
+    if (['root', 'admin', 'cashier', 'marketing'].includes(roleId)) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Cannot delete a default system role.' });
+        return;
+    }
+    const roleName = settings.roles.find(r => r.id === roleId)?.name || 'N/A';
+    setSettings(s => ({
+      ...s,
+      roles: s.roles.filter(r => r.id !== roleId),
+    }));
+    logActivity(`Deleted role: '${roleName}'.`, user?.username || 'System', 'Settings');
+  }, [settings.roles, toast, logActivity, user]);
+
 
   return (
     <SettingsContext.Provider
@@ -260,6 +338,9 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         toggleService,
         updateBusinessDayHours,
         updateCompanyName,
+        addRole,
+        updateRole,
+        deleteRole,
       }}
     >
       {children}
