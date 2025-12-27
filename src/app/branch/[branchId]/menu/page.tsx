@@ -1,16 +1,24 @@
 
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo } from "react";
 import { useSearchParams, useParams, useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
-import type { OrderType, MenuItem } from "@/lib/types";
+import type { OrderType } from "@/lib/types";
 import { MenuItemCard } from "@/components/menu/MenuItemCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import * as LucideIcons from 'lucide-react';
 import { useMenu } from "@/context/MenuContext";
 import { useDeals } from "@/context/DealsContext";
 import { Loader } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 
 const Icon = ({ name, className }: { name: string, className: string }) => {
@@ -28,48 +36,39 @@ export default function MenuPage() {
   const router = useRouter();
   const branchId = params.branchId as string;
   const searchParams = useSearchParams();
-  const { setOrderDetails, addItem } = useCart();
+  const { setOrderDetails, tableId, setTable } = useCart();
   const { menu, isLoading: isMenuLoading } = useMenu();
   const { deals, isLoading: areDealsLoading } = useDeals();
-  const processedDeal = useRef(false);
+  const { settings } = useSettings();
 
   const { items: menuItems, categories } = menu;
 
+  const orderType = searchParams.get("mode") as OrderType | null;
+
+  const availableTables = useMemo(() => {
+    return settings.tables.filter(t => !settings.occupiedTableIds.includes(t.id));
+  }, [settings.tables, settings.occupiedTableIds]);
+
+  const selectedTable = useMemo(() => {
+    return settings.tables.find(t => t.id === tableId);
+  }, [tableId, settings.tables]);
+
+
   useEffect(() => {
     const mode = searchParams.get("mode") as OrderType;
-    const floorId = searchParams.get("floorId") || undefined;
-    const tableId = searchParams.get("tableId") || undefined;
-    const dealId = searchParams.get("dealId");
 
-    // This ensures that navigating directly to the menu URL still sets the context.
     if (mode && branchId) {
-      setOrderDetails({ branchId: branchId, orderType: mode, floorId, tableId });
+      setOrderDetails({ branchId: branchId, orderType: mode });
     }
 
-    // Auto-add deal to cart if dealId is present and not yet processed
-    if (dealId && !areDealsLoading && !processedDeal.current) {
-        const dealToAdd = deals.find(d => d.id === dealId);
-        if (dealToAdd) {
-            // Convert Deal to a MenuItem-like structure for the cart
-            const dealAsMenuItem: MenuItem = {
-                id: dealToAdd.id,
-                name: dealToAdd.name,
-                description: dealToAdd.description,
-                price: dealToAdd.price,
-                imageUrl: dealToAdd.imageUrl,
-                categoryId: 'deals', // Assign to a conceptual 'deals' category
-            };
-            addItem({ item: dealAsMenuItem });
-            processedDeal.current = true; // Mark as processed
-            
-            // Remove dealId from URL to prevent re-adding on refresh
-            const current = new URL(window.location.toString());
-            current.searchParams.delete('dealId');
-            router.replace(current.pathname + current.search);
-        }
-    }
+  }, [searchParams, branchId, setOrderDetails, deals, areDealsLoading, router]);
 
-  }, [searchParams, branchId, setOrderDetails, deals, areDealsLoading, addItem, router]);
+  const handleTableChange = (newTableId: string) => {
+    const table = settings.tables.find(t => t.id === newTableId);
+    if(table) {
+      setTable(table.id, table.floorId);
+    }
+  }
 
   if (isMenuLoading || areDealsLoading) {
     return (
@@ -86,6 +85,26 @@ export default function MenuPage() {
         <h1 className="font-headline text-4xl font-bold tracking-tight">Our Menu</h1>
         <p className="mt-2 text-lg text-muted-foreground">Explore our delicious offerings</p>
       </div>
+      
+      {orderType === 'Dine-In' && (
+        <div className="max-w-xs mx-auto mb-8 p-4 border rounded-lg bg-muted/50">
+            <Label htmlFor="table-select">Your Table</Label>
+            <Select value={tableId || undefined} onValueChange={handleTableChange}>
+                <SelectTrigger id="table-select">
+                    <SelectValue placeholder="Select your table" />
+                </SelectTrigger>
+                <SelectContent>
+                    {availableTables.map(table => (
+                        <SelectItem key={table.id} value={table.id}>
+                            {settings.floors.find(f => f.id === table.floorId)?.name} - {table.name}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+            {!tableId && <p className="text-xs text-destructive mt-1">Please select a table to place an order.</p>}
+        </div>
+      )}
+
 
       <Tabs defaultValue={categories[0]?.id} className="w-full">
         <TabsList className="grid w-full h-auto grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">

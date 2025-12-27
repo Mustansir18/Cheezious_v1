@@ -23,7 +23,8 @@ interface CartContextType {
   updateQuantity: (cartItemId: string, quantity: number) => void;
   clearCart: () => void;
   closeCart: () => void;
-  setOrderDetails: (details: { branchId: string; orderType: OrderType; floorId?: string; tableId?: string; }) => void;
+  setOrderDetails: (details: { branchId: string; orderType: OrderType; }) => void;
+  setTable: (tableId: string, floorId: string) => void;
   cartCount: number;
   cartTotal: number;
 }
@@ -64,15 +65,14 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [items, branchId, orderType, floorId, tableId]);
 
-  const setOrderDetails = (details: { branchId: string; orderType: OrderType; floorId?: string; tableId?: string; }) => {
+  const setOrderDetails = (details: { branchId: string; orderType: OrderType; }) => {
     const hasChanged = details.branchId !== branchId || details.orderType !== orderType;
     
     setBranchId(details.branchId);
     setOrderType(details.orderType);
 
     if (details.orderType === 'Dine-In') {
-        setFloorId(details.floorId || null);
-        setTableId(details.tableId || null);
+        // Don't set table here, it will be set by `setTable`
     } else {
         setFloorId(null);
         setTableId(null);
@@ -82,6 +82,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       setItems([]);
     }
   };
+
+  const setTable = (newTableId: string, newFloorId: string) => {
+    setTableId(newTableId);
+    setFloorId(newFloorId);
+  }
 
   const addItem = ({ item: itemToAdd, selectedAddons = [], itemQuantity }: AddToCartOptions) => {
     const addonPrice = selectedAddons.reduce((sum, { addon, quantity }) => sum + (addon.price * quantity), 0);
@@ -156,6 +161,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         clearCart,
         closeCart,
         setOrderDetails,
+        setTable,
         cartCount,
         cartTotal,
       }}

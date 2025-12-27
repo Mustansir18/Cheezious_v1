@@ -4,7 +4,7 @@
 import { useRouter } from 'next/navigation';
 import { useSettings } from '@/context/SettingsContext';
 import { useDeals } from '@/context/DealsContext';
-import { Loader, Pizza } from 'lucide-react';
+import { Loader, Pizza, Utensils, ShoppingBag } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
@@ -14,12 +14,89 @@ import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { RatingDialog } from '@/components/ui/rating-dialog';
 import Header from '@/components/layout/Header';
+import { useState } from 'react';
+import type { Deal, MenuItem } from '@/lib/types';
+import { useCart } from '@/context/CartContext';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+
+function DealSelectionDialog({ deal, onSelectMode, isOpen, onOpenChange }: { deal: Deal | null; onSelectMode: (mode: 'Dine-In' | 'Take-Away') => void; isOpen: boolean; onOpenChange: (open: boolean) => void; }) {
+    if (!deal) return null;
+
+    const { settings } = useSettings();
+    const branch = settings.branches.find(b => b.id === settings.defaultBranchId);
+    
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle className="font-headline text-2xl">How will you be dining?</DialogTitle>
+                    <DialogDescription>Select an option to add "{deal.name}" to your cart.</DialogDescription>
+                </DialogHeader>
+                <div className="grid grid-cols-2 gap-4 py-4">
+                     <Button
+                        variant={branch?.dineInEnabled ? "outline" : "secondary"}
+                        className="h-24 flex-col gap-2"
+                        onClick={() => onSelectMode('Dine-In')}
+                        disabled={!branch?.dineInEnabled}
+                     >
+                        <Utensils className="h-8 w-8" />
+                        <span className="font-semibold">Dine-In</span>
+                     </Button>
+                     <Button
+                        variant={branch?.takeAwayEnabled ? "outline" : "secondary"}
+                        className="h-24 flex-col gap-2"
+                        onClick={() => onSelectMode('Take-Away')}
+                        disabled={!branch?.takeAwayEnabled}
+                     >
+                        <ShoppingBag className="h-8 w-8" />
+                        <span className="font-semibold">Take Away</span>
+                     </Button>
+                </div>
+                 <DialogFooter className="sm:justify-center">
+                    <p className="text-xs text-muted-foreground">You can continue ordering after making a selection.</p>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
 
 
 function DealsCarousel() {
   const { deals, isLoading } = useDeals();
   const { settings } = useSettings();
+  const router = useRouter();
+  const { setOrderDetails, addItem } = useCart();
+  const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
+  const [isDialogOpen, setDialogOpen] = useState(false);
   const defaultBranchId = settings.defaultBranchId || (settings.branches.length > 0 ? settings.branches[0].id : null);
+
+  const handleDealClick = (deal: Deal) => {
+    setSelectedDeal(deal);
+    setDialogOpen(true);
+  };
+
+  const handleModeSelection = (mode: 'Dine-In' | 'Take-Away') => {
+    if (!selectedDeal || !defaultBranchId) return;
+
+    setOrderDetails({ branchId: defaultBranchId, orderType: mode });
+
+    const dealAsMenuItem: MenuItem = {
+      id: selectedDeal.id,
+      name: selectedDeal.name,
+      description: selectedDeal.description,
+      price: selectedDeal.price,
+      imageUrl: selectedDeal.imageUrl,
+      categoryId: 'deals',
+    };
+    
+    addItem({ item: dealAsMenuItem, itemQuantity: 1 });
+
+    setDialogOpen(false);
+    setSelectedDeal(null);
+
+    router.push(`/branch/${defaultBranchId}/menu?mode=${mode}`);
+  };
+
 
   if (isLoading) {
     return (
@@ -43,19 +120,25 @@ function DealsCarousel() {
         <CarouselContent className="-ml-4">
           {deals.map((deal) => (
             <CarouselItem key={deal.id} className="md:basis-1/2 lg:basis-1/3 pl-4">
-              <Link href={`/branch/${defaultBranchId}?dealId=${deal.id}`} className="block p-1 group">
+              <div className="block p-1 group cursor-pointer" onClick={() => handleDealClick(deal)}>
                   <Card className="overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:scale-105 animate-blink-neon-green">
                     <CardContent className="flex aspect-video items-center justify-center p-0">
                       <Image src={deal.imageUrl} alt={deal.name} width={600} height={400} className="object-cover w-full h-full" />
                     </CardContent>
                   </Card>
-              </Link>
+              </div>
             </CarouselItem>
           ))}
         </CarouselContent>
         <CarouselPrevious className="absolute left-[-50px] top-1/2 -translate-y-1/2 z-10 h-10 w-10 bg-background/80 text-foreground border hover:bg-accent" />
         <CarouselNext className="absolute right-[-50px] top-1/2 -translate-y-1/2 z-10 h-10 w-10 bg-background/80 text-foreground border hover:bg-accent" />
       </Carousel>
+      <DealSelectionDialog 
+        deal={selectedDeal}
+        onSelectMode={handleModeSelection}
+        isOpen={isDialogOpen}
+        onOpenChange={setDialogOpen}
+      />
     </div>
   );
 }

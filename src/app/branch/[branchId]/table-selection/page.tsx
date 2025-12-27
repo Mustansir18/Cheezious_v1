@@ -21,7 +21,6 @@ export default function TableSelectionPage() {
     const dealId = searchParams.get('dealId');
 
     const { settings, isLoading } = useSettings();
-    const { orders } = useOrders();
     const { setOrderDetails } = useCart();
     const router = useRouter();
 
@@ -31,9 +30,8 @@ export default function TableSelectionPage() {
     const availableTables = settings.tables.filter(table => table.floorId === selectedFloorId);
     
     const occupiedTableIds = useMemo(() => {
-        const activeOrders = orders.filter(order => ACTIVE_STATUSES.includes(order.status));
-        return new Set(activeOrders.map(order => order.tableId));
-    }, [orders]);
+        return new Set(settings.occupiedTableIds);
+    }, [settings.occupiedTableIds]);
 
 
     const handleProceedToMenu = () => {
@@ -42,8 +40,6 @@ export default function TableSelectionPage() {
             setOrderDetails({
                 branchId: branchId,
                 orderType: 'Dine-In',
-                floorId: selectedFloorId,
-                tableId: selectedTableId,
             });
             const menuUrl = `/branch/${branchId}/menu?mode=Dine-In&floorId=${selectedFloorId}&tableId=${selectedTableId}${dealId ? `&dealId=${dealId}` : ''}`;
             router.push(menuUrl);

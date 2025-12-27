@@ -14,17 +14,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <ActivityLogProvider>
       <AuthProvider>
-        <SettingsProvider>
-          <DealsProvider>
-            <MenuProvider>
-              <OrderProvider>
+        <OrderProvider>
+          <SettingsProvider>
+            <DealsProvider>
+              <MenuProvider>
                 <RatingProvider>
                   <CartProvider>{children}</CartProvider>
                 </RatingProvider>
-              </OrderProvider>
-            </MenuProvider>
-          </DealsProvider>
-        </SettingsProvider>
+              </MenuProvider>
+            </DealsProvider>
+          </SettingsProvider>
+        </OrderProvider>
       </AuthProvider>
     </ActivityLogProvider>
   );

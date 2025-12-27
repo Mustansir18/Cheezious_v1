@@ -11,9 +11,7 @@ import { cn } from "@/lib/utils";
 
 export default function ModeSelectionPage() {
   const params = useParams();
-  const searchParams = useSearchParams();
   const branchId = params.branchId as string;
-  const dealId = searchParams.get('dealId');
 
   const { settings } = useSettings();
   const branch = useMemo(() => settings.branches.find((b) => b.id === branchId), [branchId, settings.branches]);
@@ -25,8 +23,8 @@ export default function ModeSelectionPage() {
   const isDineInAvailable = branch.dineInEnabled;
   const isTakeAwayAvailable = branch.takeAwayEnabled;
 
-  const takeAwayUrl = `/branch/${branchId}/menu?mode=Take-Away${dealId ? `&dealId=${dealId}` : ''}`;
-  const dineInUrl = `/branch/${branchId}/table-selection${dealId ? `?dealId=${dealId}` : ''}`;
+  const takeAwayUrl = `/branch/${branchId}/menu?mode=Take-Away`;
+  const dineInUrl = `/branch/${branchId}/menu?mode=Dine-In`;
 
 
   return (
