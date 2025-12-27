@@ -84,7 +84,6 @@ export function PaymentMethodBreakdown({ data, selectedMethod, onSelectMethod, o
                             cx="50%"
                             cy="50%"
                             innerRadius={40}
-                            outerRadius={60}
                             paddingAngle={5}
                             onClick={(data) => handlePieClick(data)}
                             className="cursor-pointer"
@@ -93,8 +92,9 @@ export function PaymentMethodBreakdown({ data, selectedMethod, onSelectMethod, o
                                 <Cell 
                                     key={`cell-${index}`} 
                                     fill={entry.fill} 
+                                    outerRadius={selectedMethod === entry.method ? 70 : 60}
                                     className={cn(
-                                        "transition-opacity",
+                                        "transition-all",
                                         selectedMethod && selectedMethod !== entry.method && "blur-out"
                                     )}
                                 />
