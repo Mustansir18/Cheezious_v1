@@ -29,6 +29,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useDeals } from '@/context/DealsContext';
+import { cn } from '@/lib/utils';
 
 
 async function handleImageUpload(file: File) {
@@ -58,6 +59,7 @@ function CategoryForm({ category, onSave }: { category?: MenuCategory; onSave: (
   const [icon, setIcon] = useState(category?.icon || 'Package');
   const { menu } = useMenu();
   const { toast } = useToast();
+  const [isIdInvalid, setIsIdInvalid] = useState(false);
   
   const validateId = (value: string) => {
     if (menu.categories.some(c => c.id === value)) {
@@ -66,14 +68,19 @@ function CategoryForm({ category, onSave }: { category?: MenuCategory; onSave: (
             title: 'Duplicate Code',
             description: `The code "${value}" is already in use by another category.`,
         });
+        setIsIdInvalid(true);
         return false;
     }
+    setIsIdInvalid(false);
     return true;
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-     if (!category && !validateId(id)) return;
+    if (isIdInvalid) return;
+    
+    if (!category && !validateId(id)) return;
+    
     if (category) {
       onSave({ ...category, name, icon });
     } else {
@@ -94,27 +101,29 @@ function CategoryForm({ category, onSave }: { category?: MenuCategory; onSave: (
           <Input 
             id="category-id" 
             value={id} 
-            onChange={(e) => setId(e.target.value)} 
+            onChange={(e) => { setId(e.target.value); setIsIdInvalid(false); }}
             onBlur={(e) => validateId(e.target.value)}
             required 
             placeholder="e.g. C-01" 
           />
         </div>
       )}
-      <div>
-        <Label htmlFor="category-name">Category Name</Label>
-        <Input id="category-name" value={name} onChange={(e) => setName(e.target.value)} required />
-      </div>
-      <div>
-        <Label htmlFor="category-icon">Icon Name</Label>
-        <Input id="category-icon" value={icon} onChange={(e) => setIcon(e.target.value)} required />
-        <p className="text-sm text-muted-foreground mt-1">
-          Use any valid icon name from <a href="https://lucide.dev/icons/" target="_blank" rel="noopener noreferrer" className="underline">Lucide icons</a>.
-        </p>
+      <div className={cn(category ? '' : isIdInvalid && 'blur-out')}>
+        <div className="mt-4">
+          <Label htmlFor="category-name">Category Name</Label>
+          <Input id="category-name" value={name} onChange={(e) => setName(e.target.value)} required disabled={!category && isIdInvalid} />
+        </div>
+        <div className="mt-4">
+          <Label htmlFor="category-icon">Icon Name</Label>
+          <Input id="category-icon" value={icon} onChange={(e) => setIcon(e.target.value)} required disabled={!category && isIdInvalid} />
+          <p className="text-sm text-muted-foreground mt-1">
+            Use any valid icon name from <a href="https://lucide.dev/icons/" target="_blank" rel="noopener noreferrer" className="underline">Lucide icons</a>.
+          </p>
+        </div>
       </div>
       <DialogFooter>
         <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
-        <Button type="submit">Save Category</Button>
+        <Button type="submit" disabled={isIdInvalid}>Save Category</Button>
       </DialogFooter>
     </form>
   );
@@ -133,6 +142,8 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
   const [imageUrl, setImageUrl] = useState(item?.imageUrl || '');
   const [isCompressing, setIsCompressing] = useState(false);
   const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>(item?.availableAddonIds || []);
+  const [isIdInvalid, setIsIdInvalid] = useState(false);
+
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -155,13 +166,17 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
             title: 'Duplicate Code',
             description: `The code "${value}" is already in use by another item or deal.`,
         });
+        setIsIdInvalid(true);
         return false;
     }
+    setIsIdInvalid(false);
     return true;
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isIdInvalid) return;
+    
     if (!item && !validateId(id)) return; // Don't save if validation fails on create
 
     const data = { name, description, price, categoryId, imageUrl, availableAddonIds: selectedAddonIds };
@@ -185,64 +200,67 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
           <Input 
             id="item-id" 
             value={id} 
-            onChange={(e) => setId(e.target.value)} 
+            onChange={(e) => { setId(e.target.value); setIsIdInvalid(false); }}
             onBlur={(e) => validateId(e.target.value)}
             required 
             placeholder="e.g. P-001" 
           />
         </div>
       )}
-      <div>
-        <Label htmlFor="item-name">Item Name</Label>
-        <Input id="item-name" value={name} onChange={(e) => setName(e.target.value)} required />
-      </div>
-      <div>
-        <Label htmlFor="item-description">Description</Label>
-        <Textarea id="item-description" value={description} onChange={(e) => setDescription(e.target.value)} required />
-      </div>
-      <div>
-        <Label htmlFor="item-price">Base Price</Label>
-        <Input id="item-price" type="number" value={price} onChange={(e) => setPrice(Number(e.target.value))} required />
-      </div>
-      <div>
-        <Label htmlFor="item-category">Category</Label>
-        <Select value={categoryId} onValueChange={setCategoryId} required>
-          <SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger>
-          <SelectContent>
-            {menu.categories.map(cat => (<SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div>
-        <Label>Available Add-ons</Label>
-        <ScrollArea className="h-40 rounded-md border p-4">
-            <div className="space-y-2">
-                {menu.addons.map(addon => (
-                    <div key={addon.id} className="flex items-center space-x-2">
-                        <Checkbox
-                            id={`addon-${addon.id}`}
-                            checked={selectedAddonIds.includes(addon.id)}
-                            onCheckedChange={() => handleAddonToggle(addon.id)}
-                        />
-                        <Label htmlFor={`addon-${addon.id}`} className="font-normal flex-grow">{addon.name}</Label>
-                        <span className="text-sm text-muted-foreground">+RS {Math.round(addon.price)}</span>
-                    </div>
-                ))}
-            </div>
-        </ScrollArea>
-      </div>
-      <div>
-        <Label htmlFor="item-image">Item Image</Label>
-        <Input id="item-image" type="file" accept="image/*" onChange={handleImageChange} className="file:text-foreground"/>
-        <p className="text-sm text-muted-foreground mt-1">It will be automatically compressed.</p>
-        {isCompressing && <p className="text-sm text-blue-500 mt-2">Compressing...</p>}
-        {imageUrl && !isCompressing && (
-          <div className="mt-4"><p className="text-sm font-medium mb-2">Preview:</p><Image src={imageUrl} alt="Preview" width={100} height={100} className="rounded-md object-cover" /></div>
-        )}
+      <div className={cn(item ? '' : isIdInvalid && 'blur-out')}>
+        <div className="mt-4">
+            <Label htmlFor="item-name">Item Name</Label>
+            <Input id="item-name" value={name} onChange={(e) => setName(e.target.value)} required disabled={!item && isIdInvalid} />
+        </div>
+        <div className="mt-4">
+            <Label htmlFor="item-description">Description</Label>
+            <Textarea id="item-description" value={description} onChange={(e) => setDescription(e.target.value)} required disabled={!item && isIdInvalid} />
+        </div>
+        <div className="mt-4">
+            <Label htmlFor="item-price">Base Price</Label>
+            <Input id="item-price" type="number" value={price} onChange={(e) => setPrice(Number(e.target.value))} required disabled={!item && isIdInvalid} />
+        </div>
+        <div className="mt-4">
+            <Label htmlFor="item-category">Category</Label>
+            <Select value={categoryId} onValueChange={setCategoryId} required disabled={!item && isIdInvalid}>
+            <SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger>
+            <SelectContent>
+                {menu.categories.map(cat => (<SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>))}
+            </SelectContent>
+            </Select>
+        </div>
+        <div className="mt-4">
+            <Label>Available Add-ons</Label>
+            <ScrollArea className="h-40 rounded-md border p-4">
+                <div className="space-y-2">
+                    {menu.addons.map(addon => (
+                        <div key={addon.id} className="flex items-center space-x-2">
+                            <Checkbox
+                                id={`addon-${addon.id}`}
+                                checked={selectedAddonIds.includes(addon.id)}
+                                onCheckedChange={() => handleAddonToggle(addon.id)}
+                                disabled={!item && isIdInvalid}
+                            />
+                            <Label htmlFor={`addon-${addon.id}`} className="font-normal flex-grow">{addon.name}</Label>
+                            <span className="text-sm text-muted-foreground">+RS {Math.round(addon.price)}</span>
+                        </div>
+                    ))}
+                </div>
+            </ScrollArea>
+        </div>
+        <div className="mt-4">
+            <Label htmlFor="item-image">Item Image</Label>
+            <Input id="item-image" type="file" accept="image/*" onChange={handleImageChange} className="file:text-foreground" disabled={!item && isIdInvalid}/>
+            <p className="text-sm text-muted-foreground mt-1">It will be automatically compressed.</p>
+            {isCompressing && <p className="text-sm text-blue-500 mt-2">Compressing...</p>}
+            {imageUrl && !isCompressing && (
+            <div className="mt-4"><p className="text-sm font-medium mb-2">Preview:</p><Image src={imageUrl} alt="Preview" width={100} height={100} className="rounded-md object-cover" /></div>
+            )}
+        </div>
       </div>
       <DialogFooter>
         <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
-        <Button type="submit">Save Item</Button>
+        <Button type="submit" disabled={isIdInvalid}>Save Item</Button>
       </DialogFooter>
     </form>
   );

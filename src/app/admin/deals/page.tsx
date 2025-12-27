@@ -26,6 +26,7 @@ import imageCompression from 'browser-image-compression';
 import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useMenu } from '@/context/MenuContext';
+import { cn } from '@/lib/utils';
 
 
 async function handleImageUpload(file: File) {
@@ -66,6 +67,7 @@ function DealForm({
   const { deals } = useDeals();
   const { menu } = useMenu();
   const { toast } = useToast();
+  const [isIdInvalid, setIsIdInvalid] = useState(false);
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -84,13 +86,17 @@ function DealForm({
             title: 'Duplicate Code',
             description: `The code "${value}" is already in use by another deal or menu item.`,
         });
+        setIsIdInvalid(true);
         return false;
     }
+    setIsIdInvalid(false);
     return true;
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isIdInvalid) return;
+
     if (!deal && !validateId(id)) return; // Don't save if validation fails on create
     
     const data = { name, description, price, imageUrl };
@@ -114,41 +120,43 @@ function DealForm({
           <Input 
             id="deal-id" 
             value={id} 
-            onChange={(e) => setId(e.target.value)} 
+            onChange={(e) => { setId(e.target.value); setIsIdInvalid(false); }} 
             onBlur={(e) => validateId(e.target.value)}
             required placeholder="e.g. D-001" 
           />
         </div>
       )}
-      <div>
-        <Label htmlFor="deal-name">Deal Name</Label>
-        <Input id="deal-name" value={name} onChange={(e) => setName(e.target.value)} required />
-      </div>
-      <div>
-        <Label htmlFor="deal-description">Description</Label>
-        <Textarea id="deal-description" value={description} onChange={(e) => setDescription(e.target.value)} required />
-      </div>
-      <div>
-        <Label htmlFor="deal-price">Price</Label>
-        <Input id="deal-price" type="number" value={price} onChange={(e) => setPrice(Number(e.target.value))} required />
-      </div>
-      <div>
-        <Label htmlFor="deal-image">Deal Image</Label>
-        <Input id="deal-image" type="file" accept="image/*" onChange={handleImageChange} className="file:text-foreground"/>
-        <p className="text-sm text-muted-foreground mt-1">Select an image from your system. It will be automatically compressed.</p>
-        {isCompressing && <p className="text-sm text-blue-500 mt-2">Compressing image...</p>}
-        {imageUrl && !isCompressing && (
-          <div className="mt-4">
-            <p className="text-sm font-medium mb-2">Image Preview:</p>
-            <Image src={imageUrl} alt="Image preview" width={100} height={100} className="rounded-md object-cover" />
-          </div>
-        )}
+      <div className={cn(deal ? '' : isIdInvalid && 'blur-out')}>
+        <div>
+            <Label htmlFor="deal-name">Deal Name</Label>
+            <Input id="deal-name" value={name} onChange={(e) => setName(e.target.value)} required disabled={!deal && isIdInvalid} />
+        </div>
+        <div className="mt-4">
+            <Label htmlFor="deal-description">Description</Label>
+            <Textarea id="deal-description" value={description} onChange={(e) => setDescription(e.target.value)} required disabled={!deal && isIdInvalid} />
+        </div>
+        <div className="mt-4">
+            <Label htmlFor="deal-price">Price</Label>
+            <Input id="deal-price" type="number" value={price} onChange={(e) => setPrice(Number(e.target.value))} required disabled={!deal && isIdInvalid} />
+        </div>
+        <div className="mt-4">
+            <Label htmlFor="deal-image">Deal Image</Label>
+            <Input id="deal-image" type="file" accept="image/*" onChange={handleImageChange} className="file:text-foreground" disabled={!deal && isIdInvalid} />
+            <p className="text-sm text-muted-foreground mt-1">Select an image from your system. It will be automatically compressed.</p>
+            {isCompressing && <p className="text-sm text-blue-500 mt-2">Compressing image...</p>}
+            {imageUrl && !isCompressing && (
+            <div className="mt-4">
+                <p className="text-sm font-medium mb-2">Image Preview:</p>
+                <Image src={imageUrl} alt="Image preview" width={100} height={100} className="rounded-md object-cover" />
+            </div>
+            )}
+        </div>
       </div>
       <DialogFooter>
         <DialogClose asChild>
           <Button type="button" variant="secondary">Cancel</Button>
         </DialogClose>
-        <Button type="submit">Save Deal</Button>
+        <Button type="submit" disabled={isIdInvalid}>Save Deal</Button>
       </DialogFooter>
     </form>
   );
