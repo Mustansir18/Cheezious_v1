@@ -21,7 +21,7 @@ export default function SalesTargetPage() {
     const { orders } = useOrders();
     const { menu } = useMenu();
 
-    const [targetType, setTargetType] = useState<'item' | 'category'>('category');
+    const [targetType, setTargetType] = useState<'item' | 'category' | 'menu'>('category');
     const [selectedId, setSelectedId] = useState<string>('');
     const [targetAmount, setTargetAmount] = useState<number>(10000);
     const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -30,7 +30,7 @@ export default function SalesTargetPage() {
     });
 
     const targetData = useMemo(() => {
-        if (!selectedId || targetAmount <= 0) return null;
+        if ((targetType !== 'menu' && !selectedId) || targetAmount <= 0) return null;
 
         const filteredOrders = orders.filter(order => {
             const orderDate = new Date(order.orderDate);
@@ -41,6 +41,8 @@ export default function SalesTargetPage() {
         });
 
         let actualSales = 0;
+        let targetName = "Whole Menu";
+
         if (targetType === 'item') {
             actualSales = filteredOrders.reduce((sum, order) => {
                 const itemSales = order.items
@@ -48,7 +50,8 @@ export default function SalesTargetPage() {
                     .reduce((itemSum, item) => itemSum + (item.itemPrice * item.quantity), 0);
                 return sum + itemSales;
             }, 0);
-        } else { // category
+            targetName = menu.items.find(i => i.id === selectedId)?.name || 'N/A';
+        } else if (targetType === 'category') {
             const itemIdsInCategory = menu.items.filter(item => item.categoryId === selectedId).map(item => item.id);
             actualSales = filteredOrders.reduce((sum, order) => {
                 const categorySales = order.items
@@ -56,19 +59,18 @@ export default function SalesTargetPage() {
                     .reduce((itemSum, item) => itemSum + (item.itemPrice * item.quantity), 0);
                 return sum + categorySales;
             }, 0);
+            targetName = menu.categories.find(c => c.id === selectedId)?.name || 'N/A';
+        } else { // 'menu'
+            actualSales = filteredOrders.reduce((sum, order) => sum + order.totalAmount, 0);
         }
 
         const percentage = (actualSales / targetAmount) * 100;
-        const selectedEntity = targetType === 'item' 
-            ? menu.items.find(i => i.id === selectedId)
-            : menu.categories.find(c => c.id === selectedId);
-
 
         return {
             targetAmount,
             actualSales,
             percentage,
-            name: selectedEntity?.name || 'N/A',
+            name: targetName,
         };
     }, [orders, menu, targetType, selectedId, targetAmount, dateRange]);
 
@@ -97,23 +99,26 @@ export default function SalesTargetPage() {
                         <Select value={targetType} onValueChange={(v) => { setTargetType(v as any); setSelectedId(''); }}>
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
+                                <SelectItem value="menu">Whole Menu</SelectItem>
                                 <SelectItem value="category">Category</SelectItem>
                                 <SelectItem value="item">Menu Item</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
 
-                    <div className="space-y-2">
-                        <Label>Select {targetType === 'item' ? 'Item' : 'Category'}</Label>
-                        <Select value={selectedId} onValueChange={setSelectedId}>
-                            <SelectTrigger><SelectValue placeholder={`Select a ${targetType}`} /></SelectTrigger>
-                            <SelectContent>
-                                {selectionOptions.map(option => (
-                                    <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
+                    {targetType !== 'menu' && (
+                        <div className="space-y-2">
+                            <Label>Select {targetType === 'item' ? 'Item' : 'Category'}</Label>
+                            <Select value={selectedId} onValueChange={setSelectedId}>
+                                <SelectTrigger><SelectValue placeholder={`Select a ${targetType}`} /></SelectTrigger>
+                                <SelectContent>
+                                    {selectionOptions.map(option => (
+                                        <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
 
                     <div className="space-y-2">
                         <Label htmlFor="target-amount">Target Amount (RS)</Label>
