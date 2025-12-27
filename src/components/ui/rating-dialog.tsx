@@ -64,11 +64,9 @@ export function RatingDialog() {
     <>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogTrigger asChild>
-            <div className="fixed bottom-6 right-6 z-50">
-                <Button className="rounded-full h-14 w-auto px-6 shadow-lg animate-pulse">
-                    <Star className="mr-2 h-5 w-5" /> Rate Us
-                </Button>
-            </div>
+            <Button className="rounded-full h-14 w-auto px-6 shadow-lg animate-pulse">
+                <Star className="mr-2 h-5 w-5" /> Rate Us
+            </Button>
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>

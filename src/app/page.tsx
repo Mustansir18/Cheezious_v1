@@ -109,7 +109,7 @@ export default function Home() {
             <DealsCarousel />
         </div>
 
-        <div className="fixed bottom-6 right-6 z-50">
+        <div className="mt-8">
             <RatingDialog />
         </div>
     </main>
