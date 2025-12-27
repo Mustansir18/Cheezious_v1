@@ -17,8 +17,9 @@ import { Calendar } from '@/components/ui/calendar';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Target, DollarSign, FileDown, FileText } from 'lucide-react';
+import { Calendar as CalendarIcon, Target, DollarSign, FileDown, FileText, Utensils, ShoppingBag } from 'lucide-react';
 import type { DateRange } from 'react-day-picker';
+import { Pie, PieChart, ResponsiveContainer, Cell, Tooltip } from 'recharts';
 
 export default function SalesTargetPage() {
     const { orders } = useOrders();
@@ -44,36 +45,52 @@ export default function SalesTargetPage() {
         });
 
         let actualSales = 0;
+        let dineInSales = 0;
+        let takeAwaySales = 0;
         let targetName = "Whole Menu";
 
-        if (targetType === 'item') {
-            actualSales = filteredOrders.reduce((sum, order) => {
-                const itemSales = order.items
+        const calculateSales = (order: typeof orders[0]) => {
+            if (targetType === 'item') {
+                return order.items
                     .filter(item => item.menuItemId === selectedId)
                     .reduce((itemSum, item) => itemSum + (item.itemPrice * item.quantity), 0);
-                return sum + itemSales;
-            }, 0);
-            targetName = menu.items.find(i => i.id === selectedId)?.name || 'N/A';
-        } else if (targetType === 'category') {
-            const itemIdsInCategory = menu.items.filter(item => item.categoryId === selectedId).map(item => item.id);
-            actualSales = filteredOrders.reduce((sum, order) => {
-                const categorySales = order.items
+            } else if (targetType === 'category') {
+                const itemIdsInCategory = menu.items.filter(item => item.categoryId === selectedId).map(item => item.id);
+                return order.items
                     .filter(item => itemIdsInCategory.includes(item.menuItemId))
                     .reduce((itemSum, item) => itemSum + (item.itemPrice * item.quantity), 0);
-                return sum + categorySales;
-            }, 0);
+            }
+            return order.totalAmount; // Whole menu
+        };
+
+        filteredOrders.forEach(order => {
+            const orderSales = calculateSales(order);
+            actualSales += orderSales;
+            if (order.orderType === 'Dine-In') {
+                dineInSales += orderSales;
+            } else if (order.orderType === 'Take-Away') {
+                takeAwaySales += orderSales;
+            }
+        });
+        
+        if (targetType === 'item') {
+            targetName = menu.items.find(i => i.id === selectedId)?.name || 'N/A';
+        } else if (targetType === 'category') {
             targetName = menu.categories.find(c => c.id === selectedId)?.name || 'N/A';
-        } else { // 'menu'
-            actualSales = filteredOrders.reduce((sum, order) => sum + order.totalAmount, 0);
         }
 
         const percentage = (actualSales / targetAmount) * 100;
+        const salesBreakdown = [
+            { name: 'Dine-In', sales: dineInSales, fill: 'hsl(var(--chart-1))' },
+            { name: 'Take-Away', sales: takeAwaySales, fill: 'hsl(var(--chart-2))' },
+        ].filter(item => item.sales > 0);
 
         return {
             targetAmount,
             actualSales,
             percentage,
             name: targetName,
+            salesBreakdown,
         };
     }, [orders, menu, targetType, selectedId, targetAmount, dateRange]);
     
@@ -189,33 +206,91 @@ export default function SalesTargetPage() {
             </Card>
 
             {targetData && (
-                <Card className="mt-8">
-                    <CardHeader>
-                        <CardTitle className="flex items-center"><Target className="mr-2 text-primary"/>Target Progress: {targetData.name}</CardTitle>
-                        <CardDescription>Showing progress for the period: {dateDisplay}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div>
-                            <div className="flex justify-between mb-1 text-sm font-medium">
-                                <span>Achieved: RS {Math.round(targetData.actualSales).toLocaleString()}</span>
-                                <span className="text-muted-foreground">Target: RS {targetData.targetAmount.toLocaleString()}</span>
+                <div className="mt-8 space-y-8">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center"><Target className="mr-2 text-primary"/>Target Progress: {targetData.name}</CardTitle>
+                            <CardDescription>Showing progress for the period: {dateDisplay}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div>
+                                <div className="flex justify-between mb-1 text-sm font-medium">
+                                    <span>Achieved: RS {Math.round(targetData.actualSales).toLocaleString()}</span>
+                                    <span className="text-muted-foreground">Target: RS {targetData.targetAmount.toLocaleString()}</span>
+                                </div>
+                                <Progress value={targetData.percentage} className="h-4" />
                             </div>
-                            <Progress value={targetData.percentage} className="h-4" />
-                        </div>
-                        <div className="text-center text-2xl font-bold">
-                            {targetData.percentage.toFixed(2)}%
-                            <span className="text-sm font-normal text-muted-foreground ml-1">of target reached</span>
-                        </div>
-                    </CardContent>
-                    <CardFooter className="justify-end gap-2">
-                        <Button variant="outline" onClick={handleDownloadPDF}>
-                            <FileText className="mr-2 h-4 w-4" /> Download PDF
-                        </Button>
-                        <Button variant="outline" onClick={handleDownloadExcel}>
-                            <FileDown className="mr-2 h-4 w-4" /> Download Excel
-                        </Button>
-                    </CardFooter>
-                </Card>
+                            <div className="text-center text-2xl font-bold">
+                                {targetData.percentage.toFixed(2)}%
+                                <span className="text-sm font-normal text-muted-foreground ml-1">of target reached</span>
+                            </div>
+                        </CardContent>
+                        <CardFooter className="justify-end gap-2">
+                            <Button variant="outline" onClick={handleDownloadPDF}>
+                                <FileText className="mr-2 h-4 w-4" /> Download PDF
+                            </Button>
+                            <Button variant="outline" onClick={handleDownloadExcel}>
+                                <FileDown className="mr-2 h-4 w-4" /> Download Excel
+                            </Button>
+                        </CardFooter>
+                    </Card>
+
+                    {targetData.salesBreakdown.length > 0 && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Sales Breakdown by Order Type</CardTitle>
+                                <CardDescription>Dine-In vs. Take-Away sales for the selected target.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex flex-col md:flex-row items-center justify-center gap-8">
+                                <ResponsiveContainer width="100%" height={200} className="max-w-[200px]">
+                                    <PieChart>
+                                        <Tooltip
+                                            cursor={{ fill: 'hsl(var(--muted))' }}
+                                            content={({ active, payload }) => {
+                                                if (active && payload && payload.length) {
+                                                return (
+                                                    <div className="rounded-lg border bg-background p-2 shadow-sm">
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[0.70rem] uppercase text-muted-foreground">{payload[0].name}</span>
+                                                            <span className="font-bold">RS {payload[0].value ? Math.round(payload[0].value as number).toLocaleString() : 0}</span>
+                                                        </div>
+                                                    </div>
+                                                );
+                                                }
+                                                return null;
+                                            }}
+                                        />
+                                        <Pie
+                                            data={targetData.salesBreakdown}
+                                            dataKey="sales"
+                                            nameKey="name"
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={40}
+                                            outerRadius={70}
+                                            paddingAngle={5}
+                                        >
+                                            {targetData.salesBreakdown.map((entry) => (
+                                                <Cell key={`cell-${entry.name}`} fill={entry.fill} />
+                                            ))}
+                                        </Pie>
+                                    </PieChart>
+                                </ResponsiveContainer>
+                                <div className="grid grid-cols-1 gap-4 w-full md:w-auto">
+                                    {targetData.salesBreakdown.map(entry => (
+                                        <div key={entry.name} className="flex items-center gap-4 rounded-lg border p-3">
+                                            {entry.name === 'Dine-In' ? <Utensils className="h-6 w-6 text-muted-foreground" /> : <ShoppingBag className="h-6 w-6 text-muted-foreground" />}
+                                            <div>
+                                                <p className="text-sm text-muted-foreground">{entry.name}</p>
+                                                <p className="text-lg font-bold">RS {Math.round(entry.sales).toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
+                </div>
             )}
         </div>
     );
