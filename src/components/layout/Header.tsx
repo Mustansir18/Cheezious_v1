@@ -25,7 +25,7 @@ export default function Header({ branchId }: { branchId?: string }) {
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-sm">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2">
-          <Pizza className="h-8 w-8 text-primary" />
+          <Pizza className="h-8 w-8 text-primary animate-icon-blink" />
           <span className="hidden font-headline text-xl font-bold text-primary sm:inline-block">
             {settings.companyName}
           </span>

@@ -53,7 +53,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm">
         <form onSubmit={handleLogin}>
           <CardHeader className="text-center">
-            <Pizza className="mx-auto h-16 w-auto text-primary" />
+            <Pizza className="mx-auto h-16 w-auto text-primary animate-icon-blink" />
             <CardTitle className="font-headline text-2xl">Welcome to {settings.companyName}</CardTitle>
             <CardDescription>Enter your credentials to access your dashboard.</CardDescription>
           </CardHeader>

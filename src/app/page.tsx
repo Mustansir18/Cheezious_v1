@@ -81,7 +81,7 @@ export default function Home() {
     <main className="relative flex min-h-screen flex-col items-center justify-center p-4">
         
         <div className="flex flex-col items-center justify-center text-center space-y-6">
-            <Pizza className="h-24 w-24 text-primary" />
+            <Pizza className="h-24 w-24 text-primary animate-icon-blink" />
             <div className="space-y-2">
                 <h1 className="font-headline text-5xl font-bold tracking-tight">Welcome to {settings.companyName}</h1>
                 <p className="text-lg text-muted-foreground">The best place for pizza and fast food lovers.</p>
