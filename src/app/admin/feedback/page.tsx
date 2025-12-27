@@ -10,7 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
 import { useMemo } from "react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
 
 const StarRating = ({ rating }: { rating: number }) => (
     <div className="flex">
@@ -39,17 +39,17 @@ export default function FeedbackPage() {
         const sum = ratings.reduce((acc, r) => acc + r.rating, 0);
         const average = sum / total;
         
-        const distribution = [1, 2, 3, 4, 5].map(star => {
+        const distribution = [5, 4, 3, 2, 1].map(star => {
             const count = ratings.filter(r => r.rating === star).length;
             return { star, count, percentage: total > 0 ? (count / total) * 100 : 0 };
         });
 
-        const COLORS = ['#FF8042', '#FFBB28', '#00C49F', '#0088FE', '#8884d8'].reverse();
+        const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#FF6347'];
 
         const chartData = distribution.map((d, index) => ({
             name: `${d.star} Star`,
             value: d.count,
-            fill: COLORS[d.star - 1],
+            fill: COLORS[index],
         })).filter(d => d.value > 0);
 
         return { average, total, distribution, chartData };
@@ -90,13 +90,13 @@ export default function FeedbackPage() {
                 </CardHeader>
                 <CardContent>
                     {ratings.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div className="md:col-span-1 flex flex-col items-center justify-center text-center">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            <div className="flex flex-col items-center justify-center text-center">
                                 <p className="text-6xl font-bold">{ratingSummary.average.toFixed(2)}</p>
                                 <StarRating rating={Math.round(ratingSummary.average)} />
                                 <p className="text-muted-foreground mt-1">Based on {ratingSummary.total} ratings</p>
                             </div>
-                            <div className="md:col-span-2 h-48">
+                            <div className="h-48">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
                                         <RechartsTooltip content={({ active, payload }) => {
@@ -109,13 +109,24 @@ export default function FeedbackPage() {
                                             }
                                             return null;
                                         }}/>
-                                        <Pie data={ratingSummary.chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+                                        <Pie data={ratingSummary.chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={40} outerRadius={60}>
                                             {ratingSummary.chartData.map((entry, index) => (
                                                 <Cell key={`cell-${index}`} fill={entry.fill} />
                                             ))}
                                         </Pie>
                                     </PieChart>
                                 </ResponsiveContainer>
+                            </div>
+                             <div className="space-y-2">
+                                {ratingSummary.distribution.map(({ star, count, percentage }) => (
+                                    <div key={star} className="flex items-center gap-2">
+                                        <span className="text-sm text-muted-foreground whitespace-nowrap">{star} star</span>
+                                        <div className="w-full bg-muted rounded-full h-2.5">
+                                            <div className="bg-yellow-400 h-2.5 rounded-full" style={{ width: `${percentage}%` }}></div>
+                                        </div>
+                                        <span className="text-sm font-bold w-12 text-right">{count}</span>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     ) : (
@@ -136,6 +147,7 @@ export default function FeedbackPage() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead className="w-[200px]">Date</TableHead>
+
                                     <TableHead className="w-[150px]">Rating</TableHead>
                                     <TableHead>Comment</TableHead>
                                 </TableRow>
