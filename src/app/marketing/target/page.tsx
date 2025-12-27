@@ -47,6 +47,9 @@ export default function SalesTargetPage() {
         let actualSales = 0;
         let dineInSales = 0;
         let takeAwaySales = 0;
+        let dineInOrders = 0;
+        let takeAwayOrders = 0;
+
         let targetName = "Whole Menu";
 
         const calculateSales = (order: typeof orders[0]) => {
@@ -65,11 +68,15 @@ export default function SalesTargetPage() {
 
         filteredOrders.forEach(order => {
             const orderSales = calculateSales(order);
-            actualSales += orderSales;
-            if (order.orderType === 'Dine-In') {
-                dineInSales += orderSales;
-            } else if (order.orderType === 'Take-Away') {
-                takeAwaySales += orderSales;
+            if (orderSales > 0) { // Only count orders that contribute to the target
+                actualSales += orderSales;
+                if (order.orderType === 'Dine-In') {
+                    dineInSales += orderSales;
+                    dineInOrders++;
+                } else if (order.orderType === 'Take-Away') {
+                    takeAwaySales += orderSales;
+                    takeAwayOrders++;
+                }
             }
         });
         
@@ -91,6 +98,10 @@ export default function SalesTargetPage() {
             percentage,
             name: targetName,
             salesBreakdown,
+            dineInOrders,
+            takeAwayOrders,
+            dineInSales,
+            takeAwaySales
         };
     }, [orders, menu, targetType, selectedId, targetAmount, dateRange]);
     
@@ -107,6 +118,9 @@ export default function SalesTargetPage() {
         doc.text(`Target Amount: RS ${targetData.targetAmount.toLocaleString()}`, 14, 45);
         doc.text(`Achieved Sales: RS ${targetData.actualSales.toLocaleString()}`, 14, 52);
         doc.text(`Percentage Reached: ${targetData.percentage.toFixed(2)}%`, 14, 59);
+        
+        doc.text(`Dine-In Orders: ${targetData.dineInOrders} (Sales: RS ${Math.round(targetData.dineInSales).toLocaleString()})`, 14, 66);
+        doc.text(`Take-Away Orders: ${targetData.takeAwayOrders} (Sales: RS ${Math.round(targetData.takeAwaySales).toLocaleString()})`, 14, 73);
 
         doc.save(`sales-target-report-${targetData.name}.pdf`);
     };
@@ -118,7 +132,10 @@ export default function SalesTargetPage() {
         content += `Target Name: ${targetData.name}\n`;
         content += `Period: ${dateDisplay}\n\n`;
         content += `Target Amount,Achieved Sales,Percentage\n`;
-        content += `${targetData.targetAmount},${targetData.actualSales},${targetData.percentage.toFixed(2)}%\n`;
+        content += `${targetData.targetAmount},${targetData.actualSales},${targetData.percentage.toFixed(2)}%\n\n`;
+        content += `Dine-In Orders,Dine-In Sales,Take-Away Orders,Take-Away Sales\n`;
+        content += `${targetData.dineInOrders},${targetData.dineInSales},${targetData.takeAwayOrders},${targetData.takeAwaySales}\n`;
+
 
         zip.file("report.txt", content);
         zip.generateAsync({ type: "blob" }).then(function(content) {
