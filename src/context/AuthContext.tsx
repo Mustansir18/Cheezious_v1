@@ -166,7 +166,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       alert('Username already exists.');
       return;
     }
-    const newUser: User = { id: generateUniqueCode('user'), username, password, role, branchId };
+    const newUser: User = { id: generateUniqueCode('U'), username, password, role, branchId };
     setUsers(prev => [...prev, newUser]);
     logActivity(`Added new user '${username}'.`, user?.username || "System", 'User');
   }, [users, logActivity, user]);

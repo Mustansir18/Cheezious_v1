@@ -86,7 +86,7 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
   }, [menu, isLoading]);
 
   const addCategory = (category: Omit<MenuCategory, 'id'>) => {
-    const newCategory = { ...category, id: generateUniqueCode('cat') };
+    const newCategory = { ...category, id: generateUniqueCode('C') };
     setMenu(m => ({ ...m, categories: [...m.categories, newCategory] }));
     logActivity(`Added menu category: '${category.name}'.`, user?.username || 'System', 'Menu');
   };
@@ -106,7 +106,7 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addItem = (item: Omit<MenuItem, 'id'>) => {
-    const newItem = { ...item, id: generateUniqueCode('item') };
+    const newItem = { ...item, id: generateUniqueCode('P') };
     setMenu(m => ({ ...m, items: [...m.items, newItem] }));
     logActivity(`Added menu item: '${item.name}'.`, user?.username || 'System', 'Menu');
   };
@@ -122,7 +122,7 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addAddon = (addon: Omit<Addon, 'id'>) => {
-    const newAddon = { ...addon, id: generateUniqueCode('addon') };
+    const newAddon = { ...addon, id: generateUniqueCode('A') };
     setMenu(m => ({ ...m, addons: [...m.addons, newAddon] }));
     logActivity(`Added add-on: '${addon.name}'.`, user?.username || 'System', 'Menu');
   };

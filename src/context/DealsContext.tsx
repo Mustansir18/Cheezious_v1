@@ -59,7 +59,7 @@ export const DealsProvider = ({ children }: { children: ReactNode }) => {
   }, [deals, isLoading]);
 
   const addDeal = useCallback((deal: Omit<Deal, 'id'>) => {
-    const newDeal: Deal = { ...deal, id: generateUniqueCode('deal') };
+    const newDeal: Deal = { ...deal, id: generateUniqueCode('D') };
     setDeals(d => [...d, newDeal]);
     logActivity(`Added new deal: '${deal.name}'.`, user?.username || 'System', 'Deal');
   }, [logActivity, user]);

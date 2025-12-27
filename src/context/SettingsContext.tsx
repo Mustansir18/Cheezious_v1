@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
 import { ALL_PERMISSIONS } from '@/config/permissions';
+import { generateUniqueCode } from '@/lib/utils';
 
 const defaultRoles: Role[] = [
     {
@@ -287,7 +288,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   }, [toast, logActivity, user]);
 
   const addRole = useCallback((role: Omit<Role, 'id'>) => {
-    const newRole: Role = { ...role, id: role.name.toLowerCase().replace(/\s+/g, '-') as UserRole };
+    const newRole: Role = { ...role, id: generateUniqueCode('R') };
     if (settings.roles.some(r => r.id === newRole.id)) {
         toast({ variant: 'destructive', title: 'Error', description: `A role with the ID '${newRole.id}' already exists.` });
         return;
