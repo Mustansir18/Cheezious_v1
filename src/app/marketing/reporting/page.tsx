@@ -223,7 +223,7 @@ export default function ReportingPage() {
     });
 
     const completionTimeData = {
-        baseOrders,
+        orders: baseFilteredOrders,
         filteredOrders,
     };
     
@@ -504,3 +504,5 @@ export default function ReportingPage() {
     </TooltipProvider>
   );
 }
+
+    
