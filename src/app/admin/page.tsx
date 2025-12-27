@@ -82,7 +82,7 @@ export default function AdminDashboardPage() {
       description: 'A record of all actions taken.',
       href: '/admin/activity-log',
       icon: ClipboardList,
-      role: ['root', 'admin'],
+      role: ['root'],
     },
     {
       title: 'User Management',
