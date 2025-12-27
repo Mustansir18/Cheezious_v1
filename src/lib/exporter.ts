@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import jsPDF from 'jspdf';
@@ -7,7 +8,7 @@ import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
 import type { DailySale } from '@/components/reporting/DailySalesReport';
 import type { HourlySale } from '@/components/reporting/HourlySalesReport';
-import type { ItemSale, DealSale, CategorySale } from '@/lib/types';
+import type { ItemSale, DealSale, CategorySale, Order } from '@/lib/types';
 import type { OrderTypeData } from '@/components/reporting/OrderTypeSummary';
 import type { OrderAdjustmentData } from '@/components/reporting/OrderAdjustmentsSummary';
 import type { PaymentData } from '@/components/reporting/PaymentMethodBreakdown';
@@ -47,8 +48,11 @@ function arrayToCsv(data: any[], columns: { key: string, label: string }[]): str
     const rows = data.map(row => {
         return columns.map(c => {
             let value = row[c.key];
+             if (typeof value === 'number') {
+                value = Math.round(value);
+            }
             if (typeof value === 'string' && value.includes(',')) {
-                return `"${value}"`;
+                return `"${value.replace(/"/g, '""')}"`;
             }
             return value;
         }).join(',');
@@ -58,6 +62,43 @@ function arrayToCsv(data: any[], columns: { key: string, label: string }[]): str
 
 
 // --- Individual Report Generators ---
+
+export const exportOrderTypeDetailsAs = (format: 'pdf' | 'csv', orders: Order[], orderType: 'Dine-In' | 'Take-Away', headerInfo: ReportHeaderInfo) => {
+    const title = `${orderType} Order Details`;
+    const columns = [
+        { key: 'orderNumber', label: 'Order #' },
+        { key: 'orderType', label: 'Type' },
+        { key: 'orderDate', label: 'Created' },
+        { key: 'completionDate', label: 'Completed' },
+        { key: 'totalAmount', label: 'Price (RS)' },
+        { key: 'paymentMethod', label: 'Payment' },
+        { key: 'items', label: 'Items' },
+    ];
+
+    const data = orders.map(o => ({
+        ...o,
+        orderDate: new Date(o.orderDate).toLocaleString(),
+        completionDate: o.completionDate ? new Date(o.completionDate).toLocaleString() : 'N/A',
+        items: o.items.map(i => `${i.quantity}x ${i.name}`).join('; '),
+    }));
+
+    if (format === 'pdf') {
+        const doc = new jsPDF({ orientation: 'landscape' });
+        addReportHeader(doc, title, headerInfo);
+        doc.autoTable({
+            head: [columns.map(c => c.label)],
+            body: data.map(row => columns.map(c => (row as any)[c.key])),
+            startY: 55,
+            styles: { fontSize: 8 },
+        });
+        doc.save(`${title.toLowerCase().replace(/\s/g, '-')}.pdf`);
+    } else {
+        const csv = arrayToCsv(data, columns);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        saveAs(blob, `${title.toLowerCase().replace(/\s/g, '-')}.csv`);
+    }
+};
+
 
 export const exportTopItemsAs = (format: 'pdf' | 'csv', data: (ItemSale | DealSale)[], title: string, headerInfo?: ReportHeaderInfo) => {
     const columns = [
@@ -165,25 +206,26 @@ export const exportAllReportsAsZip = async (reportData: any) => {
 
     // Summary
     reportText += '--- Overall Summary ---\n';
+    reportText += 'Metric,Value\n';
     reportData.summaryCards.forEach((d: any) => reportText += `${d.title},${d.value}\n`);
     reportText += '\n';
 
     // Top Items
     reportText += '--- Top Selling Items ---\n';
     reportText += 'Item,Quantity,Revenue\n';
-    reportData.topSellingItems.forEach((d: any) => reportText += `${d.name},${d.quantity},${Math.round(d.totalRevenue)}\n`);
+    reportData.topSellingItems.forEach((d: any) => reportText += `"${d.name}",${d.quantity},${Math.round(d.totalRevenue)}\n`);
     reportText += '\n';
     
     // Top Deals
     reportText += '--- Top Selling Deals ---\n';
     reportText += 'Deal,Quantity,Revenue\n';
-    reportData.topSellingDeals.forEach((d: any) => reportText += `${d.name},${d.quantity},${Math.round(d.totalRevenue)}\n`);
+    reportData.topSellingDeals.forEach((d: any) => reportText += `"${d.name}",${d.quantity},${Math.round(d.totalRevenue)}\n`);
     reportText += '\n';
 
     // Category Sales
     reportText += '--- Sales by Category ---\n';
     reportText += 'Category,Sales\n';
-    reportData.categoryChartData.forEach((d: any) => reportText += `${d.name},${Math.round(d.sales)}\n`);
+    reportData.categoryChartData.forEach((d: any) => reportText += `"${d.name}",${Math.round(d.sales)}\n`);
     reportText += '\n';
 
     // Hourly Sales

@@ -1,20 +1,25 @@
 
+
 'use client';
 
 import { Pie, PieChart, ResponsiveContainer, Cell, Tooltip } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Printer, FileDown } from 'lucide-react';
+import { Printer, FileDown, FileText } from 'lucide-react';
 import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import type { ElementType } from 'react';
+import { exportOrderTypeDetailsAs } from '@/lib/exporter';
+import type { Order } from '@/lib/types';
+import { useSettings } from '@/context/SettingsContext';
 
 export interface OrderTypeData {
-  type: string;
+  type: 'Dine-In' | 'Take-Away';
   count: number;
   sales: number;
   icon: ElementType;
   fill: string;
+  orders: Order[];
 }
 
 interface OrderTypeSummaryProps {
@@ -22,12 +27,21 @@ interface OrderTypeSummaryProps {
   onPrint: () => void;
   selectedType: string | null;
   onSelectType: (type: string | null) => void;
+  headerInfo: { companyName: string; branchName: string; dateDisplay?: string; };
 }
 
-export function OrderTypeSummary({ data, onPrint, selectedType, onSelectType }: OrderTypeSummaryProps) {
+export function OrderTypeSummary({ data, onPrint, selectedType, onSelectType, headerInfo }: OrderTypeSummaryProps) {
   
   const handleSelect = (type: string) => {
     onSelectType(selectedType === type ? null : type);
+  }
+  
+  const selectedData = data.find(d => d.type === selectedType);
+
+  const handleDownload = (format: 'pdf' | 'csv') => {
+      if (selectedData) {
+          exportOrderTypeDetailsAs(format, selectedData.orders, selectedData.type, headerInfo);
+      }
   }
 
   return (
@@ -40,12 +54,22 @@ export function OrderTypeSummary({ data, onPrint, selectedType, onSelectType }: 
         <div className="flex items-center gap-2 print-hidden">
             <UITooltip>
                 <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" disabled>
+                    <Button variant="ghost" size="icon" onClick={() => handleDownload('csv')} disabled={!selectedType}>
                         <FileDown className="h-4 w-4"/>
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                    <p>Download report (coming soon)</p>
+                    <p>Download CSV of {selectedType || 'selection'}</p>
+                </TooltipContent>
+            </UITooltip>
+             <UITooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" onClick={() => handleDownload('pdf')} disabled={!selectedType}>
+                        <FileText className="h-4 w-4 text-red-500"/>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>Download PDF of {selectedType || 'selection'}</p>
                 </TooltipContent>
             </UITooltip>
             <Button variant="ghost" size="icon" onClick={onPrint}>

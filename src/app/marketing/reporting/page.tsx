@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useOrders } from "@/context/OrderContext";
@@ -7,7 +8,7 @@ import { useSettings } from "@/context/SettingsContext";
 import { useMemo, useState, useEffect } from "react";
 import type { Order } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Calendar as CalendarIcon, ShoppingCart, DollarSign, Utensils, Loader, Printer, Scale, FileDown, Tag, Gift, XCircle, ShoppingBag, FileArchive } from "lucide-react";
+import { Calendar as CalendarIcon, ShoppingCart, DollarSign, Utensils, Loader, Printer, Scale, FileDown, Tag, Gift, XCircle, ShoppingBag, FileArchive, FileText } from "lucide-react";
 import { HourlySalesReport } from "@/components/reporting/HourlySalesReport";
 import { DailySalesReport, type DailySale } from "@/components/reporting/DailySalesReport";
 import { TopSellingItems } from "@/components/reporting/TopSellingItems";
@@ -50,7 +51,7 @@ function ReportCardActions({ reportId, onPrint, onDownloadPdf, onDownloadCsv }: 
             <Tooltip>
                 <TooltipTrigger asChild>
                     <Button variant="ghost" size="icon" onClick={onDownloadPdf}>
-                        <FileDown className="h-4 w-4 text-red-500"/>
+                        <FileText className="h-4 w-4 text-red-500"/>
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -199,8 +200,8 @@ export default function ReportingPage() {
     }));
 
     const orderTypeChartData: OrderTypeData[] = [
-        { type: 'Dine-In', count: dineInOrders.length, sales: dineInOrders.reduce((sum, o) => sum + o.totalAmount, 0), icon: Utensils, fill: 'hsl(var(--chart-1))' },
-        { type: 'Take-Away', count: takeAwayOrders.length, sales: takeAwayOrders.reduce((sum, o) => sum + o.totalAmount, 0), icon: ShoppingBag, fill: 'hsl(var(--chart-2))' },
+        { type: 'Dine-In', count: dineInOrders.length, sales: dineInOrders.reduce((sum, o) => sum + o.totalAmount, 0), icon: Utensils, fill: 'hsl(var(--chart-1))', orders: dineInOrders },
+        { type: 'Take-Away', count: takeAwayOrders.length, sales: takeAwayOrders.reduce((sum, o) => sum + o.totalAmount, 0), icon: ShoppingBag, fill: 'hsl(var(--chart-2))', orders: takeAwayOrders },
     ];
     
     const adjustmentChartData: OrderAdjustmentData[] = [
@@ -459,6 +460,7 @@ export default function ReportingPage() {
                     onPrint={() => handlePrint('order-type-report')}
                     selectedType={selectedOrderType}
                     onSelectType={setSelectedOrderType}
+                    headerInfo={{ companyName: settings.companyName, branchName: defaultBranch.name, dateDisplay }}
                 />
             </div>
              <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8">
