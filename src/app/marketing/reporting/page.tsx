@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useOrders } from "@/context/OrderContext";
@@ -286,7 +285,7 @@ export default function ReportingPage() {
       return (
         <div className="container mx-auto p-4 lg:p-8 text-center">
              <header className="mb-8">
-                <h1 className="font-headline text-4xl font-bold">Admin Reports</h1>
+                <h1 className="font-headline text-4xl font-bold">Marketing Reports</h1>
                 <p className="text-muted-foreground">Sales data from the current session.</p>
             </header>
             <Card className="mt-10">
@@ -355,7 +354,7 @@ export default function ReportingPage() {
     <div className="container mx-auto p-4 lg:p-8">
       <header className="mb-8 flex flex-col md:flex-row justify-between items-start gap-4">
         <div>
-            <h1 className="font-headline text-4xl font-bold">Admin Reports</h1>
+            <h1 className="font-headline text-4xl font-bold">Marketing Reports</h1>
             <p className="text-muted-foreground">{filterDescription}</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">

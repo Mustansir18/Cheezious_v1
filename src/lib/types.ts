@@ -128,7 +128,7 @@ export type PaymentMethod = {
 }
 
 // --- Auth Types ---
-export type UserRole = 'root' | 'admin' | 'cashier';
+export type UserRole = 'root' | 'admin' | 'cashier' | 'marketing';
 
 export type User = {
     id: string;

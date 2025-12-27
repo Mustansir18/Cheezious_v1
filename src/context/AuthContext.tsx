@@ -44,6 +44,12 @@ const initialUsers: User[] = [
         password: 'cashier',
         role: 'cashier',
         branchId: defaultBranchId,
+    },
+    {
+        id: 'marketing-user',
+        username: 'markeeting',
+        password: 'markeeting',
+        role: 'marketing',
     }
 ];
 

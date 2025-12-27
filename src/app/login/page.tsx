@@ -33,6 +33,8 @@ export default function LoginPage() {
           router.push('/admin');
         } else if (user.role === 'cashier') {
           router.push('/cashier');
+        } else if (user.role === 'marketing') {
+            router.push('/marketing/reporting');
         }
       }
     } catch (error: any) {
