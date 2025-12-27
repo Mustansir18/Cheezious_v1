@@ -7,7 +7,7 @@ import { useMenu } from "@/context/MenuContext";
 import { useMemo, useState, useEffect } from "react";
 import type { Order } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Calendar as CalendarIcon, ShoppingCart, DollarSign, Utensils, Loader, Printer, Scale, FileDown, Tag, Gift, XCircle, ShoppingBag } from "lucide-react";
+import { Calendar as CalendarIcon, ShoppingCart, DollarSign, Utensils, Loader, Printer, Scale, FileDown, Tag, Gift, XCircle, ShoppingBag, FileArchive } from "lucide-react";
 import { HourlySalesReport } from "@/components/reporting/HourlySalesReport";
 import { DailySalesReport, type DailySale } from "@/components/reporting/DailySalesReport";
 import { TopSellingItems } from "@/components/reporting/TopSellingItems";
@@ -25,6 +25,8 @@ import { cn } from "@/lib/utils";
 import { DateRange } from "react-day-picker";
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { ItemSale, DealSale, CategorySale } from "@/lib/types";
+import { exportSummaryAs, exportAllReportsAsZip } from '@/lib/exporter';
+import { useToast } from "@/hooks/use-toast";
 
 
 export interface HourlySale {
@@ -32,19 +34,29 @@ export interface HourlySale {
   sales: number;
 }
 
-function ReportCardActions({ reportId, onPrint }: { reportId: string; onPrint: (id: string) => void }) {
+function ReportCardActions({ reportId, onPrint, onDownloadPdf, onDownloadCsv }: { reportId: string; onPrint: (id: string) => void, onDownloadPdf: () => void, onDownloadCsv: () => void }) {
     return (
         <div className="flex items-center gap-2 print-hidden">
-            <Tooltip>
+            <UITooltip>
                 <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" disabled>
+                    <Button variant="ghost" size="icon" onClick={onDownloadCsv}>
                         <FileDown className="h-4 w-4"/>
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                    <p>Download report (coming soon)</p>
+                    <p>Download as CSV</p>
                 </TooltipContent>
-            </Tooltip>
+            </UITooltip>
+            <UITooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" onClick={onDownloadPdf}>
+                        <FileDown className="h-4 w-4 text-red-500"/>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>Download as PDF</p>
+                </TooltipContent>
+            </UITooltip>
             <Button variant="ghost" size="icon" onClick={() => onPrint(reportId)}>
                 <Printer className="h-4 w-4"/>
             </Button>
@@ -63,6 +75,7 @@ export default function ReportingPage() {
     from: new Date(new Date().setHours(0, 0, 0, 0)),
     to: new Date(),
   });
+  const { toast } = useToast();
 
   const reportData = useMemo(() => {
     if (!orders || !menu.categories.length) return null;
@@ -210,7 +223,8 @@ export default function ReportingPage() {
     });
 
     const completionTimeData: CompletionTimeData = {
-        orders: filteredOrders,
+        baseOrders: baseFilteredOrders,
+        filteredOrders: filteredOrders,
     };
     
     const categoryChartData: CategorySale[] = Object.entries(categorySales).map(([categoryId, sales], index) => {
@@ -222,12 +236,20 @@ export default function ReportingPage() {
         };
     }).filter(c => c.sales > 0);
 
+    const summaryCards = [
+        { title: "Total Sales", value: `RS ${Math.round(totalSales)}` },
+        { title: "Total Orders", value: totalOrders },
+        { title: "Avg. Order Size", value: `RS ${Math.round(averageOrderSize)}` },
+        { title: "Total Items Sold", value: totalItemsSold },
+    ];
+
 
     return {
       totalOrders,
       totalSales,
       totalItemsSold,
       averageOrderSize,
+      summaryCards,
       topSellingItems,
       topSellingDeals,
       hourlySalesChartData,
@@ -278,6 +300,21 @@ export default function ReportingPage() {
     };
   }, []);
 
+  const dateDisplay = dateRange?.from
+      ? dateRange.to
+        ? `${format(dateRange.from, "LLL dd, y")} - ${format(dateRange.to, "LLL dd, y")}`
+        : format(dateRange.from, "LLL dd, y")
+      : "Pick a date";
+
+  const handleExportAll = async () => {
+      if (!reportData) return;
+      toast({
+          title: 'Exporting All Reports',
+          description: 'Your download will begin shortly...'
+      });
+      await exportAllReportsAsZip(reportData, dateDisplay);
+  }
+
 
   if (isLoading || isMenuLoading) {
     return (
@@ -306,10 +343,7 @@ export default function ReportingPage() {
   }
 
   const {
-    totalOrders,
-    totalSales,
-    totalItemsSold,
-    averageOrderSize,
+    summaryCards,
     topSellingItems,
     topSellingDeals,
     hourlySalesChartData,
@@ -321,17 +355,17 @@ export default function ReportingPage() {
     categoryChartData,
   } = reportData;
 
-  const summaryCards = [
-    { title: "Total Sales", value: `RS ${Math.round(totalSales)}`, icon: DollarSign },
-    { title: "Total Orders", value: totalOrders, icon: ShoppingCart },
-    { title: "Avg. Order Size", value: `RS ${Math.round(averageOrderSize)}`, icon: Scale },
-    { title: "Total Items Sold", value: totalItemsSold, icon: Utensils },
+  const summaryCardsWithIcons = [
+    { ...summaryCards[0], icon: DollarSign },
+    { ...summaryCards[1], icon: ShoppingCart },
+    { ...summaryCards[2], icon: Scale },
+    { ...summaryCards[3], icon: Utensils },
   ];
   
   const activeFilters = [selectedOrderType, selectedPaymentMethod, selectedAdjustmentType].filter(Boolean);
-  let filterDescription = 'Sales data for the selected period.';
+  let filterDescription = `Sales data for: ${dateDisplay}.`;
   if (activeFilters.length > 0) {
-      filterDescription = `Displaying data for '${activeFilters.join(', ')}' orders.`
+      filterDescription = `Displaying '${activeFilters.join(', ')}' orders for: ${dateDisplay}.`
   }
 
 
@@ -355,18 +389,7 @@ export default function ReportingPage() {
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dateRange?.from ? (
-                    dateRange.to ? (
-                      <>
-                        {format(dateRange.from, "LLL dd, y")} -{" "}
-                        {format(dateRange.to, "LLL dd, y")}
-                      </>
-                    ) : (
-                      format(dateRange.from, "LLL dd, y")
-                    )
-                  ) : (
-                    <span>Pick a date range</span>
-                  )}
+                  <span>{dateDisplay}</span>
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="end">
@@ -380,6 +403,10 @@ export default function ReportingPage() {
                 />
               </PopoverContent>
             </Popover>
+             <Button onClick={handleExportAll}>
+                <FileArchive className="mr-2 h-4 w-4" />
+                Export All (ZIP)
+            </Button>
         </div>
       </header>
       
@@ -391,11 +418,16 @@ export default function ReportingPage() {
                         <CardTitle className="font-headline flex items-center">Overall Summary</CardTitle>
                         <CardDescription>Top-level metrics for the selected period.</CardDescription>
                     </div>
-                    <ReportCardActions reportId="summary-report" onPrint={handlePrint} />
+                    <ReportCardActions 
+                        reportId="summary-report" 
+                        onPrint={handlePrint}
+                        onDownloadPdf={() => exportSummaryAs('pdf', summaryCards)}
+                        onDownloadCsv={() => exportSummaryAs('csv', summaryCards)}
+                    />
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-                        {summaryCards.map(card => (
+                        {summaryCardsWithIcons.map(card => (
                             <Card key={card.title}>
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <CardTitle className="text-sm font-medium">{card.title}</CardTitle>

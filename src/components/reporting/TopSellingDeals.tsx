@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { DealSale } from '@/lib/types';
@@ -21,6 +22,7 @@ import { ScrollArea } from '../ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Printer, FileDown } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { exportTopItemsAs } from '@/lib/exporter';
 
 
 interface TopSellingDealsProps {
@@ -29,11 +31,12 @@ interface TopSellingDealsProps {
 }
 
 export function TopSellingDeals({ data, onPrint }: TopSellingDealsProps) {
+  const title = 'Top Selling Deals';
   return (
     <Card className="h-full">
       <CardHeader className="flex-row justify-between items-center">
         <div>
-            <CardTitle className="font-headline">Top Selling Deals</CardTitle>
+            <CardTitle className="font-headline">{title}</CardTitle>
             <CardDescription>
                 Deals ranked by quantity sold for the selected period.
             </CardDescription>
@@ -41,12 +44,22 @@ export function TopSellingDeals({ data, onPrint }: TopSellingDealsProps) {
          <div className="flex items-center gap-2 print-hidden">
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" disabled>
+                    <Button variant="ghost" size="icon" onClick={() => exportTopItemsAs('csv', data, title)}>
                         <FileDown className="h-4 w-4"/>
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                    <p>Download report (coming soon)</p>
+                    <p>Download as CSV</p>
+                </TooltipContent>
+            </Tooltip>
+             <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" onClick={() => exportTopItemsAs('pdf', data, title)}>
+                        <FileDown className="h-4 w-4 text-red-500"/>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>Download as PDF</p>
                 </TooltipContent>
             </Tooltip>
             <Button variant="ghost" size="icon" onClick={onPrint}>
@@ -81,5 +94,3 @@ export function TopSellingDeals({ data, onPrint }: TopSellingDealsProps) {
     </Card>
   );
 }
-
-    

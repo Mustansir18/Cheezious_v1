@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { CategorySale } from '@/lib/types';
@@ -14,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Printer, FileDown } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Pie, PieChart, ResponsiveContainer, Cell, Tooltip as RechartsTooltip } from 'recharts';
+import { exportCategorySalesAs } from '@/lib/exporter';
 
 interface CategorySalesTableProps {
   data: CategorySale[];
@@ -33,12 +35,22 @@ export function CategorySalesTable({ data, onPrint }: CategorySalesTableProps) {
          <div className="flex items-center gap-2 print-hidden">
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" disabled>
+                    <Button variant="ghost" size="icon" onClick={() => exportCategorySalesAs('csv', data)}>
                         <FileDown className="h-4 w-4"/>
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                    <p>Download report (coming soon)</p>
+                    <p>Download as CSV</p>
+                </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                     <Button variant="ghost" size="icon" onClick={() => exportCategorySalesAs('pdf', data)}>
+                        <FileDown className="h-4 w-4 text-red-500"/>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>Download as PDF</p>
                 </TooltipContent>
             </Tooltip>
             <Button variant="ghost" size="icon" onClick={onPrint}>
@@ -98,5 +110,3 @@ export function CategorySalesTable({ data, onPrint }: CategorySalesTableProps) {
     </Card>
   );
 }
-
-    

@@ -1,7 +1,8 @@
 
+
 'use client';
 
-import type { HourlySale } from '@/app/admin/reporting/page';
+import type { HourlySale } from '@/app/marketing/reporting/page';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Printer, FileDown } from 'lucide-react';
@@ -15,6 +16,8 @@ import {
   YAxis,
 } from 'recharts';
 import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { exportChartDataAs } from '@/lib/exporter';
+
 
 interface HourlySalesReportProps {
   data: HourlySale[];
@@ -22,22 +25,33 @@ interface HourlySalesReportProps {
 }
 
 export function HourlySalesReport({ data, onPrint }: HourlySalesReportProps) {
+  const title = "Hourly Sales";
   return (
     <Card className="h-full">
       <CardHeader className="flex-row justify-between items-center">
         <div>
-            <CardTitle className="font-headline">Hourly Sales</CardTitle>
+            <CardTitle className="font-headline">{title}</CardTitle>
             <CardDescription>Total revenue generated per hour for the selected period.</CardDescription>
         </div>
         <div className="flex items-center gap-2 print-hidden">
             <UITooltip>
                 <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" disabled>
+                    <Button variant="ghost" size="icon" onClick={() => exportChartDataAs('csv', data, title, 'hour', 'sales')}>
                         <FileDown className="h-4 w-4"/>
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                    <p>Download report (coming soon)</p>
+                    <p>Download as CSV</p>
+                </TooltipContent>
+            </UITooltip>
+            <UITooltip>
+                <TooltipTrigger asChild>
+                     <Button variant="ghost" size="icon" onClick={() => exportChartDataAs('pdf', data, title, 'hour', 'sales')}>
+                        <FileDown className="h-4 w-4 text-red-500"/>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>Download as PDF</p>
                 </TooltipContent>
             </UITooltip>
             <Button variant="ghost" size="icon" onClick={onPrint}>
