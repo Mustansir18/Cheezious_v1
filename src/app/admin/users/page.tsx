@@ -18,11 +18,13 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Trash2, PlusCircle, User, Edit } from 'lucide-react';
-import type { User as UserType } from '@/lib/types';
+import type { User as UserType, UserRole } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSettings } from '@/context/SettingsContext';
 import { Badge } from '@/components/ui/badge';
 import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
+import rolesConfig from '@/config/roles.json';
+
 
 function UserForm({
   user,
@@ -33,7 +35,7 @@ function UserForm({
 }) {
   const [username, setUsername] = useState(user?.username || '');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'admin' | 'cashier' | 'root'>(user?.role || 'cashier');
+  const [role, setRole] = useState<UserRole>(user?.role || 'cashier');
   const [branchId, setBranchId] = useState<string | undefined>(user?.branchId);
   const { settings } = useSettings();
 
@@ -68,13 +70,14 @@ function UserForm({
       </div>
        <div>
         <Label htmlFor="role">Role</Label>
-        <Select value={role} onValueChange={(value) => setRole(value as 'admin' | 'cashier' | 'root')}>
+        <Select value={role} onValueChange={(value) => setRole(value as UserRole)}>
             <SelectTrigger id="role">
                 <SelectValue placeholder="Select a role" />
             </SelectTrigger>
             <SelectContent>
-                <SelectItem value="cashier">Cashier</SelectItem>
-                <SelectItem value="admin">Branch Admin</SelectItem>
+                {rolesConfig.roles.filter(r => r.id !== 'root').map(r => (
+                  <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                ))}
             </SelectContent>
         </Select>
       </div>
@@ -131,6 +134,10 @@ export default function UserManagementPage() {
         return false;
     });
 
+    const getRoleName = (roleId: UserRole) => {
+        return rolesConfig.roles.find(r => r.id === roleId)?.name || roleId;
+    }
+
     const openAddDialog = () => {
       setEditingUser(undefined);
       setDialogOpen(true);
@@ -147,7 +154,7 @@ export default function UserManagementPage() {
                 <CardHeader className="flex flex-row justify-between items-center">
                     <div>
                         <CardTitle className="font-headline text-4xl font-bold">User Management</CardTitle>
-                        <CardDescription>Create and manage cashier and branch admin accounts.</CardDescription>
+                        <CardDescription>Create and manage cashier, admin, and marketing accounts.</CardDescription>
                     </div>
                     <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
                         <DialogTrigger asChild>
@@ -182,7 +189,7 @@ export default function UserManagementPage() {
                                 </TableCell>
                                 <TableCell>
                                     <Badge variant={u.role === 'admin' ? 'secondary' : 'outline'}>
-                                        {u.role === 'admin' ? 'Branch Admin' : 'Cashier'}
+                                        {getRoleName(u.role)}
                                     </Badge>
                                 </TableCell>
                                 <TableCell>{settings.branches.find(b => b.id === u.branchId)?.name || 'N/A'}</TableCell>
@@ -202,7 +209,7 @@ export default function UserManagementPage() {
                     </Table>
                     {displayableUsers.length === 0 && (
                         <div className="text-center py-12">
-                            <p className="text-muted-foreground">No users found for your branch.</p>
+                            <p className="text-muted-foreground">No users found.</p>
                             <p className="text-sm text-muted-foreground">Click "Add User" to create one.</p>
                         </div>
                     )}

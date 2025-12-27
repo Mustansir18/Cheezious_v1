@@ -140,6 +140,14 @@ export type User = {
     branchId?: string; // Assigned branch for admins and cashiers
 };
 
+// --- Role Management Types ---
+export type Role = {
+  id: UserRole;
+  name: string;
+  permissions: string[];
+};
+
+
 // --- Activity Log Types ---
 export type ActivityLogCategory = 'Order' | 'User' | 'Settings' | 'Deal' | 'Menu' | 'System';
 

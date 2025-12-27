@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2, Edit, Lock, Percent } from "lucide-react";
+import { Trash2, Edit, Lock, Percent, ShieldCheck, CheckSquare, Square } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -23,8 +23,9 @@ import {
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import type { Branch } from "@/lib/types";
+import type { Branch, Role } from "@/lib/types";
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
+import rolesConfig from '@/config/roles.json';
 
 
 function AdvancedSettingsGate({ onUnlock }: { onUnlock: () => void }) {
@@ -66,6 +67,46 @@ function AdvancedSettingsGate({ onUnlock }: { onUnlock: () => void }) {
         </Card>
     );
 }
+
+function RoleManagement() {
+    const [roles] = useState<Role[]>(rolesConfig.roles);
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Role Management</CardTitle>
+                <CardDescription>Define roles and their access permissions across the application.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Role</TableHead>
+                            <TableHead>Permissions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {roles.map(role => (
+                            <TableRow key={role.id}>
+                                <TableCell className="font-semibold capitalize">{role.name}</TableCell>
+                                <TableCell>
+                                    <div className="flex flex-wrap gap-2">
+                                        {role.permissions.map(permission => (
+                                            <span key={permission} className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded-full">
+                                                {permission}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
+    );
+}
+
 
 export default function AdminSettingsPage() {
     const { settings, addFloor, deleteFloor, addTable, deleteTable, addPaymentMethod, deletePaymentMethod, toggleAutoPrint, updateBranch, toggleService, updateBusinessDayHours, addBranch, deleteBranch, setDefaultBranch, updateCompanyName, updatePaymentMethodTaxRate } = useSettings();
@@ -161,8 +202,9 @@ export default function AdminSettingsPage() {
             </header>
 
             <Tabs defaultValue="general">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="general">General</TabsTrigger>
+                    <TabsTrigger value="roles">Roles & Permissions</TabsTrigger>
                     <TabsTrigger value="advanced">Advanced</TabsTrigger>
                 </TabsList>
                 <TabsContent value="general" className="mt-6 space-y-8">
@@ -257,6 +299,9 @@ export default function AdminSettingsPage() {
                             </Table>
                         </CardContent>
                     </Card>
+                </TabsContent>
+                 <TabsContent value="roles" className="mt-6">
+                    <RoleManagement />
                 </TabsContent>
                 <TabsContent value="advanced">
                     {!isAdvancedSettingsUnlocked ? (

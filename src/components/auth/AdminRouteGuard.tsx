@@ -5,16 +5,10 @@ import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Loader } from 'lucide-react';
+import rolesConfig from '@/config/roles.json';
+import type { Role } from '@/lib/types';
 
-const ROOT_ONLY_PAGES = [
-    '/admin/settings',
-    '/admin/users',
-    '/admin/menu',
-    '/admin/deals',
-    '/admin/qr-codes',
-    '/admin/feedback',
-    '/admin/reporting',
-];
+const allRoles: Role[] = rolesConfig.roles;
 
 export function AdminRouteGuard({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -22,39 +16,40 @@ export function AdminRouteGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    // The queue page is a special case; it should be accessible by branch admins and root
-    // but the layout itself is guarded, so we don't need to redirect here.
-    if (pathname === '/admin/queue') {
+    if (isLoading) return;
+
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
+    const userRole = allRoles.find(role => role.id === user.role);
+
+    if (!userRole) {
+        router.push('/login'); // Role not found, deny access
         return;
     }
 
-    if (!isLoading) {
-      if (!user) {
-        // Not logged in, redirect to login page
-        router.push('/login');
+    // Check if the user's role grants access to the current path.
+    // The 'admin' role is a special case which gives access to all admin pages.
+    const hasAccess = userRole.permissions.includes('admin:*') || userRole.permissions.includes(pathname);
+
+    if (!hasAccess) {
+        // If no access, redirect to a default page.
+        // This could be the user's primary dashboard or the main login page.
+        if (user.role === 'cashier') {
+             router.push('/cashier');
+        } else if (user.role === 'marketing') {
+            router.push('/marketing/reporting');
+        } else {
+             router.push('/login');
+        }
         return;
-      } 
-      
-      if (user.role !== 'root' && user.role !== 'admin') {
-        // Logged in, but not an admin or root, redirect to their default page
-        router.push('/cashier'); 
-        return;
-      }
-      
-      // If user is an admin (not root) and tries to access a root-only page
-      if (user.role === 'admin' && ROOT_ONLY_PAGES.includes(pathname)) {
-        router.push('/admin'); // Redirect to their allowed dashboard
-        return;
-      }
     }
+
   }, [user, isLoading, router, pathname]);
 
-  // If we are on the queue page, don't show the sidebar/layout, just the page content
-  if (pathname === '/admin/queue') {
-    return <>{children}</>;
-  }
-
-  // Initial loading state
+  // Initial loading state or if redirection is about to happen
   if (isLoading || !user) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -64,8 +59,10 @@ export function AdminRouteGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // If user is not authorized for this specific admin page
-  if (user.role !== 'root' && user.role !== 'admin') {
+  const userRole = allRoles.find(role => role.id === user.role);
+  const hasAccess = userRole && (userRole.permissions.includes('admin:*') || userRole.permissions.includes(pathname));
+
+  if (!hasAccess) {
      return (
       <div className="flex h-screen items-center justify-center">
         <Loader className="h-12 w-12 animate-spin text-primary" />
@@ -74,16 +71,10 @@ export function AdminRouteGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-   // If a branch admin tries to access a page they shouldn't
-  if (user.role === 'admin' && ROOT_ONLY_PAGES.includes(pathname)) {
-      return (
-        <div className="flex h-screen items-center justify-center">
-            <Loader className="h-12 w-12 animate-spin text-primary" />
-            <p className="ml-4 text-muted-foreground">Access Denied. Redirecting...</p>
-        </div>
-      );
+  // If we are on the queue page, don't show the sidebar/layout, just the page content
+  if (pathname === '/admin/queue' && hasAccess) {
+    return <>{children}</>;
   }
-
 
   return <>{children}</>;
 }
