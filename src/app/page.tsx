@@ -54,7 +54,9 @@ function DealsCarousel() {
   const router = useRouter();
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const [isDialogOpen, setDialogOpen] = useState(false);
-  const defaultBranchId = settings.defaultBranchId || (settings.branches.length > 0 ? settings.branches[0].id : null);
+  
+  // Make the component more robust: use the default branch, or fall back to the first available branch.
+  const targetBranchId = settings.defaultBranchId || (settings.branches.length > 0 ? settings.branches[0].id : null);
 
   const handleDealClick = (deal: Deal) => {
     setSelectedDeal(deal);
@@ -62,12 +64,12 @@ function DealsCarousel() {
   };
 
   const handleConfirmDeal = () => {
-    if (!selectedDeal || !defaultBranchId) return;
+    if (!selectedDeal || !targetBranchId) return;
     
     setDialogOpen(false);
     
     // Redirect to the branch selection page with the dealId as a query parameter
-    router.push(`/branch/${defaultBranchId}?dealId=${selectedDeal.id}`);
+    router.push(`/branch/${targetBranchId}?dealId=${selectedDeal.id}`);
   };
 
 
@@ -79,7 +81,8 @@ function DealsCarousel() {
     );
   }
 
-  if (deals.length === 0 || !defaultBranchId) {
+  // Hide the carousel if there are no deals OR no branches configured at all.
+  if (deals.length === 0 || !targetBranchId) {
       return null;
   }
 
