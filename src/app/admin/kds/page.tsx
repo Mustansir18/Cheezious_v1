@@ -5,13 +5,15 @@ import { useMemo } from 'react';
 import type { Order, OrderItem, KitchenStation } from '@/lib/types';
 import { useOrders } from '@/context/OrderContext';
 import { useSettings } from '@/context/SettingsContext';
-import { Loader, Utensils, ShoppingBag, Check } from 'lucide-react';
+import { Loader, Utensils, ShoppingBag, Check, ChefHat } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 
 interface KitchenItemSlipProps {
     item: OrderItem;
@@ -63,53 +65,60 @@ const KitchenItemSlip = ({ item, order, onTogglePrepared }: KitchenItemSlipProps
 
 
 interface StationColumnProps {
-    title: string;
     stationId?: KitchenStation | 'dispatch';
     orders: Order[];
     onTogglePrepared: (orderId: string, itemId: string) => void;
 }
 
-const StationColumn = ({ title, stationId, orders, onTogglePrepared }: StationColumnProps) => {
+const StationColumn = ({ stationId, orders, onTogglePrepared }: StationColumnProps) => {
     const itemsForStation = useMemo(() => {
         const allItems: { item: OrderItem, order: Order }[] = [];
         orders.forEach(order => {
             order.items.forEach(item => {
                 if (stationId === 'dispatch') {
-                    allItems.push({ item, order });
-                } else if (item.stationId === stationId) {
+                    // Dispatch shows all non-prepared items
+                    if (!item.isPrepared) {
+                        allItems.push({ item, order });
+                    }
+                } else if (item.stationId === stationId && !item.isPrepared) {
                     allItems.push({ item, order });
                 }
             });
         });
-        return allItems.filter(({item}) => !item.isPrepared);
+        return allItems;
     }, [orders, stationId]);
 
     return (
-        <div className="flex flex-col h-full bg-muted/50 rounded-lg">
-            <CardHeader className="p-4 border-b">
-                <CardTitle className="text-center font-headline text-2xl">{title} ({itemsForStation.length})</CardTitle>
-            </CardHeader>
-            <ScrollArea className="flex-grow p-4">
-                 {itemsForStation.length > 0 ? (
-                    <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 gap-4">
-                        {itemsForStation.map(({ item, order }) => (
-                            <KitchenItemSlip 
-                                key={item.id} 
-                                item={item} 
-                                order={order}
-                                onTogglePrepared={onTogglePrepared} 
-                            />
-                        ))}
-                    </div>
-                 ) : (
-                    <div className="flex h-full items-center justify-center">
-                        <p className="text-muted-foreground">No items for this station.</p>
-                    </div>
-                 )}
-            </ScrollArea>
-        </div>
+        <ScrollArea className="h-full">
+             <div className="p-4 pt-0">
+                {itemsForStation.length > 0 ? (
+                <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 2xl:columns-5 gap-4">
+                    {itemsForStation.map(({ item, order }) => (
+                        <KitchenItemSlip 
+                            key={`${order.id}-${item.id}`} 
+                            item={item} 
+                            order={order}
+                            onTogglePrepared={onTogglePrepared} 
+                        />
+                    ))}
+                </div>
+                ) : (
+                <div className="flex h-[50vh] items-center justify-center">
+                    <p className="text-muted-foreground">No items for this station.</p>
+                </div>
+                )}
+             </div>
+        </ScrollArea>
     );
 };
+
+const stationTabs: { id: KitchenStation | 'dispatch', name: string, icon: React.ElementType }[] = [
+    { id: 'dispatch', name: 'Dispatch', icon: ChefHat },
+    { id: 'pizza', name: 'Pizza', icon: Utensils },
+    { id: 'fried', name: 'Fried', icon: Utensils },
+    { id: 'pasta', name: 'Pasta', icon: Utensils },
+    { id: 'bar', name: 'Bar', icon: Utensils },
+];
 
 
 export default function KDSPage() {
@@ -130,18 +139,28 @@ export default function KDSPage() {
     }
     
     return (
-        <div className="h-[calc(100vh-theme(space.16))] w-full p-4">
-             <header className="text-center mb-4">
+        <div className="h-screen w-full flex flex-col p-4 bg-muted/40">
+             <header className="text-center mb-4 flex-shrink-0">
                 <h1 className="font-headline text-4xl font-bold">Kitchen Display System</h1>
                 <p className="text-muted-foreground">Live order preparation view for all stations.</p>
             </header>
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5 gap-4 h-[calc(100%-80px)]">
-                <StationColumn title="Dispatch" stationId="dispatch" orders={ordersInPreparation} onTogglePrepared={toggleItemPrepared} />
-                <StationColumn title="Pizza" stationId="pizza" orders={ordersInPreparation} onTogglePrepared={toggleItemPrepared} />
-                <StationColumn title="Fried" stationId="fried" orders={ordersInPreparation} onTogglePrepared={toggleItemPrepared} />
-                <StationColumn title="Pasta" stationId="pasta" orders={ordersInPreparation} onTogglePrepared={toggleItemPrepared} />
-                <StationColumn title="Bar" stationId="bar" orders={ordersInPreparation} onTogglePrepared={toggleItemPrepared} />
-            </div>
+            <Tabs defaultValue="dispatch" className="w-full flex flex-col flex-grow">
+                <TabsList className="grid w-full grid-cols-5 h-auto">
+                    {stationTabs.map(tab => (
+                         <TabsTrigger key={tab.id} value={tab.id} className="py-3 text-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                            <tab.icon className="mr-2 h-5 w-5" />
+                            {tab.name}
+                        </TabsTrigger>
+                    ))}
+                </TabsList>
+                <div className="flex-grow mt-4 bg-background rounded-lg border">
+                    {stationTabs.map(tab => (
+                        <TabsContent key={tab.id} value={tab.id} className="h-full m-0">
+                           <StationColumn stationId={tab.id} orders={ordersInPreparation} onTogglePrepared={toggleItemPrepared} />
+                        </TabsContent>
+                    ))}
+                </div>
+            </Tabs>
         </div>
     );
 }
