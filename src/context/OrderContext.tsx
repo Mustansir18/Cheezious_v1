@@ -2,7 +2,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef } from 'react';
-import type { Order, OrderStatus } from '@/lib/types';
+import type { Order, OrderStatus, OrderItem } from '@/lib/types';
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
 
@@ -11,6 +11,7 @@ interface OrderContextType {
   isLoading: boolean;
   addOrder: (order: Order) => void;
   updateOrderStatus: (orderId: string, status: OrderStatus, reason?: string) => void;
+  toggleItemPrepared: (orderId: string, itemId: string) => void;
   applyDiscountOrComplementary: (
     orderId: string, 
     details: { 
@@ -110,6 +111,42 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
         });
     });
   }, [logActivity, user]);
+  
+  const toggleItemPrepared = useCallback((orderId: string, itemId: string) => {
+      setOrders(prevOrders => {
+          return prevOrders.map(order => {
+              if (order.id === orderId) {
+                  let allItemsPrepared = true;
+                  const newItems = order.items.map(item => {
+                      if (item.id === itemId) {
+                          if (!item.isPrepared) {
+                            logActivity(`Marked item '${item.name}' as prepared for order #${order.orderNumber}.`, user?.username || 'System', 'Order');
+                          }
+                          return { ...item, isPrepared: !item.isPrepared };
+                      }
+                      return item;
+                  });
+
+                  // After toggling, check if all items are now prepared
+                  for (const item of newItems) {
+                      if (!item.isPrepared) {
+                          allItemsPrepared = false;
+                          break;
+                      }
+                  }
+                  
+                  // If all items are prepared and status is 'Preparing', move to 'Ready'
+                  if (allItemsPrepared && order.status === 'Preparing') {
+                      logActivity(`All items ready for Order #${order.orderNumber}. Status moved to 'Ready'.`, user?.username || 'System', 'Order');
+                      return { ...order, items: newItems, status: 'Ready' as OrderStatus };
+                  }
+
+                  return { ...order, items: newItems };
+              }
+              return order;
+          });
+      });
+  }, [logActivity, user]);
 
 
    const applyDiscountOrComplementary = useCallback((orderId: string, details: { discountType?: 'percentage' | 'amount', discountValue?: number, isComplementary?: boolean, complementaryReason?: string }) => {
@@ -172,6 +209,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
         isLoading,
         addOrder,
         updateOrderStatus,
+        toggleItemPrepared,
         applyDiscountOrComplementary,
         clearOrders,
       }}

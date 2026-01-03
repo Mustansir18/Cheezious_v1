@@ -16,6 +16,11 @@ export const ALL_PERMISSIONS = [
         description: 'View and manage all customer orders.'
     },
     {
+        id: '/admin/kds',
+        name: 'Kitchen Display System (KDS)',
+        description: 'Access to the live kitchen order display.'
+    },
+    {
         id: '/admin/queue',
         name: 'Order Queue Display',
         description: 'Access to the public-facing order status screen.'

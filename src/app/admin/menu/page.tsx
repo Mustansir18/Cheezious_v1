@@ -21,8 +21,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2, Edit, PlusCircle, FileText, FileDown } from 'lucide-react';
-import type { MenuCategory, MenuItem, Addon } from '@/lib/types';
+import { Trash2, Edit, PlusCircle, FileText, FileDown, ChefHat } from 'lucide-react';
+import type { MenuCategory, MenuItem, Addon, KitchenStation } from '@/lib/types';
 import imageCompression from 'browser-image-compression';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -131,6 +131,13 @@ function CategoryForm({ category, onSave }: { category?: MenuCategory; onSave: (
   );
 }
 
+const kitchenStations: { id: KitchenStation; name: string }[] = [
+    { id: 'pizza', name: 'Pizza' },
+    { id: 'pasta', name: 'Pasta' },
+    { id: 'fried', name: 'Fried' },
+    { id: 'bar', name: 'Bar' },
+];
+
 // Item Form
 function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuItem, 'id'> | MenuItem, id?: string) => void; }) {
   const { menu } = useMenu();
@@ -142,6 +149,7 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
   const [price, setPrice] = useState(item?.price || 0);
   const [categoryId, setCategoryId] = useState(item?.categoryId || '');
   const [imageUrl, setImageUrl] = useState(item?.imageUrl || '');
+  const [stationId, setStationId] = useState<KitchenStation | undefined>(item?.stationId);
   const [isCompressing, setIsCompressing] = useState(false);
   const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>(item?.availableAddonIds || []);
   const [isIdInvalid, setIsIdInvalid] = useState(false);
@@ -181,7 +189,7 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
     
     if (!item && !validateId(id)) return; // Don't save if validation fails on create
 
-    const data = { name, description, price, categoryId, imageUrl, availableAddonIds: selectedAddonIds };
+    const data = { name, description, price, categoryId, imageUrl, availableAddonIds: selectedAddonIds, stationId };
     if (item) {
       onSave({ ...item, ...data });
     } else {
@@ -210,27 +218,45 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
         </div>
       )}
       <div className={cn(item ? '' : isIdInvalid && 'blur-out')}>
-        <div className="mt-4">
-            <Label htmlFor="item-name">Item Name</Label>
-            <Input id="item-name" value={name} onChange={(e) => setName(e.target.value)} required disabled={!item && isIdInvalid} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div>
+                <Label htmlFor="item-name">Item Name</Label>
+                <Input id="item-name" value={name} onChange={(e) => setName(e.target.value)} required disabled={!item && isIdInvalid} />
+            </div>
+            <div>
+                <Label htmlFor="item-price">Base Price</Label>
+                <Input id="item-price" type="number" value={price} onChange={(e) => setPrice(Number(e.target.value))} required disabled={!item && isIdInvalid} />
+            </div>
         </div>
         <div className="mt-4">
             <Label htmlFor="item-description">Description</Label>
             <Textarea id="item-description" value={description} onChange={(e) => setDescription(e.target.value)} required disabled={!item && isIdInvalid} />
         </div>
-        <div className="mt-4">
-            <Label htmlFor="item-price">Base Price</Label>
-            <Input id="item-price" type="number" value={price} onChange={(e) => setPrice(Number(e.target.value))} required disabled={!item && isIdInvalid} />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div>
+                <Label htmlFor="item-category">Category</Label>
+                <Select value={categoryId} onValueChange={setCategoryId} required disabled={!item && isIdInvalid}>
+                <SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger>
+                <SelectContent>
+                    {menu.categories.map(cat => (<SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>))}
+                </SelectContent>
+                </Select>
+            </div>
+            <div>
+                <Label htmlFor="item-station">Kitchen Station</Label>
+                <Select value={stationId} onValueChange={(v) => setStationId(v as KitchenStation)} disabled={!item && isIdInvalid}>
+                <SelectTrigger>
+                    <SelectValue placeholder="Assign to a station" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="">None</SelectItem>
+                    {kitchenStations.map(s => (<SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>))}
+                </SelectContent>
+                </Select>
+            </div>
         </div>
-        <div className="mt-4">
-            <Label htmlFor="item-category">Category</Label>
-            <Select value={categoryId} onValueChange={setCategoryId} required disabled={!item && isIdInvalid}>
-            <SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger>
-            <SelectContent>
-                {menu.categories.map(cat => (<SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>))}
-            </SelectContent>
-            </Select>
-        </div>
+
         <div className="mt-4">
             <Label>Available Add-ons</Label>
             <ScrollArea className="h-40 rounded-md border p-4">
@@ -364,12 +390,14 @@ export default function MenuManagementPage() {
                     { key: 'id', label: 'Code' }, 
                     { key: 'name', label: 'Name' }, 
                     { key: 'categoryName', label: 'Category' },
-                    { key: 'price', label: 'Price (RS)' }
+                    { key: 'price', label: 'Price (RS)' },
+                    { key: 'stationName', label: 'Kitchen Station' },
                 ];
                 data = menu.items.map(i => ({
                     ...i, 
                     price: Math.round(i.price),
-                    categoryName: menu.categories.find(c => c.id === i.categoryId)?.name || 'N/A'
+                    categoryName: menu.categories.find(c => c.id === i.categoryId)?.name || 'N/A',
+                    stationName: kitchenStations.find(s => s.id === i.stationId)?.name || 'None',
                 }));
                 break;
         }
@@ -450,8 +478,20 @@ export default function MenuManagementPage() {
                     </Dialog>
                 </div>
             </CardHeader>
-            <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Code</TableHead><TableHead>Category</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
-                <TableBody>{menu.items.map(item => (<TableRow key={item.id}><TableCell>{item.name}</TableCell><TableCell className="font-mono text-xs">{item.id}</TableCell><TableCell>{menu.categories.find(c => c.id === item.categoryId)?.name || 'N/A'}</TableCell><TableCell className="text-right">RS {Math.round(item.price)}</TableCell>
+            <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Code</TableHead><TableHead>Category</TableHead><TableHead>Station</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
+                <TableBody>{menu.items.map(item => (<TableRow key={item.id}>
+                    <TableCell>{item.name}</TableCell>
+                    <TableCell className="font-mono text-xs">{item.id}</TableCell>
+                    <TableCell>{menu.categories.find(c => c.id === item.categoryId)?.name || 'N/A'}</TableCell>
+                    <TableCell>
+                        {item.stationId ? (
+                             <span className="flex items-center gap-1.5 capitalize">
+                                <ChefHat className="h-4 w-4 text-muted-foreground" />
+                                {item.stationId}
+                             </span>
+                        ) : 'N/A'}
+                    </TableCell>
+                    <TableCell className="text-right">RS {Math.round(item.price)}</TableCell>
                     <TableCell className="text-right">
                         <Button variant="ghost" size="icon" onClick={() => { setEditingItem(item); setItemOpen(true); }}><Edit className="h-4 w-4" /></Button>
                         <DeleteConfirmationDialog

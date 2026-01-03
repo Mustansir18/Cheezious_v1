@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CreditCard, MessageSquarePlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
+import { useMenu } from "@/context/MenuContext";
 
 const FALLBACK_IMAGE_URL = "https://picsum.photos/seed/placeholder/400/300";
 
@@ -26,6 +27,7 @@ export default function OrderConfirmationPage() {
   const { items, cartTotal, branchId, orderType, floorId, tableId, clearCart, closeCart, setIsCartOpen } = useCart();
   const { addOrder } = useOrders();
   const { settings } = useSettings();
+  const { menu } = useMenu();
   const router = useRouter();
   const { toast } = useToast();
   const [paymentMethod, setPaymentMethod] = useState<string>('');
@@ -69,16 +71,21 @@ export default function OrderConfirmationPage() {
     const orderId = crypto.randomUUID();
     const orderNumber = `${branch.orderPrefix}-${Date.now().toString().slice(-6)}`;
 
-    const orderItems: OrderItem[] = items.map((item: CartItem) => ({
-        id: crypto.randomUUID(),
-        orderId: orderId,
-        menuItemId: item.id,
-        name: item.name,
-        quantity: item.quantity,
-        itemPrice: item.price,
-        baseItemPrice: item.basePrice,
-        selectedAddons: item.selectedAddons.map(a => ({ name: a.name, price: a.price, quantity: a.quantity })),
-    }));
+    const orderItems: OrderItem[] = items.map((item: CartItem) => {
+        const menuItem = menu.items.find(mi => mi.id === item.id);
+        return {
+            id: crypto.randomUUID(),
+            orderId: orderId,
+            menuItemId: item.id,
+            name: item.name,
+            quantity: item.quantity,
+            itemPrice: item.price,
+            baseItemPrice: item.basePrice,
+            selectedAddons: item.selectedAddons.map(a => ({ name: a.name, price: a.price, quantity: a.quantity })),
+            stationId: menuItem?.stationId,
+            isPrepared: false,
+        };
+    });
 
     const newOrder: Order = {
         id: orderId,

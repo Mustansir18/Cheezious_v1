@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Package, Settings, Users, Megaphone, ShoppingCart, QrCode, Monitor, ClipboardList, Star, BarChart } from 'lucide-react';
+import { Package, Settings, Users, Megaphone, ShoppingCart, QrCode, Monitor, ClipboardList, Star, BarChart, ChefHat } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useEffect } from 'react';
@@ -40,6 +40,13 @@ export default function AdminDashboardPage() {
       description: 'View and manage live orders.',
       href: '/admin/orders',
       icon: ShoppingCart,
+      role: ['root', 'admin'],
+    },
+    {
+      title: 'Kitchen Display (KDS)',
+      description: 'Live display for kitchen stations.',
+      href: '/admin/kds',
+      icon: ChefHat,
       role: ['root', 'admin'],
     },
     {
