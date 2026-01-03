@@ -174,9 +174,17 @@ function DealForm({
                     {items.map(dealItem => {
                         const menuItem = menu.items.find(i => i.id === dealItem.menuItemId);
                         if (!menuItem) return null;
+                        const category = menu.categories.find(c => c.id === menuItem.categoryId);
+                        const stationName = category?.stationId || 'Dispatch';
                         return (
                             <div key={dealItem.menuItemId} className="flex items-center justify-between text-sm">
-                                <span>{menuItem.name}</span>
+                                <div className="flex items-center gap-2">
+                                  <span>{menuItem.name}</span>
+                                  <span className="flex items-center gap-1 text-gray-500 capitalize">
+                                      <ChefHat className="h-3 w-3" /> 
+                                      ({stationName})
+                                  </span>
+                                </div>
                                 <div className="flex items-center gap-2">
                                     <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleItemQuantityChange(dealItem.menuItemId, -1)}><Minus className="h-3 w-3"/></Button>
                                     <span className="font-bold">{dealItem.quantity}</span>
@@ -327,20 +335,22 @@ export default function DealsManagementPage() {
                   <TableCell className="font-medium">{deal.name}</TableCell>
                   <TableCell className="font-mono text-xs">{deal.id}</TableCell>
                    <TableCell className="text-xs text-muted-foreground">
-                       {deal.items.map(item => {
-                           const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
-                           const category = menu.categories.find(c => c.id === menuItem?.categoryId);
-                           const stationName = category?.stationId || 'Dispatch';
-                           return (
-                            <div key={item.menuItemId} className="flex items-center gap-2">
-                                <span>{item.quantity}x {menuItem?.name || 'Unknown'}</span>
-                                <span className="flex items-center gap-1 text-gray-500 capitalize">
-                                    <ChefHat className="h-3 w-3" /> 
-                                    ({stationName})
-                                </span>
-                            </div>
-                           )
-                       })}
+                       <div className="flex flex-col gap-1">
+                           {deal.items.map(item => {
+                               const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
+                               const category = menu.categories.find(c => c.id === menuItem?.categoryId);
+                               const stationName = category?.stationId || 'Dispatch';
+                               return (
+                                <div key={item.menuItemId} className="flex items-center gap-2">
+                                    <span>{item.quantity}x {menuItem?.name || 'Unknown'}</span>
+                                    <span className="flex items-center gap-1 text-gray-500 capitalize">
+                                        <ChefHat className="h-3 w-3" /> 
+                                        ({stationName})
+                                    </span>
+                                </div>
+                               )
+                           })}
+                       </div>
                    </TableCell>
                   <TableCell className="text-right">RS {Math.round(deal.price)}</TableCell>
                   <TableCell className="text-right">
@@ -362,5 +372,7 @@ export default function DealsManagementPage() {
     </div>
   );
 }
+
+    
 
     
