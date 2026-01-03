@@ -1,8 +1,9 @@
 
+
 "use client";
 import type { Order, OrderStatus } from "@/lib/types";
 import { OrderCard } from "@/components/cashier/OrderCard";
-import { Clock, CookingPot, CheckCircle, Loader, Info, Calendar as CalendarIcon, XCircle, Search } from "lucide-react";
+import { Clock, CookingPot, CheckCircle, Loader, Info, Calendar as CalendarIcon, XCircle, Search, CheckCheck } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useOrders } from "@/context/OrderContext";
 import { useSettings } from "@/context/SettingsContext";
@@ -106,12 +107,13 @@ export default function AdminOrdersPage() {
 
   const displayedOrders = activeTab === "All" ? filteredOrders : getOrdersByStatus(activeTab as OrderStatus);
 
-  const statusTabs: (OrderStatus | "All")[] = ["All", "Pending", "Preparing", "Ready", "Completed", "Cancelled"];
+  const statusTabs: (OrderStatus | "All")[] = ["All", "Pending", "Preparing", "Partial Ready", "Ready", "Completed", "Cancelled"];
   const tabIcons: Record<OrderStatus | "All", React.ElementType> = {
     All: Clock,
     Pending: Clock,
     Preparing: CookingPot,
-    Ready: CheckCircle,
+    "Partial Ready": Check,
+    Ready: CheckCheck,
     Completed: CheckCircle,
     Cancelled: XCircle,
   };
@@ -171,7 +173,7 @@ export default function AdminOrdersPage() {
       </header>
       
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-6 mb-8 h-auto">
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-7 mb-8 h-auto">
                  {statusTabs.map(status => {
                      const Icon = tabIcons[status];
                      const count = status === "All" ? filteredOrders.length : getOrdersByStatus(status).length;

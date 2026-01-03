@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef } from 'react';
@@ -12,6 +13,7 @@ interface OrderContextType {
   addOrder: (order: Order) => void;
   updateOrderStatus: (orderId: string, status: OrderStatus, reason?: string) => void;
   toggleItemPrepared: (orderId: string, itemId: string) => void;
+  dispatchItem: (orderId: string, itemId: string) => void;
   applyDiscountOrComplementary: (
     orderId: string, 
     details: { 
@@ -166,6 +168,26 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
           });
       });
   }, [logActivity, user]);
+  
+  const dispatchItem = useCallback((orderId: string, itemId: string) => {
+    setOrders(prevOrders => prevOrders.map(order => {
+      if (order.id === orderId) {
+        const newItems = order.items.map(item => 
+          item.id === itemId ? { ...item, isDispatched: true } : item
+        );
+        
+        const allItemsDispatched = newItems.every(item => item.isDispatched);
+        const newStatus = allItemsDispatched ? 'Ready' : 'Partial Ready';
+        
+        if (order.status !== newStatus) {
+            logActivity(`Order #${order.orderNumber} is now '${newStatus}'.`, user?.username || 'System', 'Order');
+        }
+
+        return { ...order, items: newItems, status: newStatus };
+      }
+      return order;
+    }));
+  }, [logActivity, user]);
 
 
    const applyDiscountOrComplementary = useCallback((orderId: string, details: { discountType?: 'percentage' | 'amount', discountValue?: number, isComplementary?: boolean, complementaryReason?: string }) => {
@@ -229,6 +251,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
         addOrder,
         updateOrderStatus,
         toggleItemPrepared,
+        dispatchItem,
         applyDiscountOrComplementary,
         clearOrders,
       }}

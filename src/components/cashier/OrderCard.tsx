@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import type { Order, OrderItem, OrderStatus } from "@/lib/types";
@@ -16,7 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { formatDistanceToNow } from "date-fns";
 import { Skeleton } from "../ui/skeleton";
 import { ScrollArea } from "../ui/scroll-area";
-import { Utensils, ShoppingBag, Check, CheckCircle, CookingPot, Loader, CreditCard, Printer, Info, XCircle, Tag, Gift, MessageSquareText } from "lucide-react";
+import { Utensils, ShoppingBag, Check, CheckCircle, CookingPot, Loader, CreditCard, Printer, Info, XCircle, Tag, Gift, MessageSquareText, CheckCheck } from "lucide-react";
 import { useMemo, useState, useCallback } from "react";
 import { useSettings } from "@/context/SettingsContext";
 import { OrderReceipt } from "./OrderReceipt";
@@ -33,7 +34,8 @@ import { useToast } from "@/hooks/use-toast";
 const statusConfig = {
     Pending: { icon: Loader, color: "text-gray-500", label: "Pending" },
     Preparing: { icon: CookingPot, color: "text-blue-500", label: "Preparing" },
-    Ready: { icon: Check, color: "text-yellow-500", label: "Ready for Pickup" },
+    "Partial Ready": { icon: Check, color: "text-orange-500", label: "Partially Ready" },
+    Ready: { icon: CheckCheck, color: "text-yellow-500", label: "Ready for Pickup" },
     Completed: { icon: CheckCircle, color: "text-green-500", label: "Completed" },
     Cancelled: { icon: XCircle, color: "text-red-500", label: "Cancelled" },
 };
@@ -376,7 +378,7 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
                         {isModifiableByUser && <OrderModificationDialog order={order} />}
                      </div>
                  )}
-                 {(order.status === 'Preparing' || order.status === 'Ready') && isModifiableByUser && (
+                 {(order.status === 'Preparing' || order.status === 'Ready' || order.status === 'Partial Ready') && isModifiableByUser && (
                      <OrderModificationDialog order={order} />
                  )}
             </div>
@@ -416,7 +418,5 @@ OrderCard.Skeleton = function OrderCardSkeleton() {
       </Card>
     );
   };
-
-    
 
     

@@ -70,7 +70,7 @@ export type CartItem = Omit<MenuItem, 'price' | 'availableAddonIds'> & {
 
 export type OrderType = 'Dine-In' | 'Take-Away';
 
-export type OrderStatus = 'Pending' | 'Preparing' | 'Ready' | 'Completed' | 'Cancelled';
+export type OrderStatus = 'Pending' | 'Preparing' | 'Partial Ready' | 'Ready' | 'Completed' | 'Cancelled';
 
 export type Order = {
     id: string; // Will be a client-generated UUID
@@ -112,6 +112,7 @@ export type OrderItem = {
     selectedAddons: { name: string; price: number; quantity: number }[];
     stationId?: KitchenStation; // Denormalized from MenuCategory for KDS
     isPrepared?: boolean; // For KDS tracking
+    isDispatched?: boolean; // For Dispatch station tracking
     dealName?: string;
 };
 

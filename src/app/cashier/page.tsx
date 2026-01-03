@@ -1,8 +1,9 @@
 
+
 "use client";
 import type { Order, OrderStatus } from "@/lib/types";
 import { OrderCard } from "@/components/cashier/OrderCard";
-import { BarChart, Clock, CookingPot, CheckCircle, Loader, Info, Monitor, XCircle } from "lucide-react";
+import { BarChart, Clock, CookingPot, CheckCircle, Loader, Info, Monitor, XCircle, CheckCheck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOrders } from "@/context/OrderContext";
@@ -44,12 +45,13 @@ export default function CashierPage() {
 
   const totalSales = orders.filter(o => o.status === 'Completed').reduce((acc, order) => acc + order.totalAmount, 0);
   
-  const statusTabs: (OrderStatus | "All")[] = ["All", "Pending", "Preparing", "Ready", "Completed", "Cancelled"];
+  const statusTabs: (OrderStatus | "All")[] = ["All", "Pending", "Preparing", "Partial Ready", "Ready", "Completed", "Cancelled"];
   const tabIcons: Record<OrderStatus | "All", React.ElementType> = {
     All: Clock,
     Pending: Clock,
     Preparing: CookingPot,
-    Ready: CheckCircle,
+    "Partial Ready": CheckCircle,
+    Ready: CheckCheck,
     Completed: CheckCircle,
     Cancelled: XCircle,
   };
@@ -93,7 +95,7 @@ export default function CashierPage() {
       </header>
 
        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-6 mb-8 h-auto">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 md:grid-cols-7 mb-8 h-auto">
                  {statusTabs.map(status => {
                      const Icon = tabIcons[status];
                      const count = status === "All" ? orders.length : getOrdersByStatus(status).length;
