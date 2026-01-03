@@ -28,11 +28,20 @@ const OrderContext = createContext<OrderContextType | undefined>(undefined);
 // Define a key for sessionStorage
 const ORDERS_STORAGE_KEY = 'cheeziousOrders';
 
+function usePrevious<T>(value: T): T | undefined {
+  const ref = useRef<T>();
+  useEffect(() => {
+    ref.current = value;
+  });
+  return ref.current;
+}
+
 export const OrderProvider = ({ children }: { children: ReactNode }) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { logActivity } = useActivityLog();
   const { user } = useAuth();
+  const prevOrders = usePrevious(orders);
 
 
   // Load orders from sessionStorage on initial render
@@ -79,6 +88,23 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
+  // Log activities when order status changes
+  useEffect(() => {
+    if (!prevOrders || isLoading) return;
+
+    orders.forEach(currentOrder => {
+      const oldOrder = prevOrders.find(o => o.id === currentOrder.id);
+      if (oldOrder && oldOrder.status !== currentOrder.status) {
+        if (currentOrder.status === 'Cancelled') {
+            logActivity(`Cancelled Order #${currentOrder.orderNumber}. Reason: ${currentOrder.cancellationReason}`, user?.username || 'System', 'Order');
+        } else {
+            logActivity(`Updated Order #${currentOrder.orderNumber} status from '${oldOrder.status}' to '${currentOrder.status}'.`, user?.username || 'System', 'Order');
+        }
+      }
+    });
+  }, [orders, prevOrders, logActivity, user, isLoading]);
+
+
   const addOrder = useCallback((order: Order) => {
     setOrders((prevOrders) => [...prevOrders, order]);
     logActivity(`Placed new Order #${order.orderNumber}.`, user?.username || 'System', 'Order');
@@ -88,12 +114,6 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
     setOrders(prevOrders => {
         const orderToUpdate = prevOrders.find(o => o.id === orderId);
         if (!orderToUpdate || orderToUpdate.status === status) return prevOrders;
-
-        if (status === 'Cancelled') {
-            logActivity(`Cancelled Order #${orderToUpdate.orderNumber}. Reason: ${reason}`, user?.username || 'System', 'Order');
-        } else {
-            logActivity(`Updated Order #${orderToUpdate.orderNumber} status from '${orderToUpdate.status}' to '${status}'.`, user?.username || 'System', 'Order');
-        }
 
         return prevOrders.map(order => {
             if (order.id !== orderId) return order;
@@ -110,7 +130,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
             };
         });
     });
-  }, [logActivity, user]);
+  }, []);
   
   const toggleItemPrepared = useCallback((orderId: string, itemId: string) => {
       setOrders(prevOrders => {
@@ -137,7 +157,6 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
                   
                   // If all items are prepared and status is 'Preparing', move to 'Ready'
                   if (allItemsPrepared && order.status === 'Preparing') {
-                      logActivity(`All items ready for Order #${order.orderNumber}. Status moved to 'Ready'.`, user?.username || 'System', 'Order');
                       return { ...order, items: newItems, status: 'Ready' as OrderStatus };
                   }
 
