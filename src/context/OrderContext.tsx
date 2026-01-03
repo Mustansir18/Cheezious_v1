@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef } from 'react';
@@ -90,18 +89,30 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  // Log activities when order status changes
+  // Log activities when order status or item preparation status changes
   useEffect(() => {
     if (!prevOrders || isLoading) return;
+    const username = user?.username || 'System';
 
     orders.forEach(currentOrder => {
       const oldOrder = prevOrders.find(o => o.id === currentOrder.id);
-      if (oldOrder && oldOrder.status !== currentOrder.status) {
-        if (currentOrder.status === 'Cancelled') {
-            logActivity(`Cancelled Order #${currentOrder.orderNumber}. Reason: ${currentOrder.cancellationReason}`, user?.username || 'System', 'Order');
-        } else {
-            logActivity(`Updated Order #${currentOrder.orderNumber} status from '${oldOrder.status}' to '${currentOrder.status}'.`, user?.username || 'System', 'Order');
+      if (oldOrder) {
+        // Log main order status change
+        if (oldOrder.status !== currentOrder.status) {
+          if (currentOrder.status === 'Cancelled') {
+              logActivity(`Cancelled Order #${currentOrder.orderNumber}. Reason: ${currentOrder.cancellationReason}`, username, 'Order');
+          } else {
+              logActivity(`Updated Order #${currentOrder.orderNumber} status from '${oldOrder.status}' to '${currentOrder.status}'.`, username, 'Order');
+          }
         }
+        
+        // Log item preparation status changes
+        currentOrder.items.forEach(currentItem => {
+            const oldItem = oldOrder.items.find(i => i.id === currentItem.id);
+            if (oldItem && !oldItem.isPrepared && currentItem.isPrepared) {
+                 logActivity(`Marked item '${currentItem.name}' as prepared for order #${currentOrder.orderNumber}.`, username, 'Order');
+            }
+        });
       }
     });
   }, [orders, prevOrders, logActivity, user, isLoading]);
@@ -140,9 +151,6 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
               if (order.id === orderId) {
                   const newItems = order.items.map(item => {
                       if (itemIds.includes(item.id)) {
-                           if (!item.isPrepared) {
-                               logActivity(`Marked item '${item.name}' as prepared for order #${order.orderNumber}.`, user?.username || 'System', 'Order');
-                           }
                            return { ...item, isPrepared: !item.isPrepared };
                       }
                       return item;
@@ -159,7 +167,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
               return order;
           });
       });
-  }, [logActivity, user]);
+  }, []);
   
   const dispatchItem = useCallback((orderId: string, itemId: string) => {
     setOrders(prevOrders => prevOrders.map(order => {
@@ -171,15 +179,11 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
         const allItemsDispatched = newItems.every(item => item.isDispatched);
         const newStatus = allItemsDispatched ? 'Ready' : 'Partial Ready';
         
-        if (order.status !== newStatus) {
-            logActivity(`Order #${order.orderNumber} is now '${newStatus}'.`, user?.username || 'System', 'Order');
-        }
-
         return { ...order, items: newItems, status: newStatus };
       }
       return order;
     }));
-  }, [logActivity, user]);
+  }, []);
 
 
    const applyDiscountOrComplementary = useCallback((orderId: string, details: { discountType?: 'percentage' | 'amount', discountValue?: number, isComplementary?: boolean, complementaryReason?: string }) => {
@@ -260,5 +264,5 @@ export const useOrders = () => {
   }
   return context;
 };
-
+    
     
