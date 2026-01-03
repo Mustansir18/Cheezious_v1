@@ -1,16 +1,16 @@
 
+
 'use client';
 
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Utensils, ShoppingBag } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
-import { useMemo, useEffect } from "react";
+import { useMemo } from "react";
 import { notFound, useParams, useSearchParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/context/CartContext";
 import { useDeals } from "@/context/DealsContext";
-import type { MenuItem } from "@/lib/types";
 
 export default function ModeSelectionPage() {
   const params = useParams();
@@ -20,7 +20,7 @@ export default function ModeSelectionPage() {
   const dealId = searchParams.get('dealId');
 
   const { settings } = useSettings();
-  const { setOrderDetails, addItem } = useCart();
+  const { setOrderDetails, addDeal } = useCart();
   const { deals } = useDeals();
   const branch = useMemo(() => settings.branches.find((b) => b.id === branchId), [branchId, settings.branches]);
   const dealToAdd = useMemo(() => deals.find(d => d.id === dealId), [deals, dealId]);
@@ -29,17 +29,9 @@ export default function ModeSelectionPage() {
       // Set the order details first
       setOrderDetails({ branchId, orderType: mode });
 
-      // If a deal was selected, add it to the cart
+      // If a deal was selected, add its component items to the cart
       if (dealToAdd) {
-          const dealAsMenuItem: MenuItem = {
-              id: dealToAdd.id,
-              name: dealToAdd.name,
-              description: dealToAdd.description,
-              price: dealToAdd.price,
-              imageUrl: dealToAdd.imageUrl,
-              categoryId: 'deals', // Assuming a categoryId for deals
-          };
-          addItem({ item: dealAsMenuItem, itemQuantity: 1 });
+          addDeal(dealToAdd);
       }
 
       // Navigate to the appropriate next page

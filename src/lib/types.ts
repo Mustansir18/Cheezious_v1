@@ -40,12 +40,18 @@ export type MenuItem = {
   availableAddonIds?: string[];
 };
 
+export type DealItem = {
+    menuItemId: string;
+    quantity: number;
+};
+
 export type Deal = {
   id:string;
   name: string;
   description: string;
   price: number;
   imageUrl: string;
+  items: DealItem[];
 };
 
 export type SelectedAddon = Addon & { quantity: number };
@@ -56,6 +62,7 @@ export type CartItem = Omit<MenuItem, 'price' | 'availableAddonIds'> & {
   price: number; // Final price including addons (for one unit)
   basePrice: number; // Original item price
   selectedAddons: SelectedAddon[];
+  isDealComponent?: boolean; // Flag to identify items added as part of a deal
 };
 
 

@@ -1,12 +1,14 @@
 
+
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import type { Deal } from '@/lib/types';
-import { menuItems } from '@/lib/data'; // Using some menu items as initial deals
+import { initialDeals as defaultDeals } from '@/lib/data';
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useMenu } from './MenuContext';
 
 interface DealsContextType {
   deals: Deal[];
@@ -20,18 +22,13 @@ const DealsContext = createContext<DealsContextType | undefined>(undefined);
 
 const DEALS_STORAGE_KEY = 'cheeziousDeals';
 
-// Use some of the existing "deal" menu items as the initial state for our new deals system.
-const initialDeals: Deal[] = menuItems
-  .filter(item => item.categoryId === 'deals')
-  .map(({ id, name, description, price, imageUrl }) => ({ id, name, description, price, imageUrl }));
-
-
 export const DealsProvider = ({ children }: { children: ReactNode }) => {
-  const [deals, setDeals] = useState<Deal[]>(initialDeals);
+  const [deals, setDeals] = useState<Deal[]>(defaultDeals);
   const [isLoading, setIsLoading] = useState(true);
   const { logActivity } = useActivityLog();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { menu } = useMenu();
 
   useEffect(() => {
     try {
@@ -41,9 +38,12 @@ export const DealsProvider = ({ children }: { children: ReactNode }) => {
         if (Array.isArray(parsed)) {
             setDeals(parsed);
         }
+      } else {
+        setDeals(defaultDeals); // Load initial deals if nothing is in storage
       }
     } catch (error) {
       console.error("Could not load deals from local storage", error);
+      setDeals(defaultDeals);
     } finally {
       setIsLoading(false);
     }
@@ -64,13 +64,13 @@ export const DealsProvider = ({ children }: { children: ReactNode }) => {
       toast({ variant: 'destructive', title: 'Error', description: 'Deal Code is required.' });
       return;
     }
-    if (deals.some(deal => deal.id === newDeal.id)) {
-      toast({ variant: 'destructive', title: 'Error', description: `A deal with the code '${newDeal.id}' already exists.` });
+    if (deals.some(deal => deal.id === newDeal.id) || menu.items.some(item => item.id === newDeal.id)) {
+      toast({ variant: 'destructive', title: 'Error', description: `An item or deal with the code '${newDeal.id}' already exists.` });
       return;
     }
     setDeals(d => [...d, newDeal]);
     logActivity(`Added new deal: '${newDeal.name}'.`, user?.username || 'System', 'Deal');
-  }, [logActivity, user, deals, toast]);
+  }, [logActivity, user, deals, menu.items, toast]);
 
   const updateDeal = useCallback((updatedDeal: Deal) => {
     setDeals(d => d.map(deal => deal.id === updatedDeal.id ? updatedDeal : deal));

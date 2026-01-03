@@ -1,9 +1,11 @@
 
+
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import type { CartItem, MenuItem, OrderType, Addon } from '@/lib/types';
+import type { CartItem, MenuItem, OrderType, Addon, Deal } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { useMenu } from './MenuContext';
 
 
 interface AddToCartOptions {
@@ -20,6 +22,7 @@ interface CartContextType {
   isCartOpen: boolean;
   setIsCartOpen: React.Dispatch<React.SetStateAction<boolean>>;
   addItem: (options: AddToCartOptions) => void;
+  addDeal: (deal: Deal) => void;
   updateQuantity: (cartItemId: string, quantity: number) => void;
   clearCart: () => void;
   closeCart: () => void;
@@ -39,6 +42,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [floorId, setFloorId] = useState<string | null>(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { toast } = useToast();
+  const { menu } = useMenu();
 
   useEffect(() => {
     try {
@@ -121,8 +125,35 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  const addDeal = (deal: Deal) => {
+    deal.items.forEach(dealItem => {
+        const menuItem = menu.items.find(i => i.id === dealItem.menuItemId);
+        if (menuItem) {
+            // Add item to cart with quantity from deal, no addons, and a special price if needed
+            // For now, we use the item's base price.
+            addItem({ item: menuItem, itemQuantity: dealItem.quantity });
+        }
+    });
+
+    toast({
+        title: "Deal Added!",
+        description: `The "${deal.name}" deal has been added to your cart.`,
+    });
+  };
+
   const updateQuantity = (cartItemId: string, quantity: number) => {
     setItems((prevItems) => {
+      const itemToUpdate = prevItems.find(item => item.cartItemId === cartItemId);
+      // Prevent updating quantity for items that are part of a deal.
+      if (itemToUpdate?.isDealComponent) {
+          toast({
+              variant: 'destructive',
+              title: 'Cannot Modify Deal Item',
+              description: 'Please remove the deal to change its components.'
+          });
+          return prevItems;
+      }
+      
       if (quantity <= 0) {
         return prevItems.filter((item) => item.cartItemId !== cartItemId);
       }
@@ -157,6 +188,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         isCartOpen,
         setIsCartOpen,
         addItem,
+        addDeal,
         updateQuantity,
         clearCart,
         closeCart,

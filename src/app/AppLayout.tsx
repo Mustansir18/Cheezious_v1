@@ -16,13 +16,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <AuthProvider>
         <OrderProvider>
           <SettingsProvider>
-            <DealsProvider>
-              <MenuProvider>
+            <MenuProvider>
+              <DealsProvider>
                 <RatingProvider>
                   <CartProvider>{children}</CartProvider>
                 </RatingProvider>
-              </MenuProvider>
-            </DealsProvider>
+              </DealsProvider>
+            </MenuProvider>
           </SettingsProvider>
         </OrderProvider>
       </AuthProvider>
