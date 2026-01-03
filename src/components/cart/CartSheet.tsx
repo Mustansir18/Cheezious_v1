@@ -17,11 +17,65 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { UpdateQuantity } from "./UpdateQuantity";
 import { cn } from "@/lib/utils";
+import type { CartItem } from "@/lib/types";
 
 const FALLBACK_IMAGE_URL = "https://picsum.photos/seed/placeholder/400/300";
 
+const CartItemDisplay = ({ item, allItems }: { item: CartItem, allItems: CartItem[] }) => {
+  if (item.isDealComponent) {
+    return null; // Don't render deal components directly
+  }
+
+  const isDeal = item.categoryId === 'deals';
+  const dealComponents = isDeal ? allItems.filter(i => i.parentDealId === item.cartItemId) : [];
+
+  return (
+    <div>
+      <div className="flex items-start gap-4 py-4">
+        <Image
+          src={item.imageUrl || FALLBACK_IMAGE_URL}
+          alt={item.name}
+          width={64}
+          height={64}
+          className="rounded-md object-cover"
+          data-ai-hint="food item"
+        />
+        <div className="flex-grow space-y-1">
+          <p className="font-semibold">{item.name}</p>
+          
+          {/* List deal components */}
+          {isDeal && dealComponents.length > 0 && (
+            <div className="pl-2 text-xs text-muted-foreground">
+              {dealComponents.map(component => (
+                  <p key={component.cartItemId}>- {component.name}</p>
+              ))}
+            </div>
+          )}
+
+          {/* List addons for non-deal items */}
+          {!isDeal && item.selectedAddons.length > 0 && (
+            <div className="text-sm text-muted-foreground">
+              {item.selectedAddons.map(addon => (
+                <p key={addon.id}>+ {addon.quantity}x {addon.name}</p>
+              ))}
+            </div>
+          )}
+          
+          <p className="text-sm">
+            RS {Math.round(item.price)}
+          </p>
+        </div>
+        <UpdateQuantity cartItemId={item.cartItemId} quantity={item.quantity} />
+      </div>
+      <Separator />
+    </div>
+  );
+};
+
 export function CartSheet({ children }: { children: React.ReactNode }) {
   const { items, cartTotal, cartCount, branchId, isCartOpen, setIsCartOpen } = useCart();
+
+  const visibleItems = items.filter(item => !item.isDealComponent);
 
   return (
     <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
@@ -34,32 +88,8 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
           <>
             <ScrollArea className="flex-grow">
               <div className="pr-4">
-                {items.map((item, index) => (
-                  <div key={item.cartItemId}>
-                    <div className="flex items-start gap-4 py-4">
-                       <Image
-                        src={item.imageUrl || FALLBACK_IMAGE_URL}
-                        alt={item.name}
-                        width={64}
-                        height={64}
-                        className="rounded-md object-cover"
-                        data-ai-hint="food item"
-                      />
-                      <div className="flex-grow space-y-1">
-                        <p className="font-semibold">{item.name}</p>
-                        <div className="text-sm text-muted-foreground">
-                            {item.selectedAddons.map(addon => (
-                                <p key={addon.id}>+ {addon.quantity}x {addon.name}</p>
-                            ))}
-                        </div>
-                        <p className="text-sm">
-                          RS {Math.round(item.price)}
-                        </p>
-                      </div>
-                      <UpdateQuantity cartItemId={item.cartItemId} quantity={item.quantity} />
-                    </div>
-                    {index < items.length - 1 && <Separator />}
-                  </div>
+                {visibleItems.map((item) => (
+                  <CartItemDisplay key={item.cartItemId} item={item} allItems={items} />
                 ))}
               </div>
             </ScrollArea>

@@ -63,6 +63,7 @@ export type CartItem = Omit<MenuItem, 'price' | 'availableAddonIds'> & {
   basePrice: number; // Original item price
   selectedAddons: SelectedAddon[];
   isDealComponent?: boolean; // Flag to identify items added as part of a deal
+  parentDealId?: string; // ID of the parent deal item in the cart
 };
 
 
