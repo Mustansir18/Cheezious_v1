@@ -1,9 +1,8 @@
 
-
 "use client";
 import type { Order, OrderStatus } from "@/lib/types";
 import { OrderCard } from "@/components/cashier/OrderCard";
-import { Clock, CookingPot, CheckCircle, Loader, Info, Calendar as CalendarIcon, XCircle, Search, CheckCheck } from "lucide-react";
+import { Clock, CookingPot, CheckCircle, Loader, Info, Calendar as CalendarIcon, XCircle, Search, CheckCheck, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useOrders } from "@/context/OrderContext";
 import { useSettings } from "@/context/SettingsContext";
