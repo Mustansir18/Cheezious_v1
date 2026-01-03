@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef } from 'react';
@@ -146,27 +147,32 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
   }, []);
   
  const toggleItemPrepared = useCallback((orderId: string, itemIds: string[]) => {
-      setOrders(prevOrders => {
-          return prevOrders.map(order => {
-              if (order.id === orderId) {
-                  const newItems = order.items.map(item => {
-                      if (itemIds.includes(item.id)) {
-                           return { ...item, isPrepared: !item.isPrepared };
-                      }
-                      return item;
-                  });
-
-                  // If the order status is currently 'Pending', move it to 'Preparing'
-                  // as soon as the first item is marked as prepared.
-                  if (order.status === 'Pending' && newItems.some(i => i.isPrepared)) {
-                      return { ...order, items: newItems, status: 'Preparing' as OrderStatus };
-                  }
-                  
-                  return { ...order, items: newItems };
-              }
-              return order;
+    setOrders(prevOrders => {
+      return prevOrders.map(order => {
+        if (order.id === orderId) {
+          const newItems = order.items.map(item => {
+            if (itemIds.includes(item.id)) {
+              const wasPrepared = item.isPrepared;
+              // Toggle and add timestamp if it's being marked as prepared
+              return { ...item, isPrepared: !wasPrepared, preparedAt: !wasPrepared ? new Date().toISOString() : item.preparedAt };
+            }
+            return item;
           });
+
+          let newStatus = order.status;
+          const allItemsPrepared = newItems.every(i => i.isPrepared);
+
+          if (allItemsPrepared) {
+            newStatus = 'Ready';
+          } else if (newItems.some(i => i.isPrepared)) {
+            newStatus = 'Preparing';
+          }
+
+          return { ...order, items: newItems, status: newStatus };
+        }
+        return order;
       });
+    });
   }, []);
   
   const dispatchItem = useCallback((orderId: string, itemId: string) => {
@@ -264,5 +270,5 @@ export const useOrders = () => {
   }
   return context;
 };
-    
+
     

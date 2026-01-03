@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
 import type { CartItem, MenuItem, OrderType, Addon, Deal, DealItem } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useMenu } from './MenuContext';
@@ -128,20 +128,24 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const addDeal = (deal: Deal) => {
     const dealCartId = `deal-${deal.id}-${crypto.randomUUID()}`;
 
-    const dealRepresentation: CartItem = {
-      id: deal.id,
-      cartItemId: dealCartId,
+    // The deal itself is added as a non-component item.
+    // It holds the total price of the deal.
+    const dealCartItem: CartItem = {
+      id: deal.id, // The menu item id for the deal
+      cartItemId: dealCartId, // a unique id for this specific instance in the cart
       name: deal.name,
       description: deal.description,
       imageUrl: deal.imageUrl,
       price: deal.price,
       basePrice: deal.price,
       quantity: 1,
-      categoryId: 'deals',
+      categoryId: menu.items.find(i => i.id === deal.id)?.categoryId || '',
       selectedAddons: [],
       isDealComponent: false,
+      dealName: deal.name, // Set dealName on the deal itself
     };
-    
+
+    // The component items are added with a price of 0, as their cost is included in the deal item
     const componentItems: CartItem[] = deal.items.flatMap((dealItem: DealItem) => {
       const menuItem = menu.items.find(i => i.id === dealItem.menuItemId);
       if (!menuItem) return [];
@@ -153,13 +157,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         basePrice: menuItem.price,
         quantity: 1,
         selectedAddons: [],
-        isDealComponent: true,
-        parentDealId: dealCartId,
+        isDealComponent: true, // This flag identifies it as part of a deal
+        parentDealId: dealCartId, // Link back to the parent deal item
         dealName: deal.name,
       }));
     });
 
-    setItems(prev => [...prev, dealRepresentation, ...componentItems]);
+    setItems(prev => [...prev, dealCartItem, ...componentItems]);
 
     toast({
       title: "Deal Added!",
@@ -174,7 +178,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       if (!itemToUpdate) return prevItems;
 
       // If the item is a Deal, we need to remove its components as well.
-      if (itemToUpdate.categoryId === 'deals') {
+      if (itemToUpdate.dealName && !itemToUpdate.isDealComponent) {
           if (quantity <= 0) {
               // Remove the deal and all its child components
               return prevItems.filter(item => item.cartItemId !== cartItemId && item.parentDealId !== cartItemId);
@@ -218,16 +222,20 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setIsCartOpen(false);
   }
 
-  const cartTotal = items.reduce((total, item) => {
-      // Deal components have a price of 0, so they don't add to the total.
-      // The main deal item itself holds the price.
-      return total + item.price * item.quantity;
-  }, 0);
+  const cartTotal = useMemo(() => {
+    return items.reduce((total, item) => {
+        // Individual components have a price of 0, so they don't add to the total.
+        // The main deal item itself holds the price.
+        return total + item.price * item.quantity;
+    }, 0);
+  }, [items]);
 
-  const cartCount = items.reduce((count, item) => {
-      if (item.isDealComponent) return count; // Don't count individual deal components
-      return count + item.quantity;
-  }, 0);
+  const cartCount = useMemo(() => {
+    return items.reduce((count, item) => {
+        if (item.isDealComponent) return count; // Don't count individual deal components
+        return count + item.quantity;
+    }, 0);
+  }, [items]);
 
 
   return (
@@ -263,3 +271,5 @@ export const useCart = () => {
   }
   return context;
 };
+
+    

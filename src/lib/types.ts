@@ -112,8 +112,10 @@ export type OrderItem = {
     selectedAddons: { name: string; price: number; quantity: number }[];
     stationId?: KitchenStation; // Denormalized from MenuCategory for KDS
     isPrepared?: boolean; // For KDS tracking
+    preparedAt?: string; // ISO string timestamp for when it was marked prepared
     isDispatched?: boolean; // For Dispatch station tracking
     dealName?: string;
+    order?: Order;
 };
 
 export type PlacedOrder = {
