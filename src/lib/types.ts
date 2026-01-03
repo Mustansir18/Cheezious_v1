@@ -64,6 +64,7 @@ export type CartItem = Omit<MenuItem, 'price' | 'availableAddonIds'> & {
   selectedAddons: SelectedAddon[];
   isDealComponent?: boolean; // Flag to identify items added as part of a deal
   parentDealId?: string; // ID of the parent deal item in the cart
+  dealName?: string;
 };
 
 
@@ -111,6 +112,7 @@ export type OrderItem = {
     selectedAddons: { name: string; price: number; quantity: number }[];
     stationId?: KitchenStation; // Denormalized from MenuCategory for KDS
     isPrepared?: boolean; // For KDS tracking
+    dealName?: string;
 };
 
 export type PlacedOrder = {

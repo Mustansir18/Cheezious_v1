@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useMemo } from 'react';
@@ -38,6 +39,11 @@ const KitchenItemSlip = ({ item, order, onTogglePrepared }: KitchenItemSlipProps
                  <CardDescription className="text-xs">
                     Order #{order.orderNumber} &bull; {formatDistanceToNow(new Date(order.orderDate), { addSuffix: true })}
                 </CardDescription>
+                {item.dealName && (
+                    <CardDescription className="text-xs text-primary font-semibold pt-1">
+                        Part of "{item.dealName}" deal
+                    </CardDescription>
+                )}
             </CardHeader>
             <CardContent className="p-3 pt-0">
                 <p className="font-bold text-2xl mb-2">{item.quantity}x</p>

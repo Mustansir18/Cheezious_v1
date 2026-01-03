@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
@@ -85,6 +86,7 @@ export default function OrderConfirmationPage() {
             selectedAddons: item.selectedAddons.map(a => ({ name: a.name, price: a.price, quantity: a.quantity })),
             stationId: category?.stationId,
             isPrepared: false,
+            dealName: item.dealName,
         };
     });
 

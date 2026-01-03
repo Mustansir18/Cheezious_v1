@@ -139,6 +139,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       quantity: 1,
       categoryId: 'deals',
       selectedAddons: [],
+      isDealComponent: false,
     };
     
     const componentItems: CartItem[] = deal.items.flatMap((dealItem: DealItem) => {
@@ -148,12 +149,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       return Array.from({ length: dealItem.quantity }).map(() => ({
         ...menuItem,
         cartItemId: `${menuItem.id}-${crypto.randomUUID()}`,
-        price: menuItem.price, // Or a special deal price if applicable
+        price: 0, // Individual components have no price; the deal item has the price
         basePrice: menuItem.price,
-        quantity: 1, // Each component is a single item
+        quantity: 1,
         selectedAddons: [],
         isDealComponent: true,
         parentDealId: dealCartId,
+        dealName: deal.name,
       }));
     });
 
@@ -217,12 +219,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const cartTotal = items.reduce((total, item) => {
-      // Only add items that are not deal components to the total,
-      // as the deal parent item itself holds the price.
-      if (!item.isDealComponent) {
-          return total + item.price * item.quantity;
-      }
-      return total;
+      // Deal components have a price of 0, so they don't add to the total.
+      // The main deal item itself holds the price.
+      return total + item.price * item.quantity;
   }, 0);
 
   const cartCount = items.reduce((count, item) => {
