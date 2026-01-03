@@ -12,7 +12,7 @@ interface OrderContextType {
   isLoading: boolean;
   addOrder: (order: Order) => void;
   updateOrderStatus: (orderId: string, status: OrderStatus, reason?: string) => void;
-  toggleItemPrepared: (orderId: string, itemId: string) => void;
+  toggleItemPrepared: (orderId: string, itemIds: string[]) => void;
   dispatchItem: (orderId: string, itemId: string) => void;
   applyDiscountOrComplementary: (
     orderId: string, 
@@ -134,34 +134,26 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
     });
   }, []);
   
-  const toggleItemPrepared = useCallback((orderId: string, itemId: string) => {
+ const toggleItemPrepared = useCallback((orderId: string, itemIds: string[]) => {
       setOrders(prevOrders => {
           return prevOrders.map(order => {
               if (order.id === orderId) {
-                  let allItemsPrepared = true;
                   const newItems = order.items.map(item => {
-                      if (item.id === itemId) {
-                          if (!item.isPrepared) {
-                            logActivity(`Marked item '${item.name}' as prepared for order #${order.orderNumber}.`, user?.username || 'System', 'Order');
-                          }
-                          return { ...item, isPrepared: !item.isPrepared };
+                      if (itemIds.includes(item.id)) {
+                           if (!item.isPrepared) {
+                               logActivity(`Marked item '${item.name}' as prepared for order #${order.orderNumber}.`, user?.username || 'System', 'Order');
+                           }
+                           return { ...item, isPrepared: !item.isPrepared };
                       }
                       return item;
                   });
 
-                  // After toggling, check if all items are now prepared
-                  for (const item of newItems) {
-                      if (!item.isPrepared) {
-                          allItemsPrepared = false;
-                          break;
-                      }
+                  // If the order status is currently 'Pending', move it to 'Preparing'
+                  // as soon as the first item is marked as prepared.
+                  if (order.status === 'Pending' && newItems.some(i => i.isPrepared)) {
+                      return { ...order, items: newItems, status: 'Preparing' as OrderStatus };
                   }
                   
-                  // If all items are prepared and status is 'Preparing', move to 'Ready'
-                  if (allItemsPrepared && order.status === 'Preparing') {
-                      return { ...order, items: newItems, status: 'Ready' as OrderStatus };
-                  }
-
                   return { ...order, items: newItems };
               }
               return order;

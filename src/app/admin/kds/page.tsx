@@ -16,24 +16,37 @@ import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from '@/components/ui/separator';
 
-const KDS_STATUSES: OrderStatus[] = ['Preparing', 'Partial Ready'];
+const KDS_STATUSES: OrderStatus[] = ['Pending', 'Preparing', 'Partial Ready'];
+
+interface KDSItemGroup {
+    name: string;
+    quantity: number;
+    order: Order;
+    originalItems: OrderItem[];
+    addons: { name: string; quantity: number }[];
+    dealName?: string;
+}
 
 // For individual station slips (Pizza, Fried, etc.)
 interface KitchenItemSlipProps {
-    item: OrderItem;
-    order: Order;
-    onTogglePrepared: (orderId: string, itemId: string) => void;
+    itemGroup: KDSItemGroup;
+    onTogglePrepared: (orderId: string, itemIds: string[]) => void;
 }
 
-const KitchenItemSlip = ({ item, order, onTogglePrepared }: KitchenItemSlipProps) => {
+const KitchenItemSlip = ({ itemGroup, onTogglePrepared }: KitchenItemSlipProps) => {
     const { settings } = useSettings();
+    const { order, name, quantity, originalItems } = itemGroup;
     const table = settings.tables.find(t => t.id === order.tableId);
+    
+    // We can assume all items in the group have the same 'isPrepared' status
+    const isPrepared = originalItems[0]?.isPrepared || false;
+    const itemIds = originalItems.map(i => i.id);
 
     return (
-        <Card className={cn("mb-4 break-inside-avoid", item.isPrepared && "opacity-50")}>
+        <Card className={cn("mb-4 break-inside-avoid", isPrepared && "opacity-50")}>
             <CardHeader className="p-3">
                 <div className="flex justify-between items-start">
-                    <CardTitle className="font-bold text-lg">{item.name}</CardTitle>
+                    <CardTitle className="font-bold text-lg">{name}</CardTitle>
                     <Badge variant={order.orderType === 'Dine-In' ? 'secondary' : 'outline'} className="flex items-center gap-1">
                         {order.orderType === 'Dine-In' ? <Utensils className="h-3 w-3"/> : <ShoppingBag className="h-3 w-3"/>}
                         {order.orderType === 'Dine-In' && table ? table.name : order.orderType}
@@ -42,17 +55,17 @@ const KitchenItemSlip = ({ item, order, onTogglePrepared }: KitchenItemSlipProps
                  <CardDescription className="text-xs">
                     Order #{order.orderNumber} &bull; {formatDistanceToNow(new Date(order.orderDate), { addSuffix: true })}
                 </CardDescription>
-                {item.dealName && (
+                {itemGroup.dealName && (
                     <CardDescription className="text-xs text-primary font-semibold pt-1">
-                        Part of "{item.dealName}" deal
+                        Part of "{itemGroup.dealName}" deal
                     </CardDescription>
                 )}
             </CardHeader>
             <CardContent className="p-3 pt-0">
-                <p className="font-bold text-2xl mb-2">{item.quantity}x</p>
-                {item.selectedAddons && item.selectedAddons.length > 0 && (
+                <p className="font-bold text-2xl mb-2">{quantity}x</p>
+                {itemGroup.addons && itemGroup.addons.length > 0 && (
                     <div className="text-xs text-muted-foreground border-t pt-2 mt-2">
-                        {item.selectedAddons.map(addon => (
+                        {itemGroup.addons.map(addon => (
                             <p key={addon.name}>+ {addon.quantity}x {addon.name}</p>
                         ))}
                     </div>
@@ -62,10 +75,10 @@ const KitchenItemSlip = ({ item, order, onTogglePrepared }: KitchenItemSlipProps
                 )}
                 <Button 
                     size="sm" 
-                    className={cn("w-full mt-3", item.isPrepared ? "bg-gray-400" : "bg-green-600 hover:bg-green-700")}
-                    onClick={() => onTogglePrepared(order.id, item.id)}
+                    className={cn("w-full mt-3", isPrepared ? "bg-gray-400" : "bg-green-600 hover:bg-green-700")}
+                    onClick={() => onTogglePrepared(order.id, itemIds)}
                 >
-                    <Check className="mr-2 h-4 w-4"/> {item.isPrepared ? 'Mark as Not Done' : 'Mark as Prepared'}
+                    <Check className="mr-2 h-4 w-4"/> {isPrepared ? 'Mark as Not Done' : 'Mark as Prepared'}
                 </Button>
             </CardContent>
         </Card>
@@ -138,32 +151,71 @@ const DispatchOrderSlip = ({ order, onDispatchItem }: DispatchOrderSlipProps) =>
 interface StationColumnProps {
     stationId: KitchenStation;
     orders: Order[];
-    onTogglePrepared: (orderId: string, itemId: string) => void;
+    onTogglePrepared: (orderId: string, itemIds: string[]) => void;
 }
 
 const StationColumn = ({ stationId, orders, onTogglePrepared }: StationColumnProps) => {
-    const itemsForStation = useMemo(() => {
-        const allItems: { item: OrderItem, order: Order }[] = [];
+    const itemGroupsForStation = useMemo(() => {
+        const itemGroups: KDSItemGroup[] = [];
         orders.forEach(order => {
-            order.items.forEach(item => {
-                if (item.stationId === stationId && !item.isPrepared) {
-                    allItems.push({ item, order });
+            const relevantItems = order.items.filter(item => item.stationId === stationId && !item.isPrepared);
+            if(relevantItems.length === 0) return;
+
+            const groups: Map<string, {
+                name: string;
+                quantity: number;
+                originalItems: OrderItem[];
+                addons: Map<string, { name: string; quantity: number }>;
+                dealName?: string;
+            }> = new Map();
+            
+            relevantItems.forEach(item => {
+                const groupKey = `${item.name}-${(item.selectedAddons || []).map(a => `${a.id}:${a.quantity}`).sort().join(',')}`;
+
+                if (!groups.has(groupKey)) {
+                    groups.set(groupKey, {
+                        name: item.name,
+                        quantity: 0,
+                        originalItems: [],
+                        addons: new Map(),
+                        dealName: item.dealName,
+                    });
                 }
+                const group = groups.get(groupKey)!;
+                group.quantity += item.quantity;
+                group.originalItems.push(item);
+                (item.selectedAddons || []).forEach(addon => {
+                    const addonKey = addon.id;
+                    if (!group.addons.has(addonKey)) {
+                        group.addons.set(addonKey, { name: addon.name, quantity: 0 });
+                    }
+                    group.addons.get(addonKey)!.quantity += addon.quantity;
+                });
+            });
+
+            groups.forEach(group => {
+                itemGroups.push({
+                    name: group.name,
+                    quantity: group.quantity,
+                    order,
+                    originalItems: group.originalItems,
+                    addons: Array.from(group.addons.values()),
+                    dealName: group.dealName,
+                });
             });
         });
-        return allItems;
+        return itemGroups;
     }, [orders, stationId]);
 
     return (
         <ScrollArea className="h-full">
              <div className="p-4 pt-0">
-                {itemsForStation.length > 0 ? (
+                {itemGroupsForStation.length > 0 ? (
                 <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 2xl:columns-5 gap-4">
-                    {itemsForStation.map(({ item, order }) => (
+                    {itemGroupsForStation.map((group, index) => (
                         <KitchenItemSlip 
-                            key={`${order.id}-${item.id}`} 
-                            item={item} 
-                            order={order}
+                            key={`${group.order.id}-${group.name}-${index}`} 
+                            itemGroup={group}
                             onTogglePrepared={onTogglePrepared} 
                         />
                     ))}
@@ -186,10 +238,11 @@ interface DispatchColumnProps {
 const DispatchColumn = ({ orders, onDispatchItem }: DispatchColumnProps) => {
     const ordersForDispatch = useMemo(() => {
         return orders.filter(order => {
-            const hasPreparedItems = order.items.some(item => item.isPrepared);
+            // An order should be in dispatch if its status is Preparing or Partial Ready
+            // AND not all of its items have been dispatched yet.
+            const isInDispatchStatus = ['Preparing', 'Partial Ready'].includes(order.status);
             const allItemsDispatched = order.items.every(item => item.isDispatched);
-            // Show if there are prepared items AND not all items have been dispatched yet.
-            return hasPreparedItems && !allItemsDispatched;
+            return isInDispatchStatus && !allItemsDispatched;
         });
     }, [orders]);
     
