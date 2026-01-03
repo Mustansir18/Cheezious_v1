@@ -245,12 +245,12 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
             </div>
             <div>
                 <Label htmlFor="item-station">Kitchen Station</Label>
-                <Select value={stationId} onValueChange={(v) => setStationId(v as KitchenStation)} disabled={!item && isIdInvalid}>
+                <Select value={stationId} onValueChange={(v) => setStationId(v === 'none' ? undefined : (v as KitchenStation))} disabled={!item && isIdInvalid}>
                 <SelectTrigger>
                     <SelectValue placeholder="Assign to a station" />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {kitchenStations.map(s => (<SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>))}
                 </SelectContent>
                 </Select>
