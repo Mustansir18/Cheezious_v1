@@ -14,6 +14,7 @@ export type MenuCategory = {
   id: string;
   name: string;
   icon: string;
+  stationId?: KitchenStation;
 }
 
 export type Addon = {
@@ -37,7 +38,6 @@ export type MenuItem = {
   categoryId: string;
   imageUrl: string;
   availableAddonIds?: string[];
-  stationId?: KitchenStation;
 };
 
 export type Deal = {
@@ -101,7 +101,7 @@ export type OrderItem = {
     baseItemPrice: number; // Base price of the item without addons
     name: string;
     selectedAddons: { name: string; price: number; quantity: number }[];
-    stationId?: KitchenStation; // Denormalized from MenuItem for KDS
+    stationId?: KitchenStation; // Denormalized from MenuCategory for KDS
     isPrepared?: boolean; // For KDS tracking
 };
 

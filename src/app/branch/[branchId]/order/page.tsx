@@ -73,6 +73,7 @@ export default function OrderConfirmationPage() {
 
     const orderItems: OrderItem[] = items.map((item: CartItem) => {
         const menuItem = menu.items.find(mi => mi.id === item.id);
+        const category = menu.categories.find(c => c.id === menuItem?.categoryId);
         return {
             id: crypto.randomUUID(),
             orderId: orderId,
@@ -82,7 +83,7 @@ export default function OrderConfirmationPage() {
             itemPrice: item.price,
             baseItemPrice: item.basePrice,
             selectedAddons: item.selectedAddons.map(a => ({ name: a.name, price: a.price, quantity: a.quantity })),
-            stationId: menuItem?.stationId,
+            stationId: category?.stationId,
             isPrepared: false,
         };
     });

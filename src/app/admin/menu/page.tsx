@@ -54,11 +54,19 @@ async function handleImageUpload(file: File) {
   }
 }
 
+const kitchenStations: { id: KitchenStation; name: string }[] = [
+    { id: 'pizza', name: 'Pizza' },
+    { id: 'pasta', name: 'Pasta' },
+    { id: 'fried', name: 'Fried' },
+    { id: 'bar', name: 'Bar' },
+];
+
 // Category Form
 function CategoryForm({ category, onSave }: { category?: MenuCategory; onSave: (cat: Omit<MenuCategory, 'id'> | MenuCategory, id?: string) => void;}) {
   const [id, setId] = useState(category?.id || '');
   const [name, setName] = useState(category?.name || '');
   const [icon, setIcon] = useState(category?.icon || 'Package');
+  const [stationId, setStationId] = useState<KitchenStation | undefined>(category?.stationId);
   const { menu } = useMenu();
   const { toast } = useToast();
   const [isIdInvalid, setIsIdInvalid] = useState(false);
@@ -83,10 +91,11 @@ function CategoryForm({ category, onSave }: { category?: MenuCategory; onSave: (
     
     if (!category && !validateId(id)) return;
     
+    const data = { name, icon, stationId };
     if (category) {
-      onSave({ ...category, name, icon });
+      onSave({ ...category, ...data });
     } else {
-      onSave({ name, icon }, id);
+      onSave(data, id);
     }
   };
 
@@ -122,6 +131,18 @@ function CategoryForm({ category, onSave }: { category?: MenuCategory; onSave: (
             Use any valid icon name from <a href="https://lucide.dev/icons/" target="_blank" rel="noopener noreferrer" className="underline">Lucide icons</a>.
           </p>
         </div>
+        <div className="mt-4">
+            <Label htmlFor="item-station">Kitchen Station</Label>
+            <Select value={stationId} onValueChange={(v) => setStationId(v === 'none' ? undefined : (v as KitchenStation))} disabled={!category && isIdInvalid}>
+            <SelectTrigger>
+                <SelectValue placeholder="Assign to a station" />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="none">None (Dispatch Only)</SelectItem>
+                {kitchenStations.map(s => (<SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>))}
+            </SelectContent>
+            </Select>
+        </div>
       </div>
       <DialogFooter>
         <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
@@ -130,13 +151,6 @@ function CategoryForm({ category, onSave }: { category?: MenuCategory; onSave: (
     </form>
   );
 }
-
-const kitchenStations: { id: KitchenStation; name: string }[] = [
-    { id: 'pizza', name: 'Pizza' },
-    { id: 'pasta', name: 'Pasta' },
-    { id: 'fried', name: 'Fried' },
-    { id: 'bar', name: 'Bar' },
-];
 
 // Item Form
 function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuItem, 'id'> | MenuItem, id?: string) => void; }) {
@@ -149,7 +163,6 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
   const [price, setPrice] = useState(item?.price || 0);
   const [categoryId, setCategoryId] = useState(item?.categoryId || '');
   const [imageUrl, setImageUrl] = useState(item?.imageUrl || '');
-  const [stationId, setStationId] = useState<KitchenStation | undefined>(item?.stationId);
   const [isCompressing, setIsCompressing] = useState(false);
   const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>(item?.availableAddonIds || []);
   const [isIdInvalid, setIsIdInvalid] = useState(false);
@@ -189,7 +202,7 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
     
     if (!item && !validateId(id)) return; // Don't save if validation fails on create
 
-    const data = { name, description, price, categoryId, imageUrl, availableAddonIds: selectedAddonIds, stationId };
+    const data = { name, description, price, categoryId, imageUrl, availableAddonIds: selectedAddonIds };
     if (item) {
       onSave({ ...item, ...data });
     } else {
@@ -240,18 +253,6 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
                 <SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger>
                 <SelectContent>
                     {menu.categories.map(cat => (<SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>))}
-                </SelectContent>
-                </Select>
-            </div>
-            <div>
-                <Label htmlFor="item-station">Kitchen Station</Label>
-                <Select value={stationId} onValueChange={(v) => setStationId(v === 'none' ? undefined : (v as KitchenStation))} disabled={!item && isIdInvalid}>
-                <SelectTrigger>
-                    <SelectValue placeholder="Assign to a station" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
-                    {kitchenStations.map(s => (<SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>))}
                 </SelectContent>
                 </Select>
             </div>
@@ -376,8 +377,15 @@ export default function MenuManagementPage() {
         switch (list) {
             case 'categories':
                 title = "Menu Categories";
-                columns = [{ key: 'id', label: 'Code' }, { key: 'name', label: 'Name' }];
-                data = menu.categories;
+                columns = [
+                    { key: 'id', label: 'Code' },
+                    { key: 'name', label: 'Name' },
+                    { key: 'stationName', label: 'Kitchen Station' },
+                ];
+                data = menu.categories.map(c => ({
+                    ...c,
+                    stationName: kitchenStations.find(s => s.id === c.stationId)?.name || 'None',
+                }));
                 break;
             case 'addons':
                 title = "Add-ons Library";
@@ -391,13 +399,11 @@ export default function MenuManagementPage() {
                     { key: 'name', label: 'Name' }, 
                     { key: 'categoryName', label: 'Category' },
                     { key: 'price', label: 'Price (RS)' },
-                    { key: 'stationName', label: 'Kitchen Station' },
                 ];
                 data = menu.items.map(i => ({
                     ...i, 
                     price: Math.round(i.price),
                     categoryName: menu.categories.find(c => c.id === i.categoryId)?.name || 'N/A',
-                    stationName: kitchenStations.find(s => s.id === i.stationId)?.name || 'None',
                 }));
                 break;
         }
@@ -426,8 +432,16 @@ export default function MenuManagementPage() {
                     </Dialog>
                 </div>
             </CardHeader>
-            <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Code</TableHead><TableHead>Icon</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
+            <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Code</TableHead><TableHead>Icon</TableHead><TableHead>Station</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
                 <TableBody>{menu.categories.map(cat => (<TableRow key={cat.id}><TableCell>{cat.name}</TableCell><TableCell className="font-mono text-xs">{cat.id}</TableCell><TableCell className="font-mono">{cat.icon}</TableCell>
+                    <TableCell>
+                        {cat.stationId ? (
+                             <span className="flex items-center gap-1.5 capitalize">
+                                <ChefHat className="h-4 w-4 text-muted-foreground" />
+                                {cat.stationId}
+                             </span>
+                        ) : 'N/A'}
+                    </TableCell>
                     <TableCell className="text-right">
                         <Button variant="ghost" size="icon" onClick={() => { setEditingCategory(cat); setCategoryOpen(true); }}><Edit className="h-4 w-4" /></Button>
                         <DeleteConfirmationDialog
@@ -478,19 +492,11 @@ export default function MenuManagementPage() {
                     </Dialog>
                 </div>
             </CardHeader>
-            <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Code</TableHead><TableHead>Category</TableHead><TableHead>Station</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
+            <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Code</TableHead><TableHead>Category</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
                 <TableBody>{menu.items.map(item => (<TableRow key={item.id}>
                     <TableCell>{item.name}</TableCell>
                     <TableCell className="font-mono text-xs">{item.id}</TableCell>
                     <TableCell>{menu.categories.find(c => c.id === item.categoryId)?.name || 'N/A'}</TableCell>
-                    <TableCell>
-                        {item.stationId ? (
-                             <span className="flex items-center gap-1.5 capitalize">
-                                <ChefHat className="h-4 w-4 text-muted-foreground" />
-                                {item.stationId}
-                             </span>
-                        ) : 'N/A'}
-                    </TableCell>
                     <TableCell className="text-right">RS {Math.round(item.price)}</TableCell>
                     <TableCell className="text-right">
                         <Button variant="ghost" size="icon" onClick={() => { setEditingItem(item); setItemOpen(true); }}><Edit className="h-4 w-4" /></Button>
