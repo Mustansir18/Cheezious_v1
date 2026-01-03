@@ -20,7 +20,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2, Edit, PlusCircle, Loader, FileText, FileDown, Minus, Plus } from 'lucide-react';
+import { Trash2, Edit, PlusCircle, Loader, FileText, FileDown, Minus, Plus, ChefHat } from 'lucide-react';
 import type { Deal, DealItem, MenuItem } from '@/lib/types';
 import imageCompression from 'browser-image-compression';
 import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
@@ -312,7 +312,7 @@ export default function DealsManagementPage() {
                 <TableHead>Image</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Code</TableHead>
-                <TableHead>Included Items</TableHead>
+                <TableHead>Included Items & Station</TableHead>
                 <TableHead className="text-right">Price</TableHead>
                 <TableHead className="text-right w-[120px]">Actions</TableHead>
               </TableRow>
@@ -328,7 +328,17 @@ export default function DealsManagementPage() {
                    <TableCell className="text-xs text-muted-foreground">
                        {deal.items.map(item => {
                            const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
-                           return <div key={item.menuItemId}>{item.quantity}x {menuItem?.name || 'Unknown'}</div>
+                           const category = menu.categories.find(c => c.id === menuItem?.categoryId);
+                           const stationName = category?.stationId || 'Dispatch';
+                           return (
+                            <div key={item.menuItemId} className="flex items-center gap-2">
+                                <span>{item.quantity}x {menuItem?.name || 'Unknown'}</span>
+                                <span className="flex items-center gap-1 text-gray-500 capitalize">
+                                    <ChefHat className="h-3 w-3" /> 
+                                    ({stationName})
+                                </span>
+                            </div>
+                           )
                        })}
                    </TableCell>
                   <TableCell className="text-right">RS {Math.round(deal.price)}</TableCell>
@@ -351,3 +361,5 @@ export default function DealsManagementPage() {
     </div>
   );
 }
+
+    
