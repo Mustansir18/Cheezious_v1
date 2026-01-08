@@ -47,7 +47,7 @@ export default function MenuPage() {
     if (categories.length > 0 && !activeCategoryId) {
       const defaultCategory = categories[0];
       setActiveCategoryId(defaultCategory.id);
-      if (defaultCategory.subCategories.length > 0) {
+      if (defaultCategory.subCategories && defaultCategory.subCategories.length > 0) {
         setActiveSubCategoryId(defaultCategory.subCategories[0].id);
       } else {
         setActiveSubCategoryId(null);
@@ -94,7 +94,7 @@ export default function MenuPage() {
   
   const currentMenuItems = menuItems.filter(item => 
       item.categoryId === activeCategory.id &&
-      (activeCategory.subCategories.length === 0 || item.subCategoryId === activeSubCategoryId)
+      (!activeCategory.subCategories || activeCategory.subCategories.length === 0 || item.subCategoryId === activeSubCategoryId)
   );
 
   return (
@@ -126,7 +126,7 @@ export default function MenuPage() {
       <div className="main-menu-container">
         <div className="main-menu-tabs">
             {categories.map((category) => (
-                <div 
+                <button
                     key={category.id} 
                     onClick={() => handleCategoryChange(category.id)}
                     className={cn(
@@ -135,14 +135,15 @@ export default function MenuPage() {
                     )}
                 >
                     {category.name}
-                </div>
+                </button>
             ))}
         </div>
+        
         <div className="sub-menu-bar">
-          {activeCategory.subCategories.length > 0 && (
+          {activeCategory.subCategories && activeCategory.subCategories.length > 0 && (
               <div className="sub-menu-items">
                   {activeCategory.subCategories.map(sub => (
-                      <div 
+                      <button
                           key={sub.id}
                           onClick={() => handleSubCategoryChange(sub.id)}
                           className={cn(
@@ -151,7 +152,7 @@ export default function MenuPage() {
                           )}
                       >
                           {sub.name}
-                      </div>
+                      </button>
                   ))}
               </div>
           )}
