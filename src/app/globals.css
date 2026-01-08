@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,25 +9,25 @@ body {
 
 @layer base {
   :root {
-    --background: 60 56% 91%;
+    --background: 53 43% 94%;
     --foreground: 240 10% 3.9%;
-    --card: 60 56% 91%;
+    --card: 53 43% 94%;
     --card-foreground: 240 10% 3.9%;
-    --popover: 60 56% 91%;
+    --popover: 53 43% 94%;
     --popover-foreground: 240 10% 3.9%;
-    --primary: 0 100% 50%;
+    --primary: 0 84% 60%;
     --primary-foreground: 0 0% 98%;
     --secondary: 60 20% 80%;
     --secondary-foreground: 240 10% 3.9%;
     --muted: 60 20% 85%;
     --muted-foreground: 240 5% 45.1%;
-    --accent: 240 100% 27%;
+    --accent: 0 0% 22%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 60 20% 80%;
     --input: 60 20% 85%;
-    --ring: 0 100% 50%;
+    --ring: 0 84% 60%;
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
@@ -49,19 +50,19 @@ body {
     --card-foreground: 0 0% 98%;
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
-    --primary: 0 100% 50%;
+    --primary: 0 84% 60%;
     --primary-foreground: 0 0% 98%;
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
-    --accent: 240 100% 67%;
+    --accent: 0 0% 98%;
     --accent-foreground: 240 5.9% 10%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
-    --ring: 0 100% 50%;
+    --ring: 0 84% 60%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
@@ -96,13 +97,13 @@ body {
   .main-menu-tabs {
     @apply flex items-end gap-1 px-4 relative z-20;
   }
-  
+
   .main-menu-tab {
-    @apply px-4 py-2 text-lg font-semibold text-gray-300 cursor-pointer;
+    @apply px-4 py-2 text-lg font-semibold text-gray-400 cursor-pointer;
   }
 
   .main-menu-tab:hover {
-    @apply text-white;
+    @apply text-black;
   }
 
   /* ACTIVE TAB — overlaps bar */
@@ -132,7 +133,6 @@ body {
     background-image: radial-gradient(circle at 100% 0, transparent 14px, #373737 15px);
   }
 
-
   /* ===== SUB MENU BAR ===== */
   .sub-menu-bar {
     @apply bg-[#373737] rounded-lg mt-[-2px] z-10 relative;
@@ -146,9 +146,9 @@ body {
   .sub-menu-trigger {
     @apply px-4 py-2 text-white font-semibold cursor-pointer;
   }
-  
+
   .sub-menu-trigger-active {
-    @apply bg-red-600 text-white rounded-full;
+    @apply bg-primary text-primary-foreground rounded-full;
   }
 
 
@@ -178,7 +178,7 @@ body {
   .animate-icon-blink {
     animation: icon-blink 1.5s ease-in-out infinite;
   }
-  
+
   @keyframes blink-neon-green {
     0%, 100% {
       box-shadow: 0 0 5px 2px #39FF14; /* Neon Green */
