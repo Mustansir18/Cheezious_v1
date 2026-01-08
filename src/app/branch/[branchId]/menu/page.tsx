@@ -38,20 +38,22 @@ export default function MenuPage() {
     return settings.tables.filter(t => !settings.occupiedTableIds.includes(t.id));
   }, [settings.tables, settings.occupiedTableIds]);
 
-  const [activeCategory, setActiveCategory] = useState<MenuCategory | null>(null);
-  const [activeSubCategory, setActiveSubCategory] = useState<string | null>(null);
+  const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
+  const [activeSubCategoryId, setActiveSubCategoryId] = useState<string | null>(null);
+  
+  const activeCategory = useMemo(() => categories.find(c => c.id === activeCategoryId), [categories, activeCategoryId]);
 
   useEffect(() => {
-    if (categories.length > 0 && !activeCategory) {
+    if (categories.length > 0 && !activeCategoryId) {
       const defaultCategory = categories[0];
-      setActiveCategory(defaultCategory);
+      setActiveCategoryId(defaultCategory.id);
       if (defaultCategory.subCategories.length > 0) {
-        setActiveSubCategory(defaultCategory.subCategories[0].id);
+        setActiveSubCategoryId(defaultCategory.subCategories[0].id);
       } else {
-        setActiveSubCategory(null);
+        setActiveSubCategoryId(null);
       }
     }
-  }, [categories, activeCategory]);
+  }, [categories, activeCategoryId]);
 
   useEffect(() => {
     const mode = searchParams.get("mode") as OrderType;
@@ -72,13 +74,13 @@ export default function MenuPage() {
   const handleCategoryChange = (categoryId: string) => {
     const newCategory = categories.find(c => c.id === categoryId);
     if (newCategory) {
-        setActiveCategory(newCategory);
-        setActiveSubCategory(newCategory.subCategories[0]?.id || null);
+        setActiveCategoryId(newCategory.id);
+        setActiveSubCategoryId(newCategory.subCategories[0]?.id || null);
     }
   };
 
   const handleSubCategoryChange = (subId: string) => {
-    setActiveSubCategory(subId);
+    setActiveSubCategoryId(subId);
   }
 
   if (isMenuLoading || areDealsLoading || !activeCategory) {
@@ -92,7 +94,7 @@ export default function MenuPage() {
   
   const currentMenuItems = menuItems.filter(item => 
       item.categoryId === activeCategory.id &&
-      (activeCategory.subCategories.length === 0 || item.subCategoryId === activeSubCategory)
+      (activeCategory.subCategories.length === 0 || item.subCategoryId === activeSubCategoryId)
   );
 
   return (
@@ -136,25 +138,26 @@ export default function MenuPage() {
                 </div>
             ))}
         </div>
+        <div className="sub-menu-bar">
+          {activeCategory.subCategories.length > 0 && (
+              <div className="sub-menu-items">
+                  {activeCategory.subCategories.map(sub => (
+                      <div 
+                          key={sub.id}
+                          onClick={() => handleSubCategoryChange(sub.id)}
+                          className={cn(
+                              'sub-menu-trigger',
+                              activeSubCategoryId === sub.id && 'sub-menu-trigger-active'
+                          )}
+                      >
+                          {sub.name}
+                      </div>
+                  ))}
+              </div>
+          )}
+        </div>
       </div>
       
-      {activeCategory.subCategories.length > 0 && (
-        <div className="sub-menu-bar">
-            {activeCategory.subCategories.map(sub => (
-                <div 
-                    key={sub.id}
-                    onClick={() => handleSubCategoryChange(sub.id)}
-                    className={cn(
-                        'sub-menu-trigger',
-                        activeSubCategory === sub.id && 'sub-menu-trigger-active'
-                    )}
-                >
-                    {sub.name}
-                </div>
-            ))}
-        </div>
-      )}
-
       <div className="mt-8">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {currentMenuItems.map((item) => <MenuItemCard key={item.id} item={item} />)}
