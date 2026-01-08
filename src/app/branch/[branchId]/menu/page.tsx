@@ -124,7 +124,6 @@ export default function MenuPage() {
       )}
 
       <div className="main-menu-container">
-
         {/* CATEGORY TABS */}
         <div className="main-menu-tabs">
           {categories.map(category => (
@@ -160,7 +159,6 @@ export default function MenuPage() {
             </div>
           )}
         </div>
-
       </div>
       
       <div className="mt-8">
