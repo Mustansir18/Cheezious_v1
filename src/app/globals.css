@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -14,8 +15,8 @@ body {
     --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
-    --primary: 0 72% 51%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
     --secondary: 240 5% 96%;
     --secondary-foreground: 240 6% 10%;
     --muted: 240 5% 96%;
@@ -187,30 +188,76 @@ body {
     @apply opacity-30 blur-sm transition-all;
   }
 
-  /* Custom menu tab styling */
-  .menu-tab-trigger {
-    @apply relative px-4 py-2 text-lg font-semibold text-gray-500 transition-colors duration-200;
+  .main-tabs-container {
+    @apply relative border-b-2 border-[#2c3e50];
   }
-  .menu-tab-trigger[data-state='active'] {
-    @apply text-gray-900;
-    text-decoration: underline;
-    text-underline-offset: 4px;
+
+  .main-tabs-list {
+    @apply flex justify-center p-0 bg-transparent;
+  }
+
+  .main-tabs-trigger {
+    @apply relative px-6 py-3 text-lg font-semibold text-gray-500 transition-colors duration-200 border-b-2 border-transparent;
+    background-color: transparent;
+    box-shadow: none;
+  }
+  
+  .main-tabs-trigger[data-state='active'] {
+    @apply text-foreground bg-transparent;
+    box-shadow: none;
+  }
+
+  .main-tabs-trigger[data-state='active']::before,
+  .main-tabs-trigger[data-state='active']::after {
+      content: '';
+      position: absolute;
+      bottom: -2px; 
+      width: 15px;
+      height: 15px;
+      background-color: transparent;
+  }
+
+  .main-tabs-trigger[data-state='active']::before {
+      left: -15px;
+      border-bottom-right-radius: 15px;
+      box-shadow: 5px 5px 0 5px #2c3e50;
+  }
+
+  .main-tabs-trigger[data-state='active']::after {
+      right: -15px;
+      border-bottom-left-radius: 15px;
+      box-shadow: -5px 5px 0 5px #2c3e50;
+  }
+
+  .main-tabs-trigger[data-state='active'] > span {
+    @apply relative;
+  }
+  .main-tabs-trigger[data-state='active'] > span::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -15px;
+    right: -15px;
+    bottom: -2px;
+    background-color: #2c3e50;
+    z-index: -1;
   }
 
   .sub-menu-bar {
-     @apply bg-[#2c3e50] -mt-px;
+     @apply bg-[#2c3e50] p-2 -mt-px flex justify-center;
   }
-
-  /* This creates the "folder tab" effect */
-  .main-tabs-container {
-    border-bottom: 2px solid #2c3e50; /* The dark bar color */
+  
+  .sub-menu-trigger {
+      @apply text-white px-4 py-2 rounded-md font-semibold text-sm transition-colors;
+      background-color: transparent;
+      box-shadow: none;
   }
-
-  .main-tabs-list > button[data-state='active'] {
-    background-color: #2c3e50; /* Same as the bar color */
-    border-bottom-color: transparent;
-    color: white;
-    text-decoration: none;
+  .sub-menu-trigger:hover {
+      @apply bg-white/10;
+  }
+  .sub-menu-trigger[data-state='active'] {
+    @apply bg-red-600 text-white;
+    box-shadow: none;
   }
 }
 
