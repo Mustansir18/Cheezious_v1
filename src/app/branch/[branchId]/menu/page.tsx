@@ -135,7 +135,7 @@ export default function MenuPage() {
                         <TabsTrigger 
                             key={sub.id} 
                             value={sub.id}
-                            className="text-white data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md px-4 py-2"
+                            className="text-white data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-md px-4 py-2"
                         >
                             {sub.name}
                         </TabsTrigger>
