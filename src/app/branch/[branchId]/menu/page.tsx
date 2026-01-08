@@ -124,39 +124,46 @@ export default function MenuPage() {
       )}
 
       <div className="main-menu-container">
+
+        {/* Dark background rail */}
+        <div className="main-menu-rail" />
+
+        {/* Category Tabs */}
         <div className="main-menu-tabs">
-            {categories.map((category) => (
-                <button
-                    key={category.id} 
-                    onClick={() => handleCategoryChange(category.id)}
-                    className={cn(
-                        'main-menu-tab', 
-                        activeCategory.id === category.id && 'main-menu-tab-active'
-                    )}
-                >
-                    {category.name}
-                </button>
-            ))}
+          {categories.map(category => (
+            <button
+              key={category.id}
+              onClick={() => handleCategoryChange(category.id)}
+              className={cn(
+                "main-menu-tab",
+                activeCategory.id === category.id && "main-menu-tab-active"
+              )}
+            >
+              {category.name}
+            </button>
+          ))}
         </div>
-        
+
+        {/* Sub Categories */}
         <div className="sub-menu-bar">
-          {activeCategory.subCategories && activeCategory.subCategories.length > 0 && (
-              <div className="sub-menu-items">
-                  {activeCategory.subCategories.map(sub => (
-                      <button
-                          key={sub.id}
-                          onClick={() => handleSubCategoryChange(sub.id)}
-                          className={cn(
-                              'sub-menu-trigger',
-                              activeSubCategoryId === sub.id && 'sub-menu-trigger-active'
-                          )}
-                      >
-                          {sub.name}
-                      </button>
-                  ))}
-              </div>
+          {activeCategory.subCategories?.length > 0 && (
+            <div className="sub-menu-items">
+              {activeCategory.subCategories.map(sub => (
+                <button
+                  key={sub.id}
+                  onClick={() => handleSubCategoryChange(sub.id)}
+                  className={cn(
+                    "sub-menu-trigger",
+                    activeSubCategoryId === sub.id && "sub-menu-trigger-active"
+                  )}
+                >
+                  {sub.name}
+                </button>
+              ))}
+            </div>
           )}
         </div>
+
       </div>
       
       <div className="mt-8">

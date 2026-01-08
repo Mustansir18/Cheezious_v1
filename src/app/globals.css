@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -89,56 +88,77 @@ body {
 }
 
 @layer utilities {
+  /* ===== MAIN MENU ===== */
+
   .main-menu-container {
-    @apply relative pt-4;
-  }
-  .main-menu-tabs {
-    @apply flex items-end space-x-1 pl-4;
-    z-index: 10;
-    position: relative;
-  }
-  .main-menu-tab {
-    @apply px-4 py-2 cursor-pointer text-lg font-semibold text-muted-foreground transition-all duration-200;
-  }
-  .main-menu-tab-active {
-    @apply relative bg-[#373737] text-white rounded-t-lg;
-    padding-bottom: 0.75rem; /* 12px to match the curve size */
+    @apply relative mt-8;
   }
 
+  /* Dark rail behind tabs */
+  .main-menu-rail {
+    @apply bg-[#373737] h-[52px] w-full rounded-lg;
+  }
+
+  /* Tabs wrapper */
+  .main-menu-tabs {
+    @apply absolute top-0 left-0 flex items-end gap-1 px-4;
+    z-index: 20;
+  }
+
+  .main-menu-tab {
+    @apply relative px-5 py-2 text-lg font-semibold text-gray-300 cursor-pointer;
+  }
+
+  .main-menu-tab:hover {
+    @apply text-white;
+  }
+
+  /* Active tab */
+  .main-menu-tab-active {
+    @apply bg-[#373737] text-white rounded-t-xl;
+    z-index: 30;
+  }
+
+  /* Curved cutouts */
   .main-menu-tab-active::before,
   .main-menu-tab-active::after {
-    content: '';
+    content: "";
     position: absolute;
     bottom: 0;
-    width: 12px; 
-    height: 12px;
-    background-color: transparent;
+    width: 14px;
+    height: 14px;
+    background: transparent;
   }
 
   .main-menu-tab-active::before {
-    left: -12px;
-    background-image: radial-gradient(circle at 0 0, transparent 12px, #373737 12.5px);
+    left: -14px;
+    background-image: radial-gradient(circle at 0 0, transparent 14px, #373737 15px);
   }
 
   .main-menu-tab-active::after {
-    right: -12px;
-    background-image: radial-gradient(circle at 100% 0, transparent 12px, #373737 12.5px);
+    right: -14px;
+    background-image: radial-gradient(circle at 100% 0, transparent 14px, #373737 15px);
   }
+
+  /* ===== SUB MENU ===== */
 
   .sub-menu-bar {
-      @apply relative bg-[#373737] rounded-lg -mt-1;
-      min-height: 52px;
-  }
-  .sub-menu-items {
-      @apply flex items-center justify-center p-2 space-x-2;
-  }
-  .sub-menu-trigger {
-      @apply px-4 py-2 cursor-pointer text-white font-bold transition-colors;
-  }
-  .sub-menu-trigger-active {
-      @apply bg-white text-black rounded-full;
+    @apply bg-[#373737] mt-[-1px] rounded-lg;
+    min-height: 52px;
   }
 
+  .sub-menu-items {
+    @apply flex justify-center items-center gap-3 py-2;
+  }
+
+  .sub-menu-trigger {
+    @apply px-4 py-2 text-white font-semibold cursor-pointer;
+  }
+
+  .sub-menu-trigger-active {
+    @apply bg-white text-black rounded-full;
+  }
+  
   @keyframes blink {
     0%, 100% {
       box-shadow: 0 0 5px 2px hsl(var(--primary));
