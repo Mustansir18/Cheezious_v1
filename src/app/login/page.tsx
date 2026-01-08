@@ -2,6 +2,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader, Eye, EyeOff, Pizza } from 'lucide-react';
+import { Loader, Eye, EyeOff, Pizza, Home } from 'lucide-react';
 import { useSettings } from '@/context/SettingsContext';
 
 export default function LoginPage() {
@@ -89,10 +90,16 @@ export default function LoginPage() {
               </div>
             </div>
           </CardContent>
-          <CardFooter>
+          <CardFooter className="flex flex-col gap-4">
             <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
                 {isLoading ? 'Signing In...' : 'Sign In'}
+            </Button>
+            <Button variant="outline" className="w-full" asChild>
+                <Link href="/">
+                    <Home className="mr-2 h-4 w-4" />
+                    Go to Homepage
+                </Link>
             </Button>
           </CardFooter>
         </form>
