@@ -15,8 +15,8 @@ body {
     --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 45 93% 47%;
+    --primary-foreground: 0 0% 10%;
     --secondary: 240 5% 96%;
     --secondary-foreground: 240 6% 10%;
     --muted: 240 5% 96%;
@@ -50,8 +50,8 @@ body {
     --card-foreground: 0 0% 98%;
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
-    --primary: 0 72% 51%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 45 93% 47%;
+    --primary-foreground: 0 0% 10%;
     --secondary: 240 4% 16%;
     --secondary-foreground: 0 0% 98%;
     --muted: 240 4% 16%;
@@ -62,7 +62,7 @@ body {
     --destructive-foreground: 0 0% 98%;
     --border: 240 4% 16%;
     --input: 240 4% 16%;
-    --ring: 0 72% 51%;
+    --ring: 45 93% 47%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
@@ -189,18 +189,18 @@ body {
   }
 
   /* New Menu Styles */
-  .main-menu-container {
-    @apply relative border-b-2 border-gray-200;
-  }
   .main-menu-tabs {
-    @apply flex justify-center;
+    @apply flex justify-center border-b-2 border-gray-300;
   }
+
   .main-menu-tab {
-    @apply px-4 py-1.5 text-lg font-bold text-gray-600 cursor-pointer;
+    @apply px-4 py-1.5 text-lg font-bold text-gray-600 cursor-pointer relative;
   }
+
   .main-menu-tab-active {
-    @apply relative bg-[#4a4a4a] text-white rounded-t-lg;
+    @apply bg-[#4a4a4a] text-white rounded-t-lg;
   }
+
   .main-menu-tab-active::before,
   .main-menu-tab-active::after {
     content: '';
@@ -209,12 +209,15 @@ body {
     width: 20px;
     height: 20px;
     background-color: transparent;
+    pointer-events: none;
   }
+
   .main-menu-tab-active::before {
     left: -20px;
     border-bottom-right-radius: 20px;
     box-shadow: 5px 5px 0 5px #4a4a4a;
   }
+
   .main-menu-tab-active::after {
     right: -20px;
     border-bottom-left-radius: 20px;
