@@ -3,7 +3,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
-import { menuItems as initialMenuItems, menuCategories as initialMenuCategories, addons as initialAddons } from '@/lib/data';
+import { menuItemsWithDeals as initialMenuItems, menuCategories as initialMenuCategories, addons as initialAddons } from '@/lib/data';
 import type { MenuItem, MenuCategory, Addon } from '@/lib/types';
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
@@ -34,7 +34,7 @@ interface MenuContextType {
 
 const MenuContext = createContext<MenuContextType | undefined>(undefined);
 
-const MENU_STORAGE_KEY = 'cheeziousMenu';
+const MENU_STORAGE_KEY = 'cheeziousMenuV2';
 
 const initialData: MenuData = {
     items: initialMenuItems,
@@ -62,13 +62,9 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
       const storedMenu = localStorage.getItem(MENU_STORAGE_KEY);
       if (storedMenu) {
         const parsed = JSON.parse(storedMenu);
-        
-        const isOldFormat = parsed.categories?.some((c: MenuCategory) => !c.id.startsWith('C-'));
-
-        if (parsed.items && parsed.categories && parsed.addons && !isOldFormat) {
+        if (parsed.items && parsed.categories && parsed.addons) {
             setMenu(parsed);
         } else {
-             // If data is in old format or malformed, reset to fresh initial data
              setMenu(initialData);
         }
       }

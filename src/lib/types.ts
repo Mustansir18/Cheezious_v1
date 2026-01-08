@@ -10,11 +10,17 @@ export type Branch = {
   orderPrefix: string;
 };
 
+export type SubCategory = {
+  id: string;
+  name: string;
+}
+
 export type MenuCategory = {
   id: string;
   name: string;
   icon: string;
   stationId?: KitchenStation;
+  subCategories: SubCategory[];
 }
 
 export type Addon = {
@@ -36,6 +42,7 @@ export type MenuItem = {
   description: string;
   price: number;
   categoryId: string;
+  subCategoryId?: string;
   imageUrl: string;
   availableAddonIds?: string[];
 };
@@ -246,5 +253,3 @@ export const SyncOrderOutputSchema = z.object({
   message: z.string().describe('A message detailing the result of the operation.'),
 });
 export type SyncOrderOutput = z.infer<typeof SyncOrderOutputSchema>;
-
-    
