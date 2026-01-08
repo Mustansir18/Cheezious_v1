@@ -196,7 +196,7 @@ body {
     @apply flex justify-center;
   }
   .main-menu-tab {
-    @apply px-4 py-3 text-lg font-bold text-gray-600 cursor-pointer;
+    @apply px-4 py-2 text-lg font-bold text-gray-600 cursor-pointer;
   }
   .main-menu-tab-active {
     @apply relative bg-[#4a4a4a] text-white rounded-t-lg;
