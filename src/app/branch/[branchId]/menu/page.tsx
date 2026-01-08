@@ -75,7 +75,7 @@ export default function MenuPage() {
     const newCategory = categories.find(c => c.id === categoryId);
     if (newCategory) {
         setActiveCategoryId(newCategory.id);
-        setActiveSubCategoryId(newCategory.subCategories[0]?.id || null);
+        setActiveSubCategoryId(newCategory.subCategories?.[0]?.id || null);
     }
   };
 

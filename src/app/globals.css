@@ -89,35 +89,45 @@ body {
 }
 
 @layer utilities {
+  .main-menu-container {
+    @apply relative pt-4;
+  }
   .main-menu-tabs {
-      @apply flex items-end space-x-1;
+    @apply flex items-end space-x-1 pl-4;
+    z-index: 10;
+    position: relative;
   }
   .main-menu-tab {
-      @apply px-4 py-2 cursor-pointer text-lg font-semibold text-muted-foreground transition-all duration-200 border-b-2 border-transparent;
+    @apply px-4 py-2 cursor-pointer text-lg font-semibold text-muted-foreground transition-all duration-200;
   }
   .main-menu-tab-active {
-      @apply relative bg-[#373737] text-white rounded-t-lg border-b-0;
+    @apply relative bg-[#373737] text-white rounded-t-lg;
+    padding-bottom: 0.75rem; /* 12px to match the curve size */
   }
+
   .main-menu-tab-active::before,
   .main-menu-tab-active::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      width: 15px; /* Width of the curve */
-      height: 15px; /* Height of the curve */
-      /* This creates the curve using a box-shadow trick */
-      box-shadow: 0 0 0 50px #373737; /* Use a large shadow of the tab color */
+    content: '';
+    position: absolute;
+    bottom: 0;
+    width: 12px; 
+    height: 12px;
+    background-color: transparent;
   }
+
   .main-menu-tab-active::before {
-      left: -15px; /* Position to the left */
-      border-bottom-right-radius: 15px; /* Curve the corner */
+    left: -12px;
+    background-image: radial-gradient(circle at 0 0, transparent 12px, #373737 12.5px);
   }
+
   .main-menu-tab-active::after {
-      right: -15px; /* Position to the right */
-      border-bottom-left-radius: 15px; /* Curve the corner */
+    right: -12px;
+    background-image: radial-gradient(circle at 100% 0, transparent 12px, #373737 12.5px);
   }
+
   .sub-menu-bar {
-      @apply relative bg-[#373737] rounded-b-lg;
+      @apply relative bg-[#373737] rounded-lg -mt-1;
+      min-height: 52px;
   }
   .sub-menu-items {
       @apply flex items-center justify-center p-2 space-x-2;
