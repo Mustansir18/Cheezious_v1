@@ -103,7 +103,7 @@ body {
   }
 
   .main-menu-tab:hover {
-    @apply text-black;
+    @apply text-white;
   }
 
   /* ACTIVE TAB — overlaps bar */
