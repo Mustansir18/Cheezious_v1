@@ -188,75 +188,57 @@ body {
     @apply opacity-30 blur-sm transition-all;
   }
 
-  .main-tabs-container {
-    @apply relative border-b-2 border-[#2c3e50];
-  }
-
+  /* Main Menu Tabs */
   .main-tabs-list {
-    @apply flex justify-center p-0 bg-transparent;
+    @apply relative flex justify-center border-b-2 border-[#2c3e50];
   }
 
   .main-tabs-trigger {
-    @apply relative px-6 py-3 text-lg font-semibold text-gray-500 transition-colors duration-200 border-b-2 border-transparent;
-    background-color: transparent;
-    box-shadow: none;
-  }
-  
-  .main-tabs-trigger[data-state='active'] {
-    @apply text-foreground bg-transparent;
-    box-shadow: none;
+    @apply relative px-4 py-3 text-lg font-semibold text-gray-500 bg-transparent shadow-none border-b-2 border-transparent;
   }
 
+  .main-tabs-trigger[data-state='active'] {
+    @apply text-black font-bold border-b-transparent;
+    
+  }
+  
   .main-tabs-trigger[data-state='active']::before,
   .main-tabs-trigger[data-state='active']::after {
-      content: '';
-      position: absolute;
-      bottom: -2px; 
-      width: 15px;
-      height: 15px;
-      background-color: transparent;
+    content: '';
+    position: absolute;
+    bottom: -2px; /* Sits on top of the border-b */
+    width: 15px;
+    height: 15px;
+    background-color: transparent; /* Makes the corner transparent */
   }
 
   .main-tabs-trigger[data-state='active']::before {
-      left: -15px;
-      border-bottom-right-radius: 15px;
-      box-shadow: 5px 5px 0 5px #2c3e50;
+    left: -15px;
+    border-bottom-right-radius: 15px;
+    box-shadow: 5px 5px 0 5px #2c3e50; /* Creates the inner curve effect */
   }
 
   .main-tabs-trigger[data-state='active']::after {
-      right: -15px;
-      border-bottom-left-radius: 15px;
-      box-shadow: -5px 5px 0 5px #2c3e50;
-  }
-
-  .main-tabs-trigger[data-state='active'] > span {
-    @apply relative;
-  }
-  .main-tabs-trigger[data-state='active'] > span::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -15px;
     right: -15px;
-    bottom: -2px;
-    background-color: #2c3e50;
-    z-index: -1;
+    border-bottom-left-radius: 15px;
+    box-shadow: -5px 5px 0 5px #2c3e50; /* Creates the inner curve effect */
   }
 
   .sub-menu-bar {
-     @apply bg-[#2c3e50] p-2 -mt-px flex justify-center;
+    @apply bg-[#2c3e50] p-2 mt-[-2px] flex justify-center;
   }
   
   .sub-menu-trigger {
-      @apply text-white px-4 py-2 rounded-md font-semibold text-sm transition-colors;
-      background-color: transparent;
-      box-shadow: none;
+    @apply text-white px-4 py-2 rounded-md font-semibold text-sm transition-colors bg-transparent shadow-none;
   }
+
   .sub-menu-trigger:hover {
-      @apply bg-white/10;
+    background-color: transparent;
+    @apply text-gray-300;
   }
+  
   .sub-menu-trigger[data-state='active'] {
-    @apply bg-red-600 text-white;
+    @apply bg-white text-black;
     box-shadow: none;
   }
 }

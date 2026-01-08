@@ -112,54 +112,71 @@ export default function MenuPage() {
       )}
 
       <Tabs value={activeCategory.id} onValueChange={handleCategoryChange} className="w-full">
-        <div className="main-tabs-container">
-          <TabsList className="main-tabs-list">
+        <TabsList className="main-tabs-list">
             {categories.map((category) => (
-              <TabsTrigger 
+            <TabsTrigger 
                 key={category.id} 
                 value={category.id}
                 className="main-tabs-trigger"
-              >
+            >
                 {category.name}
-              </TabsTrigger>
+            </TabsTrigger>
             ))}
-          </TabsList>
-        </div>
+        </TabsList>
         
-        <div className="sub-menu-bar">
-           <Tabs value={activeSubCategory || ""} onValueChange={setActiveSubCategory} className="w-full">
-              <TabsList className="flex justify-center h-auto p-0 bg-transparent">
-                  {activeCategory.subCategories.map(sub => (
-                      <TabsTrigger 
-                          key={sub.id} 
-                          value={sub.id}
-                          className="sub-menu-trigger"
-                      >
-                          {sub.name}
-                      </TabsTrigger>
-                  ))}
-              </TabsList>
-           </Tabs>
-        </div>
+        {activeCategory.subCategories.length > 0 && (
+          <div className="sub-menu-bar">
+              <Tabs value={activeSubCategory || ""} onValueChange={setActiveSubCategory} className="w-full">
+                  <TabsList className="flex justify-center h-auto p-0 bg-transparent">
+                      {activeCategory.subCategories.map(sub => (
+                          <TabsTrigger 
+                              key={sub.id} 
+                              value={sub.id}
+                              className="sub-menu-trigger"
+                          >
+                              {sub.name}
+                          </TabsTrigger>
+                      ))}
+                  </TabsList>
+              </Tabs>
+          </div>
+        )}
 
         <div className="mt-6">
             {categories.map((category) => (
-            <TabsContent key={category.id} value={category.id} forceMount className={cn('hidden', activeCategory.id === category.id && 'block')}>
-                {category.subCategories.map(sub => (
-                    <TabsContent key={sub.id} value={sub.id} forceMount className={cn('hidden', activeSubCategory === sub.id && 'block')}>
+                <TabsContent key={category.id} value={category.id} className="mt-0">
+                    {category.subCategories.map(sub => (
+                      <div key={sub.id} style={{ display: activeSubCategory === sub.id ? 'block' : 'none' }}>
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mt-6">
                             {menuItems
                                 .filter(item => item.categoryId === category.id && item.subCategoryId === sub.id)
                                 .map((item) => <MenuItemCard key={item.id} item={item} />)
                             }
                         </div>
-                    </TabsContent>
-                ))}
-            </TabsContent>
+                      </div>
+                    ))}
+                    {/* Render items without subcategory if no subcategory is selected */}
+                    {category.subCategories.length > 0 && !activeSubCategory &&
+                      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mt-6">
+                          {menuItems
+                              .filter(item => item.categoryId === category.id && !item.subCategoryId)
+                              .map((item) => <MenuItemCard key={item.id} item={item} />)
+                          }
+                      </div>
+                    }
+                    {/* Render all items if there are no subcategories */}
+                     {category.subCategories.length === 0 && (
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mt-6">
+                            {menuItems
+                                .filter(item => item.categoryId === category.id)
+                                .map((item) => <MenuItemCard key={item.id} item={item} />)
+                            }
+                        </div>
+                     )}
+                </TabsContent>
             ))}
         </div>
       </Tabs>
     </div>
   );
 }
-
