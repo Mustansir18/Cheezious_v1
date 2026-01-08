@@ -188,58 +188,49 @@ body {
     @apply opacity-30 blur-sm transition-all;
   }
 
-  /* Main Menu Tabs */
-  .main-tabs-list {
-    @apply relative flex justify-center border-b-2 border-[#2c3e50];
+  /* New Menu Styles */
+  .main-menu-container {
+    @apply relative border-b-2 border-gray-200;
   }
-
-  .main-tabs-trigger {
-    @apply relative px-4 py-3 text-lg font-semibold text-gray-500 bg-transparent shadow-none border-b-2 border-transparent;
+  .main-menu-tabs {
+    @apply flex justify-center;
   }
-
-  .main-tabs-trigger[data-state='active'] {
-    @apply text-black font-bold border-b-transparent;
-    
+  .main-menu-tab {
+    @apply px-4 py-3 text-lg font-bold text-gray-600 cursor-pointer;
   }
-  
-  .main-tabs-trigger[data-state='active']::before,
-  .main-tabs-trigger[data-state='active']::after {
+  .main-menu-tab-active {
+    @apply relative bg-[#4a4a4a] text-white rounded-t-lg;
+  }
+  .main-menu-tab-active::before,
+  .main-menu-tab-active::after {
     content: '';
     position: absolute;
-    bottom: -2px; /* Sits on top of the border-b */
-    width: 15px;
-    height: 15px;
-    background-color: transparent; /* Makes the corner transparent */
+    bottom: 0;
+    width: 20px;
+    height: 20px;
+    background-color: transparent;
   }
-
-  .main-tabs-trigger[data-state='active']::before {
-    left: -15px;
-    border-bottom-right-radius: 15px;
-    box-shadow: 5px 5px 0 5px #2c3e50; /* Creates the inner curve effect */
+  .main-menu-tab-active::before {
+    left: -20px;
+    border-bottom-right-radius: 20px;
+    box-shadow: 5px 5px 0 5px #4a4a4a;
   }
-
-  .main-tabs-trigger[data-state='active']::after {
-    right: -15px;
-    border-bottom-left-radius: 15px;
-    box-shadow: -5px 5px 0 5px #2c3e50; /* Creates the inner curve effect */
+  .main-menu-tab-active::after {
+    right: -20px;
+    border-bottom-left-radius: 20px;
+    box-shadow: -5px 5px 0 5px #4a4a4a;
   }
 
   .sub-menu-bar {
-    @apply bg-[#2c3e50] p-2 mt-[-2px] flex justify-center;
-  }
-  
-  .sub-menu-trigger {
-    @apply text-white px-4 py-2 rounded-md font-semibold text-sm transition-colors bg-transparent shadow-none;
+    @apply bg-[#4a4a4a] py-2 flex justify-center items-center;
   }
 
-  .sub-menu-trigger:hover {
-    background-color: transparent;
-    @apply text-gray-300;
+  .sub-menu-trigger {
+    @apply text-white font-bold px-4 py-2 uppercase cursor-pointer text-sm;
   }
-  
-  .sub-menu-trigger[data-state='active'] {
-    @apply bg-white text-black;
-    box-shadow: none;
+
+  .sub-menu-trigger-active {
+    @apply bg-red-600 text-white rounded-md;
   }
 }
 

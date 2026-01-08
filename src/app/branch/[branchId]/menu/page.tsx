@@ -6,7 +6,6 @@ import { useSearchParams, useParams, useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import type { OrderType, MenuCategory } from "@/lib/types";
 import { MenuItemCard } from "@/components/menu/MenuItemCard";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMenu } from "@/context/MenuContext";
 import { useDeals } from "@/context/DealsContext";
 import { Loader } from "lucide-react";
@@ -48,6 +47,8 @@ export default function MenuPage() {
       setActiveCategory(defaultCategory);
       if (defaultCategory.subCategories.length > 0) {
         setActiveSubCategory(defaultCategory.subCategories[0].id);
+      } else {
+        setActiveSubCategory(null);
       }
     }
   }, [categories, activeCategory]);
@@ -76,6 +77,10 @@ export default function MenuPage() {
     }
   };
 
+  const handleSubCategoryChange = (subId: string) => {
+    setActiveSubCategory(subId);
+  }
+
   if (isMenuLoading || areDealsLoading || !activeCategory) {
     return (
         <div className="flex h-[calc(100vh-10rem)] items-center justify-center">
@@ -84,6 +89,11 @@ export default function MenuPage() {
         </div>
     )
   }
+  
+  const currentMenuItems = menuItems.filter(item => 
+      item.categoryId === activeCategory.id &&
+      (activeCategory.subCategories.length === 0 || item.subCategoryId === activeSubCategory)
+  );
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -111,72 +121,50 @@ export default function MenuPage() {
         </div>
       )}
 
-      <Tabs value={activeCategory.id} onValueChange={handleCategoryChange} className="w-full">
-        <TabsList className="main-tabs-list">
+      <div className="main-menu-container">
+        <div className="main-menu-tabs">
             {categories.map((category) => (
-            <TabsTrigger 
-                key={category.id} 
-                value={category.id}
-                className="main-tabs-trigger"
-            >
-                {category.name}
-            </TabsTrigger>
-            ))}
-        </TabsList>
-        
-        {activeCategory.subCategories.length > 0 && (
-          <div className="sub-menu-bar">
-              <Tabs value={activeSubCategory || ""} onValueChange={setActiveSubCategory} className="w-full">
-                  <TabsList className="flex justify-center h-auto p-0 bg-transparent">
-                      {activeCategory.subCategories.map(sub => (
-                          <TabsTrigger 
-                              key={sub.id} 
-                              value={sub.id}
-                              className="sub-menu-trigger"
-                          >
-                              {sub.name}
-                          </TabsTrigger>
-                      ))}
-                  </TabsList>
-              </Tabs>
-          </div>
-        )}
-
-        <div className="mt-6">
-            {categories.map((category) => (
-                <TabsContent key={category.id} value={category.id} className="mt-0">
-                    {category.subCategories.map(sub => (
-                      <div key={sub.id} style={{ display: activeSubCategory === sub.id ? 'block' : 'none' }}>
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mt-6">
-                            {menuItems
-                                .filter(item => item.categoryId === category.id && item.subCategoryId === sub.id)
-                                .map((item) => <MenuItemCard key={item.id} item={item} />)
-                            }
-                        </div>
-                      </div>
-                    ))}
-                    {/* Render items without subcategory if no subcategory is selected */}
-                    {category.subCategories.length > 0 && !activeSubCategory &&
-                      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mt-6">
-                          {menuItems
-                              .filter(item => item.categoryId === category.id && !item.subCategoryId)
-                              .map((item) => <MenuItemCard key={item.id} item={item} />)
-                          }
-                      </div>
-                    }
-                    {/* Render all items if there are no subcategories */}
-                     {category.subCategories.length === 0 && (
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mt-6">
-                            {menuItems
-                                .filter(item => item.categoryId === category.id)
-                                .map((item) => <MenuItemCard key={item.id} item={item} />)
-                            }
-                        </div>
-                     )}
-                </TabsContent>
+                <div 
+                    key={category.id} 
+                    onClick={() => handleCategoryChange(category.id)}
+                    className={cn(
+                        'main-menu-tab', 
+                        activeCategory.id === category.id && 'main-menu-tab-active'
+                    )}
+                >
+                    {category.name}
+                </div>
             ))}
         </div>
-      </Tabs>
+      </div>
+      
+      {activeCategory.subCategories.length > 0 && (
+        <div className="sub-menu-bar">
+            {activeCategory.subCategories.map(sub => (
+                <div 
+                    key={sub.id}
+                    onClick={() => handleSubCategoryChange(sub.id)}
+                    className={cn(
+                        'sub-menu-trigger',
+                        activeSubCategory === sub.id && 'sub-menu-trigger-active'
+                    )}
+                >
+                    {sub.name}
+                </div>
+            ))}
+        </div>
+      )}
+
+      <div className="mt-8">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {currentMenuItems.map((item) => <MenuItemCard key={item.id} item={item} />)}
+        </div>
+        {currentMenuItems.length === 0 && (
+          <div className="text-center py-16">
+            <p className="text-muted-foreground">No items in this category yet.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
