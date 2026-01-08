@@ -124,24 +124,25 @@ export default function MenuPage() {
       )}
 
       <div className="main-menu-container">
-        {/* CATEGORY TABS */}
-        <div className="main-menu-tabs">
-          {categories.map(category => (
-            <button
-              key={category.id}
-              onClick={() => handleCategoryChange(category.id)}
-              className={cn(
-                "main-menu-tab",
-                activeCategory.id === category.id && "main-menu-tab-active"
-              )}
-            >
-              {category.name}
-            </button>
-          ))}
-        </div>
-
-        {/* SUB CATEGORY BAR */}
+        {/* Main dark container for tabs and sub-menu */}
         <div className="sub-menu-bar">
+          {/* CATEGORY TABS */}
+          <div className="main-menu-tabs">
+            {categories.map(category => (
+              <button
+                key={category.id}
+                onClick={() => handleCategoryChange(category.id)}
+                className={cn(
+                  "main-menu-tab",
+                  activeCategory.id === category.id && "main-menu-tab-active"
+                )}
+              >
+                {category.name}
+              </button>
+            ))}
+          </div>
+
+          {/* SUB CATEGORY ITEMS */}
           {activeCategory.subCategories?.length > 0 && (
             <div className="sub-menu-items">
               {activeCategory.subCategories.map(sub => (

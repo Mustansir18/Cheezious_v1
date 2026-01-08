@@ -14,7 +14,7 @@ body {
     --card-foreground: 240 10% 3.9%;
     --popover: 60 56% 91%;
     --popover-foreground: 240 10% 3.9%;
-    --primary: 0 100% 50%;
+    --primary: 0 100% 50%; /* This will be red */
     --primary-foreground: 0 0% 98%;
     --secondary: 60 20% 80%;
     --secondary-foreground: 240 10% 3.9%;
@@ -88,30 +88,39 @@ body {
 }
 
 @layer utilities {
-  /* ===== MAIN MENU ===== */
+  /* ===== MENU ===== */
   .main-menu-container {
-    @apply relative mt-6;
+    @apply mt-6;
   }
 
+  /* The main dark bar that contains everything */
+  .sub-menu-bar {
+    @apply relative bg-[#373737] rounded-lg;
+    min-height: 52px;
+  }
+  
+  /* Container for the main category tabs */
   .main-menu-tabs {
-    @apply flex items-end gap-1 px-4 relative z-20;
+    @apply flex items-end gap-1 px-4;
   }
-
+  
+  /* Individual inactive tab */
   .main-menu-tab {
-    @apply px-4 py-2 text-lg font-semibold text-gray-500 cursor-pointer;
+    @apply relative px-4 py-2 text-lg font-semibold text-gray-400 cursor-pointer;
   }
-
+  
   .main-menu-tab:hover {
     @apply text-white;
   }
 
-  /* ACTIVE TAB — overlaps bar */
+  /* Active tab style */
   .main-menu-tab-active {
-    @apply relative bg-[#373737] text-white rounded-t-xl;
-    transform: translateY(2px);
+    @apply bg-[#373737] text-white rounded-t-xl;
+    /* Pushes the tab down to overlap the container */
+    transform: translateY(6px);
   }
 
-  /* Curved cut-outs using box-shadow trick */
+  /* Creates the curved corner effect */
   .main-menu-tab-active::before,
   .main-menu-tab-active::after {
     content: '';
@@ -119,40 +128,37 @@ body {
     bottom: 0;
     width: 14px;
     height: 14px;
-    background: transparent;
+    /* This creates a shadow that looks like a cutout */
+    box-shadow: 0 0 0 14px hsl(var(--background));
   }
 
   .main-menu-tab-active::before {
     left: -14px;
-    box-shadow: 7px 7px 0 0 hsl(var(--background));
     border-bottom-right-radius: 14px;
   }
 
   .main-menu-tab-active::after {
     right: -14px;
-    box-shadow: -7px 7px 0 0 hsl(var(--background));
     border-bottom-left-radius: 14px;
   }
-
-
-  /* ===== SUB MENU BAR ===== */
-  .sub-menu-bar {
-    @apply bg-[#373737] rounded-lg z-10 relative;
-    min-height: 52px;
-  }
-
+  
+  /* Container for sub-category buttons */
   .sub-menu-items {
     @apply flex justify-center items-center gap-3 py-2;
   }
-
+  
+  /* Individual sub-category button */
   .sub-menu-trigger {
     @apply px-4 py-2 text-white font-semibold cursor-pointer;
   }
-
+  
+  /* Active sub-category button */
   .sub-menu-trigger-active {
     @apply bg-primary text-primary-foreground rounded-full;
   }
 
+
+  /* ===== ANIMATIONS & OTHER UTILS ===== */
   @keyframes blink {
     0%, 100% {
       box-shadow: 0 0 5px 2px hsl(var(--primary));
