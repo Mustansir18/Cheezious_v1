@@ -125,10 +125,7 @@ export default function MenuPage() {
 
       <div className="main-menu-container">
 
-        {/* Dark background rail */}
-        <div className="main-menu-rail" />
-
-        {/* Category Tabs */}
+        {/* CATEGORY TABS */}
         <div className="main-menu-tabs">
           {categories.map(category => (
             <button
@@ -144,7 +141,7 @@ export default function MenuPage() {
           ))}
         </div>
 
-        {/* Sub Categories */}
+        {/* SUB CATEGORY BAR */}
         <div className="sub-menu-bar">
           {activeCategory.subCategories?.length > 0 && (
             <div className="sub-menu-items">

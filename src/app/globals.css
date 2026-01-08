@@ -91,35 +91,28 @@ body {
   /* ===== MAIN MENU ===== */
 
   .main-menu-container {
-    @apply relative mt-8;
+    @apply relative mt-6;
   }
 
-  /* Dark rail behind tabs */
-  .main-menu-rail {
-    @apply bg-[#373737] h-[52px] w-full rounded-lg;
-  }
-
-  /* Tabs wrapper */
   .main-menu-tabs {
-    @apply absolute top-0 left-0 flex items-end gap-1 px-4;
-    z-index: 20;
+    @apply flex items-end gap-1 px-4 relative z-20;
   }
 
   .main-menu-tab {
-    @apply relative px-5 py-2 text-lg font-semibold text-gray-300 cursor-pointer;
+    @apply px-4 py-2 text-lg font-semibold text-gray-300 cursor-pointer;
   }
 
   .main-menu-tab:hover {
     @apply text-white;
   }
 
-  /* Active tab */
+  /* ACTIVE TAB — overlaps bar */
   .main-menu-tab-active {
-    @apply bg-[#373737] text-white rounded-t-xl;
-    z-index: 30;
+    @apply relative bg-[#373737] text-white rounded-t-xl;
+    transform: translateY(6px);
   }
 
-  /* Curved cutouts */
+  /* Curved cut-outs */
   .main-menu-tab-active::before,
   .main-menu-tab-active::after {
     content: "";
@@ -140,10 +133,10 @@ body {
     background-image: radial-gradient(circle at 100% 0, transparent 14px, #373737 15px);
   }
 
-  /* ===== SUB MENU ===== */
+  /* ===== SUB MENU BAR ===== */
 
   .sub-menu-bar {
-    @apply bg-[#373737] mt-[-1px] rounded-lg;
+    @apply bg-[#373737] rounded-lg mt-[-2px] z-10 relative;
     min-height: 52px;
   }
 
