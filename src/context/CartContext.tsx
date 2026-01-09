@@ -98,7 +98,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     // Create a stable, unique key for this specific variation of the item.
     // This key is based on the item's ID and a sorted list of its addons and their quantities.
     const uniqueVariationId = selectedAddons.length > 0
-      ? `${itemToAdd.id}-${selectedAddons.map(({ addon, quantity }) => `${addon.id}x${quantity}`).sort().join('-')}`
+      ? `${itemToAdd.id}-${selectedAddons.map(({ addon, quantity }) => `${addon.id}x${quantity}`).sort().join('|')}`
       : itemToAdd.id;
 
     setItems((prevItems) => {
@@ -132,38 +132,24 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const addDeal = (deal: Deal) => {
     const dealCartId = `deal-${deal.id}-${crypto.randomUUID()}`;
+    
+    // Find the master menu item that represents this deal
     const dealMenuItem = menu.items.find(i => i.id === deal.id);
     if (!dealMenuItem) return;
 
     const dealCartItem: CartItem = {
-      ...dealMenuItem,
-      cartItemId: dealCartId, 
-      uniqueVariationId: dealCartId, // Deals are always unique
+      ...dealMenuItem, // Use properties from the menu item (like description, image etc)
+      cartItemId: dealCartId, // Unique instance ID for this deal in the cart
+      uniqueVariationId: dealCartId, // Deals are always unique variations
       price: deal.price,
       basePrice: deal.price,
-      quantity: 1,
+      quantity: 1, // Deals are added one at a time
       selectedAddons: [],
-      isDealComponent: false,
+      isDealComponent: false, // This is the parent deal item
+      dealName: deal.name, // Store the deal name explicitly
     };
 
-    const componentItems: CartItem[] = deal.items.flatMap((dealComponent: DealItem) => {
-      const menuItem = menu.items.find(i => i.id === dealComponent.menuItemId);
-      if (!menuItem) return [];
-
-      return {
-        ...menuItem,
-        cartItemId: `${menuItem.id}-${crypto.randomUUID()}`,
-        uniqueVariationId: `${menuItem.id}-${dealCartId}`, // Link to parent deal
-        price: 0, 
-        basePrice: menuItem.price,
-        quantity: dealComponent.quantity,
-        selectedAddons: [],
-        isDealComponent: true, 
-        parentDealId: dealCartId,
-      };
-    });
-
-    setItems(prev => [...prev, dealCartItem, ...componentItems]);
+    setItems(prev => [...prev, dealCartItem]);
 
     toast({
       title: "Deal Added!",
@@ -177,15 +163,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       
       if (!itemToUpdate) return prevItems;
 
-      if (itemToUpdate.categoryId === 'deals' && !itemToUpdate.isDealComponent) {
+      // Special handling for parent deal items
+      if (itemToUpdate.categoryId === 'C-00001' && !itemToUpdate.isDealComponent) {
+          // If trying to reduce quantity to 0 or less, remove the deal and its components
           if (quantity <= 0) {
               return prevItems.filter(item => item.cartItemId !== cartItemId && item.parentDealId !== cartItemId);
           }
-          toast({
-              title: "Cannot change deal quantity",
-              description: "Please remove the deal and add it again."
-          });
-          return prevItems;
+          // Otherwise, just update the quantity of the parent deal item
+          return prevItems.map(item =>
+              item.cartItemId === cartItemId ? { ...item, quantity } : item
+          );
       }
 
       if (itemToUpdate.isDealComponent) {
@@ -218,12 +205,17 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const cartTotal = useMemo(() => {
+    // We only sum up items that are NOT deal components, as the parent deal holds the price.
     return items.reduce((total, item) => {
-        return total + item.price * item.quantity;
+      if (item.isDealComponent) {
+          return total;
+      }
+      return total + item.price * item.quantity;
     }, 0);
   }, [items]);
 
   const cartCount = useMemo(() => {
+    // Only count parent items (not components of a deal)
     return items.reduce((count, item) => {
         if (item.isDealComponent) return count; 
         return count + item.quantity;
