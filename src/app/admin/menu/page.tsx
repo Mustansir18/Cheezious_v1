@@ -74,6 +74,8 @@ function CategoryForm({ category, onSave }: { category?: MenuCategory; onSave: (
   
   const [newSubCategoryName, setNewSubCategoryName] = useState('');
 
+  const currentCategoryState = menu.categories.find(c => c.id === category?.id) || category;
+
   const validateId = (value: string) => {
     if (menu.categories.some(c => c.id === value && c.id !== category?.id)) {
         toast({
@@ -101,8 +103,9 @@ function CategoryForm({ category, onSave }: { category?: MenuCategory; onSave: (
     
     if (!category && !validateId(id)) return;
     
-    const subCategories = category?.subCategories || [];
+    const subCategories = currentCategoryState?.subCategories || [];
     const data = { name, icon, stationId, subCategories };
+
     if (category) {
       onSave({ ...category, ...data });
     } else {
@@ -160,7 +163,7 @@ function CategoryForm({ category, onSave }: { category?: MenuCategory; onSave: (
                 <Label>Sub-Categories</Label>
                 <ScrollArea className="h-40 rounded-md border p-4">
                     <div className="space-y-2">
-                        {category.subCategories?.map(sc => (
+                        {currentCategoryState?.subCategories?.map(sc => (
                             <div key={sc.id} className="flex items-center justify-between">
                                 <span>{sc.name}</span>
                                 <DeleteConfirmationDialog
@@ -170,7 +173,7 @@ function CategoryForm({ category, onSave }: { category?: MenuCategory; onSave: (
                                 />
                             </div>
                         ))}
-                         {(!category.subCategories || category.subCategories.length === 0) && <p className="text-xs text-muted-foreground">No sub-categories yet.</p>}
+                         {(!currentCategoryState?.subCategories || currentCategoryState.subCategories.length === 0) && <p className="text-xs text-muted-foreground">No sub-categories yet.</p>}
                     </div>
                 </ScrollArea>
                 <div className="mt-2 flex gap-2">
