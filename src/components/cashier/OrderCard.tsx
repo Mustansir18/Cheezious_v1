@@ -31,6 +31,7 @@ import { useOrders } from "@/context/OrderContext";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useMenu } from "@/context/MenuContext";
+import { useDeals } from "@/context/DealsContext";
 
 const statusConfig = {
     Pending: { icon: Loader, color: "text-gray-500", label: "Pending" },
@@ -221,7 +222,7 @@ interface OrderCardProps {
 
 export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, children, isMutable = true }: OrderCardProps) {
   const { settings } = useSettings();
-  const { menu } = useMenu();
+  const { deals } = useDeals();
   const { user } = useAuth();
   
   const handleUpdateStatus = (newStatus: OrderStatus) => {
@@ -271,11 +272,11 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
     const dealItemsMap = new Map<string, { dealName: string, dealPrice: number, items: OrderItem[] }>();
     const regularItems: OrderItem[] = [];
 
-    const dealsInOrder = order.items.filter(item => menu.deals.some(deal => deal.id === item.menuItemId));
+    const dealsInOrder = order.items.filter(item => deals.some(deal => deal.id === item.menuItemId));
     const dealItemIds = new Set(dealsInOrder.map(item => item.id));
 
     dealsInOrder.forEach(dealItem => {
-        const dealInfo = menu.deals.find(deal => deal.id === dealItem.menuItemId);
+        const dealInfo = deals.find(deal => deal.id === dealItem.menuItemId);
         if(!dealInfo) return;
 
         const components: OrderItem[] = [];
@@ -299,7 +300,7 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
     });
 
     return { dealItems: Array.from(dealItemsMap.values()), regularItems };
-  }, [order.items, menu.deals]);
+  }, [order.items, deals]);
 
 
   return (
