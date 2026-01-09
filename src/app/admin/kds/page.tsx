@@ -10,7 +10,7 @@ export default function KDSPage() {
     const router = useRouter();
 
     useEffect(() => {
-        router.replace('/admin/kds/master');
+        router.replace('/admin/kds/pizza');
     }, [router]);
 
     return (
@@ -20,4 +20,3 @@ export default function KDSPage() {
         </div>
     );
 }
-

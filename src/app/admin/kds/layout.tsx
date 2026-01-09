@@ -15,11 +15,11 @@ interface StationLink {
 }
 
 const stationLinks: StationLink[] = [
-    { href: '/admin/kds/master', id: 'master', name: 'CUTT Station', icon: ChefHat },
     { href: '/admin/kds/pizza', id: 'pizza', name: 'MAKE Station', icon: Pizza },
     { href: '/admin/kds/pasta', id: 'pasta', name: 'PASTA Station', icon: CookingPot },
     { href: '/admin/kds/fried', id: 'fried', name: 'FRIED Station', icon: Flame },
     { href: '/admin/kds/bar', id: 'bar', name: 'BEVERAGES Station', icon: Martini },
+    { href: '/admin/kds/master', id: 'master', name: 'CUTT Station', icon: ChefHat },
 ];
 
 function KdsHeader() {
