@@ -210,7 +210,7 @@ export default function OrderConfirmationPage() {
                         <SelectTrigger id="payment-method"><SelectValue placeholder="Select a payment method" /></SelectTrigger>
                         <SelectContent>{settings.paymentMethods.map(method => (<SelectItem key={method.id} value={method.name}>{method.name}</SelectItem>))}</SelectContent>
                     </Select>
-                     {!paymentMethod && <p className="text-xs text-muted-foreground pt-1">Please select a payment method to see the final total.</p>}
+                     {!paymentMethod && <p className="text-sm text-foreground/80 pt-1">Please select a payment method to see the final total.</p>}
                 </div>
             </div>
 
