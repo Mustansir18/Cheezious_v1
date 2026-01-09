@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
@@ -96,15 +95,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const addonPrice = selectedAddons.reduce((sum, { addon, quantity }) => sum + (addon.price * quantity), 0);
     const finalPrice = itemToAdd.price + addonPrice;
 
-    // This key identifies the specific combination of addons.
-    const addonCombinationKey = selectedAddons.length > 0
-      ? selectedAddons
-          .map(({ addon, quantity }) => `${addon.id}x${quantity}`)
-          .sort()
-          .join('-')
-      : 'base';
-
-    const uniqueVariationId = `${itemToAdd.id}-${addonCombinationKey}`;
+    // Create a stable, unique key for this specific variation of the item.
+    // This key is based on the item's ID and a sorted list of its addons and their quantities.
+    const uniqueVariationId = selectedAddons.length > 0
+      ? `${itemToAdd.id}-${selectedAddons.map(({ addon, quantity }) => `${addon.id}x${quantity}`).sort().join('-')}`
+      : itemToAdd.id;
 
     setItems((prevItems) => {
       const existingItem = prevItems.find((item) => item.uniqueVariationId === uniqueVariationId);
@@ -143,6 +138,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const dealCartItem: CartItem = {
       ...dealMenuItem,
       cartItemId: dealCartId, 
+      uniqueVariationId: dealCartId, // Deals are always unique
       price: deal.price,
       basePrice: deal.price,
       quantity: 1,
@@ -157,6 +153,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       return {
         ...menuItem,
         cartItemId: `${menuItem.id}-${crypto.randomUUID()}`,
+        uniqueVariationId: `${menuItem.id}-${dealCartId}`, // Link to parent deal
         price: 0, 
         basePrice: menuItem.price,
         quantity: dealComponent.quantity,
