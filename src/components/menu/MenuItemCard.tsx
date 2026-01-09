@@ -18,7 +18,7 @@ import { Textarea } from "../ui/textarea";
 
 const FALLBACK_IMAGE_URL = "https://picsum.photos/seed/placeholder/400/300";
 
-function AddToCartDialog({ item, onAddToCart, triggerButton, children }: { item: MenuItem; onAddToCart: (options: { selectedAddons: { addon: Addon; quantity: number }[], itemQuantity: number, instructions: string }) => void; triggerButton?: React.ReactNode; children?: React.ReactNode; }) {
+function AddToCartDialog({ item, onAddToCart }: { item: MenuItem; onAddToCart: (options: { selectedAddons: { addon: Addon; quantity: number }[], itemQuantity: number, instructions: string }) => void; }) {
     const { menu } = useMenu();
     const [selectedAddons, setSelectedAddons] = useState<Map<string, { addon: Addon; quantity: number }>>(new Map());
     const [itemQuantity, setItemQuantity] = useState(1);
@@ -68,12 +68,13 @@ function AddToCartDialog({ item, onAddToCart, triggerButton, children }: { item:
     const totalAddonPrice = Array.from(selectedAddons.values()).reduce((sum, { addon, quantity }) => sum + (addon.price * quantity), 0);
     const finalPrice = (item.price + totalAddonPrice) * itemQuantity;
     
-    const trigger = triggerButton || children;
-    
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                {trigger}
+                <Button variant="default">
+                    <PlusCircle className="mr-2 h-5 w-5" />
+                    {item.availableAddonIds && item.availableAddonIds.length > 0 ? 'Customize & Add' : 'Add to Cart'}
+                </Button>
             </DialogTrigger>
             <DialogContent className="max-h-[90vh] flex flex-col">
                 <DialogHeader>
@@ -174,6 +175,8 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
     return cartItems.filter(cartItem => cartItem.id === item.id);
   }, [cartItems, item.id]);
 
+  const hasCustomizations = item.availableAddonIds && item.availableAddonIds.length > 0;
+
   return (
     <Card className="flex h-full flex-col overflow-hidden transition-shadow hover:shadow-lg">
       <CardHeader className="p-0">
@@ -199,12 +202,7 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
             <AddToCartDialog 
                 item={item} 
                 onAddToCart={handleAddToCart}
-            >
-                <Button variant="default">
-                    <PlusCircle className="mr-2 h-5 w-5" />
-                    {item.availableAddonIds && item.availableAddonIds.length > 0 ? 'Customize & Add' : 'Add to Cart'}
-                </Button>
-            </AddToCartDialog>
+            />
         ) : (
             <div className="space-y-3">
                 {variationsInCart.map((cartItem) => (
@@ -227,15 +225,18 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
                         </div>
                     </div>
                 ))}
-                <AddToCartDialog 
-                    item={item} 
-                    onAddToCart={handleAddToCart}
-                >
-                     <Button variant="secondary" className="w-full">
-                        <PlusCircle className="mr-2 h-5 w-5" />
-                        Add Another Variation
-                    </Button>
-                </AddToCartDialog>
+                 <Dialog>
+                    <DialogTrigger asChild>
+                        <Button variant="secondary" className="w-full">
+                            <PlusCircle className="mr-2 h-5 w-5" />
+                            Add Another Variation
+                        </Button>
+                    </DialogTrigger>
+                    <AddToCartDialog 
+                        item={item} 
+                        onAddToCart={handleAddToCart}
+                    />
+                </Dialog>
             </div>
         )}
       </CardFooter>

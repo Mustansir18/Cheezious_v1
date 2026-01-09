@@ -88,8 +88,7 @@ function CategoryForm({ category, onSave }: { category?: MenuCategory; onSave: (
     return true;
   }
 
-  const handleAddSubCategory = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAddSubCategory = () => {
     if (newSubCategoryName.trim() && category?.id) {
         addSubCategory(category.id, newSubCategoryName.trim());
         setNewSubCategoryName('');
@@ -174,10 +173,10 @@ function CategoryForm({ category, onSave }: { category?: MenuCategory; onSave: (
                          {(!category.subCategories || category.subCategories.length === 0) && <p className="text-xs text-muted-foreground">No sub-categories yet.</p>}
                     </div>
                 </ScrollArea>
-                <form onSubmit={handleAddSubCategory} className="mt-2 flex gap-2">
+                <div className="mt-2 flex gap-2">
                     <Input placeholder="New Sub-Category Name" value={newSubCategoryName} onChange={e => setNewSubCategoryName(e.target.value)} />
-                    <Button type="submit" variant="secondary">Add</Button>
-                </form>
+                    <Button type="button" variant="secondary" onClick={handleAddSubCategory}>Add</Button>
+                </div>
             </div>
         )}
       </div>
@@ -240,8 +239,7 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
     return true;
   }
   
-  const handleAddAddon = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAddAddon = () => {
     addNewAddon({ id: newAddonId, name: newAddonName, price: newAddonPrice });
     // Also select the newly added addon
     setSelectedAddonIds(prev => [...prev, newAddonId]);
@@ -350,15 +348,15 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
                     ))}
                 </div>
             </ScrollArea>
-             <form onSubmit={handleAddAddon} className="mt-4 p-4 border rounded-lg bg-muted/50 space-y-2">
+             <div className="mt-4 p-4 border rounded-lg bg-muted/50 space-y-2">
                 <p className="text-sm font-medium">Create New Add-on</p>
                 <div className="grid grid-cols-3 gap-2">
                     <Input placeholder="Code (e.g. A-01)" value={newAddonId} onChange={e => setNewAddonId(e.target.value)} required />
                     <Input placeholder="Name" value={newAddonName} onChange={e => setNewAddonName(e.target.value)} required />
                     <Input type="number" placeholder="Price" value={newAddonPrice} onChange={e => setNewAddonPrice(Number(e.target.value))} required />
                 </div>
-                <Button type="submit" size="sm" className="w-full">Add to Library & Select</Button>
-            </form>
+                <Button type="button" size="sm" className="w-full" onClick={handleAddAddon}>Add to Library & Select</Button>
+            </div>
         </div>
         <div className="mt-4">
             <Label htmlFor="item-image">Item Image</Label>
