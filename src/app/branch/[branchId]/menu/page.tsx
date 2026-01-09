@@ -36,6 +36,7 @@ export default function MenuPage() {
 
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const [activeSubCategoryId, setActiveSubCategoryId] = useState<string | null>(null);
+  const [dealProcessed, setDealProcessed] = useState(false);
   
   const activeCategory = useMemo(() => categories.find(c => c.id === activeCategoryId), [categories, activeCategoryId]);
 
@@ -66,28 +67,28 @@ export default function MenuPage() {
   
   // Effect to add deal to cart
   useEffect(() => {
-    if (dealId && menuItems.length > 0 && cartItems) {
+    // Only run if a dealId exists, menu is loaded, and the deal hasn't been processed yet
+    if (dealId && !isMenuLoading && !dealProcessed) {
       const dealItem = menuItems.find(item => item.id === dealId);
-      // Check if the base deal item is already in the cart.
-      const isDealInCart = cartItems.some(item => item.id === dealId && !item.isDealComponent);
+      
+      if (dealItem) {
+        // Mark as processed immediately to prevent re-runs
+        setDealProcessed(true);
 
-      if (dealItem && !isDealInCart) {
         addItem({
           item: dealItem,
           itemQuantity: 1,
           selectedAddons: [],
           instructions: '',
         });
-        // Remove the dealId from URL to prevent re-adding on refresh.
-        // The router.replace is wrapped to ensure it only runs once.
+
+        // Clean up URL
         const newParams = new URLSearchParams(searchParams.toString());
         newParams.delete('dealId');
         router.replace(`${window.location.pathname}?${newParams.toString()}`, { scroll: false });
       }
     }
-  // The dependency array is intentionally limited. 
-  // We only want this to run when the essential data is ready, not every time the cart changes.
-  }, [dealId, menuItems, addItem, router, cartItems, searchParams]);
+  }, [dealId, isMenuLoading, menuItems, addItem, router, searchParams, dealProcessed]);
 
 
   const handleCategoryChange = (categoryId: string) => {
