@@ -17,8 +17,8 @@ export const ALL_PERMISSIONS = [
     },
     {
         id: '/admin/kds',
-        name: 'CUTT Station',
-        description: 'Access to the master order assembly station.'
+        name: 'Kitchen Display System',
+        description: 'Access to all KDS stations for order preparation and dispatch.'
     },
     {
         id: '/admin/queue',

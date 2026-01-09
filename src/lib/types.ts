@@ -131,7 +131,7 @@ export type OrderItem = {
     selectedVariant?: { name: string; price: number }; // The chosen size/variant
     stationId?: KitchenStation; // Denormalized from MenuCategory for KDS
     isPrepared?: boolean; // For KDS tracking
-    preparedAt?: string; // ISO string timestamp for when it was marked prepared
+    preparedAt?: string; // ISO string timestamp for when it was marked as prepared
     isDispatched?: boolean; // For Dispatch station tracking
     dealName?: string;
     order?: Order;
