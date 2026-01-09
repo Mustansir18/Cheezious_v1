@@ -57,6 +57,7 @@ function AddToCartDialog({ item, onAddToCart, triggerButton }: { item: MenuItem;
         const addonsArray = Array.from(selectedAddons.values());
         onAddToCart({ selectedAddons: addonsArray, itemQuantity });
         setIsOpen(false);
+        // Reset state after adding to cart
         setSelectedAddons(new Map());
         setItemQuantity(1);
     };
@@ -148,7 +149,6 @@ function AddToCartDialog({ item, onAddToCart, triggerButton }: { item: MenuItem;
 
 export function MenuItemCard({ item }: { item: MenuItem }) {
   const { addItem, items: cartItems, updateQuantity } = useCart();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const handleAddToCart = (options: { selectedAddons: { addon: Addon; quantity: number }[], itemQuantity: number }) => {
     addItem({ item, ...options });
