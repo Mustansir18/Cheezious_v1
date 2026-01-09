@@ -148,6 +148,7 @@ function AddToCartDialog({ item, onAddToCart, triggerButton }: { item: MenuItem;
 
 export function MenuItemCard({ item }: { item: MenuItem }) {
   const { addItem, items: cartItems, updateQuantity } = useCart();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const handleAddToCart = (options: { selectedAddons: { addon: Addon; quantity: number }[], itemQuantity: number }) => {
     addItem({ item, ...options });
@@ -230,7 +231,7 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
                         item={item} 
                         onAddToCart={handleAddToCart}
                         triggerButton={
-                            <Button variant="secondary" className="w-full">
+                             <Button variant="secondary" className="w-full">
                                 <PlusCircle className="mr-2 h-5 w-5" />
                                 Append Item
                             </Button>
@@ -243,5 +244,3 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
     </Card>
   );
 }
-
-    
