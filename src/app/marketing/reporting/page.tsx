@@ -41,7 +41,7 @@ const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0')
 function HourlyReportDetail() {
     const { orders } = useOrders();
     const { settings } = useSettings();
-    const [date, setDate] = useState<Date>(new Date());
+    const date = new Date();
     const [startHour, setStartHour] = useState<string>('00');
     const [endHour, setEndHour] = useState<string>('23');
 
@@ -151,30 +151,12 @@ function HourlyReportDetail() {
         <Card>
             <CardHeader>
                 <CardTitle className="font-headline flex items-center">
-                    <Clock className="mr-2"/> Hourly Sales Report
+                    <Clock className="mr-2"/> Hourly Sales Report for {format(date, 'PPP')}
                 </CardTitle>
-                <CardDescription>Generate a detailed sales report for a specific date and time range.</CardDescription>
+                <CardDescription>Generate a detailed sales report for a specific time range for today.</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end mb-8">
-                    <div className="space-y-2">
-                        <Label>Date</Label>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button
-                                    variant={"outline"}
-                                    className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}
-                                >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    <span>{date ? format(date, "PPP") : "Pick a date"}</span>
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar initialFocus mode="single" selected={date} onSelect={(d) => d && setDate(d)} />
-                            </PopoverContent>
-                        </Popover>
-                    </div>
-
                     <div className="space-y-2">
                         <Label>Start Hour</Label>
                         <Select value={startHour} onValueChange={setStartHour}>
@@ -198,7 +180,7 @@ function HourlyReportDetail() {
                             </SelectContent>
                         </Select>
                     </div>
-                     <div className="flex items-center gap-2 print-hidden">
+                     <div className="flex items-center gap-2 print-hidden md:col-start-4">
                         <Button onClick={generateCsv} variant="outline" className="w-full">
                             <FileDown className="mr-2 h-4 w-4" /> CSV
                         </Button>
@@ -209,27 +191,6 @@ function HourlyReportDetail() {
                 </div>
                  {reportData && (
                     <>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                            <Card>
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
-                                    <DollarSign className="h-5 w-5 text-muted-foreground" />
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-2xl font-bold">RS {Math.round(reportData.totalSales).toLocaleString()}</div>
-                                </CardContent>
-                            </Card>
-                             <Card>
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
-                                    <ShoppingCart className="h-5 w-5 text-muted-foreground" />
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-2xl font-bold">{reportData.totalOrders.toLocaleString()}</div>
-                                </CardContent>
-                            </Card>
-                        </div>
-                        
                         <Table>
                             <TableHeader>
                                 <TableRow>
