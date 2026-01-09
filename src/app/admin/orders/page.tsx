@@ -2,7 +2,7 @@
 "use client";
 import type { Order, OrderStatus } from "@/lib/types";
 import { OrderCard } from "@/components/cashier/OrderCard";
-import { Clock, CookingPot, CheckCircle, Loader, Info, Calendar as CalendarIcon, XCircle, Search, CheckCheck, Check } from "lucide-react";
+import { Clock, CookingPot, CheckCircle, Loader, Info, Calendar as CalendarIcon, XCircle, Search, CheckCheck, Check, FileDown, FileText } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useOrders } from "@/context/OrderContext";
 import { useSettings } from "@/context/SettingsContext";
@@ -17,6 +17,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { exportOrderListAs } from "@/lib/exporter";
 
 
 function getBusinessDay(date: Date, start: string, end: string): { start: Date, end: Date } {
@@ -105,6 +106,17 @@ export default function AdminOrdersPage() {
   const getOrdersByStatus = (status: OrderStatus) => filteredOrders.filter(o => o.status === status);
 
   const displayedOrders = activeTab === "All" ? filteredOrders : getOrdersByStatus(activeTab as OrderStatus);
+  const defaultBranch = settings.branches.find(b => b.id === settings.defaultBranchId) || settings.branches[0];
+
+  const handleDownload = (format: 'pdf' | 'csv') => {
+      if (!defaultBranch) return;
+      const title = `Orders - ${activeTab} (${formatDateForFilename(date)})`;
+      exportOrderListAs(format, displayedOrders, title, { companyName: settings.companyName, branchName: defaultBranch.name });
+  };
+    
+  const formatDateForFilename = (date: Date | undefined) => {
+      return date ? format(date, 'yyyy-MM-dd') : 'all-time';
+  }
 
   const statusTabs: (OrderStatus | "All")[] = ["All", "Pending", "Preparing", "Partial Ready", "Ready", "Completed", "Cancelled"];
   const tabIcons: Record<OrderStatus | "All", React.ElementType> = {
@@ -172,18 +184,24 @@ export default function AdminOrdersPage() {
       </header>
       
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-7 mb-8 h-auto">
-                 {statusTabs.map(status => {
-                     const Icon = tabIcons[status];
-                     const count = status === "All" ? filteredOrders.length : getOrdersByStatus(status).length;
-                     return (
-                        <TabsTrigger key={status} value={status} className="flex gap-2 flex-wrap py-2">
-                            <Icon className="h-4 w-4" />
-                            {status} ({count})
-                        </TabsTrigger>
-                     )
-                 })}
-            </TabsList>
+            <div className="flex justify-between items-center mb-8">
+                <TabsList className="grid w-full grid-cols-2 md:grid-cols-7 h-auto">
+                    {statusTabs.map(status => {
+                        const Icon = tabIcons[status];
+                        const count = status === "All" ? filteredOrders.length : getOrdersByStatus(status).length;
+                        return (
+                            <TabsTrigger key={status} value={status} className="flex gap-2 flex-wrap py-2">
+                                <Icon className="h-4 w-4" />
+                                {status} ({count})
+                            </TabsTrigger>
+                        )
+                    })}
+                </TabsList>
+                 <div className="flex gap-2 ml-4">
+                    <Button variant="outline" onClick={() => handleDownload('csv')} disabled={displayedOrders.length === 0}><FileDown className="mr-2 h-4 w-4" /> CSV</Button>
+                    <Button variant="outline" onClick={() => handleDownload('pdf')} disabled={displayedOrders.length === 0}><FileText className="mr-2 h-4 w-4" /> PDF</Button>
+                </div>
+            </div>
 
             <TabsContent value={activeTab}>
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">

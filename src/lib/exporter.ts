@@ -63,6 +63,40 @@ function arrayToCsv(data: any[], columns: { key: string, label: string }[]): str
 
 // --- Individual Report Generators ---
 
+export const exportOrderListAs = (format: 'pdf' | 'csv', orders: Order[], title: string, headerInfo: ReportHeaderInfo) => {
+    const columns = [
+        { key: 'orderNumber', label: 'Order #' },
+        { key: 'orderDate', label: 'Date' },
+        { key: 'orderType', label: 'Type' },
+        { key: 'status', label: 'Status' },
+        { key: 'totalAmount', label: 'Total (RS)' },
+        { key: 'paymentMethod', label: 'Payment' },
+        { key: 'items', label: 'Items' },
+    ];
+
+    const data = orders.map(o => ({
+        ...o,
+        orderDate: new Date(o.orderDate).toLocaleString(),
+        items: o.items.map(i => `${i.quantity}x ${i.name}`).join('; '),
+    }));
+
+    if (format === 'pdf') {
+        const doc = new jsPDF({ orientation: 'landscape' });
+        addReportHeader(doc, title, headerInfo);
+        doc.autoTable({
+            head: [columns.map(c => c.label)],
+            body: data.map(row => columns.map(c => (row as any)[c.key])),
+            startY: 55,
+            styles: { fontSize: 8 },
+        });
+        doc.save(`${title.toLowerCase().replace(/\s/g, '-')}.pdf`);
+    } else {
+        const csv = arrayToCsv(data, columns);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        saveAs(blob, `${title.toLowerCase().replace(/\s/g, '-')}.csv`);
+    }
+};
+
 export const exportCompletionTimeAs = (format: 'pdf' | 'csv', data: Order[], title: string, headerInfo: ReportHeaderInfo) => {
     const columns = [
         { key: 'orderNumber', label: 'Order #' },
