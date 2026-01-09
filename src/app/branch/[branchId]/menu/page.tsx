@@ -110,25 +110,6 @@ export default function MenuPage() {
         <p className="mt-2 text-lg text-muted-foreground">Explore our delicious offerings</p>
       </div>
       
-      {orderType === 'Dine-In' && (
-        <div className="max-w-xs mx-auto mb-8 p-4 border rounded-lg bg-muted/50">
-            <Label htmlFor="table-select">Your Table</Label>
-            <Select value={tableId || undefined} onValueChange={handleTableChange}>
-                <SelectTrigger id="table-select">
-                    <SelectValue placeholder="Select your table" />
-                </SelectTrigger>
-                <SelectContent>
-                    {availableTables.map(table => (
-                        <SelectItem key={table.id} value={table.id}>
-                            {settings.floors.find(f => f.id === table.floorId)?.name} - {table.name}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-            {!tableId && <p className="text-xs text-destructive mt-1">Please select a table to place an order.</p>}
-        </div>
-      )}
-
       <div className="main-menu-container">
         {/* CATEGORY TABS */}
         <div className="main-menu-tabs">
