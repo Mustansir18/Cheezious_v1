@@ -1,55 +1,63 @@
 
 'use client';
 
-import { useMemo } from 'react';
-import type { Order, OrderStatus } from '@/lib/types';
-import { useOrders } from '@/context/OrderContext';
-import { Loader } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import MasterOrderSlip from '@/components/cashier/MasterOrderSlip';
+import { useRouter } from 'next/navigation';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ChefHat, Pizza, CookingPot, Flame, Martini, ClipboardList } from 'lucide-react';
+import type { KitchenStation } from '@/lib/types';
 
+interface StationInfo {
+    id: KitchenStation | 'master';
+    name: string;
+    description: string;
+    icon: React.ElementType;
+}
 
-const KDS_STATUSES: OrderStatus[] = ['Pending', 'Preparing', 'Partial Ready', 'Ready'];
+const stations: StationInfo[] = [
+    { id: 'pizza', name: 'Pizza Station', description: 'Pizzas and Pizza Rolls', icon: Pizza },
+    { id: 'pasta', name: 'Pasta Station', description: 'All pasta dishes', icon: CookingPot },
+    { id: 'fried', name: 'Fried Station', description: 'Fried chicken, wings, and sides', icon: Flame },
+    { id: 'bar', name: 'Bar & Desserts', description: 'Drinks, desserts, and dips', icon: Martini },
+    { id: 'master', name: 'CUTT Station', description: 'Master assembly view of all orders', icon: ClipboardList },
+];
 
-export default function CuttStationPage() {
-  const { orders, isLoading } = useOrders();
+export default function KDSLandingPage() {
+    const router = useRouter();
 
-  const ordersForKDS = useMemo(() => {
-    return orders
-        .filter((order) => KDS_STATUSES.includes(order.status))
-        .sort((a,b) => new Date(a.orderDate).getTime() - new Date(b.orderDate).getTime());
-  }, [orders]);
+    const handleStationSelect = (stationId: string) => {
+        if (stationId === 'master') {
+            router.push('/admin/kds/master');
+        } else {
+            router.push(`/admin/kds/${stationId}`);
+        }
+    };
 
-  if (isLoading) {
     return (
-      <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
-        <Loader className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-4 text-muted-foreground">Loading CUTT Station...</p>
-      </div>
-    );
-  }
+        <div className="container mx-auto p-4 lg:p-8">
+            <header className="mb-8">
+                <h1 className="font-headline text-4xl font-bold">Kitchen Display System</h1>
+                <p className="text-muted-foreground">Select a station to view assigned order items.</p>
+            </header>
 
-  return (
-    <div className="h-screen w-full flex flex-col p-4 sm:p-6 md:p-8 bg-muted/40">
-      <header className="text-center mb-8 flex-shrink-0">
-        <h1 className="font-headline text-4xl font-bold">CUTT Station (Master)</h1>
-        <p className="text-muted-foreground">A master view of all items for order assembly.</p>
-      </header>
-       <ScrollArea className="flex-grow">
-            <div className="p-4 pt-0">
-                {ordersForKDS.length > 0 ? (
-                <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 2xl:columns-5 gap-6 space-y-6">
-                    {ordersForKDS.map((order) => (
-                        <MasterOrderSlip key={order.id} order={order} />
-                    ))}
-                </div>
-                ) : (
-                <div className="flex h-[50vh] items-center justify-center">
-                    <p className="text-muted-foreground text-lg">No active orders for assembly.</p>
-                </div>
-                )}
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {stations.map((station) => (
+                    <Card 
+                        key={station.id}
+                        className="group transform cursor-pointer transition-transform duration-300 hover:scale-105 hover:shadow-xl"
+                        onClick={() => handleStationSelect(station.id)}
+                    >
+                        <CardHeader className="flex flex-row items-center gap-4 space-y-0">
+                            <station.icon className="h-10 w-10 text-primary" />
+                            <div>
+                                <CardTitle className="font-headline text-2xl">{station.name}</CardTitle>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-muted-foreground">{station.description}</p>
+                        </CardContent>
+                    </Card>
+                ))}
             </div>
-      </ScrollArea>
-    </div>
-  );
+        </div>
+    );
 }
