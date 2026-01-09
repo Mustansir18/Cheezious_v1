@@ -28,7 +28,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { useDeals } from '@/context/DealsContext';
 import { cn } from '@/lib/utils';
 import { exportListDataAs } from '@/lib/exporter';
 import { useSettings } from '@/context/SettingsContext';
@@ -194,7 +193,6 @@ function CategoryForm({ category, onSave }: { category?: MenuCategory; onSave: (
 // Item Form
 function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuItem, 'id'> | MenuItem, id?: string) => void; }) {
   const { menu, addAddon: addNewAddon, deleteAddon } = useMenu();
-  const { deals } = useDeals();
   const { toast } = useToast();
   const [id, setId] = useState(item?.id || '');
   const [name, setName] = useState(item?.name || '');
@@ -229,7 +227,7 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
   }
 
   const validateId = (value: string) => {
-    if (menu.items.some(item => item.id === value && item.id !== item?.id) || deals.some(deal => deal.id === value)) {
+    if (menu.items.some(i => i.id === value && i.id !== item?.id)) {
         toast({
             variant: 'destructive',
             title: 'Duplicate Code',
@@ -440,7 +438,7 @@ export default function MenuManagementPage() {
       if ('id' in itemData) {
           updateItem(itemData as MenuItem);
       } else if (id) {
-          addItem({ id, ...itemData });
+          addItem({ id, ...itemData } as MenuItem);
       }
       setItemOpen(false);
   }
