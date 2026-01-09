@@ -97,7 +97,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const finalPrice = itemToAdd.price + addonPrice;
 
     // This key identifies the specific combination of addons.
-    const addonCombinationKey = selectedAddons.length > 0 
+    const addonCombinationKey = selectedAddons.length > 0
       ? selectedAddons
           .map(({ addon, quantity }) => `${addon.id}x${quantity}`)
           .sort()
@@ -105,7 +105,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       : 'base';
 
     const uniqueVariationId = `${itemToAdd.id}-${addonCombinationKey}`;
-    
+
     setItems((prevItems) => {
       const existingItem = prevItems.find((item) => item.uniqueVariationId === uniqueVariationId);
 
@@ -114,19 +114,19 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         return prevItems.map((item) =>
           item.cartItemId === existingItem.cartItemId ? { ...item, quantity: item.quantity + itemQuantity } : item
         );
+      } else {
+        // If the variation doesn't exist, create a new cart item for it.
+        const newCartItem: CartItem = {
+          ...itemToAdd,
+          cartItemId: crypto.randomUUID(), // Each cart item instance gets a unique ID
+          uniqueVariationId: uniqueVariationId,
+          price: finalPrice,
+          basePrice: itemToAdd.price,
+          selectedAddons: selectedAddons.map(({ addon, quantity }) => ({ ...addon, quantity })),
+          quantity: itemQuantity,
+        };
+        return [...prevItems, newCartItem];
       }
-      
-      // If the variation doesn't exist, create a new cart item for it.
-      const newCartItem: CartItem = { 
-        ...itemToAdd,
-        cartItemId: `${uniqueVariationId}-${crypto.randomUUID()}`,
-        uniqueVariationId: uniqueVariationId,
-        price: finalPrice,
-        basePrice: itemToAdd.price,
-        selectedAddons: selectedAddons.map(({ addon, quantity }) => ({ ...addon, quantity })),
-        quantity: itemQuantity,
-      };
-      return [...prevItems, newCartItem];
     });
 
     toast({
