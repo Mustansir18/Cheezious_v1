@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Image from "next/image";
 import type { MenuItem, Addon, CartItem } from "@/lib/types";
 import { useCart } from "@/context/CartContext";
@@ -156,10 +156,10 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
     addItem({ item, ...options });
   };
   
-  // Find an item in the cart that matches the menu item ID and has no addons.
-  const existingCartItem = cartItems.find(
-    cartItem => cartItem.id === item.id && cartItem.selectedAddons.length === 0
-  );
+  const existingCartItem = useMemo(() => {
+    // Find the first instance of this item in the cart, regardless of add-ons
+    return cartItems.find(cartItem => cartItem.id === item.id);
+  }, [cartItems, item.id]);
 
   const hasAddons = item.availableAddonIds && item.availableAddonIds.length > 0;
   
@@ -184,14 +184,19 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
       <CardFooter className="flex items-center justify-between p-4 pt-0">
         <p className="text-xl font-bold text-primary">RS {Math.round(item.price)}</p>
         
-        {existingCartItem && !hasAddons ? (
+        {existingCartItem ? (
+          // If the item (any variant) is in the cart, show quantity controls for the first found instance.
+          // Note: This simplifies the UI. It doesn't allow adding multiple *different* customizations of the same item from the card.
+          // Users would need to go to the cart or re-customize to manage different versions.
           <UpdateQuantity cartItemId={existingCartItem.cartItemId} quantity={existingCartItem.quantity} />
         ) : hasAddons ? (
+          // If the item is not in the cart and has add-ons, show the customize dialog.
           <AddToCartDialog 
             item={item} 
             onAddToCart={handleAddToCart}
           />
         ) : (
+          // If the item is not in the cart and has no add-ons, show a simple add button.
           <Button onClick={() => handleAddToCart({ selectedAddons: [], itemQuantity: 1 })} className="bg-accent text-accent-foreground hover:bg-accent/90">
             <PlusCircle className="mr-2 h-5 w-5" /> Add
           </Button>
