@@ -154,7 +154,7 @@ function CategoryForm({ category, onSave }: { category?: MenuCategory; onSave: (
 
 // Item Form
 function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuItem, 'id'> | MenuItem, id?: string) => void; }) {
-  const { menu } = useMenu();
+  const { menu, addAddon: addNewAddon, deleteAddon } = useMenu();
   const { deals } = useDeals();
   const { toast } = useToast();
   const [id, setId] = useState(item?.id || '');
@@ -166,7 +166,11 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
   const [isCompressing, setIsCompressing] = useState(false);
   const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>(item?.availableAddonIds || []);
   const [isIdInvalid, setIsIdInvalid] = useState(false);
-
+  
+  // State for new addon form
+  const [newAddonId, setNewAddonId] = useState('');
+  const [newAddonName, setNewAddonName] = useState('');
+  const [newAddonPrice, setNewAddonPrice] = useState(0);
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -194,6 +198,17 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
     }
     setIsIdInvalid(false);
     return true;
+  }
+  
+  const handleAddAddon = (e: React.FormEvent) => {
+    e.preventDefault();
+    addNewAddon({ id: newAddonId, name: newAddonName, price: newAddonPrice });
+    // Also select the newly added addon
+    setSelectedAddonIds(prev => [...prev, newAddonId]);
+    // Clear the form
+    setNewAddonId('');
+    setNewAddonName('');
+    setNewAddonPrice(0);
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -271,11 +286,30 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
                                 disabled={!item && isIdInvalid}
                             />
                             <Label htmlFor={`addon-${addon.id}`} className="font-normal flex-grow">{addon.name}</Label>
-                            <span className="text-sm text-muted-foreground">+RS {Math.round(addon.price)}</span>
+                            <span className="text-sm text-muted-foreground mr-2">+RS {Math.round(addon.price)}</span>
+                             <DeleteConfirmationDialog
+                                title={`Delete Add-on "${addon.name}"?`}
+                                description={<>This will permanently delete the add-on <strong>{addon.name}</strong> from the library and remove it from all items.</>}
+                                onConfirm={() => deleteAddon(addon.id, addon.name)}
+                                triggerButton={
+                                    <Button variant="ghost" size="icon" className="h-6 w-6">
+                                        <Trash2 className="h-3 w-3 text-destructive" />
+                                    </Button>
+                                }
+                            />
                         </div>
                     ))}
                 </div>
             </ScrollArea>
+             <form onSubmit={handleAddAddon} className="mt-4 p-4 border rounded-lg bg-muted/50 space-y-2">
+                <p className="text-sm font-medium">Create New Add-on</p>
+                <div className="grid grid-cols-3 gap-2">
+                    <Input placeholder="Code (e.g. A-01)" value={newAddonId} onChange={e => setNewAddonId(e.target.value)} required />
+                    <Input placeholder="Name" value={newAddonName} onChange={e => setNewAddonName(e.target.value)} required />
+                    <Input type="number" placeholder="Price" value={newAddonPrice} onChange={e => setNewAddonPrice(Number(e.target.value))} required />
+                </div>
+                <Button type="submit" size="sm" className="w-full">Add to Library & Select</Button>
+            </form>
         </div>
         <div className="mt-4">
             <Label htmlFor="item-image">Item Image</Label>
