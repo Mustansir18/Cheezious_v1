@@ -203,7 +203,7 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
                     }
                 />
             ) : (
-                 <Button onClick={handleSimpleAdd} className="bg-accent text-accent-foreground hover:bg-accent/90">
+                 <Button onClick={handleSimpleAdd}>
                     <PlusCircle className="mr-2 h-5 w-5" /> Add
                 </Button>
             )
