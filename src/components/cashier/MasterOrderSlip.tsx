@@ -22,8 +22,8 @@ export default function MasterOrderSlip({ order, onDispatchItem }: MasterOrderSl
     const { settings } = useSettings();
     const table = settings.tables.find(t => t.id === order.tableId);
 
-    const handleDispatchToggle = (itemId: string, isPrepared: boolean, isDispatched: boolean) => {
-        if (isPrepared && !isDispatched) {
+    const handleDispatchToggle = (itemId: string, isSelectable: boolean, isDispatched: boolean) => {
+        if (isSelectable && !isDispatched) {
             onDispatchItem(order.id, itemId);
         }
     };
@@ -55,21 +55,23 @@ export default function MasterOrderSlip({ order, onDispatchItem }: MasterOrderSl
                     <div className="space-y-3 pr-2">
                         {order.items.map((item, index) => {
                             const isPrepared = !!item.isPrepared;
+                            const isDispatchOnly = !item.stationId;
                             const isDispatched = !!item.isDispatched;
-                            const isSelectable = isPrepared && !isDispatched;
+                            const isSelectable = isPrepared || isDispatchOnly;
+                            
                             return (
                                 <div key={item.id}>
                                     {index > 0 && <Separator className="my-2" />}
                                     <div className="flex justify-between items-start gap-2">
-                                        <div className={cn("flex items-start gap-2", !isPrepared && "opacity-50")}>
+                                        <div className={cn("flex items-start gap-2", !isSelectable && "opacity-50")}>
                                             <Checkbox
                                                 id={`dispatch-${item.id}`}
                                                 checked={isDispatched}
-                                                disabled={!isSelectable}
-                                                onCheckedChange={() => handleDispatchToggle(item.id, isPrepared, isDispatched)}
+                                                disabled={!isSelectable || isDispatched}
+                                                onCheckedChange={() => handleDispatchToggle(item.id, isSelectable, isDispatched)}
                                                 className="mt-1"
                                             />
-                                            <Label htmlFor={`dispatch-${item.id}`} className={cn("font-semibold", isSelectable && "cursor-pointer")}>
+                                            <Label htmlFor={`dispatch-${item.id}`} className={cn("font-semibold", isSelectable && !isDispatched && "cursor-pointer")}>
                                                 <p>{item.quantity}x {item.name}</p>
                                                 {item.selectedAddons && item.selectedAddons.length > 0 && (
                                                     <div className="pl-4 text-xs font-normal text-muted-foreground">
@@ -85,6 +87,8 @@ export default function MasterOrderSlip({ order, onDispatchItem }: MasterOrderSl
                                                 <Badge variant="default" className="bg-green-600 hover:bg-green-700">Dispatched</Badge>
                                             ) : isPrepared ? (
                                                 <Badge variant="outline" className="border-yellow-500 text-yellow-600">Prepared</Badge>
+                                            ) : isDispatchOnly ? (
+                                                 <Badge variant="outline" className="border-blue-500 text-blue-600">Direct</Badge>
                                             ) : (
                                                 <Badge variant="secondary">Pending</Badge>
                                             )}

@@ -177,8 +177,9 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
           item.id === itemId ? { ...item, isDispatched: true } : item
         );
         
-        const allItemsDispatched = newItems.every(item => item.isDispatched);
-        const newStatus = allItemsDispatched ? 'Ready' : 'Partial Ready';
+        // An item is considered "fulfilled" if it is dispatched OR if it was dispatch-only to begin with.
+        const allItemsFulfilled = newItems.every(item => item.isDispatched || !item.stationId);
+        const newStatus = allItemsFulfilled ? 'Ready' : 'Partial Ready';
         
         return { ...order, items: newItems, status: newStatus };
       }
