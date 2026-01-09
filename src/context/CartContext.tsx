@@ -96,21 +96,28 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const addonPrice = selectedAddons.reduce((sum, { addon, quantity }) => sum + (addon.price * quantity), 0);
     const finalPrice = itemToAdd.price + addonPrice;
 
-    const addonIds = selectedAddons.map(({ addon, quantity }) => `${addon.id}x${quantity}`).sort().join('-');
-    const cartItemId = `${itemToAdd.id}${addonIds ? `-${addonIds}` : ''}`;
+    // Create a unique key for an item based on its ID and its specific addon combination.
+    const addonCombinationKey = selectedAddons
+      .map(({ addon, quantity }) => `${addon.id}x${quantity}`)
+      .sort()
+      .join('-');
+      
+    const cartItemId = `${itemToAdd.id}${addonCombinationKey ? `-${addonCombinationKey}` : ''}`;
     
     setItems((prevItems) => {
       const existingItem = prevItems.find((item) => item.cartItemId === cartItemId);
 
       if (existingItem) {
+        // If the exact item with the same addons exists, just increase its quantity.
         return prevItems.map((item) =>
           item.cartItemId === cartItemId ? { ...item, quantity: item.quantity + itemQuantity } : item
         );
       }
       
+      // If it's a new item or a new combination of addons, add it as a new line item.
       const newCartItem: CartItem = { 
         ...itemToAdd,
-        cartItemId: cartItemId,
+        cartItemId: `${cartItemId}-${crypto.randomUUID()}`, // Ensure unique even if added twice quickly
         price: finalPrice,
         basePrice: itemToAdd.price,
         selectedAddons: selectedAddons.map(({ addon, quantity }) => ({ ...addon, quantity })),
@@ -127,40 +134,35 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const addDeal = (deal: Deal) => {
     const dealCartId = `deal-${deal.id}-${crypto.randomUUID()}`;
+    const dealMenuItem = menu.items.find(i => i.id === deal.id);
+    if (!dealMenuItem) return; // Should not happen
 
-    // The deal itself is added as a non-component item.
-    // It holds the total price of the deal.
+    // The deal itself is the parent item. It holds the total price.
     const dealCartItem: CartItem = {
-      id: deal.id, // The menu item id for the deal
-      cartItemId: dealCartId, // a unique id for this specific instance in the cart
-      name: deal.name,
-      description: deal.description,
-      imageUrl: deal.imageUrl,
+      ...dealMenuItem,
+      cartItemId: dealCartId, 
       price: deal.price,
       basePrice: deal.price,
       quantity: 1,
-      categoryId: menu.items.find(i => i.id === deal.id)?.categoryId || '',
       selectedAddons: [],
-      isDealComponent: false,
-      dealName: deal.name, // Set dealName on the deal itself
+      isDealComponent: false, // This is the main deal item, not a component.
     };
 
-    // The component items are added with a price of 0, as their cost is included in the deal item
-    const componentItems: CartItem[] = deal.items.flatMap((dealItem: DealItem) => {
-      const menuItem = menu.items.find(i => i.id === dealItem.menuItemId);
+    // The component items are added with a price of 0.
+    const componentItems: CartItem[] = deal.items.flatMap((dealComponent: DealItem) => {
+      const menuItem = menu.items.find(i => i.id === dealComponent.menuItemId);
       if (!menuItem) return [];
 
-      return Array.from({ length: dealItem.quantity }).map(() => ({
+      return {
         ...menuItem,
         cartItemId: `${menuItem.id}-${crypto.randomUUID()}`,
-        price: 0, // Individual components have no price; the deal item has the price
+        price: 0, 
         basePrice: menuItem.price,
-        quantity: 1,
+        quantity: dealComponent.quantity,
         selectedAddons: [],
-        isDealComponent: true, // This flag identifies it as part of a deal
-        parentDealId: dealCartId, // Link back to the parent deal item
-        dealName: deal.name,
-      }));
+        isDealComponent: true, 
+        parentDealId: dealCartId, // Link back to the parent deal item.
+      };
     });
 
     setItems(prev => [...prev, dealCartItem, ...componentItems]);
@@ -177,17 +179,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       
       if (!itemToUpdate) return prevItems;
 
-      // If the item is a Deal, we need to remove its components as well.
-      if (itemToUpdate.dealName && !itemToUpdate.isDealComponent) {
+      // If the item is a Deal (the parent), we must remove its components as well.
+      if (itemToUpdate.categoryId === 'deals' && !itemToUpdate.isDealComponent) {
           if (quantity <= 0) {
               // Remove the deal and all its child components
               return prevItems.filter(item => item.cartItemId !== cartItemId && item.parentDealId !== cartItemId);
           }
           // For now, we don't support increasing quantity of a deal directly. 
-          // User should add the deal again.
           toast({
               title: "Cannot change deal quantity",
-              description: "Please remove the deal and add it again to change quantity."
+              description: "Please remove the deal and add it again."
           });
           return prevItems;
       }
@@ -202,6 +203,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           return prevItems;
       }
       
+      // For regular items
       if (quantity <= 0) {
         return prevItems.filter((item) => item.cartItemId !== cartItemId);
       }
@@ -224,15 +226,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const cartTotal = useMemo(() => {
     return items.reduce((total, item) => {
-        // Individual components have a price of 0, so they don't add to the total.
-        // The main deal item itself holds the price.
+        // The price for deal components is 0, so this calculation works correctly.
+        // The total price is held by the main deal item.
         return total + item.price * item.quantity;
     }, 0);
   }, [items]);
 
   const cartCount = useMemo(() => {
+    // We only count top-level items (regular items and deals), not deal components.
     return items.reduce((count, item) => {
-        if (item.isDealComponent) return count; // Don't count individual deal components
+        if (item.isDealComponent) return count; 
         return count + item.quantity;
     }, 0);
   }, [items]);
@@ -271,5 +274,3 @@ export const useCart = () => {
   }
   return context;
 };
-
-    
