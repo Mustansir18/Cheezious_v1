@@ -24,15 +24,15 @@ export default function MenuPage() {
   const router = useRouter();
   const branchId = params.branchId as string;
   const searchParams = useSearchParams();
-  const { setOrderDetails, tableId, setTable } = useCart();
+  const { setOrderDetails, tableId, setTable, addItem, items: cartItems } = useCart();
   const { menu, isLoading: isMenuLoading } = useMenu();
-  const { settings } = useSettings();
 
   const { items: menuItems, categories } = menu;
 
   const orderType = searchParams.get("mode") as OrderType | null;
   const tableIdFromUrl = searchParams.get("tableId");
   const floorIdFromUrl = searchParams.get("floorId");
+  const dealId = searchParams.get("dealId");
 
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const [activeSubCategoryId, setActiveSubCategoryId] = useState<string | null>(null);
@@ -63,6 +63,27 @@ export default function MenuPage() {
     }
 
   }, [searchParams, branchId, tableIdFromUrl, floorIdFromUrl, setOrderDetails, setTable]);
+  
+  // Effect to add deal to cart
+  useEffect(() => {
+    if (dealId && menuItems.length > 0 && cartItems) {
+      const dealItem = menuItems.find(item => item.id === dealId);
+      const isDealInCart = cartItems.some(item => item.id === dealId);
+
+      if (dealItem && !isDealInCart) {
+        addItem({
+          item: dealItem,
+          itemQuantity: 1,
+          selectedAddons: [],
+          instructions: '',
+        });
+        // Optional: remove the dealId from URL to prevent re-adding on refresh
+        const newParams = new URLSearchParams(searchParams.toString());
+        newParams.delete('dealId');
+        router.replace(`${window.location.pathname}?${newParams.toString()}`, { scroll: false });
+      }
+    }
+  }, [dealId, menuItems, addItem, router, searchParams, cartItems]);
 
 
   const handleCategoryChange = (categoryId: string) => {
