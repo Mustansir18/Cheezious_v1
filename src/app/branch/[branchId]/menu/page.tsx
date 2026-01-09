@@ -68,7 +68,8 @@ export default function MenuPage() {
   useEffect(() => {
     if (dealId && menuItems.length > 0 && cartItems) {
       const dealItem = menuItems.find(item => item.id === dealId);
-      const isDealInCart = cartItems.some(item => item.id === dealId);
+      // Check if the base deal item is already in the cart.
+      const isDealInCart = cartItems.some(item => item.id === dealId && !item.isDealComponent);
 
       if (dealItem && !isDealInCart) {
         addItem({
@@ -77,13 +78,16 @@ export default function MenuPage() {
           selectedAddons: [],
           instructions: '',
         });
-        // Optional: remove the dealId from URL to prevent re-adding on refresh
+        // Remove the dealId from URL to prevent re-adding on refresh.
+        // The router.replace is wrapped to ensure it only runs once.
         const newParams = new URLSearchParams(searchParams.toString());
         newParams.delete('dealId');
         router.replace(`${window.location.pathname}?${newParams.toString()}`, { scroll: false });
       }
     }
-  }, [dealId, menuItems, addItem, router, searchParams, cartItems]);
+  // The dependency array is intentionally limited. 
+  // We only want this to run when the essential data is ready, not every time the cart changes.
+  }, [dealId, menuItems, addItem, router, cartItems, searchParams]);
 
 
   const handleCategoryChange = (categoryId: string) => {
