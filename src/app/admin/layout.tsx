@@ -38,7 +38,7 @@ function AdminSidebar() {
   const navLinks = [
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, role: ['root', 'admin'] },
     { href: '/admin/orders', label: 'Orders', icon: ShoppingCart, role: ['root', 'admin'] },
-    { href: '/admin/kds', label: 'KDS', icon: ChefHat, role: ['root', 'admin'] },
+    { href: '/admin/kds', label: 'CUTT Station', icon: ChefHat, role: ['root', 'admin'] },
     { href: '/admin/queue', label: 'Queue', icon: Monitor, role: ['root', 'admin'] },
     { href: '/admin/reporting', label: 'Sales Reports', icon: BarChart, role: ['root'] },
     { href: '/admin/menu', label: 'Menu', icon: Package, role: ['root'] },

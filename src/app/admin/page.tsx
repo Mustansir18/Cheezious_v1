@@ -43,8 +43,8 @@ export default function AdminDashboardPage() {
       role: ['root', 'admin'],
     },
     {
-      title: 'Kitchen Display (KDS)',
-      description: 'Live display for kitchen stations.',
+      title: 'CUTT Station (Master)',
+      description: 'Live display for order assembly.',
       href: '/admin/kds',
       icon: ChefHat,
       role: ['root', 'admin'],
