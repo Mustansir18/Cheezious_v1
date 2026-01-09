@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { PlusCircle, Plus, Minus, Trash2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { UpdateQuantity } from "../cart/UpdateQuantity";
+import { cn } from "@/lib/utils";
 
 const FALLBACK_IMAGE_URL = "https://picsum.photos/seed/placeholder/400/300";
 
@@ -97,19 +98,19 @@ function AddToCartDialog({ item, onAddToCart, triggerButton }: { item: MenuItem;
                                     const selectedInfo = selectedAddons.get(addon.id);
 
                                     return (
-                                        <div key={addon.id} className="flex flex-col p-2 rounded-md hover:bg-muted/50">
+                                        <div key={addon.id} className={cn("p-2 rounded-md hover:bg-muted/50", isSelected && "bg-muted/50")}>
                                             <div className="flex items-center space-x-3">
                                                 <input
                                                     type="checkbox"
                                                     id={`addon-dialog-${addon.id}`}
                                                     checked={isSelected}
                                                     onChange={() => handleAddonToggle(addon)}
-                                                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                                    className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
                                                 />
-                                                <Label htmlFor={`addon-dialog-${addon.id}`} className="flex-grow font-normal cursor-pointer">
+                                                <Label htmlFor={`addon-dialog-${addon.id}`} className="flex-grow font-normal cursor-pointer text-base">
                                                     {addon.name}
                                                 </Label>
-                                                <span className="text-sm text-muted-foreground">+RS {Math.round(addon.price)}</span>
+                                                <span className="text-sm font-semibold">+RS {Math.round(addon.price)}</span>
                                             </div>
                                             {isSelected && selectedInfo && (
                                                 <div className="flex items-center justify-end gap-2 mt-2">
@@ -146,7 +147,7 @@ function AddToCartDialog({ item, onAddToCart, triggerButton }: { item: MenuItem;
 
 
 export function MenuItemCard({ item }: { item: MenuItem }) {
-  const { addItem, items: cartItems } = useCart();
+  const { addItem, items: cartItems, updateQuantity } = useCart();
 
   const handleAddToCart = (options: { selectedAddons: { addon: Addon; quantity: number }[], itemQuantity: number }) => {
     addItem({ item, ...options });
@@ -158,6 +159,16 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
 
   const hasAddons = item.availableAddonIds && item.availableAddonIds.length > 0;
   
+  const handleSimpleAdd = () => {
+    // Check if a plain version of this item is already in the cart
+    const plainItemInCart = variationsInCart.find(ci => ci.selectedAddons.length === 0);
+    if (plainItemInCart) {
+      updateQuantity(plainItemInCart.cartItemId, 1);
+    } else {
+      handleAddToCart({ selectedAddons: [], itemQuantity: 1 });
+    }
+  };
+
   return (
     <Card className="flex h-full flex-col overflow-hidden transition-shadow hover:shadow-lg">
       <CardHeader className="p-0">
@@ -191,7 +202,7 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
                     }
                 />
             ) : (
-                 <Button onClick={() => handleAddToCart({ selectedAddons: [], itemQuantity: 1 })} className="bg-accent text-accent-foreground hover:bg-accent/90">
+                 <Button onClick={handleSimpleAdd} className="bg-accent text-accent-foreground hover:bg-accent/90">
                     <PlusCircle className="mr-2 h-5 w-5" /> Add
                 </Button>
             )
@@ -232,3 +243,5 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
     </Card>
   );
 }
+
+    
