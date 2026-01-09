@@ -55,27 +55,110 @@ export const addons: Addon[] = [
 const getImage = (id: string) => PlaceHolderImages.find(i => i.id === id)?.imageUrl || `https://picsum.photos/seed/${id}/400/300`;
 
 export const menuItems: MenuItem[] = [
-  // Classic Flavors
-  { id: 'I-00014', name: 'Chicken Tikka Pizza (Small)', description: 'Made with pizza sauce, cheese mix, topped with tasty tikka and onions for a delightful taste experience.', price: 200, categoryId: 'C-00002', subCategoryId: 'SC-00002', imageUrl: getImage('chicken-tikka'), availableAddonIds: ['A-00001', 'A-00002', 'A-00003', 'A-00004'] },
-  { id: 'I-00015', name: 'Chicken Tikka Pizza (Regular)', description: 'Made with pizza sauce, cheese mix, topped with tasty tikka and onions for a delightful taste experience.', price: 390, categoryId: 'C-00002', subCategoryId: 'SC-00002', imageUrl: getImage('chicken-tikka'), availableAddonIds: ['A-00001', 'A-00002', 'A-00003', 'A-00004'] },
-  { id: 'I-00016', name: 'Chicken Fajita Pizza (Small)', description: 'An authentic taste of Fajita marinated chicken, onions, cheese, pizza sauce, and bell peppers.', price: 200, categoryId: 'C-00002', subCategoryId: 'SC-00002', imageUrl: getImage('chicken-fajita'), availableAddonIds: ['A-00001', 'A-00002', 'A-00003', 'A-00004'] },
-  { id: 'I-00017', name: 'Chicken Fajita Pizza (Regular)', description: 'An authentic taste of Fajita marinated chicken, onions, cheese, pizza sauce, and bell peppers.', price: 390, categoryId: 'C-00002', subCategoryId: 'SC-00002', imageUrl: getImage('chicken-fajita'), availableAddonIds: ['A-00001', 'A-00002', 'A-00003', 'A-00004'] },
+  // --- NEW PIZZA STRUCTURE ---
+  {
+    id: 'I-P-001', name: 'Chicken Tikka Pizza',
+    description: 'Made with pizza sauce, cheese mix, topped with tasty tikka and onions for a delightful taste experience.',
+    price: 0, categoryId: 'C-00002', subCategoryId: 'SC-00002', imageUrl: getImage('chicken-tikka'),
+    availableAddonIds: ['A-00001', 'A-00002', 'A-00003', 'A-00004'],
+    variants: [
+      { name: 'Small', price: 200 },
+      { name: 'Regular', price: 390 },
+    ]
+  },
+  {
+    id: 'I-P-002', name: 'Chicken Fajita Pizza',
+    description: 'An authentic taste of Fajita marinated chicken, onions, cheese, pizza sauce, and bell peppers.',
+    price: 0, categoryId: 'C-00002', subCategoryId: 'SC-00002', imageUrl: getImage('chicken-fajita'),
+    availableAddonIds: ['A-00001', 'A-00002', 'A-00003', 'A-00004'],
+    variants: [
+      { name: 'Small', price: 200 },
+      { name: 'Regular', price: 390 },
+    ]
+  },
+  {
+    id: 'I-P-003', name: 'Chicken Supreme Pizza',
+    description: 'Featuring smoky chicken tikka, fajita, onions, capsicums, mushrooms, pizza sauce, black olives, and cheese mix.',
+    price: 0, categoryId: 'C-00002', subCategoryId: 'SC-00003', imageUrl: getImage('chicken-supreme'),
+    availableAddonIds: ['A-00001', 'A-00002', 'A-00003', 'A-00004'],
+    variants: [
+      { name: 'Small', price: 200 },
+      { name: 'Regular', price: 390 },
+    ]
+  },
+   {
+    id: 'I-P-004', name: 'Behari Kebab Pizza',
+    description: 'Loaded with cheese mix, onions, jalapenos, sauce, garnish, tikka, and juicy seekh kebab topping.',
+    price: 0, categoryId: 'C-00002', subCategoryId: 'SC-00003', imageUrl: getImage('behari-kebab'),
+    availableAddonIds: ['A-00001', 'A-00002', 'A-00003', 'A-00004'],
+    variants: [
+        { name: 'Small', price: 657 },
+        { name: 'Regular', price: 1476 },
+        { name: 'Large', price: 1952 },
+        { name: 'Party', price: 3048 },
+    ]
+  },
+  {
+    id: 'I-P-005', name: 'Crown Crust Pizza',
+    description: 'A flavorful blend of special sauce, cheese & mughlai tikka, all crowned with capsicums, onions and black olives on top.',
+    price: 0, categoryId: 'C-00002', subCategoryId: 'SC-00004', imageUrl: getImage('crown-crust'),
+    availableAddonIds: ['A-00001', 'A-00002', 'A-00003', 'A-00004'],
+    variants: [
+        { name: 'Small', price: 657 },
+        { name: 'Regular', price: 1476 },
+        { name: 'Large', price: 1952 },
+        { name: 'Party', price: 3048 },
+    ]
+  },
+  {
+    id: 'I-P-006', name: 'Stuffed Crust Pizza',
+    description: 'Special sauce, kebab dip, cheese Mix with onions, capsicums, mushrooms, green olives & three mouth watering flavours of topping.',
+    price: 0, categoryId: 'C-00002', subCategoryId: 'SC-00004', imageUrl: getImage('stuff-crust'),
+    availableAddonIds: ['A-00001', 'A-00002', 'A-00003', 'A-00004'],
+    variants: [
+        { name: 'Small', price: 657 },
+        { name: 'Regular', price: 1524 },
+        { name: 'Large', price: 2333 },
+        { name: 'Party', price: 3381 },
+    ]
+  },
+   {
+    id: 'I-P-007', name: 'Cheezious Special Pizza',
+    description: 'Cheeziness overload with onions, capsicums, mushrooms, black olives, sauce, cheese mix with four combination of topping.',
+    price: 0, categoryId: 'C-00002', subCategoryId: 'SC-00005', imageUrl: getImage('cheezious-special'),
+    availableAddonIds: ['A-00001', 'A-00002', 'A-00003', 'A-00004'],
+    variants: [
+        { name: 'Small', price: 657 },
+        { name: 'Regular', price: 1476 },
+        { name: 'Large', price: 1952 },
+        { name: 'Party', price: 3048 },
+    ]
+  },
+  {
+    id: 'I-P-008', name: 'Chicken Extreme Pizza',
+    description: 'A pizza for extreme chicken lovers, loaded with chicken and cheese.',
+    price: 0, categoryId: 'C-00002', subCategoryId: 'SC-00005', imageUrl: getImage('chicken-supreme'),
+    availableAddonIds: ['A-00001', 'A-00002', 'A-00003', 'A-00004'],
+    variants: [
+        { name: 'Small', price: 657 },
+        { name: 'Regular', price: 1476 },
+        { name: 'Large', price: 1952 },
+        { name: 'Party', price: 3048 },
+    ]
+  },
+    {
+    id: 'I-P-009', name: 'Peri Peri / Malai Tikka Pizza',
+    description: 'A spicy and creamy delight with your choice of Peri Peri or Malai Tikka chicken.',
+    price: 0, categoryId: 'C-00002', subCategoryId: 'SC-00005', imageUrl: getImage('chicken-tikka'),
+    availableAddonIds: ['A-00001', 'A-00002', 'A-00003', 'A-00004'],
+    variants: [
+        { name: 'Small', price: 657 },
+        { name: 'Regular', price: 1524 },
+        { name: 'Large', price: 2333 },
+    ]
+  },
 
-  // Favorite Flavors
-  { id: 'I-00018', name: 'Chicken Supreme Pizza (Small)', description: 'Featuring smoky chicken tikka, fajita, onions, capsicums, mushrooms, pizza sauce, black olives, and cheese mix.', price: 200, categoryId: 'C-00002', subCategoryId: 'SC-00003', imageUrl: getImage('chicken-supreme'), availableAddonIds: ['A-00001', 'A-00002', 'A-00003', 'A-00004'] },
-  { id: 'I-00019', name: 'Chicken Supreme Pizza (Regular)', description: 'Featuring smoky chicken tikka, fajita, onions, capsicums, mushrooms, pizza sauce, black olives, and cheese mix.', price: 390, categoryId: 'C-00002', subCategoryId: 'SC-00003', imageUrl: getImage('chicken-supreme'), availableAddonIds: ['A-00001', 'A-00002', 'A-00003', 'A-00004'] },
-  { id: 'I-00020', name: 'Behari Kebab Pizza (Regular)', description: 'Loaded with cheese mix, onions, jalapenos, sauce, garnish, tikka, and juicy seekh kebab topping.', price: 460, categoryId: 'C-00002', subCategoryId: 'SC-00003', imageUrl: getImage('behari-kebab'), availableAddonIds: ['A-00001', 'A-00002', 'A-00003', 'A-00004'] },
-  
-  // Premium Flavors
-  { id: 'I-00008', name: 'Crown Crust Pizza (Regular)', description: 'A flavorful blend of special sauce, cheese & mughlai tikka, all crowned with capsicums, onions and black olives on top.', price: 460, categoryId: 'C-00002', subCategoryId: 'SC-00004', imageUrl: getImage('crown-crust'), availableAddonIds: ['A-00001', 'A-00002', 'A-00003', 'A-00004'] },
-  { id: 'I-00009', name: 'Crown Crust Pizza (Large)', description: 'A flavorful blend of special sauce, cheese & mughlai tikka, all crowned with capsicums, onions and black olives on top.', price: 600, categoryId: 'C-00002', subCategoryId: 'SC-00004', imageUrl: getImage('crown-crust'), availableAddonIds: ['A-00001', 'A-00002', 'A-00003', 'A-00004'] },
-  { id: 'I-00010', name: 'Stuff Crust Pizza (Regular)', description: 'Special sauce, kebab dip, cheese Mix with onions, capsicums, mushrooms, green olives & three mouth watering flavours of topping.', price: 470, categoryId: 'C-00002', subCategoryId: 'SC-00004', imageUrl: getImage('stuff-crust'), availableAddonIds: ['A-00001', 'A-00002', 'A-00003', 'A-00004'] },
-  { id: 'I-00011', name: 'Stuff Crust Pizza (Large)', description: 'Special sauce, kebab dip, cheese Mix with onions, capsicums, mushrooms, green olives & three mouth watering flavours of topping.', price: 720, categoryId: 'C-00002', subCategoryId: 'SC-00004', imageUrl: getImage('stuff-crust'), availableAddonIds: ['A-00001', 'A-00002', 'A-00003', 'A-00004'] },
-
-  // Super Loaded Pizzas
-  { id: 'I-00012', name: 'Cheezious Special (Regular)', description: 'Cheeziness overload with onions, capsicums, mushrooms, black olives, sauce, cheese mix with four combination of topping.', price: 460, categoryId: 'C-00002', subCategoryId: 'SC-00005', imageUrl: getImage('cheezious-special'), availableAddonIds: ['A-00001', 'A-00002', 'A-00003', 'A-00004'] },
-  { id: 'I-00013', name: 'Cheezious Special (Large)', description: 'Cheeziness overload with onions, capsicums, mushrooms, black olives, sauce, cheese mix with four combination of topping.', price: 600, categoryId: 'C-00002', subCategoryId: 'SC-00005', imageUrl: getImage('cheezious-special'), availableAddonIds: ['A-00001', 'A-00002', 'A-00003', 'A-00004'] },
-
+  // --- OTHER MENU ITEMS ---
   // Pizza Rolls
   { id: 'I-00007', name: 'Cheezious Rolls', description: '4 pcs rolls stuffed with yummiest mix served with dip sauce.', price: 200, categoryId: 'C-00003', subCategoryId: 'SC-00007', imageUrl: getImage('cheezious-rolls'), availableAddonIds: ['A-00005'] },
   
@@ -139,7 +222,7 @@ export const initialDeals: Deal[] = [
       { menuItemId: 'I-00037', quantity: 1 },
   ]},
   { id: 'D-00005', name: 'Small Pizza Deal', description: '6" small pizza, 1 reg. Drink (345 ml).', price: 230, imageUrl: getImage('pizza-deal-sm'), items: [
-      { menuItemId: 'I-00014', quantity: 1 },
+      { menuItemId: 'I-P-001', quantity: 1 }, // Assuming a default small tikka pizza
       { menuItemId: 'I-00036', quantity: 1 },
   ]},
 ];

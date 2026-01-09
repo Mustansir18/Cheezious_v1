@@ -30,7 +30,6 @@ import { useAuth } from "@/context/AuthContext";
 import { useOrders } from "@/context/OrderContext";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { useMenu } from "@/context/MenuContext";
 import { useDeals } from "@/context/DealsContext";
 
 const statusConfig = {
@@ -346,7 +345,7 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
               {regularItems.map((item) => (
                 <div key={item.id} className="text-sm">
                   <div className="flex justify-between items-center">
-                    <div><span className="font-semibold">{item.quantity}x</span> {item.name}</div>
+                    <div><span className="font-semibold">{item.quantity}x</span> {item.name} {item.selectedVariant ? `(${item.selectedVariant.name})` : ''}</div>
                     <div className="font-mono">RS {Math.round(item.baseItemPrice * item.quantity)}</div>
                   </div>
                    {item.selectedAddons && item.selectedAddons.length > 0 && (
@@ -466,5 +465,3 @@ OrderCard.Skeleton = function OrderCardSkeleton() {
       </Card>
     );
   };
-
-    

@@ -2,9 +2,9 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
-import type { MenuItem, Addon, CartItem } from "@/lib/types";
+import type { MenuItem, Addon, CartItem, MenuItemVariant } from "@/lib/types";
 import { useCart } from "@/context/CartContext";
 import { useMenu } from "@/context/MenuContext";
 import { Button } from "@/components/ui/button";
@@ -15,17 +15,30 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { UpdateQuantity } from "../cart/UpdateQuantity";
 import { cn } from "@/lib/utils";
 import { Textarea } from "../ui/textarea";
+import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 
 const FALLBACK_IMAGE_URL = "https://picsum.photos/seed/placeholder/400/300";
 
-function AddToCartDialog({ item, onAddToCart }: { item: MenuItem; onAddToCart: (options: { selectedAddons: { addon: Addon; quantity: number }[], itemQuantity: number, instructions: string }) => void; }) {
+function AddToCartDialog({ item, onAddToCart }: { item: MenuItem; onAddToCart: (options: { selectedAddons: { addon: Addon; quantity: number }[], itemQuantity: number, instructions: string, selectedVariant?: MenuItemVariant }) => void; }) {
     const { menu } = useMenu();
+    const [selectedVariant, setSelectedVariant] = useState<MenuItemVariant | undefined>(item.variants?.[0]);
     const [selectedAddons, setSelectedAddons] = useState<Map<string, { addon: Addon; quantity: number }>>(new Map());
     const [itemQuantity, setItemQuantity] = useState(1);
     const [instructions, setInstructions] = useState('');
     const [isOpen, setIsOpen] = useState(false);
 
+    // Reset state when the dialog is closed or the item changes
+    useEffect(() => {
+        if (!isOpen) {
+            setSelectedVariant(item.variants?.[0]);
+            setSelectedAddons(new Map());
+            setItemQuantity(1);
+            setInstructions('');
+        }
+    }, [isOpen, item]);
+
     const availableAddons = menu.addons.filter(addon => item.availableAddonIds?.includes(addon.id));
+    const hasVariants = item.variants && item.variants.length > 0;
 
     const handleAddonToggle = (addon: Addon) => {
         setSelectedAddons(prev => {
@@ -56,24 +69,26 @@ function AddToCartDialog({ item, onAddToCart }: { item: MenuItem; onAddToCart: (
     };
 
     const handleConfirm = () => {
+        if (hasVariants && !selectedVariant) {
+            // In a real app, you'd show a toast notification here.
+            console.error("Please select a size.");
+            return;
+        }
         const addonsArray = Array.from(selectedAddons.values());
-        onAddToCart({ selectedAddons: addonsArray, itemQuantity, instructions });
+        onAddToCart({ selectedAddons: addonsArray, itemQuantity, instructions, selectedVariant });
         setIsOpen(false);
-        // Reset state after adding to cart
-        setSelectedAddons(new Map());
-        setItemQuantity(1);
-        setInstructions('');
     };
     
     const totalAddonPrice = Array.from(selectedAddons.values()).reduce((sum, { addon, quantity }) => sum + (addon.price * quantity), 0);
-    const finalPrice = (item.price + totalAddonPrice) * itemQuantity;
+    const baseItemPrice = hasVariants ? (selectedVariant?.price || 0) : item.price;
+    const finalPrice = (baseItemPrice + totalAddonPrice) * itemQuantity;
     
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                <Button variant="default">
+                 <Button variant="default">
                     <PlusCircle className="mr-2 h-5 w-5" />
-                    {item.availableAddonIds && item.availableAddonIds.length > 0 ? 'Customize & Add' : 'Add to Cart'}
+                    Add to Cart
                 </Button>
             </DialogTrigger>
             <DialogContent className="max-h-[90vh] flex flex-col">
@@ -83,6 +98,29 @@ function AddToCartDialog({ item, onAddToCart }: { item: MenuItem; onAddToCart: (
                 </DialogHeader>
                 
                 <div className="flex-grow overflow-y-auto pr-2 space-y-6">
+                    {hasVariants && (
+                        <div>
+                            <h4 className="font-semibold mb-2">Size</h4>
+                            <RadioGroup
+                                value={selectedVariant?.name}
+                                onValueChange={(value) => {
+                                    const variant = item.variants?.find(v => v.name === value);
+                                    setSelectedVariant(variant);
+                                }}
+                                className="grid grid-cols-2 gap-2"
+                            >
+                                {item.variants?.map(variant => (
+                                    <Label key={variant.name} htmlFor={variant.name} className={cn("border rounded-md p-3 flex justify-between items-center cursor-pointer", selectedVariant?.name === variant.name && "border-primary ring-2 ring-primary")}>
+                                        <div className="flex items-center gap-3">
+                                            <RadioGroupItem value={variant.name} id={variant.name} />
+                                            <span>{variant.name}</span>
+                                        </div>
+                                        <span className="font-bold">RS {Math.round(variant.price)}</span>
+                                    </Label>
+                                ))}
+                            </RadioGroup>
+                        </div>
+                    )}
                      <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                         <Label className="font-semibold text-lg">Quantity</Label>
                         <div className="flex items-center gap-2">
@@ -154,7 +192,7 @@ function AddToCartDialog({ item, onAddToCart }: { item: MenuItem; onAddToCart: (
                        <p className="text-xl font-bold">Total: RS {Math.round(finalPrice)}</p>
                        <div className="flex gap-2">
                          <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
-                         <Button onClick={handleConfirm}>Add to Cart</Button>
+                         <Button onClick={handleConfirm} disabled={hasVariants && !selectedVariant}>Add to Cart</Button>
                        </div>
                     </div>
                 </DialogFooter>
@@ -167,7 +205,7 @@ function AddToCartDialog({ item, onAddToCart }: { item: MenuItem; onAddToCart: (
 export function MenuItemCard({ item }: { item: MenuItem }) {
   const { addItem, items: cartItems } = useCart();
 
-  const handleAddToCart = (options: { selectedAddons: { addon: Addon; quantity: number }[], itemQuantity: number, instructions: string }) => {
+  const handleAddToCart = (options: { selectedAddons: { addon: Addon; quantity: number }[], itemQuantity: number, instructions: string, selectedVariant?: MenuItemVariant }) => {
     addItem({ item, ...options });
   };
   
@@ -175,7 +213,9 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
     return cartItems.filter(cartItem => cartItem.id === item.id);
   }, [cartItems, item.id]);
 
-  const hasCustomizations = item.availableAddonIds && item.availableAddonIds.length > 0;
+  const hasVariants = item.variants && item.variants.length > 0;
+  const displayPrice = hasVariants ? (item.variants[0]?.price || 0) : item.price;
+
 
   return (
     <Card className="flex h-full flex-col overflow-hidden transition-shadow hover:shadow-lg">
@@ -196,10 +236,12 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
         <CardDescription className="mt-2 flex-grow">{item.description}</CardDescription>
       </CardContent>
       <CardFooter className="flex flex-col items-stretch gap-4 p-4 pt-0">
-        <p className="text-xl font-bold text-primary">RS {Math.round(item.price)}</p>
+         <p className="text-xl font-bold text-primary">
+            {hasVariants ? `From RS ${Math.round(displayPrice)}` : `RS ${Math.round(displayPrice)}`}
+        </p>
         
         {variationsInCart.length === 0 ? (
-            <AddToCartDialog 
+             <AddToCartDialog 
                 item={item} 
                 onAddToCart={handleAddToCart}
             />
@@ -209,7 +251,7 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
                     <div key={cartItem.cartItemId} className="p-3 rounded-md bg-muted/50">
                         <div className="flex justify-between items-center">
                             <div className="font-semibold">
-                                <p>{item.name}</p>
+                                <p>{item.name} {cartItem.selectedVariant && `- ${cartItem.selectedVariant.name}`}</p>
                                 {cartItem.selectedAddons.length > 0 && (
                                     <div className="pl-2 text-xs font-normal text-muted-foreground">
                                         {cartItem.selectedAddons.map(addon => (
@@ -225,18 +267,10 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
                         </div>
                     </div>
                 ))}
-                 <Dialog>
-                    <DialogTrigger asChild>
-                        <Button variant="secondary" className="w-full">
-                            <PlusCircle className="mr-2 h-5 w-5" />
-                            Add Another Variation
-                        </Button>
-                    </DialogTrigger>
-                    <AddToCartDialog 
-                        item={item} 
-                        onAddToCart={handleAddToCart}
-                    />
-                </Dialog>
+                <AddToCartDialog 
+                    item={item} 
+                    onAddToCart={handleAddToCart}
+                />
             </div>
         )}
       </CardFooter>

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import Link from "next/link";
@@ -46,7 +47,7 @@ const CartItemDisplay = ({ item, allItems }: { item: CartItem, allItems: CartIte
           data-ai-hint="food item"
         />
         <div className="flex-grow space-y-1">
-          <p className="font-semibold">{item.quantity}x {item.name}</p>
+          <p className="font-semibold">{item.quantity}x {item.name} {item.selectedVariant ? `(${item.selectedVariant.name})` : ''}</p>
           
           {/* List addons for this item (works for both regular items and the main deal item if it had addons) */}
           {item.selectedAddons && item.selectedAddons.length > 0 && (

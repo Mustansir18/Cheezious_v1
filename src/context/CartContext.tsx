@@ -3,7 +3,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
-import type { CartItem, MenuItem, OrderType, Addon, Deal } from '@/lib/types';
+import type { CartItem, MenuItem, OrderType, Addon, Deal, MenuItemVariant } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useMenu } from './MenuContext';
 
@@ -13,6 +13,7 @@ interface AddToCartOptions {
     selectedAddons?: { addon: Addon; quantity: number }[];
     itemQuantity: number;
     instructions: string;
+    selectedVariant?: MenuItemVariant;
 }
 interface CartContextType {
   items: CartItem[];
@@ -93,17 +94,18 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setFloorId(newFloorId);
   }
 
-  const addItem = ({ item: itemToAdd, selectedAddons = [], itemQuantity, instructions }: AddToCartOptions) => {
+  const addItem = ({ item: itemToAdd, selectedAddons = [], itemQuantity, instructions, selectedVariant }: AddToCartOptions) => {
     // Generate a consistent ID for the item variation based on addons and instructions
-    const getVariationId = (addons: { addon: Addon; quantity: number }[], instr: string) => {
+    const getVariationId = (addons: { addon: Addon; quantity: number }[], instr: string, variant?: MenuItemVariant) => {
       const addonString = addons.length > 0 
         ? addons.map(a => `${a.addon.id}x${a.quantity}`).sort().join(',')
         : 'no-addons';
       const instructionString = instr.trim().toLowerCase();
-      return `${addonString}|${instructionString}`;
+      const variantString = variant ? variant.name : 'no-variant';
+      return `${variantString}|${addonString}|${instructionString}`;
     };
     
-    const variationId = getVariationId(selectedAddons, instructions);
+    const variationId = getVariationId(selectedAddons, instructions, selectedVariant);
 
     const existingItem = items.find(
       (item) => item.id === itemToAdd.id && item.uniqueVariationId === variationId
@@ -115,15 +117,17 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     } else {
       // If the variation doesn't exist, create a new cart item for it.
       const addonPrice = selectedAddons.reduce((sum, { addon, quantity }) => sum + (addon.price * quantity), 0);
-      const finalPrice = itemToAdd.price + addonPrice;
+      const basePrice = selectedVariant ? selectedVariant.price : itemToAdd.price;
+      const finalPrice = basePrice + addonPrice;
 
       const newCartItem: CartItem = {
         ...itemToAdd,
         cartItemId: crypto.randomUUID(),
         uniqueVariationId: variationId,
         price: finalPrice,
-        basePrice: itemToAdd.price,
+        basePrice: basePrice,
         selectedAddons: selectedAddons.map(({ addon, quantity }) => ({ ...addon, quantity })),
+        selectedVariant: selectedVariant,
         quantity: itemQuantity,
         instructions: instructions.trim() || undefined,
       };
@@ -132,7 +136,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
     toast({
         title: "Added to Cart",
-        description: `${itemQuantity}x ${itemToAdd.name} is now in your order.`,
+        description: `${itemQuantity}x ${itemToAdd.name} ${selectedVariant ? `(${selectedVariant.name})` : ''} is now in your order.`,
     });
   };
 

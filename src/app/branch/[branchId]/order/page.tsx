@@ -84,8 +84,9 @@ export default function OrderConfirmationPage() {
             itemPrice: item.price,
             baseItemPrice: item.basePrice,
             selectedAddons: item.selectedAddons.map(a => ({ name: a.name, price: a.price, quantity: a.quantity })),
+            selectedVariant: item.selectedVariant ? { name: item.selectedVariant.name, price: item.selectedVariant.price } : undefined,
             stationId: category?.stationId,
-            isPrepared: false,
+            isPrepared: !category?.stationId,
             dealName: item.dealName,
             instructions: item.instructions,
         };
@@ -172,7 +173,7 @@ export default function OrderConfirmationPage() {
                     className="rounded-md object-cover"
                   />
                   <div className="flex-grow">
-                    <p className="font-semibold text-left">{item.quantity}x {item.name}</p>
+                    <p className="font-semibold text-left">{item.quantity}x {item.name} {item.selectedVariant ? `(${item.selectedVariant.name})` : ''}</p>
                     <div className="text-sm text-muted-foreground text-left">
                         {item.selectedAddons.map(addon => (<p key={addon.id}>+ {addon.quantity}x {addon.name}</p>))}
                     </div>

@@ -62,7 +62,7 @@ export function OrderReceipt({ order }: OrderReceiptProps) {
                 {order.items.map(item => (
                     <div key={item.id}>
                         <div className="flex justify-between items-start gap-2">
-                            <span className="break-words w-4/5">{item.quantity}x {item.name}</span>
+                            <span className="break-words w-4/5">{item.quantity}x {item.name} {item.selectedVariant ? `(${item.selectedVariant.name})` : ''}</span>
                             <span className="text-right tabular-nums whitespace-nowrap">
                                 {Math.round(item.baseItemPrice * item.quantity)}
                             </span>

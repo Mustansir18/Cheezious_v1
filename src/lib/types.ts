@@ -36,16 +36,24 @@ export type AddonCategory = {
 
 export type KitchenStation = 'pizza' | 'pasta' | 'fried' | 'bar';
 
+export type MenuItemVariant = {
+  name: string; // e.g., "Small", "Regular", "Large"
+  price: number;
+};
+
+
 export type MenuItem = {
   id: string;
   name: string;
   description: string;
-  price: number;
+  price: number; // Base price, can be overridden by variants
   categoryId: string;
   subCategoryId?: string;
   imageUrl: string;
   availableAddonIds?: string[];
+  variants?: MenuItemVariant[]; // For items with multiple sizes like pizzas
 };
+
 
 export type DealItem = {
     menuItemId: string;
@@ -65,11 +73,12 @@ export type SelectedAddon = Addon & { quantity: number };
 
 export type CartItem = Omit<MenuItem, 'price' | 'availableAddonIds'> & {
   cartItemId: string; // Unique ID for the cart instance of an item
-  uniqueVariationId?: string; // ID to represent a unique combination of item + addons
+  uniqueVariationId?: string; // ID to represent a unique combination of item + addons + variant
   quantity: number;
-  price: number; // Final price including addons (for one unit)
-  basePrice: number; // Original item price
+  price: number; // Final price including addons and variant (for one unit)
+  basePrice: number; // Original item price, before addons/variant
   selectedAddons: SelectedAddon[];
+  selectedVariant?: MenuItemVariant; // The chosen size/variant for this cart item
   isDealComponent?: boolean; // Flag to identify items added as part of a deal
   parentDealId?: string; // ID of the parent deal item in the cart
   dealName?: string;
@@ -115,10 +124,11 @@ export type OrderItem = {
     orderId: string;
     menuItemId: string;
     quantity: number;
-    itemPrice: number; // Price of the item including addons at time of order
-    baseItemPrice: number; // Base price of the item without addons
+    itemPrice: number; // Price of the item including addons and variant at time of order
+    baseItemPrice: number; // Base price of the item without addons/variant
     name: string;
     selectedAddons: { name: string; price: number; quantity: number }[];
+    selectedVariant?: { name: string; price: number }; // The chosen size/variant
     stationId?: KitchenStation; // Denormalized from MenuCategory for KDS
     isPrepared?: boolean; // For KDS tracking
     preparedAt?: string; // ISO string timestamp for when it was marked prepared
