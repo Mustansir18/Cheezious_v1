@@ -31,11 +31,6 @@ export const ALL_PERMISSIONS = [
         description: 'View sales analytics and performance reports.'
     },
     {
-        id: '/admin/hourly-report',
-        name: 'Admin - Hourly Report',
-        description: 'Generate sales reports for specific hours.'
-    },
-    {
         id: '/admin/menu',
         name: 'Menu Management',
         description: 'Create, edit, and delete menu items and categories.'
@@ -74,11 +69,6 @@ export const ALL_PERMISSIONS = [
         id: '/marketing/reporting',
         name: 'Marketing - Sales Reports',
         description: 'Access to sales reports for marketing analysis.'
-    },
-    {
-        id: '/marketing/hourly-report',
-        name: 'Marketing - Hourly Report',
-        description: 'Generate sales reports for specific hours.'
     },
     {
         id: '/marketing/feedback',
