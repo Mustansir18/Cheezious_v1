@@ -101,19 +101,21 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           .map(({ addon, quantity }) => `${addon.id}x${quantity}`)
           .sort()
           .join('-')
-      : null;
-      
-    const uniqueVariationId = addonCombinationKey ? `${itemToAdd.id}-${addonCombinationKey}` : itemToAdd.id;
+      : `base-${itemToAdd.id}`; // If no addons, use a base key.
+
+    const uniqueVariationId = `${itemToAdd.id}-${addonCombinationKey}`;
     
     setItems((prevItems) => {
       const existingItem = prevItems.find((item) => item.uniqueVariationId === uniqueVariationId);
 
       if (existingItem) {
+        // If the exact same variation exists, just increase its quantity.
         return prevItems.map((item) =>
           item.uniqueVariationId === uniqueVariationId ? { ...item, quantity: item.quantity + itemQuantity } : item
         );
       }
       
+      // If the variation doesn't exist, create a new cart item for it.
       const newCartItem: CartItem = { 
         ...itemToAdd,
         cartItemId: `${uniqueVariationId}-${crypto.randomUUID()}`,
