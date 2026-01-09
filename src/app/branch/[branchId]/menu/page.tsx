@@ -7,7 +7,6 @@ import { useCart } from "@/context/CartContext";
 import type { OrderType, MenuCategory } from "@/lib/types";
 import { MenuItemCard } from "@/components/menu/MenuItemCard";
 import { useMenu } from "@/context/MenuContext";
-import { useDeals } from "@/context/DealsContext";
 import { Loader } from "lucide-react";
 import {
   Select,
@@ -27,7 +26,6 @@ export default function MenuPage() {
   const searchParams = useSearchParams();
   const { setOrderDetails, tableId, setTable } = useCart();
   const { menu, isLoading: isMenuLoading } = useMenu();
-  const { deals, isLoading: areDealsLoading } = useDeals();
   const { settings } = useSettings();
 
   const { items: menuItems, categories } = menu;
@@ -80,7 +78,7 @@ export default function MenuPage() {
     setActiveSubCategoryId(subId);
   }
 
-  if (isMenuLoading || areDealsLoading || !activeCategory) {
+  if (isMenuLoading || !activeCategory) {
     return (
         <div className="flex h-[calc(100vh-10rem)] items-center justify-center">
             <Loader className="h-12 w-12 animate-spin text-primary" />
