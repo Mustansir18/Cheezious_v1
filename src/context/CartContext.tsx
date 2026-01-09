@@ -92,47 +92,40 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const addItem = ({ item: itemToAdd, selectedAddons = [], itemQuantity }: AddToCartOptions) => {
-    const addonPrice = selectedAddons.reduce((sum, { addon, quantity }) => sum + (addon.price * quantity), 0);
-    const finalPrice = itemToAdd.price + addonPrice;
-
-    // A consistent key for a specific variation of an item.
+    // Generate a consistent ID for the item variation based on addons
     const getVariationId = (addons: { addon: Addon; quantity: number }[]) => {
-      if (addons.length === 0) return 'plain';
-      // Sort by addon id to ensure consistency regardless of selection order
+      if (addons.length === 0) return 'no-addons';
       return addons
-        .map(({ addon, quantity }) => `${addon.id}x${quantity}`)
+        .map(a => `${a.addon.id}x${a.quantity}`)
         .sort()
-        .join('|');
+        .join(',');
     };
     
-    const newVariationId = getVariationId(selectedAddons);
+    const variationId = getVariationId(selectedAddons);
 
-    setItems((prevItems) => {
-      const existingItem = prevItems.find(
-        (item) => item.id === itemToAdd.id && item.uniqueVariationId === newVariationId
-      );
+    const existingItem = items.find(
+      (item) => item.id === itemToAdd.id && item.uniqueVariationId === variationId
+    );
 
-      if (existingItem) {
-        // If the exact same variation exists, just increase its quantity.
-        return prevItems.map((item) =>
-          item.cartItemId === existingItem.cartItemId
-            ? { ...item, quantity: item.quantity + itemQuantity }
-            : item
-        );
-      } else {
-        // If the variation doesn't exist, create a new cart item for it.
-        const newCartItem: CartItem = {
-          ...itemToAdd,
-          cartItemId: crypto.randomUUID(), // Each cart item instance gets a unique ID
-          uniqueVariationId: newVariationId,
-          price: finalPrice,
-          basePrice: itemToAdd.price,
-          selectedAddons: selectedAddons.map(({ addon, quantity }) => ({ ...addon, quantity })),
-          quantity: itemQuantity,
-        };
-        return [...prevItems, newCartItem];
-      }
-    });
+    if (existingItem) {
+      // If the exact same variation exists, just increase its quantity.
+      updateQuantity(existingItem.cartItemId, itemQuantity);
+    } else {
+      // If the variation doesn't exist, create a new cart item for it.
+      const addonPrice = selectedAddons.reduce((sum, { addon, quantity }) => sum + (addon.price * quantity), 0);
+      const finalPrice = itemToAdd.price + addonPrice;
+
+      const newCartItem: CartItem = {
+        ...itemToAdd,
+        cartItemId: crypto.randomUUID(),
+        uniqueVariationId: variationId,
+        price: finalPrice,
+        basePrice: itemToAdd.price,
+        selectedAddons: selectedAddons.map(({ addon, quantity }) => ({ ...addon, quantity })),
+        quantity: itemQuantity,
+      };
+      setItems((prevItems) => [...prevItems, newCartItem]);
+    }
 
     toast({
         title: "Added to Cart",
