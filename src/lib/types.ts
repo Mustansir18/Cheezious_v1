@@ -20,7 +20,7 @@ export type MenuCategory = {
   name: string;
   icon: string;
   stationId?: KitchenStation;
-  subCategories: SubCategory[];
+  subCategories?: SubCategory[];
 }
 
 export type Addon = {

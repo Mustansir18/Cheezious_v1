@@ -4,7 +4,7 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { menuItemsWithDeals as initialMenuItems, menuCategories as initialMenuCategories, addons as initialAddons } from '@/lib/data';
-import type { MenuItem, MenuCategory, Addon } from '@/lib/types';
+import type { MenuItem, MenuCategory, Addon, SubCategory } from '@/lib/types';
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -22,6 +22,9 @@ interface MenuContextType {
   addCategory: (category: MenuCategory) => void;
   updateCategory: (category: MenuCategory) => void;
   deleteCategory: (id: string, name: string) => void;
+  // Sub Categories
+  addSubCategory: (categoryId: string, subCategoryName: string) => void;
+  deleteSubCategory: (categoryId: string, subCategoryId: string) => void;
   // Items
   addItem: (item: MenuItem) => void;
   updateItem: (item: MenuItem) => void;
@@ -41,14 +44,6 @@ const initialData: MenuData = {
     categories: initialMenuCategories,
     addons: initialAddons,
 };
-
-function usePrevious<T>(value: T) {
-    const ref = React.useRef<T>();
-    useEffect(() => {
-        ref.current = value;
-    });
-    return ref.current;
-}
 
 export const MenuProvider = ({ children }: { children: ReactNode }) => {
   const [menu, setMenu] = useState<MenuData>(initialData);
@@ -112,6 +107,43 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
     });
     logActivity(`Deleted menu category: '${name}' and its items.`, user?.username || 'System', 'Menu');
   };
+  
+  const addSubCategory = (categoryId: string, subCategoryName: string) => {
+    const newSubCategory: SubCategory = {
+      id: `SC-${crypto.randomUUID().slice(0, 5)}`,
+      name: subCategoryName,
+    };
+    setMenu(m => ({
+      ...m,
+      categories: m.categories.map(c => {
+        if (c.id === categoryId) {
+          const updatedSubCategories = [...(c.subCategories || []), newSubCategory];
+          return { ...c, subCategories: updatedSubCategories };
+        }
+        return c;
+      })
+    }));
+    const categoryName = menu.categories.find(c => c.id === categoryId)?.name;
+    logActivity(`Added sub-category '${subCategoryName}' to '${categoryName}'.`, user?.username || 'System', 'Menu');
+  };
+
+  const deleteSubCategory = (categoryId: string, subCategoryId: string) => {
+    setMenu(m => ({
+      ...m,
+      categories: m.categories.map(c => {
+        if (c.id === categoryId) {
+          const updatedSubCategories = c.subCategories?.filter(sc => sc.id !== subCategoryId);
+          return { ...c, subCategories: updatedSubCategories };
+        }
+        return c;
+      }),
+      // Also unassign items from this sub-category
+      items: m.items.map(i => i.subCategoryId === subCategoryId ? { ...i, subCategoryId: undefined } : i)
+    }));
+    const subCategoryName = menu.categories.find(c => c.id === categoryId)?.subCategories?.find(sc => sc.id === subCategoryId)?.name;
+    logActivity(`Deleted sub-category '${subCategoryName}'.`, user?.username || 'System', 'Menu');
+  };
+
 
   const addItem = (newItem: MenuItem) => {
      if (!newItem.id) {
@@ -174,6 +206,8 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
         addCategory,
         updateCategory,
         deleteCategory,
+        addSubCategory,
+        deleteSubCategory,
         addItem,
         updateItem,
         deleteItem,

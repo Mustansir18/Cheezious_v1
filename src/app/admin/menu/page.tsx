@@ -22,7 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Trash2, Edit, PlusCircle, FileText, FileDown, ChefHat } from 'lucide-react';
-import type { MenuCategory, MenuItem, Addon, KitchenStation } from '@/lib/types';
+import type { MenuCategory, MenuItem, Addon, KitchenStation, SubCategory } from '@/lib/types';
 import imageCompression from 'browser-image-compression';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -63,14 +63,17 @@ const kitchenStations: { id: KitchenStation; name: string }[] = [
 
 // Category Form
 function CategoryForm({ category, onSave }: { category?: MenuCategory; onSave: (cat: Omit<MenuCategory, 'id'> | MenuCategory, id?: string) => void;}) {
+  const { menu, addSubCategory, deleteSubCategory } = useMenu();
+  const { toast } = useToast();
+  
   const [id, setId] = useState(category?.id || '');
   const [name, setName] = useState(category?.name || '');
   const [icon, setIcon] = useState(category?.icon || 'Package');
   const [stationId, setStationId] = useState<KitchenStation | undefined>(category?.stationId);
-  const { menu } = useMenu();
-  const { toast } = useToast();
   const [isIdInvalid, setIsIdInvalid] = useState(false);
   
+  const [newSubCategoryName, setNewSubCategoryName] = useState('');
+
   const validateId = (value: string) => {
     if (menu.categories.some(c => c.id === value && c.id !== category?.id)) {
         toast({
@@ -85,13 +88,22 @@ function CategoryForm({ category, onSave }: { category?: MenuCategory; onSave: (
     return true;
   }
 
+  const handleAddSubCategory = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newSubCategoryName.trim() && category?.id) {
+        addSubCategory(category.id, newSubCategoryName.trim());
+        setNewSubCategoryName('');
+    }
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (isIdInvalid) return;
     
     if (!category && !validateId(id)) return;
     
-    const data = { name, icon, stationId };
+    const subCategories = category?.subCategories || [];
+    const data = { name, icon, stationId, subCategories };
     if (category) {
       onSave({ ...category, ...data });
     } else {
@@ -143,6 +155,31 @@ function CategoryForm({ category, onSave }: { category?: MenuCategory; onSave: (
             </SelectContent>
             </Select>
         </div>
+
+        {category && (
+            <div className="mt-4">
+                <Label>Sub-Categories</Label>
+                <ScrollArea className="h-40 rounded-md border p-4">
+                    <div className="space-y-2">
+                        {category.subCategories?.map(sc => (
+                            <div key={sc.id} className="flex items-center justify-between">
+                                <span>{sc.name}</span>
+                                <DeleteConfirmationDialog
+                                    title={`Delete Sub-Category "${sc.name}"?`}
+                                    description={<>This will permanently delete the sub-category. Items inside will become unassigned.</>}
+                                    onConfirm={() => deleteSubCategory(category.id, sc.id)}
+                                />
+                            </div>
+                        ))}
+                         {(!category.subCategories || category.subCategories.length === 0) && <p className="text-xs text-muted-foreground">No sub-categories yet.</p>}
+                    </div>
+                </ScrollArea>
+                <form onSubmit={handleAddSubCategory} className="mt-2 flex gap-2">
+                    <Input placeholder="New Sub-Category Name" value={newSubCategoryName} onChange={e => setNewSubCategoryName(e.target.value)} />
+                    <Button type="submit" variant="secondary">Add</Button>
+                </form>
+            </div>
+        )}
       </div>
       <DialogFooter>
         <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
@@ -162,6 +199,7 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
   const [description, setDescription] = useState(item?.description || '');
   const [price, setPrice] = useState(item?.price || 0);
   const [categoryId, setCategoryId] = useState(item?.categoryId || '');
+  const [subCategoryId, setSubCategoryId] = useState(item?.subCategoryId || '');
   const [imageUrl, setImageUrl] = useState(item?.imageUrl || '');
   const [isCompressing, setIsCompressing] = useState(false);
   const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>(item?.availableAddonIds || []);
@@ -171,6 +209,8 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
   const [newAddonId, setNewAddonId] = useState('');
   const [newAddonName, setNewAddonName] = useState('');
   const [newAddonPrice, setNewAddonPrice] = useState(0);
+
+  const selectedCategory = menu.categories.find(c => c.id === categoryId);
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -217,7 +257,7 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
     
     if (!item && !validateId(id)) return; // Don't save if validation fails on create
 
-    const data = { name, description, price, categoryId, imageUrl, availableAddonIds: selectedAddonIds };
+    const data = { name, description, price, categoryId, subCategoryId, imageUrl, availableAddonIds: selectedAddonIds };
     if (item) {
       onSave({ ...item, ...data });
     } else {
@@ -264,10 +304,19 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <div>
                 <Label htmlFor="item-category">Category</Label>
-                <Select value={categoryId} onValueChange={setCategoryId} required disabled={!item && isIdInvalid}>
+                <Select value={categoryId} onValueChange={(v) => { setCategoryId(v); setSubCategoryId(''); }} required disabled={!item && isIdInvalid}>
                 <SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger>
                 <SelectContent>
                     {menu.categories.map(cat => (<SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>))}
+                </SelectContent>
+                </Select>
+            </div>
+            <div>
+                <Label htmlFor="item-subcategory">Sub-Category</Label>
+                <Select value={subCategoryId} onValueChange={setSubCategoryId} disabled={!item && isIdInvalid || !selectedCategory || !selectedCategory.subCategories || selectedCategory.subCategories.length === 0}>
+                <SelectTrigger><SelectValue placeholder="Select a sub-category" /></SelectTrigger>
+                <SelectContent>
+                    {selectedCategory?.subCategories?.map(sub => (<SelectItem key={sub.id} value={sub.id}>{sub.name}</SelectItem>))}
                 </SelectContent>
                 </Select>
             </div>
@@ -462,12 +511,15 @@ export default function MenuManagementPage() {
                     <Button variant="outline" onClick={() => handleExport('categories', 'csv')}><FileDown className="mr-2 h-4 w-4" /> CSV</Button>
                     <Button variant="outline" onClick={() => handleExport('categories', 'pdf')}><FileText className="mr-2 h-4 w-4" /> PDF</Button>
                     <Dialog open={isCategoryOpen} onOpenChange={setCategoryOpen}><DialogTrigger asChild><Button onClick={() => { setEditingCategory(undefined); setCategoryOpen(true); }}><PlusCircle className="mr-2 h-4 w-4" /> Add Category</Button></DialogTrigger>
-                        <DialogContent><DialogHeader><DialogTitle>{editingCategory ? 'Edit' : 'Add'} Category</DialogTitle></DialogHeader><CategoryForm category={editingCategory} onSave={handleSaveCategory}/></DialogContent>
+                        <DialogContent className="max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{editingCategory ? 'Edit' : 'Add'} Category</DialogTitle></DialogHeader><CategoryForm category={editingCategory} onSave={handleSaveCategory}/></DialogContent>
                     </Dialog>
                 </div>
             </CardHeader>
-            <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Code</TableHead><TableHead>Icon</TableHead><TableHead>Station</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
-                <TableBody>{menu.categories.map(cat => (<TableRow key={cat.id}><TableCell>{cat.name}</TableCell><TableCell className="font-mono text-xs">{cat.id}</TableCell><TableCell className="font-mono">{cat.icon}</TableCell>
+            <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Code</TableHead><TableHead>Sub-Categories</TableHead><TableHead>Station</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
+                <TableBody>{menu.categories.map(cat => (<TableRow key={cat.id}><TableCell>{cat.name}</TableCell><TableCell className="font-mono text-xs">{cat.id}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                        {cat.subCategories?.map(sc => sc.name).join(', ') || 'N/A'}
+                    </TableCell>
                     <TableCell>
                         {cat.stationId ? (
                              <span className="flex items-center gap-1.5 capitalize">
@@ -526,25 +578,31 @@ export default function MenuManagementPage() {
                     </Dialog>
                 </div>
             </CardHeader>
-            <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Code</TableHead><TableHead>Category</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
-                <TableBody>{menu.items.map(item => (<TableRow key={item.id}>
-                    <TableCell>{item.name}</TableCell>
-                    <TableCell className="font-mono text-xs">{item.id}</TableCell>
-                    <TableCell>{menu.categories.find(c => c.id === item.categoryId)?.name || 'N/A'}</TableCell>
-                    <TableCell className="text-right">RS {Math.round(item.price)}</TableCell>
-                    <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" onClick={() => { setEditingItem(item); setItemOpen(true); }}><Edit className="h-4 w-4" /></Button>
-                        <DeleteConfirmationDialog
-                            title={`Delete Item "${item.name}"?`}
-                            description={<>This will permanently delete the item <strong>{item.name}</strong>.</>}
-                            onConfirm={() => deleteItem(item.id, item.name)}
-                        />
-                    </TableCell></TableRow>))}
+            <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Code</TableHead><TableHead>Category</TableHead><TableHead>Sub-Category</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
+                <TableBody>{menu.items.map(item => {
+                    const category = menu.categories.find(c => c.id === item.categoryId);
+                    const subCategory = category?.subCategories?.find(sc => sc.id === item.subCategoryId);
+                    return (
+                        <TableRow key={item.id}>
+                            <TableCell>{item.name}</TableCell>
+                            <TableCell className="font-mono text-xs">{item.id}</TableCell>
+                            <TableCell>{category?.name || 'N/A'}</TableCell>
+                            <TableCell>{subCategory?.name || 'N/A'}</TableCell>
+                            <TableCell className="text-right">RS {Math.round(item.price)}</TableCell>
+                            <TableCell className="text-right">
+                                <Button variant="ghost" size="icon" onClick={() => { setEditingItem(item); setItemOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                                <DeleteConfirmationDialog
+                                    title={`Delete Item "${item.name}"?`}
+                                    description={<>This will permanently delete the item <strong>{item.name}</strong>.</>}
+                                    onConfirm={() => deleteItem(item.id, item.name)}
+                                />
+                            </TableCell>
+                        </TableRow>
+                    )
+                })}
                 </TableBody></Table>
             </CardContent>
         </Card>
     </div>
   );
 }
-
-    
