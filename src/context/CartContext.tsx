@@ -102,22 +102,23 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       .sort()
       .join('-');
       
-    const cartItemId = `${itemToAdd.id}${addonCombinationKey ? `-${addonCombinationKey}` : ''}`;
+    const uniqueVariationId = `${itemToAdd.id}${addonCombinationKey ? `-${addonCombinationKey}` : ''}`;
     
     setItems((prevItems) => {
-      const existingItem = prevItems.find((item) => item.cartItemId === cartItemId);
+      const existingItem = prevItems.find((item) => item.uniqueVariationId === uniqueVariationId);
 
       if (existingItem) {
         // If the exact item with the same addons exists, just increase its quantity.
         return prevItems.map((item) =>
-          item.cartItemId === cartItemId ? { ...item, quantity: item.quantity + itemQuantity } : item
+          item.uniqueVariationId === uniqueVariationId ? { ...item, quantity: item.quantity + itemQuantity } : item
         );
       }
       
       // If it's a new item or a new combination of addons, add it as a new line item.
       const newCartItem: CartItem = { 
         ...itemToAdd,
-        cartItemId: `${cartItemId}-${crypto.randomUUID()}`, // Ensure unique even if added twice quickly
+        cartItemId: `${uniqueVariationId}-${crypto.randomUUID()}`, // Ensure unique even if added twice quickly
+        uniqueVariationId: uniqueVariationId,
         price: finalPrice,
         basePrice: itemToAdd.price,
         selectedAddons: selectedAddons.map(({ addon, quantity }) => ({ ...addon, quantity })),

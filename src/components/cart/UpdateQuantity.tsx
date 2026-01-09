@@ -16,27 +16,35 @@ export function UpdateQuantity({ cartItemId, quantity }: { cartItemId: string, q
   return (
     <div className="flex items-center gap-2">
       <Button
-        variant="outline"
+        variant="ghost"
         size="icon"
-        className="h-8 w-8"
-        onClick={() => updateQuantity(cartItemId, quantity - 1)}
+        className="h-8 w-8 text-destructive"
+        onClick={() => updateQuantity(cartItemId, 0)}
       >
-        <Trash2 className="h-4 w-4 text-destructive" />
+        <Trash2 className="h-4 w-4" />
       </Button>
 
-      {!isDeal && (
-          <>
-            <span className="w-6 text-center font-bold">{quantity}</span>
-            <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => updateQuantity(cartItemId, quantity + 1)}
-            >
-                <Plus className="h-4 w-4" />
-            </Button>
-          </>
-      )}
+        <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => updateQuantity(cartItemId, quantity - 1)}
+            disabled={quantity <= 1}
+        >
+            <Minus className="h-4 w-4" />
+        </Button>
+      
+      <span className="w-6 text-center font-bold">{quantity}</span>
+
+      <Button
+          variant="outline"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => updateQuantity(cartItemId, quantity + 1)}
+          disabled={isDeal}
+      >
+          <Plus className="h-4 w-4" />
+      </Button>
     </div>
   );
 }

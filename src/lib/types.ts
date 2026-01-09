@@ -65,6 +65,7 @@ export type SelectedAddon = Addon & { quantity: number };
 
 export type CartItem = Omit<MenuItem, 'price' | 'availableAddonIds'> & {
   cartItemId: string; // Unique ID for the cart instance of an item
+  uniqueVariationId?: string; // ID to represent a unique combination of item + addons
   quantity: number;
   price: number; // Final price including addons (for one unit)
   basePrice: number; // Original item price

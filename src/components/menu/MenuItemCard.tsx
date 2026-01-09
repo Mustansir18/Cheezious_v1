@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useMemo } from "react";
@@ -12,10 +13,11 @@ import { Label } from "@/components/ui/label";
 import { PlusCircle, Plus, Minus, Trash2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { UpdateQuantity } from "../cart/UpdateQuantity";
+import { Separator } from "../ui/separator";
 
 const FALLBACK_IMAGE_URL = "https://picsum.photos/seed/placeholder/400/300";
 
-function AddToCartDialog({ item, onAddToCart }: { item: MenuItem; onAddToCart: (options: { selectedAddons: { addon: Addon; quantity: number }[], itemQuantity: number }) => void; }) {
+function AddToCartDialog({ item, onAddToCart, triggerButton }: { item: MenuItem; onAddToCart: (options: { selectedAddons: { addon: Addon; quantity: number }[], itemQuantity: number }) => void; triggerButton: React.ReactNode; }) {
     const { menu } = useMenu();
     const [selectedAddons, setSelectedAddons] = useState<Map<string, { addon: Addon; quantity: number }>>(new Map());
     const [itemQuantity, setItemQuantity] = useState(1);
@@ -66,9 +68,7 @@ function AddToCartDialog({ item, onAddToCart }: { item: MenuItem; onAddToCart: (
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                <Button onClick={() => setIsOpen(true)} className="bg-accent text-accent-foreground hover:bg-accent/90">
-                    <PlusCircle className="mr-2 h-5 w-5" /> Customize & Add
-                </Button>
+                {triggerButton}
             </DialogTrigger>
             <DialogContent className="max-h-[90vh] flex flex-col">
                 <DialogHeader>
@@ -156,9 +156,9 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
     addItem({ item, ...options });
   };
   
-  const existingCartItem = useMemo(() => {
-    // Find the first instance of this item in the cart, regardless of add-ons
-    return cartItems.find(cartItem => cartItem.id === item.id);
+  const variationsInCart = useMemo(() => {
+    // Find all instances of this item in the cart, which represent different variations
+    return cartItems.filter(cartItem => cartItem.id === item.id);
   }, [cartItems, item.id]);
 
   const hasAddons = item.availableAddonIds && item.availableAddonIds.length > 0;
@@ -181,25 +181,49 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
         <CardTitle className="font-headline text-xl">{item.name}</CardTitle>
         <CardDescription className="mt-2 flex-grow">{item.description}</CardDescription>
       </CardContent>
-      <CardFooter className="flex items-center justify-between p-4 pt-0">
-        <p className="text-xl font-bold text-primary">RS {Math.round(item.price)}</p>
+      <CardFooter className="flex flex-col items-stretch gap-4 p-4 pt-0">
+        <div className="flex items-center justify-between">
+            <p className="text-xl font-bold text-primary">RS {Math.round(item.price)}</p>
+            {!hasAddons && variationsInCart.length === 0 && (
+                 <Button onClick={() => handleAddToCart({ selectedAddons: [], itemQuantity: 1 })} className="bg-accent text-accent-foreground hover:bg-accent/90">
+                    <PlusCircle className="mr-2 h-5 w-5" /> Add
+                </Button>
+            )}
+        </div>
         
-        {existingCartItem ? (
-          // If the item (any variant) is in the cart, show quantity controls for the first found instance.
-          // Note: This simplifies the UI. It doesn't allow adding multiple *different* customizations of the same item from the card.
-          // Users would need to go to the cart or re-customize to manage different versions.
-          <UpdateQuantity cartItemId={existingCartItem.cartItemId} quantity={existingCartItem.quantity} />
-        ) : hasAddons ? (
-          // If the item is not in the cart and has add-ons, show the customize dialog.
-          <AddToCartDialog 
-            item={item} 
-            onAddToCart={handleAddToCart}
-          />
-        ) : (
-          // If the item is not in the cart and has no add-ons, show a simple add button.
-          <Button onClick={() => handleAddToCart({ selectedAddons: [], itemQuantity: 1 })} className="bg-accent text-accent-foreground hover:bg-accent/90">
-            <PlusCircle className="mr-2 h-5 w-5" /> Add
-          </Button>
+        {variationsInCart.length > 0 && (
+            <div className="space-y-3">
+                {variationsInCart.map((cartItem) => (
+                    <div key={cartItem.cartItemId} className="p-3 rounded-md bg-muted/50">
+                        <div className="flex justify-between items-center">
+                            <div className="font-semibold">
+                                <p>{item.name}</p>
+                                {cartItem.selectedAddons.length > 0 && (
+                                    <div className="pl-2 text-xs font-normal text-muted-foreground">
+                                        {cartItem.selectedAddons.map(addon => (
+                                            <p key={addon.id}>+ {addon.quantity}x {addon.name}</p>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                            <UpdateQuantity cartItemId={cartItem.cartItemId} quantity={cartItem.quantity} />
+                        </div>
+                    </div>
+                ))}
+            </div>
+        )}
+
+        {hasAddons && (
+            <AddToCartDialog 
+                item={item} 
+                onAddToCart={handleAddToCart}
+                triggerButton={
+                    <Button variant={variationsInCart.length > 0 ? "secondary" : "default"}>
+                        <PlusCircle className="mr-2 h-5 w-5" />
+                        {variationsInCart.length > 0 ? 'Add Another Variation' : 'Customize & Add'}
+                    </Button>
+                }
+            />
         )}
       </CardFooter>
     </Card>
