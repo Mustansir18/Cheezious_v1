@@ -10,28 +10,18 @@ export function UpdateQuantity({ cartItemId, quantity }: { cartItemId: string, q
   const { updateQuantity, items } = useCart();
   const item = items.find(i => i.cartItemId === cartItemId);
 
-  // If the item is a deal, only allow deletion (quantity set to 0)
   const isDeal = item?.categoryId === 'deals';
 
   return (
     <div className="flex items-center gap-2">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8 text-destructive"
-        onClick={() => updateQuantity(cartItemId, 0)}
-      >
-        <Trash2 className="h-4 w-4" />
-      </Button>
-
-        <Button
+       <Button
             variant="outline"
             size="icon"
-            className="h-8 w-8"
+            className="h-8 w-8 text-destructive"
             onClick={() => updateQuantity(cartItemId, quantity - 1)}
-            disabled={quantity <= 1}
+            
         >
-            <Minus className="h-4 w-4" />
+            <Trash2 className="h-4 w-4" />
         </Button>
       
       <span className="w-6 text-center font-bold">{quantity}</span>

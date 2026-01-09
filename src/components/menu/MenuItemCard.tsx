@@ -221,7 +221,7 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
                         triggerButton={
                             <Button variant="secondary" className="w-full">
                                 <PlusCircle className="mr-2 h-5 w-5" />
-                                Add Another Variation
+                                Append Item
                             </Button>
                         }
                     />
