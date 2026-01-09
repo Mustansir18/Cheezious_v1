@@ -96,12 +96,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const addonPrice = selectedAddons.reduce((sum, { addon, quantity }) => sum + (addon.price * quantity), 0);
     const finalPrice = itemToAdd.price + addonPrice;
 
+    // This key identifies the specific combination of addons.
     const addonCombinationKey = selectedAddons.length > 0 
       ? selectedAddons
           .map(({ addon, quantity }) => `${addon.id}x${quantity}`)
           .sort()
           .join('-')
-      : `base-${itemToAdd.id}`; // If no addons, use a base key.
+      : 'base';
 
     const uniqueVariationId = `${itemToAdd.id}-${addonCombinationKey}`;
     
@@ -111,7 +112,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       if (existingItem) {
         // If the exact same variation exists, just increase its quantity.
         return prevItems.map((item) =>
-          item.uniqueVariationId === uniqueVariationId ? { ...item, quantity: item.quantity + itemQuantity } : item
+          item.cartItemId === existingItem.cartItemId ? { ...item, quantity: item.quantity + itemQuantity } : item
         );
       }
       
