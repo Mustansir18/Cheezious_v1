@@ -24,7 +24,6 @@ interface CartContextType {
   isCartOpen: boolean;
   setIsCartOpen: React.Dispatch<React.SetStateAction<boolean>>;
   addItem: (options: AddToCartOptions) => void;
-  addDeal: (deal: Deal) => void;
   updateQuantity: (cartItemId: string, change: number) => void;
   clearCart: () => void;
   closeCart: () => void;
@@ -95,6 +94,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const addItem = ({ item: itemToAdd, selectedAddons = [], itemQuantity, instructions, selectedVariant }: AddToCartOptions) => {
+    const isDeal = itemToAdd.categoryId === 'C-00001';
+
     // Generate a consistent ID for the item variation based on addons and instructions
     const getVariationId = (addons: { addon: Addon; quantity: number }[], instr: string, variant?: MenuItemVariant) => {
       const addonString = addons.length > 0 
@@ -112,17 +113,18 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     );
 
     if (existingItem) {
-      // If the exact same variation exists, just increase its quantity.
       updateQuantity(existingItem.cartItemId, itemQuantity);
     } else {
-      // If the variation doesn't exist, create a new cart item for it.
+      const newItems: CartItem[] = [];
+      const parentDealId = crypto.randomUUID();
+
       const addonPrice = selectedAddons.reduce((sum, { addon, quantity }) => sum + (addon.price * quantity), 0);
-      const basePrice = selectedVariant ? selectedVariant.price : itemToAdd.price;
+      const basePrice = isDeal ? itemToAdd.price : (selectedVariant ? selectedVariant.price : itemToAdd.price);
       const finalPrice = basePrice + addonPrice;
 
       const newCartItem: CartItem = {
         ...itemToAdd,
-        cartItemId: crypto.randomUUID(),
+        cartItemId: parentDealId,
         uniqueVariationId: variationId,
         price: finalPrice,
         basePrice: basePrice,
@@ -130,8 +132,30 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         selectedVariant: selectedVariant,
         quantity: itemQuantity,
         instructions: instructions.trim() || undefined,
+        isDealComponent: false,
       };
-      setItems((prevItems) => [...prevItems, newCartItem]);
+      newItems.push(newCartItem);
+
+      if (isDeal && itemToAdd.dealItems) {
+        for (const dealItem of itemToAdd.dealItems) {
+          const componentItem = menu.items.find(i => i.id === dealItem.menuItemId);
+          if (componentItem) {
+            for (let i = 0; i < dealItem.quantity; i++) {
+              newItems.push({
+                ...componentItem,
+                cartItemId: crypto.randomUUID(),
+                quantity: 1, // Each component is added individually
+                price: 0, // Deal components have no individual price
+                basePrice: 0,
+                selectedAddons: [],
+                isDealComponent: true,
+                parentDealId: parentDealId,
+              });
+            }
+          }
+        }
+      }
+      setItems((prevItems) => [...prevItems, ...newItems]);
     }
 
     toast({
@@ -140,31 +164,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const addDeal = (deal: Deal) => {
-    const dealCartId = `deal-${deal.id}-${crypto.randomUUID()}`;
-    
-    const dealMenuItem = menu.items.find(i => i.id === deal.id);
-    if (!dealMenuItem) return;
-
-    const dealCartItem: CartItem = {
-      ...dealMenuItem,
-      cartItemId: dealCartId,
-      uniqueVariationId: dealCartId,
-      price: deal.price,
-      basePrice: deal.price,
-      quantity: 1,
-      selectedAddons: [],
-      isDealComponent: false,
-      dealName: deal.name,
-    };
-
-    setItems(prev => [...prev, dealCartItem]);
-
-    toast({
-      title: "Deal Added!",
-      description: `The "${deal.name}" deal has been added to your cart.`,
-    });
-  };
 
   const updateQuantity = (cartItemId: string, change: number) => {
     setItems((prevItems) => {
@@ -176,7 +175,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
       if (newQuantity <= 0) {
         // Filter out the item itself and any components that belong to it if it's a deal
-        if (itemToUpdate.categoryId === 'deals') {
+        if (itemToUpdate.categoryId === 'C-00001') {
             return prevItems.filter(i => i.cartItemId !== cartItemId && i.parentDealId !== cartItemId);
         }
         return prevItems.filter((item) => item.cartItemId !== cartItemId);
@@ -199,7 +198,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const cartTotal = useMemo(() => {
-    // Only include items that are not components of a deal in the final total
     return items.reduce((total, item) => {
         if (!item.isDealComponent) {
             return total + item.price * item.quantity;
@@ -209,7 +207,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, [items]);
 
   const cartCount = useMemo(() => {
-     // Exclude deal components from the visible cart count
     return items.filter(item => !item.isDealComponent).reduce((count, item) => count + item.quantity, 0);
   }, [items]);
 
@@ -224,7 +221,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         isCartOpen,
         setIsCartOpen,
         addItem,
-        addDeal,
         updateQuantity,
         clearCart,
         closeCart,

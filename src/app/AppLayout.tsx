@@ -3,7 +3,6 @@
 
 import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
-import { DealsProvider } from '@/context/DealsContext';
 import { MenuProvider } from '@/context/MenuContext';
 import { OrderProvider } from '@/context/OrderContext';
 import { SettingsProvider } from '@/context/SettingsContext';
@@ -17,11 +16,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <OrderProvider>
           <SettingsProvider>
             <MenuProvider>
-              <DealsProvider>
                 <RatingProvider>
                   <CartProvider>{children}</CartProvider>
                 </RatingProvider>
-              </DealsProvider>
             </MenuProvider>
           </SettingsProvider>
         </OrderProvider>

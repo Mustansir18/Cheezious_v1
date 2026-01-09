@@ -54,7 +54,7 @@ export const addons: Addon[] = [
 
 const getImage = (id: string) => PlaceHolderImages.find(i => i.id === id)?.imageUrl || `https://picsum.photos/seed/${id}/400/300`;
 
-export const menuItems: MenuItem[] = [
+const baseMenuItems: MenuItem[] = [
   // --- NEW PIZZA STRUCTURE ---
   {
     id: 'I-P-001', name: 'Chicken Tikka Pizza',
@@ -178,10 +178,11 @@ export const menuItems: MenuItem[] = [
   { id: 'I-00022', name: 'Crunchy Chicken Pasta', description: 'Yummiest macaroni pasta in white sauce topped with crispy chicken & cheese.', price: 280, categoryId: 'C-00005', subCategoryId: 'SC-00011', imageUrl: getImage('crunchy-pasta'), availableAddonIds: ['A-00001'] },
   { id: 'I-00023', name: 'Special Roasted Platter', description: '4 pcs behari rolls, 6 pcs wings with fries & dip sauce.', price: 350, categoryId: 'C-00005', subCategoryId: 'SC-00012', imageUrl: getImage('roasted-platter'), availableAddonIds: ['A-00005'] },
   { id: 'I-00024', name: 'Classic Roll Platter', description: '4 pcs behari rolls, 4 pcs arabic rolls served with fries & dip sauce.', price: 350, categoryId: 'C-00005', subCategoryId: 'SC-00012', imageUrl: getImage('roll-platter'), availableAddonIds: ['A-00005'] },
-
+  
   // My Box
   { id: 'I-00028', name: 'Reggy Burger', description: 'Classic Reggy burger.', price: 120, categoryId: 'C-00006', subCategoryId: 'SC-00013', imageUrl: getImage('reggy-burger'), availableAddonIds: ['A-00001', 'A-00006'] },
-  
+  { id: 'I-00029', name: 'Bazinga Burger', description: 'A large crispy chicken zinger burger.', price: 250, categoryId: 'C-00006', subCategoryId: 'SC-00013', imageUrl: getImage('bazinga-burger'), availableAddonIds: ['A-00001', 'A-00006'] },
+
   // Meltz
   { id: 'I-00025', name: 'Euro Sandwich', description: 'Chicken tikka with special sauce, cheese, lettuce, and pineapples in soft and crispy buns, served with fries.', price: 280, categoryId: 'C-00007', subCategoryId: 'SC-00014', imageUrl: getImage('euro-sandwich'), availableAddonIds: ['A-00001', 'A-00006'] },
   { id: 'I-00026', name: 'Mexican Sandwich', description: 'Black pepper chicken with fresh tomatoes, cucumbers, sweet corn, lettuce, and our special dip sauce, all in soft, crispy buns served with fries.', price: 280, categoryId: 'C-00007', subCategoryId: 'SC-00014', imageUrl: getImage('mexican-sandwich'), availableAddonIds: ['A-00001', 'A-00006'] },
@@ -199,45 +200,80 @@ export const menuItems: MenuItem[] = [
 ];
 
 
-export const initialDeals: Deal[] = [
-  { id: 'D-00001', name: 'Somewhat Amazing 1', description: '2 Bazinga burgers, Reg. fries, 2 reg. drinks.', price: 370, imageUrl: getImage('deal-1'), items: [
+export const initialDeals: MenuItem[] = [
+  { 
+    id: 'D-00001', 
+    name: 'Somewhat Amazing 1', 
+    description: '2 Bazinga burgers, Reg. fries, 2 reg. drinks.', 
+    price: 370, 
+    imageUrl: getImage('deal-1'), 
+    categoryId: 'C-00001', 
+    subCategoryId: 'SC-00001',
+    dealItems: [
       { menuItemId: 'I-00029', quantity: 2 },
       { menuItemId: 'I-00035', quantity: 1 },
       { menuItemId: 'I-00036', quantity: 2 },
-  ]},
-  { id: 'D-00002', name: 'Somewhat Amazing 2', description: '2 Bazinga burgers, 2 pcs chicken, Large fries, 2 reg. drinks.', price: 510, imageUrl: getImage('deal-2'), items: [
+    ]
+  },
+  { 
+    id: 'D-00002', 
+    name: 'Somewhat Amazing 2', 
+    description: '2 Bazinga burgers, 2 pcs chicken, Large fries, 2 reg. drinks.', 
+    price: 510, 
+    imageUrl: getImage('deal-2'), 
+    categoryId: 'C-00001', 
+    subCategoryId: 'SC-00001',
+    dealItems: [
       { menuItemId: 'I-00029', quantity: 2 },
       { menuItemId: 'I-00032', quantity: 2 },
       { menuItemId: 'I-00034', quantity: 1 },
       { menuItemId: 'I-00036', quantity: 2 },
-  ]},
-  { id: 'D-00003', name: 'Somewhat Amazing 3', description: '3 Bazinga burgers, Large fries, 1 liter drink.', price: 560, imageUrl: getImage('deal-3'), items: [
+    ]
+  },
+  { 
+    id: 'D-00003', 
+    name: 'Somewhat Amazing 3', 
+    description: '3 Bazinga burgers, Large fries, 1 liter drink.', 
+    price: 560, 
+    imageUrl: getImage('deal-3'), 
+    categoryId: 'C-00001', 
+    subCategoryId: 'SC-00001',
+    dealItems: [
       { menuItemId: 'I-00029', quantity: 3 },
       { menuItemId: 'I-00034', quantity: 1 },
       { menuItemId: 'I-00037', quantity: 1 },
-  ]},
-  { id: 'D-00004', name: 'Somewhat Amazing 4', description: '3 Bazinga burgers, 3 pcs chicken, 1 liter drink.', price: 640, imageUrl: getImage('deal-4'), items: [
+    ]
+  },
+  { 
+    id: 'D-00004', 
+    name: 'Somewhat Amazing 4', 
+    description: '3 Bazinga burgers, 3 pcs chicken, 1 liter drink.', 
+    price: 640, 
+    imageUrl: getImage('deal-4'), 
+    categoryId: 'C-00001', 
+    subCategoryId: 'SC-00001',
+    dealItems: [
       { menuItemId: 'I-00029', quantity: 3 },
       { menuItemId: 'I-00032', quantity: 3 },
       { menuItemId: 'I-00037', quantity: 1 },
-  ]},
-  { id: 'D-00005', name: 'Small Pizza Deal', description: '6" small pizza, 1 reg. Drink (345 ml).', price: 230, imageUrl: getImage('pizza-deal-sm'), items: [
-      { menuItemId: 'I-P-001', quantity: 1 }, // Assuming a default small tikka pizza
+    ]
+  },
+  { 
+    id: 'D-00005', 
+    name: 'Small Pizza Deal', 
+    description: '6" small pizza, 1 reg. Drink (345 ml).', 
+    price: 230, 
+    imageUrl: getImage('pizza-deal-sm'), 
+    categoryId: 'C-00001', 
+    subCategoryId: 'SC-00001',
+    dealItems: [
+      { menuItemId: 'I-P-001', quantity: 1 },
       { menuItemId: 'I-00036', quantity: 1 },
   ]},
 ];
 
-// Add deals to the menu items list with a specific category
-export const menuItemsWithDeals: MenuItem[] = [
-  ...menuItems,
-  ...initialDeals.map(deal => ({
-      id: deal.id,
-      name: deal.name,
-      description: deal.description,
-      price: deal.price,
-      imageUrl: deal.imageUrl,
-      categoryId: 'C-00001', // Deals category
-      subCategoryId: 'SC-00001',
-      availableAddonIds: []
-  }))
+// Add deals to the menu items list
+export const menuItems: MenuItem[] = [
+  ...baseMenuItems,
+  ...initialDeals
 ];

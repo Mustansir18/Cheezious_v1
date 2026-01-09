@@ -2,7 +2,7 @@
 
 "use client";
 
-import type { Order, OrderItem, OrderStatus, CartItem } from "@/lib/types";
+import type { Order, OrderItem, OrderStatus, CartItem, MenuItem } from "@/lib/types";
 import {
   Card,
   CardContent,
@@ -30,7 +30,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useOrders } from "@/context/OrderContext";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { useDeals } from "@/context/DealsContext";
+import { useMenu } from "@/context/MenuContext";
 
 const statusConfig = {
     Pending: { icon: Loader, color: "text-gray-500", label: "Pending" },
@@ -221,7 +221,7 @@ interface OrderCardProps {
 
 export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, children, isMutable = true }: OrderCardProps) {
   const { settings } = useSettings();
-  const { deals } = useDeals();
+  const { menu } = useMenu();
   const { user } = useAuth();
   
   const handleUpdateStatus = (newStatus: OrderStatus) => {
@@ -268,38 +268,18 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
   }, [settings.floors, table]);
 
   const { dealItems, regularItems } = useMemo(() => {
-    const dealItemsMap = new Map<string, { dealName: string, dealPrice: number, items: OrderItem[] }>();
-    const regularItems: OrderItem[] = [];
+      const dealsInOrder = order.items.filter(item => item.dealName);
+      const dealItemGroups: { [key: string]: OrderItem[] } = {};
+      dealsInOrder.forEach(item => {
+          if (!dealItemGroups[item.dealName!]) {
+              dealItemGroups[item.dealName!] = [];
+          }
+          dealItemGroups[item.dealName!].push(item);
+      });
 
-    const dealsInOrder = order.items.filter(item => deals.some(deal => deal.id === item.menuItemId));
-    const dealItemIds = new Set(dealsInOrder.map(item => item.id));
-
-    dealsInOrder.forEach(dealItem => {
-        const dealInfo = deals.find(deal => deal.id === dealItem.menuItemId);
-        if(!dealInfo) return;
-
-        const components: OrderItem[] = [];
-        dealInfo.items.forEach(component => {
-            const itemsInOrder = order.items.filter(i => i.menuItemId === component.menuItemId && !dealItemIds.has(i.id));
-            if(itemsInOrder.length > 0) {
-              const itemToPush = itemsInOrder.shift(); // take one
-              if (itemToPush) {
-                components.push(itemToPush);
-                dealItemIds.add(itemToPush.id);
-              }
-            }
-        });
-        dealItemsMap.set(dealItem.id, { dealName: dealItem.name, dealPrice: dealItem.itemPrice, items: components });
-    });
-
-    order.items.forEach(item => {
-        if(!dealItemIds.has(item.id)) {
-            regularItems.push(item);
-        }
-    });
-
-    return { dealItems: Array.from(dealItemsMap.values()), regularItems };
-  }, [order.items, deals]);
+      const regularItems = order.items.filter(item => !item.dealName);
+      return { dealItems: Object.entries(dealItemGroups), regularItems };
+  }, [order.items]);
 
 
   return (
@@ -331,17 +311,21 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
       <CardContent className="flex-grow">
         <ScrollArea className="h-40 pr-4">
             <div className="space-y-3">
-              {dealItems.map((deal, index) => (
-                <div key={index} className="text-sm">
-                  <div className="flex justify-between items-center font-semibold">
-                    <div>1x {deal.dealName}</div>
-                    <div className="font-mono">RS {Math.round(deal.dealPrice)}</div>
-                  </div>
-                  <div className="pl-4 text-xs text-muted-foreground border-l-2 ml-1 pl-2">
-                    {deal.items.map(item => <div key={item.id}>{item.quantity}x {item.name}</div>)}
-                  </div>
-                </div>
-              ))}
+              {dealItems.map(([dealName, items], index) => {
+                const dealInfo = menu.items.find(i => i.name === dealName);
+                const dealPrice = dealInfo?.price || 0;
+                return (
+                    <div key={index} className="text-sm">
+                    <div className="flex justify-between items-center font-semibold">
+                        <div>1x {dealName}</div>
+                        <div className="font-mono">RS {Math.round(dealPrice)}</div>
+                    </div>
+                    <div className="pl-4 text-xs text-muted-foreground border-l-2 ml-1 pl-2">
+                        {items.map(item => <div key={item.id}>{item.quantity}x {item.name}</div>)}
+                    </div>
+                    </div>
+                )
+              })}
               {regularItems.map((item) => (
                 <div key={item.id} className="text-sm">
                   <div className="flex justify-between items-center">

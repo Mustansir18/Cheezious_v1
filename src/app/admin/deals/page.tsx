@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { useDeals } from '@/context/DealsContext';
+import { useMenu } from '@/context/MenuContext';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -22,11 +22,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Trash2, Edit, PlusCircle, Loader, FileText, FileDown, Minus, Plus, ChefHat } from 'lucide-react';
-import type { Deal, DealItem, MenuItem } from '@/lib/types';
+import type { DealItem, MenuItem } from '@/lib/types';
 import imageCompression from 'browser-image-compression';
 import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { useMenu } from '@/context/MenuContext';
 import { cn } from '@/lib/utils';
 import { exportListDataAs } from '@/lib/exporter';
 import { useSettings } from '@/context/SettingsContext';
@@ -59,17 +58,16 @@ function DealForm({
   deal,
   onSave,
 }: {
-  deal?: Deal;
-  onSave: (dealData: Omit<Deal, 'id'> | Deal, id?: string) => void;
+  deal?: MenuItem;
+  onSave: (dealData: Omit<MenuItem, 'id'> | MenuItem, id?: string) => void;
 }) {
   const [id, setId] = useState(deal?.id || '');
   const [name, setName] = useState(deal?.name || '');
   const [description, setDescription] = useState(deal?.description || '');
   const [price, setPrice] = useState(deal?.price || 0);
   const [imageUrl, setImageUrl] = useState(deal?.imageUrl || '');
-  const [items, setItems] = useState<DealItem[]>(deal?.items || []);
+  const [items, setItems] = useState<DealItem[]>(deal?.dealItems || []);
   const [isCompressing, setIsCompressing] = useState(false);
-  const { deals } = useDeals();
   const { menu } = useMenu();
   const { toast } = useToast();
   const [isIdInvalid, setIsIdInvalid] = useState(false);
@@ -86,7 +84,7 @@ function DealForm({
   };
 
   const validateId = (value: string) => {
-    if (menu.items.some(item => item.id === value) || deals.some(d => d.id === value && d.id !== deal?.id)) {
+    if (menu.items.some(d => d.id === value && d.id !== deal?.id)) {
       toast({
         variant: 'destructive',
         title: 'Duplicate Code',
@@ -129,13 +127,23 @@ function DealForm({
         return;
     }
     
-    const data = { name, description, price, imageUrl, items };
+    const data = { 
+        name, 
+        description, 
+        price, 
+        imageUrl, 
+        dealItems: items,
+        categoryId: 'C-00001',
+        subCategoryId: 'SC-00001',
+    };
     if (deal) {
       onSave({ ...deal, ...data });
     } else {
       onSave(data, id);
     }
   };
+
+  const availableItems = menu.items.filter(item => item.categoryId !== 'C-00001'); // Exclude other deals
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -207,7 +215,7 @@ function DealForm({
                     <CommandEmpty>No item found.</CommandEmpty>
                     <CommandGroup>
                         <ScrollArea className="h-48">
-                            {menu.items.map((item) => (
+                            {availableItems.map((item) => (
                                 <CommandItem
                                 key={item.id}
                                 onSelect={() => handleItemSelect(item)}
@@ -243,17 +251,18 @@ function DealForm({
 }
 
 export default function DealsManagementPage() {
-  const { deals, isLoading, addDeal, updateDeal, deleteDeal } = useDeals();
-  const { menu, isLoading: isMenuLoading } = useMenu();
+  const { menu, isLoading, addItem, updateItem, deleteItem } = useMenu();
   const { settings } = useSettings();
   const [isDialogOpen, setDialogOpen] = useState(false);
-  const [editingDeal, setEditingDeal] = useState<Deal | undefined>();
+  const [editingDeal, setEditingDeal] = useState<MenuItem | undefined>();
 
-  const handleSaveDeal = (dealData: Omit<Deal, 'id'> | Deal, id?: string) => {
-    if ('id' in dealData) {
-      updateDeal(dealData as Deal);
+  const deals = menu.items.filter(item => item.categoryId === 'C-00001');
+
+  const handleSaveDeal = (dealData: Omit<MenuItem, 'id'> | MenuItem, id?: string) => {
+    if ('price' in dealData && 'id' in dealData) { // Simple check for MenuItem
+      updateItem(dealData as MenuItem);
     } else if (id) {
-      addDeal({ id, ...dealData });
+      addItem({ id, ...dealData } as MenuItem);
     }
     setDialogOpen(false);
   };
@@ -269,7 +278,7 @@ export default function DealsManagementPage() {
     const data = deals.map(d => ({ 
         ...d, 
         price: Math.round(d.price),
-        items: d.items.map(item => {
+        items: d.dealItems?.map(item => {
             const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
             return `${item.quantity}x ${menuItem?.name || 'Unknown Item'}`;
         }).join(', '),
@@ -278,7 +287,7 @@ export default function DealsManagementPage() {
     exportListDataAs(format, data, columns, title, headerInfo);
   };
 
-  if (isLoading || isMenuLoading) {
+  if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <Loader className="h-12 w-12 animate-spin text-primary" />
@@ -292,8 +301,8 @@ export default function DealsManagementPage() {
       <Card>
         <CardHeader className="flex flex-row justify-between items-center">
           <div>
-            <CardTitle className="font-headline text-4xl font-bold">Deals & Discounts</CardTitle>
-            <CardDescription>Create and manage promotional deals for the homepage carousel.</CardDescription>
+            <CardTitle className="font-headline text-4xl font-bold">Deals & Bundles</CardTitle>
+            <CardDescription>Create and manage promotional bundles for your menu.</CardDescription>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => handleExport('csv')}><FileDown className="mr-2 h-4 w-4" /> CSV</Button>
@@ -336,7 +345,7 @@ export default function DealsManagementPage() {
                   <TableCell className="font-mono text-xs">{deal.id}</TableCell>
                    <TableCell className="text-xs text-muted-foreground">
                        <div className="flex flex-col gap-1">
-                           {deal.items.map(item => {
+                           {deal.dealItems?.map(item => {
                                const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
                                const category = menu.categories.find(c => c.id === menuItem?.categoryId);
                                const stationName = category?.stationId || 'Dispatch';
@@ -360,7 +369,7 @@ export default function DealsManagementPage() {
                     <DeleteConfirmationDialog
                       title={`Delete Deal "${deal.name}"?`}
                       description={<>This action cannot be undone. This will permanently delete the deal <strong>{deal.name}</strong>.</>}
-                      onConfirm={() => deleteDeal(deal.id, deal.name)}
+                      onConfirm={() => deleteItem(deal.id, deal.name)}
                     />
                   </TableCell>
                 </TableRow>
@@ -372,7 +381,3 @@ export default function DealsManagementPage() {
     </div>
   );
 }
-
-    
-
-    

@@ -10,7 +10,6 @@ import { useMemo } from "react";
 import { notFound, useParams, useSearchParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/context/CartContext";
-import { useDeals } from "@/context/DealsContext";
 
 export default function ModeSelectionPage() {
   const params = useParams();
@@ -20,26 +19,19 @@ export default function ModeSelectionPage() {
   const dealId = searchParams.get('dealId');
 
   const { settings } = useSettings();
-  const { setOrderDetails, addDeal } = useCart();
-  const { deals } = useDeals();
+  const { setOrderDetails } = useCart();
   const branch = useMemo(() => settings.branches.find((b) => b.id === branchId), [branchId, settings.branches]);
-  const dealToAdd = useMemo(() => deals.find(d => d.id === dealId), [deals, dealId]);
   
   const handleModeSelect = (mode: 'Dine-In' | 'Take-Away') => {
-      // Set the order details first
       setOrderDetails({ branchId, orderType: mode });
 
-      // If a deal was selected, add its component items to the cart
-      if (dealToAdd) {
-          addDeal(dealToAdd);
-      }
+      const url = mode === 'Dine-In'
+        ? `/branch/${branchId}/table-selection`
+        : `/branch/${branchId}/menu?mode=Take-Away`;
 
-      // Navigate to the appropriate next page
-      if (mode === 'Dine-In') {
-        router.push(`/branch/${branchId}/table-selection?dealId=${dealId || ''}`);
-      } else {
-        router.push(`/branch/${branchId}/menu?mode=Take-Away&dealId=${dealId || ''}`);
-      }
+      const finalUrl = dealId ? `${url}${url.includes('?') ? '&' : '?'}dealId=${dealId}` : url;
+      
+      router.push(finalUrl);
   };
 
   if (!branch) {

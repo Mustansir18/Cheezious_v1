@@ -19,20 +19,27 @@ import { Separator } from "@/components/ui/separator";
 import { UpdateQuantity } from "./UpdateQuantity";
 import { cn } from "@/lib/utils";
 import type { CartItem } from "@/lib/types";
+import { useMenu } from "@/context/MenuContext";
 
 const FALLBACK_IMAGE_URL = "https://picsum.photos/seed/placeholder/400/300";
 
 const CartItemDisplay = ({ item, allItems }: { item: CartItem, allItems: CartItem[] }) => {
-  // Never render deal components directly; they are listed under their parent deal.
+  const { menu } = useMenu();
+
   if (item.isDealComponent) {
     return null;
   }
 
-  const isDeal = item.categoryId === 'deals';
+  const isDeal = item.categoryId === 'C-00001';
 
-  // Find the components that belong to this specific deal instance in the cart.
   const dealComponents = isDeal 
-    ? allItems.filter(i => i.isDealComponent && i.parentDealId === item.cartItemId) 
+    ? (item.dealItems || []).map(dealItem => {
+        const menuItem = menu.items.find(i => i.id === dealItem.menuItemId);
+        return {
+            name: menuItem?.name || 'Unknown Item',
+            quantity: dealItem.quantity,
+        };
+    })
     : [];
 
   return (
@@ -49,7 +56,6 @@ const CartItemDisplay = ({ item, allItems }: { item: CartItem, allItems: CartIte
         <div className="flex-grow space-y-1">
           <p className="font-semibold">{item.quantity}x {item.name} {item.selectedVariant ? `(${item.selectedVariant.name})` : ''}</p>
           
-          {/* List addons for this item (works for both regular items and the main deal item if it had addons) */}
           {item.selectedAddons && item.selectedAddons.length > 0 && (
             <div className="pl-4 text-sm text-muted-foreground border-l-2 ml-2 space-y-0.5">
               {item.selectedAddons.map(addon => (
@@ -58,12 +64,11 @@ const CartItemDisplay = ({ item, allItems }: { item: CartItem, allItems: CartIte
             </div>
           )}
           
-          {/* If it's a deal, list its bundled items */}
           {isDeal && dealComponents.length > 0 && (
             <div className="pl-4 text-xs text-muted-foreground border-l-2 ml-2 mt-1">
               <p className="font-semibold">Includes:</p>
               {dealComponents.map(component => (
-                  <p key={component.cartItemId}>- {component.quantity}x {component.name}</p>
+                  <p key={component.name}>- {component.quantity}x {component.name}</p>
               ))}
             </div>
           )}
@@ -82,7 +87,6 @@ const CartItemDisplay = ({ item, allItems }: { item: CartItem, allItems: CartIte
 export function CartSheet({ children }: { children: React.ReactNode }) {
   const { items, cartTotal, cartCount, branchId, isCartOpen, setIsCartOpen } = useCart();
 
-  // Filter out only the components of deals, so they aren't rendered as top-level items.
   const visibleItems = items.filter(item => !item.isDealComponent);
 
   return (

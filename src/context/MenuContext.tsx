@@ -3,7 +3,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
-import { menuItemsWithDeals as initialMenuItems, menuCategories as initialMenuCategories, addons as initialAddons } from '@/lib/data';
+import { menuItems as initialMenuItems, menuCategories as initialMenuCategories, addons as initialAddons } from '@/lib/data';
 import type { MenuItem, MenuCategory, Addon, SubCategory } from '@/lib/types';
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
@@ -25,7 +25,7 @@ interface MenuContextType {
   // Sub Categories
   addSubCategory: (categoryId: string, subCategoryName: string) => void;
   deleteSubCategory: (categoryId: string, subCategoryId: string) => void;
-  // Items
+  // Items (including Deals)
   addItem: (item: MenuItem) => void;
   updateItem: (item: MenuItem) => void;
   deleteItem: (id: string, name: string) => void;
@@ -37,7 +37,7 @@ interface MenuContextType {
 
 const MenuContext = createContext<MenuContextType | undefined>(undefined);
 
-const MENU_STORAGE_KEY = 'cheeziousMenuV2';
+const MENU_STORAGE_KEY = 'cheeziousMenuV3';
 
 const initialData: MenuData = {
     items: initialMenuItems,
@@ -155,17 +155,21 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     setMenu(m => ({ ...m, items: [...m.items, newItem] }));
-    logActivity(`Added menu item: '${newItem.name}'.`, user?.username || 'System', 'Menu');
+    const logMessage = newItem.categoryId === 'C-00001' ? `Added new deal: '${newItem.name}'.` : `Added menu item: '${newItem.name}'.`;
+    logActivity(logMessage, user?.username || 'System', 'Menu');
   };
 
   const updateItem = (item: MenuItem) => {
     setMenu(m => ({ ...m, items: m.items.map(i => i.id === item.id ? item : i) }));
-    logActivity(`Updated menu item: '${item.name}'.`, user?.username || 'System', 'Menu');
+     const logMessage = item.categoryId === 'C-00001' ? `Updated deal: '${item.name}'.` : `Updated menu item: '${item.name}'.`;
+    logActivity(logMessage, user?.username || 'System', 'Menu');
   };
 
   const deleteItem = (id: string, name: string) => {
+    const item = menu.items.find(i => i.id === id);
     setMenu(m => ({ ...m, items: m.items.filter(i => i.id !== id) }));
-    logActivity(`Deleted menu item: '${name}'.`, user?.username || 'System', 'Menu');
+    const logMessage = item?.categoryId === 'C-00001' ? `Deleted deal: '${name}'.` : `Deleted menu item: '${name}'.`;
+    logActivity(logMessage, user?.username || 'System', 'Menu');
   };
 
   const addAddon = (newAddon: Addon) => {

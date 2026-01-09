@@ -3,7 +3,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useSettings } from '@/context/SettingsContext';
-import { useDeals } from '@/context/DealsContext';
+import { useMenu } from '@/context/MenuContext';
 import { Loader, Pizza } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,10 +15,10 @@ import { cn } from '@/lib/utils';
 import { RatingDialog } from '@/components/ui/rating-dialog';
 import Header from '@/components/layout/Header';
 import { useState } from 'react';
-import type { Deal } from '@/lib/types';
+import type { MenuItem } from '@/lib/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 
-function DealConfirmationDialog({ deal, onConfirm, isOpen, onOpenChange }: { deal: Deal | null; onConfirm: () => void; isOpen: boolean; onOpenChange: (open: boolean) => void; }) {
+function DealConfirmationDialog({ deal, onConfirm, isOpen, onOpenChange }: { deal: MenuItem | null; onConfirm: () => void; isOpen: boolean; onOpenChange: (open: boolean) => void; }) {
     if (!deal) return null;
 
     return (
@@ -40,7 +40,7 @@ function DealConfirmationDialog({ deal, onConfirm, isOpen, onOpenChange }: { dea
                     <DialogClose asChild>
                         <Button type="button" variant="outline">Cancel</Button>
                     </DialogClose>
-                    <Button onClick={onConfirm}>Add to Cart</Button>
+                    <Button onClick={onConfirm}>Continue</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -49,16 +49,16 @@ function DealConfirmationDialog({ deal, onConfirm, isOpen, onOpenChange }: { dea
 
 
 function DealsCarousel() {
-  const { deals, isLoading } = useDeals();
+  const { menu, isLoading } = useMenu();
   const { settings } = useSettings();
   const router = useRouter();
-  const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
+  const [selectedDeal, setSelectedDeal] = useState<MenuItem | null>(null);
   const [isDialogOpen, setDialogOpen] = useState(false);
   
-  // Make the component more robust: use the default branch, or fall back to the first available branch.
+  const deals = menu.items.filter(item => item.categoryId === 'C-00001');
   const targetBranchId = settings.defaultBranchId || (settings.branches.length > 0 ? settings.branches[0].id : null);
 
-  const handleDealClick = (deal: Deal) => {
+  const handleDealClick = (deal: MenuItem) => {
     setSelectedDeal(deal);
     setDialogOpen(true);
   };
@@ -68,7 +68,6 @@ function DealsCarousel() {
     
     setDialogOpen(false);
     
-    // Redirect to the branch selection page with the dealId as a query parameter
     router.push(`/branch/${targetBranchId}?dealId=${selectedDeal.id}`);
   };
 
@@ -81,7 +80,6 @@ function DealsCarousel() {
     );
   }
 
-  // Hide the carousel if there are no deals OR no branches configured at all.
   if (deals.length === 0 || !targetBranchId) {
       return null;
   }

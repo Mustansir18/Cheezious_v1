@@ -41,6 +41,10 @@ export type MenuItemVariant = {
   price: number;
 };
 
+export type DealItem = {
+    menuItemId: string;
+    quantity: number;
+};
 
 export type MenuItem = {
   id: string;
@@ -52,13 +56,9 @@ export type MenuItem = {
   imageUrl: string;
   availableAddonIds?: string[];
   variants?: MenuItemVariant[]; // For items with multiple sizes like pizzas
+  dealItems?: DealItem[]; // For bundle items
 };
 
-
-export type DealItem = {
-    menuItemId: string;
-    quantity: number;
-};
 
 export type Deal = {
   id:string;
@@ -136,6 +136,8 @@ export type OrderItem = {
     dealName?: string;
     order?: Order;
     instructions?: string; // Special instructions for this specific item
+    isDealComponent?: boolean; // Is this item part of a deal bundle?
+    parentDealId?: string; // Which order item is the parent deal?
 };
 
 export type PlacedOrder = {
