@@ -33,6 +33,8 @@ export default function MenuPage() {
   const { items: menuItems, categories } = menu;
 
   const orderType = searchParams.get("mode") as OrderType | null;
+  const tableIdFromUrl = searchParams.get("tableId");
+  const floorIdFromUrl = searchParams.get("floorId");
 
   const availableTables = useMemo(() => {
     return settings.tables.filter(t => !settings.occupiedTableIds.includes(t.id));
@@ -62,7 +64,11 @@ export default function MenuPage() {
       setOrderDetails({ branchId: branchId, orderType: mode });
     }
 
-  }, [searchParams, branchId, setOrderDetails, deals, areDealsLoading, router]);
+    if (mode === 'Dine-In' && tableIdFromUrl && floorIdFromUrl) {
+      setTable(tableIdFromUrl, floorIdFromUrl);
+    }
+
+  }, [searchParams, branchId, tableIdFromUrl, floorIdFromUrl, setOrderDetails, setTable]);
 
   const handleTableChange = (newTableId: string) => {
     const table = settings.tables.find(t => t.id === newTableId);
