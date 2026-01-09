@@ -30,11 +30,7 @@ export default function MasterCuttStationPage() {
   }
 
   return (
-    <div className="h-screen w-full flex flex-col p-4 sm:p-6 md:p-8 bg-muted/40">
-      <header className="text-center mb-8 flex-shrink-0">
-        <h1 className="font-headline text-4xl font-bold">CUTT Station (Master)</h1>
-        <p className="text-muted-foreground">A master view of all items for order assembly.</p>
-      </header>
+    <div className="h-full w-full flex flex-col p-4 sm:p-6 md:p-8 bg-muted/40">
        <ScrollArea className="flex-grow">
             <div className="p-4 pt-0">
                 {ordersForKDS.length > 0 ? (

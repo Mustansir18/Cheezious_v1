@@ -6,16 +6,16 @@ import type { Order, OrderItem, KitchenStation, OrderStatus } from '@/lib/types'
 import { useOrders } from '@/context/OrderContext';
 import { Loader, Pizza, CookingPot, Flame, Martini } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useParams } from 'next/navigation';
+import { useParams, notFound } from 'next/navigation';
 import StationOrderCard from '@/components/cashier/StationOrderCard';
 
 const KDS_STATUSES: OrderStatus[] = ['Pending', 'Preparing'];
 
 const stationInfo: Record<KitchenStation, { name: string; icon: React.ElementType }> = {
-    pizza: { name: 'Pizza Station', icon: Pizza },
-    pasta: { name: 'Pasta Station', icon: CookingPot },
-    fried: { name: 'Fried Station', icon: Flame },
-    bar: { name: 'Bar & Desserts', icon: Martini },
+    pizza: { name: 'MAKE Station', icon: Pizza },
+    pasta: { name: 'PASTA Station', icon: CookingPot },
+    fried: { name: 'FRIED Station', icon: Flame },
+    bar: { name: 'BEVERAGES Station', icon: Martini },
 };
 
 export default function IndividualStationPage() {
@@ -46,6 +46,12 @@ export default function IndividualStationPage() {
     const handleItemsPrepared = (orderId: string, itemIds: string[]) => {
         toggleItemPrepared(orderId, itemIds);
     };
+    
+    const stationDetails = stationInfo[stationId];
+    
+    if (!isLoading && !stationDetails) {
+        return notFound();
+    }
 
     if (isLoading) {
         return (
@@ -54,15 +60,9 @@ export default function IndividualStationPage() {
             </div>
         );
     }
-
-    const { name = "Kitchen Station", icon: Icon = Loader } = stationInfo[stationId] || {};
-
+    
     return (
-        <div className="h-screen w-full flex flex-col p-4 sm:p-6 md:p-8 bg-muted/40">
-            <header className="text-center mb-8 flex-shrink-0 flex items-center justify-center gap-4">
-                <Icon className="h-10 w-10 text-primary" />
-                <h1 className="font-headline text-4xl font-bold">{name}</h1>
-            </header>
+        <div className="h-full w-full flex flex-col p-4 sm:p-6 md:p-8 bg-muted/40">
             <ScrollArea className="flex-grow">
                 <div className="p-4 pt-0">
                     {stationOrders.length > 0 ? (
