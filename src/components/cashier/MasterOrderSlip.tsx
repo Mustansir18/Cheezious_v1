@@ -7,16 +7,26 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { formatDistanceToNow } from 'date-fns';
 import { useSettings } from "@/context/SettingsContext";
-import { Utensils, ShoppingBag } from "lucide-react";
+import { Utensils, ShoppingBag, Check, CheckCircle } from "lucide-react";
 import { ScrollArea } from '../ui/scroll-area';
+import { Checkbox } from '../ui/checkbox';
+import { Label } from '../ui/label';
+import { cn } from '@/lib/utils';
 
 interface MasterOrderSlipProps {
     order: Order;
+    onDispatchItem: (orderId: string, itemId: string) => void;
 }
 
-export default function MasterOrderSlip({ order }: MasterOrderSlipProps) {
+export default function MasterOrderSlip({ order, onDispatchItem }: MasterOrderSlipProps) {
     const { settings } = useSettings();
     const table = settings.tables.find(t => t.id === order.tableId);
+
+    const handleDispatchToggle = (itemId: string, isPrepared: boolean, isDispatched: boolean) => {
+        if (isPrepared && !isDispatched) {
+            onDispatchItem(order.id, itemId);
+        }
+    };
 
     return (
         <Card className="break-inside-avoid shadow-lg border-2 border-primary/20">
@@ -43,28 +53,46 @@ export default function MasterOrderSlip({ order }: MasterOrderSlipProps) {
             <CardContent className="p-4 pt-0">
                 <ScrollArea className="h-full max-h-96">
                     <div className="space-y-3 pr-2">
-                        {order.items.map((item, index) => (
-                            <div key={item.id}>
-                                {index > 0 && <Separator className="my-2" />}
-                                <div className="flex justify-between items-start gap-4">
-                                    <div className="font-semibold">
-                                        <p>{item.quantity}x {item.name}</p>
-                                         {item.selectedAddons && item.selectedAddons.length > 0 && (
-                                            <div className="pl-4 text-xs font-normal text-muted-foreground">
-                                                {item.selectedAddons.map(addon => (
-                                                    <p key={addon.name}>+ {addon.quantity}x {addon.name}</p>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="flex-shrink-0">
-                                         <Badge variant="outline" className="h-6 w-6 items-center justify-center rounded-full p-0 font-bold">
-                                            {item.quantity}
-                                        </Badge>
+                        {order.items.map((item, index) => {
+                            const isPrepared = !!item.isPrepared;
+                            const isDispatched = !!item.isDispatched;
+                            const isSelectable = isPrepared && !isDispatched;
+                            return (
+                                <div key={item.id}>
+                                    {index > 0 && <Separator className="my-2" />}
+                                    <div className="flex justify-between items-start gap-2">
+                                        <div className={cn("flex items-start gap-2", !isPrepared && "opacity-50")}>
+                                            <Checkbox
+                                                id={`dispatch-${item.id}`}
+                                                checked={isDispatched}
+                                                disabled={!isSelectable}
+                                                onCheckedChange={() => handleDispatchToggle(item.id, isPrepared, isDispatched)}
+                                                className="mt-1"
+                                            />
+                                            <Label htmlFor={`dispatch-${item.id}`} className={cn("font-semibold", isSelectable && "cursor-pointer")}>
+                                                <p>{item.quantity}x {item.name}</p>
+                                                {item.selectedAddons && item.selectedAddons.length > 0 && (
+                                                    <div className="pl-4 text-xs font-normal text-muted-foreground">
+                                                        {item.selectedAddons.map(addon => (
+                                                            <p key={addon.name}>+ {addon.quantity}x {addon.name}</p>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </Label>
+                                        </div>
+                                        <div className="flex-shrink-0">
+                                            {isDispatched ? (
+                                                <Badge variant="default" className="bg-green-600 hover:bg-green-700">Dispatched</Badge>
+                                            ) : isPrepared ? (
+                                                <Badge variant="outline" className="border-yellow-500 text-yellow-600">Prepared</Badge>
+                                            ) : (
+                                                <Badge variant="secondary">Pending</Badge>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            )
+                        })}
                     </div>
                 </ScrollArea>
             </CardContent>

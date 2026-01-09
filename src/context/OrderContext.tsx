@@ -159,16 +159,11 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
             return item;
           });
 
-          let newStatus = order.status;
-          const allItemsPrepared = newItems.every(i => i.isPrepared);
+          // The status is determined by the station and assembly process,
+          // so we don't automatically change the order status here anymore.
+          // The CUTT station will determine the final 'Ready' status.
 
-          if (allItemsPrepared) {
-            newStatus = 'Ready';
-          } else if (newItems.some(i => i.isPrepared)) {
-            newStatus = 'Preparing';
-          }
-
-          return { ...order, items: newItems, status: newStatus };
+          return { ...order, items: newItems };
         }
         return order;
       });

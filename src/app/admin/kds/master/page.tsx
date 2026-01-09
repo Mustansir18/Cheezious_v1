@@ -12,11 +12,11 @@ import MasterOrderSlip from '@/components/cashier/MasterOrderSlip';
 const KDS_STATUSES: OrderStatus[] = ['Pending', 'Preparing', 'Partial Ready', 'Ready'];
 
 export default function MasterCuttStationPage() {
-  const { orders, isLoading } = useOrders();
+  const { orders, isLoading, dispatchItem } = useOrders();
 
   const ordersForKDS = useMemo(() => {
     return orders
-        .filter((order) => KDS_STATUSES.includes(order.status))
+        .filter((order) => KDS_STATUSES.includes(order.status) && order.status !== 'Ready')
         .sort((a,b) => new Date(a.orderDate).getTime() - new Date(b.orderDate).getTime());
   }, [orders]);
 
@@ -36,7 +36,7 @@ export default function MasterCuttStationPage() {
                 {ordersForKDS.length > 0 ? (
                 <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 2xl:columns-5 gap-6 space-y-6">
                     {ordersForKDS.map((order) => (
-                        <MasterOrderSlip key={order.id} order={order} />
+                        <MasterOrderSlip key={order.id} order={order} onDispatchItem={dispatchItem} />
                     ))}
                 </div>
                 ) : (
