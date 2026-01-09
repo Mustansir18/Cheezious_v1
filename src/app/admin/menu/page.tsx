@@ -31,6 +31,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { exportListDataAs } from '@/lib/exporter';
 import { useSettings } from '@/context/SettingsContext';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 
 async function handleImageUpload(file: File) {
@@ -241,6 +242,14 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
   }
   
   const handleAddAddon = () => {
+    if (!newAddonId || !newAddonName) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Add-on Code and Name are required.' });
+        return;
+    }
+     if (menu.addons.some(a => a.id === newAddonId)) {
+      toast({ variant: 'destructive', title: 'Error', description: `An add-on with the code '${newAddonId}' already exists.` });
+      return;
+    }
     addNewAddon({ id: newAddonId, name: newAddonName, price: newAddonPrice });
     // Also select the newly added addon
     setSelectedAddonIds(prev => [...prev, newAddonId]);
@@ -352,9 +361,9 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
              <div className="mt-4 p-4 border rounded-lg bg-muted/50 space-y-2">
                 <p className="text-sm font-medium">Create New Add-on</p>
                 <div className="grid grid-cols-3 gap-2">
-                    <Input placeholder="Code (e.g. A-01)" value={newAddonId} onChange={e => setNewAddonId(e.target.value)} required />
-                    <Input placeholder="Name" value={newAddonName} onChange={e => setNewAddonName(e.target.value)} required />
-                    <Input type="number" placeholder="Price" value={newAddonPrice} onChange={e => setNewAddonPrice(Number(e.target.value))} required />
+                    <Input placeholder="Code (e.g. A-01)" value={newAddonId} onChange={e => setNewAddonId(e.target.value)} />
+                    <Input placeholder="Name" value={newAddonName} onChange={e => setNewAddonName(e.target.value)} />
+                    <Input type="number" placeholder="Price" value={newAddonPrice} onChange={e => setNewAddonPrice(Number(e.target.value))} />
                 </div>
                 <Button type="button" size="sm" className="w-full" onClick={handleAddAddon}>Add to Library & Select</Button>
             </div>
@@ -379,12 +388,18 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
 
 // Addon Form
 function AddonForm({ addon, onSave }: { addon?: Addon; onSave: (addon: Omit<Addon, 'id'> | Addon, id?: string) => void; }) {
+    const { menu } = useMenu();
+    const { toast } = useToast();
     const [id, setId] = useState(addon?.id || '');
     const [name, setName] = useState(addon?.name || '');
     const [price, setPrice] = useState(addon?.price || 0);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        if (!addon && menu.addons.some(a => a.id === id)) {
+            toast({ variant: 'destructive', title: 'Error', description: `An add-on with the code '${id}' already exists.` });
+            return;
+        }
         const data = { name, price };
         if (addon) {
           onSave({ ...addon, ...data });
@@ -496,112 +511,125 @@ export default function MenuManagementPage() {
   if (isLoading) return <div>Loading menu...</div>;
 
   return (
-    <div className="container mx-auto p-4 lg:p-8 space-y-8">
-        <header>
+    <div className="container mx-auto p-4 lg:p-8">
+        <header className="mb-8">
             <h1 className="font-headline text-4xl font-bold">Menu Management</h1>
             <p className="text-muted-foreground">Manage categories, items, and add-ons for your restaurant menu.</p>
         </header>
 
-        {/* Categories */}
-        <Card>
-            <CardHeader className="flex-row justify-between items-center">
-                <div><CardTitle>Menu Categories</CardTitle><CardDescription>High-level groups for your menu items.</CardDescription></div>
-                <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => handleExport('categories', 'csv')}><FileDown className="mr-2 h-4 w-4" /> CSV</Button>
-                    <Button variant="outline" onClick={() => handleExport('categories', 'pdf')}><FileText className="mr-2 h-4 w-4" /> PDF</Button>
-                    <Dialog open={isCategoryOpen} onOpenChange={setCategoryOpen}><DialogTrigger asChild><Button onClick={() => { setEditingCategory(undefined); setCategoryOpen(true); }}><PlusCircle className="mr-2 h-4 w-4" /> Add Category</Button></DialogTrigger>
-                        <DialogContent className="max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{editingCategory ? 'Edit' : 'Add'} Category</DialogTitle></DialogHeader><CategoryForm category={editingCategory} onSave={handleSaveCategory}/></DialogContent>
-                    </Dialog>
-                </div>
-            </CardHeader>
-            <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Code</TableHead><TableHead>Sub-Categories</TableHead><TableHead>Station</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
-                <TableBody>{menu.categories.map(cat => (<TableRow key={cat.id}><TableCell>{cat.name}</TableCell><TableCell className="font-mono text-xs">{cat.id}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                        {cat.subCategories?.map(sc => sc.name).join(', ') || 'N/A'}
-                    </TableCell>
-                    <TableCell>
-                        {cat.stationId ? (
-                             <span className="flex items-center gap-1.5 capitalize">
-                                <ChefHat className="h-4 w-4 text-muted-foreground" />
-                                {cat.stationId}
-                             </span>
-                        ) : 'N/A'}
-                    </TableCell>
-                    <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" onClick={() => { setEditingCategory(cat); setCategoryOpen(true); }}><Edit className="h-4 w-4" /></Button>
-                        <DeleteConfirmationDialog
-                            title={`Delete Category "${cat.name}"?`}
-                            description={<>This will delete the category and all associated items. This action is permanent.</>}
-                            onConfirm={() => deleteCategory(cat.id, cat.name)}
-                        />
-                    </TableCell></TableRow>))}
-                </TableBody></Table>
-            </CardContent>
-        </Card>
-
-        {/* Addons */}
-        <Card>
-            <CardHeader className="flex-row justify-between items-center">
-                <div><CardTitle>Add-ons Library</CardTitle><CardDescription>All available add-ons for your menu items.</CardDescription></div>
-                 <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => handleExport('addons', 'csv')}><FileDown className="mr-2 h-4 w-4" /> CSV</Button>
-                    <Button variant="outline" onClick={() => handleExport('addons', 'pdf')}><FileText className="mr-2 h-4 w-4" /> PDF</Button>
-                    <Dialog open={isAddonOpen} onOpenChange={setAddonOpen}><DialogTrigger asChild><Button onClick={() => { setEditingAddon(undefined); setAddonOpen(true); }}><PlusCircle className="mr-2 h-4 w-4" /> Add Add-on</Button></DialogTrigger>
-                        <DialogContent><DialogHeader><DialogTitle>{editingAddon ? 'Edit' : 'Add'} Add-on</DialogTitle></DialogHeader><AddonForm addon={editingAddon} onSave={handleSaveAddon}/></DialogContent>
-                    </Dialog>
-                </div>
-            </CardHeader>
-            <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Code</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
-                <TableBody>{menu.addons.map(addon => (<TableRow key={addon.id}><TableCell>{addon.name}</TableCell><TableCell className="font-mono text-xs">{addon.id}</TableCell><TableCell className="text-right">RS {Math.round(addon.price)}</TableCell>
-                    <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" onClick={() => { setEditingAddon(addon); setAddonOpen(true); }}><Edit className="h-4 w-4" /></Button>
-                        <DeleteConfirmationDialog
-                            title={`Delete Add-on "${addon.name}"?`}
-                            description={<>This will permanently delete the add-on <strong>{addon.name}</strong>.</>}
-                            onConfirm={() => deleteAddon(addon.id, addon.name)}
-                        />
-                    </TableCell></TableRow>))}
-                </TableBody></Table>
-            </CardContent>
-        </Card>
-
-        {/* Items */}
-        <Card>
-            <CardHeader className="flex-row justify-between items-center">
-                <div><CardTitle>Menu Items</CardTitle><CardDescription>The main dishes and products you offer.</CardDescription></div>
-                <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => handleExport('items', 'csv')}><FileDown className="mr-2 h-4 w-4" /> CSV</Button>
-                    <Button variant="outline" onClick={() => handleExport('items', 'pdf')}><FileText className="mr-2 h-4 w-4" /> PDF</Button>
-                    <Dialog open={isItemOpen} onOpenChange={setItemOpen}><DialogTrigger asChild><Button onClick={() => { setEditingItem(undefined); setItemOpen(true); }}><PlusCircle className="mr-2 h-4 w-4" /> Add Item</Button></DialogTrigger>
-                        <DialogContent className="max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{editingItem ? 'Edit' : 'Add'} Item</DialogTitle></DialogHeader><ItemForm item={editingItem} onSave={handleSaveItem}/></DialogContent>
-                    </Dialog>
-                </div>
-            </CardHeader>
-            <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Code</TableHead><TableHead>Category</TableHead><TableHead>Sub-Category</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
-                <TableBody>{menu.items.map(item => {
-                    const category = menu.categories.find(c => c.id === item.categoryId);
-                    const subCategory = category?.subCategories?.find(sc => sc.id === item.subCategoryId);
-                    return (
-                        <TableRow key={item.id}>
-                            <TableCell>{item.name}</TableCell>
-                            <TableCell className="font-mono text-xs">{item.id}</TableCell>
-                            <TableCell>{category?.name || 'N/A'}</TableCell>
-                            <TableCell>{subCategory?.name || 'N/A'}</TableCell>
-                            <TableCell className="text-right">RS {Math.round(item.price)}</TableCell>
-                            <TableCell className="text-right">
-                                <Button variant="ghost" size="icon" onClick={() => { setEditingItem(item); setItemOpen(true); }}><Edit className="h-4 w-4" /></Button>
-                                <DeleteConfirmationDialog
-                                    title={`Delete Item "${item.name}"?`}
-                                    description={<>This will permanently delete the item <strong>{item.name}</strong>.</>}
-                                    onConfirm={() => deleteItem(item.id, item.name)}
-                                />
+        <Tabs defaultValue="items" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="items">Menu Items</TabsTrigger>
+                <TabsTrigger value="categories">Categories</TabsTrigger>
+                <TabsTrigger value="addons">Add-ons</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="categories" className="mt-6">
+                 <Card>
+                    <CardHeader className="flex-row justify-between items-center">
+                        <div><CardTitle>Menu Categories</CardTitle><CardDescription>High-level groups for your menu items.</CardDescription></div>
+                        <div className="flex gap-2">
+                            <Button variant="outline" onClick={() => handleExport('categories', 'csv')}><FileDown className="mr-2 h-4 w-4" /> CSV</Button>
+                            <Button variant="outline" onClick={() => handleExport('categories', 'pdf')}><FileText className="mr-2 h-4 w-4" /> PDF</Button>
+                            <Dialog open={isCategoryOpen} onOpenChange={setCategoryOpen}><DialogTrigger asChild><Button onClick={() => { setEditingCategory(undefined); setCategoryOpen(true); }}><PlusCircle className="mr-2 h-4 w-4" /> Add Category</Button></DialogTrigger>
+                                <DialogContent className="max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{editingCategory ? 'Edit' : 'Add'} Category</DialogTitle></DialogHeader><CategoryForm category={editingCategory} onSave={handleSaveCategory}/></DialogContent>
+                            </Dialog>
+                        </div>
+                    </CardHeader>
+                    <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Code</TableHead><TableHead>Sub-Categories</TableHead><TableHead>Station</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
+                        <TableBody>{menu.categories.map(cat => (<TableRow key={cat.id}><TableCell>{cat.name}</TableCell><TableCell className="font-mono text-xs">{cat.id}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground">
+                                {cat.subCategories?.map(sc => sc.name).join(', ') || 'N/A'}
                             </TableCell>
-                        </TableRow>
-                    )
-                })}
-                </TableBody></Table>
-            </CardContent>
-        </Card>
+                            <TableCell>
+                                {cat.stationId ? (
+                                     <span className="flex items-center gap-1.5 capitalize">
+                                        <ChefHat className="h-4 w-4 text-muted-foreground" />
+                                        {cat.stationId}
+                                     </span>
+                                ) : 'N/A'}
+                            </TableCell>
+                            <TableCell className="text-right">
+                                <Button variant="ghost" size="icon" onClick={() => { setEditingCategory(cat); setCategoryOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                                <DeleteConfirmationDialog
+                                    title={`Delete Category "${cat.name}"?`}
+                                    description={<>This will delete the category and all associated items. This action is permanent.</>}
+                                    onConfirm={() => deleteCategory(cat.id, cat.name)}
+                                />
+                            </TableCell></TableRow>))}
+                        </TableBody></Table>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+
+            <TabsContent value="addons" className="mt-6">
+                <Card>
+                    <CardHeader className="flex-row justify-between items-center">
+                        <div><CardTitle>Add-ons Library</CardTitle><CardDescription>All available add-ons for your menu items.</CardDescription></div>
+                         <div className="flex gap-2">
+                            <Button variant="outline" onClick={() => handleExport('addons', 'csv')}><FileDown className="mr-2 h-4 w-4" /> CSV</Button>
+                            <Button variant="outline" onClick={() => handleExport('addons', 'pdf')}><FileText className="mr-2 h-4 w-4" /> PDF</Button>
+                            <Dialog open={isAddonOpen} onOpenChange={setAddonOpen}><DialogTrigger asChild><Button onClick={() => { setEditingAddon(undefined); setAddonOpen(true); }}><PlusCircle className="mr-2 h-4 w-4" /> Add Add-on</Button></DialogTrigger>
+                                <DialogContent><DialogHeader><DialogTitle>{editingAddon ? 'Edit' : 'Add'} Add-on</DialogTitle></DialogHeader><AddonForm addon={editingAddon} onSave={handleSaveAddon}/></DialogContent>
+                            </Dialog>
+                        </div>
+                    </CardHeader>
+                    <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Code</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
+                        <TableBody>{menu.addons.map(addon => (<TableRow key={addon.id}><TableCell>{addon.name}</TableCell><TableCell className="font-mono text-xs">{addon.id}</TableCell><TableCell className="text-right">RS {Math.round(addon.price)}</TableCell>
+                            <TableCell className="text-right">
+                                <Button variant="ghost" size="icon" onClick={() => { setEditingAddon(addon); setAddonOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                                <DeleteConfirmationDialog
+                                    title={`Delete Add-on "${addon.name}"?`}
+                                    description={<>This will permanently delete the add-on <strong>{addon.name}</strong>.</>}
+                                    onConfirm={() => deleteAddon(addon.id, addon.name)}
+                                />
+                            </TableCell></TableRow>))}
+                        </TableBody></Table>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+
+            <TabsContent value="items" className="mt-6">
+                <Card>
+                    <CardHeader className="flex-row justify-between items-center">
+                        <div><CardTitle>Menu Items</CardTitle><CardDescription>The main dishes and products you offer.</CardDescription></div>
+                        <div className="flex gap-2">
+                            <Button variant="outline" onClick={() => handleExport('items', 'csv')}><FileDown className="mr-2 h-4 w-4" /> CSV</Button>
+                            <Button variant="outline" onClick={() => handleExport('items', 'pdf')}><FileText className="mr-2 h-4 w-4" /> PDF</Button>
+                            <Dialog open={isItemOpen} onOpenChange={setItemOpen}><DialogTrigger asChild><Button onClick={() => { setEditingItem(undefined); setItemOpen(true); }}><PlusCircle className="mr-2 h-4 w-4" /> Add Item</Button></DialogTrigger>
+                                <DialogContent className="max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{editingItem ? 'Edit' : 'Add'} Item</DialogTitle></DialogHeader><ItemForm item={editingItem} onSave={handleSaveItem}/></DialogContent>
+                            </Dialog>
+                        </div>
+                    </CardHeader>
+                    <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Code</TableHead><TableHead>Category</TableHead><TableHead>Sub-Category</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
+                        <TableBody>{menu.items.map(item => {
+                            const category = menu.categories.find(c => c.id === item.categoryId);
+                            const subCategory = category?.subCategories?.find(sc => sc.id === item.subCategoryId);
+                            return (
+                                <TableRow key={item.id}>
+                                    <TableCell>{item.name}</TableCell>
+                                    <TableCell className="font-mono text-xs">{item.id}</TableCell>
+                                    <TableCell>{category?.name || 'N/A'}</TableCell>
+                                    <TableCell>{subCategory?.name || 'N/A'}</TableCell>
+                                    <TableCell className="text-right">RS {Math.round(item.price)}</TableCell>
+                                    <TableCell className="text-right">
+                                        <Button variant="ghost" size="icon" onClick={() => { setEditingItem(item); setItemOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                                        <DeleteConfirmationDialog
+                                            title={`Delete Item "${item.name}"?`}
+                                            description={<>This will permanently delete the item <strong>{item.name}</strong>.</>}
+                                            onConfirm={() => deleteItem(item.id, item.name)}
+                                        />
+                                    </TableCell>
+                                </TableRow>
+                            )
+                        })}
+                        </TableBody></Table>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+        </Tabs>
     </div>
   );
 }
+
+    
