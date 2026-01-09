@@ -41,11 +41,11 @@ const CartItemDisplay = ({ item, allItems }: { item: CartItem, allItems: CartIte
           data-ai-hint="food item"
         />
         <div className="flex-grow space-y-1">
-          <p className="font-semibold">{item.name}</p>
+          <p className="font-semibold">{item.quantity}x {item.name}</p>
           
           {/* List deal components */}
           {isDeal && dealComponents.length > 0 && (
-            <div className="pl-2 text-xs text-muted-foreground">
+            <div className="pl-4 text-xs text-muted-foreground border-l-2 ml-2">
               {dealComponents.map(component => (
                   <p key={component.cartItemId}>- {component.name}</p>
               ))}
@@ -54,14 +54,14 @@ const CartItemDisplay = ({ item, allItems }: { item: CartItem, allItems: CartIte
 
           {/* List addons for non-deal items */}
           {!isDeal && item.selectedAddons.length > 0 && (
-            <div className="text-sm text-muted-foreground">
+            <div className="pl-4 text-sm text-muted-foreground border-l-2 ml-2 space-y-0.5">
               {item.selectedAddons.map(addon => (
                 <p key={addon.id}>+ {addon.quantity}x {addon.name}</p>
               ))}
             </div>
           )}
           
-          <p className="text-sm">
+          <p className="text-sm pt-1">
             RS {Math.round(item.price)}
           </p>
         </div>
