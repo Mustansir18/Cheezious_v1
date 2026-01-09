@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
-import type { CartItem, MenuItem, OrderType, Addon, Deal, DealItem } from '@/lib/types';
+import type { CartItem, MenuItem, OrderType, Addon, Deal } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useMenu } from './MenuContext';
 
@@ -22,7 +22,7 @@ interface CartContextType {
   setIsCartOpen: React.Dispatch<React.SetStateAction<boolean>>;
   addItem: (options: AddToCartOptions) => void;
   addDeal: (deal: Deal) => void;
-  updateQuantity: (cartItemId: string, quantity: number) => void;
+  updateQuantity: (cartItemId: string, change: number) => void;
   clearCart: () => void;
   closeCart: () => void;
   setOrderDetails: (details: { branchId: string; orderType: OrderType; }) => void;
@@ -64,7 +64,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       const cartState = JSON.stringify({ items, branchId, orderType, floorId, tableId });
       sessionStorage.setItem('cheeziousCart', cartState);
     } catch (error) {
-      console.error("Could not save cart to session storage", error);
+        console.error("Could not save cart to session storage", error);
     }
   }, [items, branchId, orderType, floorId, tableId]);
 
@@ -95,26 +95,36 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const addonPrice = selectedAddons.reduce((sum, { addon, quantity }) => sum + (addon.price * quantity), 0);
     const finalPrice = itemToAdd.price + addonPrice;
 
-    // Create a stable, unique key for this specific variation of the item.
-    // This key is based on the item's ID and a sorted list of its addons and their quantities.
-    const uniqueVariationId = selectedAddons.length > 0
-      ? `${itemToAdd.id}-${selectedAddons.map(({ addon, quantity }) => `${addon.id}x${quantity}`).sort().join('|')}`
-      : itemToAdd.id;
+    // A consistent key for a specific variation of an item.
+    const getVariationId = (addons: { addon: Addon; quantity: number }[]) => {
+      if (addons.length === 0) return 'plain';
+      // Sort by addon id to ensure consistency regardless of selection order
+      return addons
+        .map(({ addon, quantity }) => `${addon.id}x${quantity}`)
+        .sort()
+        .join('|');
+    };
+    
+    const newVariationId = getVariationId(selectedAddons);
 
     setItems((prevItems) => {
-      const existingItem = prevItems.find((item) => item.uniqueVariationId === uniqueVariationId);
+      const existingItem = prevItems.find(
+        (item) => item.id === itemToAdd.id && item.uniqueVariationId === newVariationId
+      );
 
       if (existingItem) {
         // If the exact same variation exists, just increase its quantity.
         return prevItems.map((item) =>
-          item.cartItemId === existingItem.cartItemId ? { ...item, quantity: item.quantity + itemQuantity } : item
+          item.cartItemId === existingItem.cartItemId
+            ? { ...item, quantity: item.quantity + itemQuantity }
+            : item
         );
       } else {
         // If the variation doesn't exist, create a new cart item for it.
         const newCartItem: CartItem = {
           ...itemToAdd,
           cartItemId: crypto.randomUUID(), // Each cart item instance gets a unique ID
-          uniqueVariationId: uniqueVariationId,
+          uniqueVariationId: newVariationId,
           price: finalPrice,
           basePrice: itemToAdd.price,
           selectedAddons: selectedAddons.map(({ addon, quantity }) => ({ ...addon, quantity })),
@@ -133,20 +143,19 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const addDeal = (deal: Deal) => {
     const dealCartId = `deal-${deal.id}-${crypto.randomUUID()}`;
     
-    // Find the master menu item that represents this deal
     const dealMenuItem = menu.items.find(i => i.id === deal.id);
     if (!dealMenuItem) return;
 
     const dealCartItem: CartItem = {
-      ...dealMenuItem, // Use properties from the menu item (like description, image etc)
-      cartItemId: dealCartId, // Unique instance ID for this deal in the cart
-      uniqueVariationId: dealCartId, // Deals are always unique variations
+      ...dealMenuItem,
+      cartItemId: dealCartId,
+      uniqueVariationId: dealCartId,
       price: deal.price,
       basePrice: deal.price,
-      quantity: 1, // Deals are added one at a time
+      quantity: 1,
       selectedAddons: [],
-      isDealComponent: false, // This is the parent deal item
-      dealName: deal.name, // Store the deal name explicitly
+      isDealComponent: false,
+      dealName: deal.name,
     };
 
     setItems(prev => [...prev, dealCartItem]);
@@ -157,42 +166,27 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const updateQuantity = (cartItemId: string, quantity: number) => {
+  const updateQuantity = (cartItemId: string, change: number) => {
     setItems((prevItems) => {
       const itemToUpdate = prevItems.find(item => item.cartItemId === cartItemId);
       
       if (!itemToUpdate) return prevItems;
 
-      // Special handling for parent deal items
-      if (itemToUpdate.categoryId === 'C-00001' && !itemToUpdate.isDealComponent) {
-          // If trying to reduce quantity to 0 or less, remove the deal and its components
-          if (quantity <= 0) {
-              return prevItems.filter(item => item.cartItemId !== cartItemId && item.parentDealId !== cartItemId);
-          }
-          // Otherwise, just update the quantity of the parent deal item
-          return prevItems.map(item =>
-              item.cartItemId === cartItemId ? { ...item, quantity } : item
-          );
-      }
+      const newQuantity = itemToUpdate.quantity + change;
 
-      if (itemToUpdate.isDealComponent) {
-          toast({
-              variant: 'destructive',
-              title: 'Cannot Modify Deal Item',
-              description: 'Please remove the entire deal to change items.'
-          });
-          return prevItems;
-      }
-      
-      if (quantity <= 0) {
+      if (newQuantity <= 0) {
+        // Filter out the item itself and any components that belong to it if it's a deal
+        if (itemToUpdate.categoryId === 'deals') {
+            return prevItems.filter(i => i.cartItemId !== cartItemId && i.parentDealId !== cartItemId);
+        }
         return prevItems.filter((item) => item.cartItemId !== cartItemId);
       }
+
       return prevItems.map((item) =>
-        item.cartItemId === cartItemId ? { ...item, quantity } : item
+        item.cartItemId === cartItemId ? { ...item, quantity: newQuantity } : item
       );
     });
   };
-
 
   const clearCart = () => {
     setItems([]);
@@ -205,23 +199,19 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const cartTotal = useMemo(() => {
-    // We only sum up items that are NOT deal components, as the parent deal holds the price.
+    // Only include items that are not components of a deal in the final total
     return items.reduce((total, item) => {
-      if (item.isDealComponent) {
-          return total;
-      }
-      return total + item.price * item.quantity;
+        if (!item.isDealComponent) {
+            return total + item.price * item.quantity;
+        }
+        return total;
     }, 0);
   }, [items]);
 
   const cartCount = useMemo(() => {
-    // Only count parent items (not components of a deal)
-    return items.reduce((count, item) => {
-        if (item.isDealComponent) return count; 
-        return count + item.quantity;
-    }, 0);
+     // Exclude deal components from the visible cart count
+    return items.filter(item => !item.isDealComponent).reduce((count, item) => count + item.quantity, 0);
   }, [items]);
-
 
   return (
     <CartContext.Provider
