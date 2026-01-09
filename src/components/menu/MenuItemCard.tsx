@@ -13,7 +13,6 @@ import { Label } from "@/components/ui/label";
 import { PlusCircle, Plus, Minus, Trash2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { UpdateQuantity } from "../cart/UpdateQuantity";
-import { Separator } from "../ui/separator";
 
 const FALLBACK_IMAGE_URL = "https://picsum.photos/seed/placeholder/400/300";
 
@@ -57,7 +56,6 @@ function AddToCartDialog({ item, onAddToCart, triggerButton }: { item: MenuItem;
         const addonsArray = Array.from(selectedAddons.values());
         onAddToCart({ selectedAddons: addonsArray, itemQuantity });
         setIsOpen(false);
-        // Reset state for next time
         setSelectedAddons(new Map());
         setItemQuantity(1);
     };
@@ -77,7 +75,6 @@ function AddToCartDialog({ item, onAddToCart, triggerButton }: { item: MenuItem;
                 </DialogHeader>
                 
                 <div className="flex-grow overflow-y-auto pr-2 space-y-6">
-                    {/* Main Item Quantity */}
                      <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                         <Label className="font-semibold text-lg">Quantity</Label>
                         <div className="flex items-center gap-2">
@@ -91,7 +88,6 @@ function AddToCartDialog({ item, onAddToCart, triggerButton }: { item: MenuItem;
                         </div>
                     </div>
                     
-                    {/* Add-ons */}
                     {availableAddons.length > 0 && (
                         <div>
                             <h4 className="font-semibold mb-2">Available Add-ons</h4>
@@ -157,7 +153,6 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
   };
   
   const variationsInCart = useMemo(() => {
-    // Find all instances of this item in the cart, which represent different variations
     return cartItems.filter(cartItem => cartItem.id === item.id);
   }, [cartItems, item.id]);
 
@@ -182,16 +177,25 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
         <CardDescription className="mt-2 flex-grow">{item.description}</CardDescription>
       </CardContent>
       <CardFooter className="flex flex-col items-stretch gap-4 p-4 pt-0">
-        <div className="flex items-center justify-between">
-            <p className="text-xl font-bold text-primary">RS {Math.round(item.price)}</p>
-            {!hasAddons && variationsInCart.length === 0 && (
+        <p className="text-xl font-bold text-primary">RS {Math.round(item.price)}</p>
+        
+        {variationsInCart.length === 0 ? (
+            hasAddons ? (
+                <AddToCartDialog 
+                    item={item} 
+                    onAddToCart={handleAddToCart}
+                    triggerButton={
+                        <Button>
+                            <PlusCircle className="mr-2 h-5 w-5" /> Customize & Add
+                        </Button>
+                    }
+                />
+            ) : (
                  <Button onClick={() => handleAddToCart({ selectedAddons: [], itemQuantity: 1 })} className="bg-accent text-accent-foreground hover:bg-accent/90">
                     <PlusCircle className="mr-2 h-5 w-5" /> Add
                 </Button>
-            )}
-        </div>
-        
-        {variationsInCart.length > 0 && (
+            )
+        ) : (
             <div className="space-y-3">
                 {variationsInCart.map((cartItem) => (
                     <div key={cartItem.cartItemId} className="p-3 rounded-md bg-muted/50">
@@ -210,20 +214,19 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
                         </div>
                     </div>
                 ))}
+                 {hasAddons && (
+                    <AddToCartDialog 
+                        item={item} 
+                        onAddToCart={handleAddToCart}
+                        triggerButton={
+                            <Button variant="secondary" className="w-full">
+                                <PlusCircle className="mr-2 h-5 w-5" />
+                                Add Another Variation
+                            </Button>
+                        }
+                    />
+                )}
             </div>
-        )}
-
-        {hasAddons && (
-            <AddToCartDialog 
-                item={item} 
-                onAddToCart={handleAddToCart}
-                triggerButton={
-                    <Button variant={variationsInCart.length > 0 ? "secondary" : "default"}>
-                        <PlusCircle className="mr-2 h-5 w-5" />
-                        {variationsInCart.length > 0 ? 'Add Another Variation' : 'Customize & Add'}
-                    </Button>
-                }
-            />
         )}
       </CardFooter>
     </Card>
