@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useSearchParams, useParams, useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import type { OrderType, MenuCategory } from "@/lib/types";
@@ -36,7 +36,7 @@ export default function MenuPage() {
 
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const [activeSubCategoryId, setActiveSubCategoryId] = useState<string | null>(null);
-  const [dealProcessed, setDealProcessed] = useState(false);
+  const dealProcessedRef = useRef(false);
   
   const activeCategory = useMemo(() => categories.find(c => c.id === activeCategoryId), [categories, activeCategoryId]);
 
@@ -68,12 +68,12 @@ export default function MenuPage() {
   // Effect to add deal to cart
   useEffect(() => {
     // Only run if a dealId exists, menu is loaded, and the deal hasn't been processed yet
-    if (dealId && !isMenuLoading && !dealProcessed) {
+    if (dealId && !isMenuLoading && !dealProcessedRef.current) {
       const dealItem = menuItems.find(item => item.id === dealId);
       
       if (dealItem) {
-        // Mark as processed immediately to prevent re-runs
-        setDealProcessed(true);
+        // Mark as processed immediately to prevent re-runs from Strict Mode
+        dealProcessedRef.current = true;
 
         addItem({
           item: dealItem,
@@ -88,7 +88,7 @@ export default function MenuPage() {
         router.replace(`${window.location.pathname}?${newParams.toString()}`, { scroll: false });
       }
     }
-  }, [dealId, isMenuLoading, menuItems, addItem, router, searchParams, dealProcessed]);
+  }, [dealId, isMenuLoading, menuItems, addItem, router, searchParams]);
 
 
   const handleCategoryChange = (categoryId: string) => {
