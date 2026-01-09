@@ -36,10 +36,6 @@ export default function MenuPage() {
   const tableIdFromUrl = searchParams.get("tableId");
   const floorIdFromUrl = searchParams.get("floorId");
 
-  const availableTables = useMemo(() => {
-    return settings.tables.filter(t => !settings.occupiedTableIds.includes(t.id));
-  }, [settings.tables, settings.occupiedTableIds]);
-
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const [activeSubCategoryId, setActiveSubCategoryId] = useState<string | null>(null);
   
@@ -70,17 +66,12 @@ export default function MenuPage() {
 
   }, [searchParams, branchId, tableIdFromUrl, floorIdFromUrl, setOrderDetails, setTable]);
 
-  const handleTableChange = (newTableId: string) => {
-    const table = settings.tables.find(t => t.id === newTableId);
-    if(table) {
-      setTable(table.id, table.floorId);
-    }
-  }
 
   const handleCategoryChange = (categoryId: string) => {
     const newCategory = categories.find(c => c.id === categoryId);
     if (newCategory) {
         setActiveCategoryId(newCategory.id);
+        // This is the fix: When changing main category, also set the sub-category
         setActiveSubCategoryId(newCategory.subCategories?.[0]?.id || null);
     }
   };
