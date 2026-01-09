@@ -73,6 +73,7 @@ export type CartItem = Omit<MenuItem, 'price' | 'availableAddonIds'> & {
   isDealComponent?: boolean; // Flag to identify items added as part of a deal
   parentDealId?: string; // ID of the parent deal item in the cart
   dealName?: string;
+  instructions?: string; // Special instructions for this specific cart item
 };
 
 
@@ -91,7 +92,7 @@ export type Order = {
     totalAmount: number;
     items: OrderItem[];
     paymentMethod: string;
-    instructions?: string;
+    instructions?: string; // Overall order instructions
     // New fields for dine-in orders
     floorId?: string;
     tableId?: string;
@@ -124,6 +125,7 @@ export type OrderItem = {
     isDispatched?: boolean; // For Dispatch station tracking
     dealName?: string;
     order?: Order;
+    instructions?: string; // Special instructions for this specific item
 };
 
 export type PlacedOrder = {

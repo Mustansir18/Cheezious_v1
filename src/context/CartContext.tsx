@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
@@ -11,6 +12,7 @@ interface AddToCartOptions {
     item: MenuItem;
     selectedAddons?: { addon: Addon; quantity: number }[];
     itemQuantity: number;
+    instructions: string;
 }
 interface CartContextType {
   items: CartItem[];
@@ -64,7 +66,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       const cartState = JSON.stringify({ items, branchId, orderType, floorId, tableId });
       sessionStorage.setItem('cheeziousCart', cartState);
     } catch (error) {
-        console.error("Could not save cart to session storage", error);
+      console.error("Could not save cart to session storage", error);
     }
   }, [items, branchId, orderType, floorId, tableId]);
 
@@ -91,17 +93,17 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setFloorId(newFloorId);
   }
 
-  const addItem = ({ item: itemToAdd, selectedAddons = [], itemQuantity }: AddToCartOptions) => {
-    // Generate a consistent ID for the item variation based on addons
-    const getVariationId = (addons: { addon: Addon; quantity: number }[]) => {
-      if (addons.length === 0) return 'no-addons';
-      return addons
-        .map(a => `${a.addon.id}x${a.quantity}`)
-        .sort()
-        .join(',');
+  const addItem = ({ item: itemToAdd, selectedAddons = [], itemQuantity, instructions }: AddToCartOptions) => {
+    // Generate a consistent ID for the item variation based on addons and instructions
+    const getVariationId = (addons: { addon: Addon; quantity: number }[], instr: string) => {
+      const addonString = addons.length > 0 
+        ? addons.map(a => `${a.addon.id}x${a.quantity}`).sort().join(',')
+        : 'no-addons';
+      const instructionString = instr.trim().toLowerCase();
+      return `${addonString}|${instructionString}`;
     };
     
-    const variationId = getVariationId(selectedAddons);
+    const variationId = getVariationId(selectedAddons, instructions);
 
     const existingItem = items.find(
       (item) => item.id === itemToAdd.id && item.uniqueVariationId === variationId
@@ -123,6 +125,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         basePrice: itemToAdd.price,
         selectedAddons: selectedAddons.map(({ addon, quantity }) => ({ ...addon, quantity })),
         quantity: itemQuantity,
+        instructions: instructions.trim() || undefined,
       };
       setItems((prevItems) => [...prevItems, newCartItem]);
     }

@@ -87,6 +87,7 @@ export default function OrderConfirmationPage() {
             stationId: category?.stationId,
             isPrepared: false,
             dealName: item.dealName,
+            instructions: item.instructions,
         };
     });
 
@@ -175,6 +176,9 @@ export default function OrderConfirmationPage() {
                     <div className="text-sm text-muted-foreground text-left">
                         {item.selectedAddons.map(addon => (<p key={addon.id}>+ {addon.quantity}x {addon.name}</p>))}
                     </div>
+                     {item.instructions && (
+                        <p className="text-sm text-blue-600 italic text-left">"{item.instructions}"</p>
+                     )}
                     <p className="text-sm text-muted-foreground text-left">
                       Item price: RS {Math.round(item.price)}
                     </p>
@@ -189,14 +193,14 @@ export default function OrderConfirmationPage() {
             <Separator />
             
             <div className="space-y-2">
-                <Label htmlFor="instructions" className="font-semibold flex items-center"><MessageSquarePlus className="mr-2 h-5 w-5"/>Special Instructions</Label>
+                <Label htmlFor="instructions" className="font-semibold flex items-center"><MessageSquarePlus className="mr-2 h-5 w-5"/>Special Instructions (for the whole order)</Label>
                 <Textarea 
                     id="instructions"
-                    placeholder="e.g., make it extra spicy, no onions..."
+                    placeholder="e.g., provide extra cutlery..."
                     value={instructions}
                     onChange={(e) => setInstructions(e.target.value)}
                 />
-                 <p className="text-xs text-muted-foreground pt-1">Any special requests for the entire order can be added here.</p>
+                 <p className="text-xs text-muted-foreground pt-1">Any special requests for the entire order can be added here. For item-specific requests, go back and edit the item.</p>
             </div>
 
             <div className={cn("p-4 rounded-lg bg-muted/50", !paymentMethod && "animate-pulse")}>
@@ -218,7 +222,7 @@ export default function OrderConfirmationPage() {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col-reverse gap-4 sm:flex-row sm:justify-end sm:gap-2">
-          <Button variant="outline" asChild><Link href={`/branch/${branchId}/menu?mode=${orderType}&floorId=${floorId}&tableId=${tableId}`}>Cancel</Link></Button>
+          <Button variant="outline" asChild><Link href={`/branch/${branchId}/menu?mode=${orderType}&floorId=${floorId}&tableId=${tableId}`}>Go Back to Menu</Link></Button>
           <Button
             onClick={handleConfirmOrder}
             className={cn("w-full sm:w-auto font-bold bg-primary text-primary-foreground hover:bg-primary/90", !!paymentMethod && "animate-blink")}

@@ -14,13 +14,15 @@ import { PlusCircle, Plus, Minus, Trash2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { UpdateQuantity } from "../cart/UpdateQuantity";
 import { cn } from "@/lib/utils";
+import { Textarea } from "../ui/textarea";
 
 const FALLBACK_IMAGE_URL = "https://picsum.photos/seed/placeholder/400/300";
 
-function AddToCartDialog({ item, onAddToCart, triggerButton }: { item: MenuItem; onAddToCart: (options: { selectedAddons: { addon: Addon; quantity: number }[], itemQuantity: number }) => void; triggerButton: React.ReactNode; }) {
+function AddToCartDialog({ item, onAddToCart, triggerButton, children }: { item: MenuItem; onAddToCart: (options: { selectedAddons: { addon: Addon; quantity: number }[], itemQuantity: number, instructions: string }) => void; triggerButton?: React.ReactNode; children?: React.ReactNode; }) {
     const { menu } = useMenu();
     const [selectedAddons, setSelectedAddons] = useState<Map<string, { addon: Addon; quantity: number }>>(new Map());
     const [itemQuantity, setItemQuantity] = useState(1);
+    const [instructions, setInstructions] = useState('');
     const [isOpen, setIsOpen] = useState(false);
 
     const availableAddons = menu.addons.filter(addon => item.availableAddonIds?.includes(addon.id));
@@ -55,25 +57,28 @@ function AddToCartDialog({ item, onAddToCart, triggerButton }: { item: MenuItem;
 
     const handleConfirm = () => {
         const addonsArray = Array.from(selectedAddons.values());
-        onAddToCart({ selectedAddons: addonsArray, itemQuantity });
+        onAddToCart({ selectedAddons: addonsArray, itemQuantity, instructions });
         setIsOpen(false);
         // Reset state after adding to cart
         setSelectedAddons(new Map());
         setItemQuantity(1);
+        setInstructions('');
     };
     
     const totalAddonPrice = Array.from(selectedAddons.values()).reduce((sum, { addon, quantity }) => sum + (addon.price * quantity), 0);
     const finalPrice = (item.price + totalAddonPrice) * itemQuantity;
     
+    const trigger = triggerButton || children;
+    
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                {triggerButton}
+                {trigger}
             </DialogTrigger>
             <DialogContent className="max-h-[90vh] flex flex-col">
                 <DialogHeader>
                     <DialogTitle className="font-headline text-2xl">{item.name}</DialogTitle>
-                    <DialogDescription>Customize your item with add-ons and set quantities.</DialogDescription>
+                    <DialogDescription>Customize your item and add special instructions.</DialogDescription>
                 </DialogHeader>
                 
                 <div className="flex-grow overflow-y-auto pr-2 space-y-6">
@@ -130,6 +135,17 @@ function AddToCartDialog({ item, onAddToCart, triggerButton }: { item: MenuItem;
                             </div>
                         </div>
                     )}
+
+                    <div>
+                        <Label htmlFor="special-instructions" className="font-semibold">Special Instructions</Label>
+                        <Textarea
+                            id="special-instructions"
+                            placeholder="e.g., extra spicy, no onions..."
+                            value={instructions}
+                            onChange={(e) => setInstructions(e.target.value)}
+                            className="mt-2"
+                        />
+                    </div>
                 </div>
 
                 <DialogFooter className="mt-auto pt-4 border-t">
@@ -148,27 +164,15 @@ function AddToCartDialog({ item, onAddToCart, triggerButton }: { item: MenuItem;
 
 
 export function MenuItemCard({ item }: { item: MenuItem }) {
-  const { addItem, items: cartItems, updateQuantity } = useCart();
+  const { addItem, items: cartItems } = useCart();
 
-  const handleAddToCart = (options: { selectedAddons: { addon: Addon; quantity: number }[], itemQuantity: number }) => {
+  const handleAddToCart = (options: { selectedAddons: { addon: Addon; quantity: number }[], itemQuantity: number, instructions: string }) => {
     addItem({ item, ...options });
   };
   
   const variationsInCart = useMemo(() => {
     return cartItems.filter(cartItem => cartItem.id === item.id);
   }, [cartItems, item.id]);
-
-  const hasAddons = item.availableAddonIds && item.availableAddonIds.length > 0;
-  
-  const handleSimpleAdd = () => {
-    // Check if a plain version of this item is already in the cart
-    const plainItemInCart = variationsInCart.find(ci => ci.selectedAddons.length === 0);
-    if (plainItemInCart) {
-      updateQuantity(plainItemInCart.cartItemId, 1);
-    } else {
-      handleAddToCart({ selectedAddons: [], itemQuantity: 1 });
-    }
-  };
 
   return (
     <Card className="flex h-full flex-col overflow-hidden transition-shadow hover:shadow-lg">
@@ -192,21 +196,15 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
         <p className="text-xl font-bold text-primary">RS {Math.round(item.price)}</p>
         
         {variationsInCart.length === 0 ? (
-            hasAddons ? (
-                <AddToCartDialog 
-                    item={item} 
-                    onAddToCart={handleAddToCart}
-                    triggerButton={
-                        <Button>
-                            <PlusCircle className="mr-2 h-5 w-5" /> Customize & Add
-                        </Button>
-                    }
-                />
-            ) : (
-                 <Button onClick={handleSimpleAdd}>
-                    <PlusCircle className="mr-2 h-5 w-5" /> Add
+            <AddToCartDialog 
+                item={item} 
+                onAddToCart={handleAddToCart}
+            >
+                <Button variant="default">
+                    <PlusCircle className="mr-2 h-5 w-5" />
+                    {item.availableAddonIds && item.availableAddonIds.length > 0 ? 'Customize & Add' : 'Add to Cart'}
                 </Button>
-            )
+            </AddToCartDialog>
         ) : (
             <div className="space-y-3">
                 {variationsInCart.map((cartItem) => (
@@ -221,23 +219,23 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
                                         ))}
                                     </div>
                                 )}
+                                {cartItem.instructions && (
+                                    <p className="pl-2 text-xs italic text-blue-600">"{cartItem.instructions}"</p>
+                                )}
                             </div>
                             <UpdateQuantity cartItemId={cartItem.cartItemId} quantity={cartItem.quantity} />
                         </div>
                     </div>
                 ))}
-                 {hasAddons && (
-                    <AddToCartDialog 
-                        item={item} 
-                        onAddToCart={handleAddToCart}
-                        triggerButton={
-                             <Button variant="secondary" className="w-full">
-                                <PlusCircle className="mr-2 h-5 w-5" />
-                                Append Item
-                            </Button>
-                        }
-                    />
-                )}
+                <AddToCartDialog 
+                    item={item} 
+                    onAddToCart={handleAddToCart}
+                >
+                     <Button variant="secondary" className="w-full">
+                        <PlusCircle className="mr-2 h-5 w-5" />
+                        Add Another Variation
+                    </Button>
+                </AddToCartDialog>
             </div>
         )}
       </CardFooter>
