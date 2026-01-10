@@ -268,18 +268,27 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
   }, [settings.floors, table]);
 
   const { dealItems, regularItems } = useMemo(() => {
-      const dealsInOrder = order.items.filter(item => item.dealName);
-      const dealItemGroups: { [key: string]: OrderItem[] } = {};
-      dealsInOrder.forEach(item => {
-          if (!dealItemGroups[item.dealName!]) {
-              dealItemGroups[item.dealName!] = [];
-          }
-          dealItemGroups[item.dealName!].push(item);
-      });
+    const deals = new Map<string, { deal: OrderItem; components: OrderItem[] }>();
+    const regulars: OrderItem[] = [];
 
-      const regularItems = order.items.filter(item => !item.dealName);
-      return { dealItems: Object.entries(dealItemGroups), regularItems };
-  }, [order.items]);
+    // First, find all parent deal items
+    order.items.forEach(item => {
+        if (item.menuItemId.startsWith('D-')) { // Assuming deals have a "D-" prefix
+            deals.set(item.id, { deal: item, components: [] });
+        }
+    });
+
+    // Then, associate components with their parent deal or classify as regular
+    order.items.forEach(item => {
+        if (item.parentDealId && deals.has(item.parentDealId)) {
+            deals.get(item.parentDealId)!.components.push(item);
+        } else if (!item.menuItemId.startsWith('D-')) {
+            regulars.push(item);
+        }
+    });
+    
+    return { dealItems: Array.from(deals.values()), regularItems };
+}, [order.items]);
 
 
   return (
@@ -311,18 +320,26 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
       <CardContent className="flex-grow">
         <ScrollArea className="h-40 pr-4">
             <div className="space-y-3">
-              {dealItems.map(([dealName, items], index) => {
-                const dealInfo = menu.items.find(i => i.name === dealName);
-                const dealPrice = dealInfo?.price || 0;
+              {dealItems.map(({ deal, components }, index) => {
+                const aggregatedComponents = components.reduce((acc, comp) => {
+                    const existing = acc.find(a => a.name === comp.name);
+                    if (existing) {
+                        existing.quantity += comp.quantity;
+                    } else {
+                        acc.push({ name: comp.name, quantity: comp.quantity });
+                    }
+                    return acc;
+                }, [] as { name: string; quantity: number }[]);
+
                 return (
-                    <div key={index} className="text-sm">
-                    <div className="flex justify-between items-center font-semibold">
-                        <div>1x {dealName}</div>
-                        <div className="font-mono">RS {Math.round(dealPrice)}</div>
-                    </div>
-                    <div className="pl-4 text-xs text-muted-foreground border-l-2 ml-1 pl-2">
-                        {items.map(item => <div key={item.id}>{item.quantity}x {item.name}</div>)}
-                    </div>
+                    <div key={deal.id} className="text-sm">
+                        <div className="flex justify-between items-center font-semibold">
+                            <div>{deal.quantity}x {deal.name}</div>
+                            <div className="font-mono">RS {Math.round(deal.itemPrice * deal.quantity)}</div>
+                        </div>
+                        <div className="pl-4 text-xs text-muted-foreground border-l-2 ml-1 pl-2">
+                            {aggregatedComponents.map(comp => <div key={comp.name}>{comp.quantity}x {comp.name}</div>)}
+                        </div>
                     </div>
                 )
               })}
