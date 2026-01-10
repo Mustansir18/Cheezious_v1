@@ -51,6 +51,7 @@ function AddItemsToOrderDialog({ order }: { order: Order }) {
 
     const handleAddItem = (options: { selectedAddons: any[], itemQuantity: number, instructions: string, selectedVariant?: any }, item: MenuItem) => {
         const cartItemId = crypto.randomUUID();
+        
         const addonPrice = options.selectedAddons.reduce((sum, addonData) => sum + (addonData.selectedPrice * addonData.quantity), 0);
         const basePrice = options.selectedVariant ? options.selectedVariant.price : item.price;
         const finalPrice = basePrice + addonPrice;
@@ -401,31 +402,36 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
     const dealsMap = new Map<string, { deal: OrderItem, components: OrderItem[] }>();
     const regulars: OrderItem[] = [];
 
+    // First, identify all parent deal items in the order
     const parentDealItems = order.items.filter(item => {
         const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
         return !item.isDealComponent && menuItem && menuItem.categoryId === 'C-00001';
     });
 
+    // Initialize the map with all parent deals
     parentDealItems.forEach(dealItem => {
         dealsMap.set(dealItem.id, { deal: dealItem, components: [] });
     });
 
+    // Now, iterate through all items to classify them
     order.items.forEach(item => {
         if (item.parentDealId) {
-            const parentDeal = order.items.find(i => i.id === item.parentDealId);
-            if (parentDeal) {
-                const dealInMap = dealsMap.get(parentDeal.id);
-                if (dealInMap) {
+            // This item is a component of a deal. Find its parent deal in the order.
+            const parentDealInOrder = order.items.find(parent => parent.id === item.parentDealId);
+            if (parentDealInOrder) {
+                 const dealInMap = dealsMap.get(parentDealInOrder.id);
+                 if (dealInMap) {
                     dealInMap.components.push(item);
-                }
+                 }
             }
         } else if (!dealsMap.has(item.id)) {
+            // This is a regular item (not a deal component and not a deal itself)
             regulars.push(item);
         }
     });
     
     return { dealItems: Array.from(dealsMap.values()), regularItems: regulars };
-}, [order.items, menu.items]);
+  }, [order.items, menu.items]);
 
 
 const getOrderTypeIcon = () => {
@@ -487,7 +493,7 @@ const OrderTypeIcon = getOrderTypeIcon();
                         </div>
                          <div className="pl-4 text-xs text-muted-foreground border-l-2 ml-1 mt-1 pt-1 space-y-0.5">
                             <p className="font-semibold text-gray-500">Includes:</p>
-                            {aggregatedComponents.map(comp => (
+                             {aggregatedComponents.map(comp => (
                                 <div key={comp.name} className="flex justify-between items-center">
                                   <span>- {comp.quantity}x {comp.name}</span>
                                 </div>
@@ -624,6 +630,7 @@ OrderCard.Skeleton = function OrderCardSkeleton() {
   };
 
     
+
 
 
 
