@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useMemo } from 'react';
@@ -8,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
 import { ALL_PERMISSIONS } from '@/config/permissions';
+import { useOrders } from './OrderContext';
 
 const defaultRoles: Role[] = [
     { id: "root", name: "Root", permissions: ["admin:*"] },
@@ -119,21 +119,18 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
   const { logActivity } = useActivityLog();
   const { user } = useAuth();
-
+  
   useEffect(() => {
     try {
       const storedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
       if (storedSettings) {
         const parsed = JSON.parse(storedSettings);
         
-        // Ensure default payment methods are always present and up-to-date
         const parsedMethods = parsed.paymentMethods || [];
         const paymentMethodMap = new Map<string, PaymentMethod>();
 
-        // Add defaults first
         defaultPaymentMethods.forEach(dpm => paymentMethodMap.set(dpm.id, dpm));
         
-        // Overwrite defaults with stored values if they exist, and add custom ones
         parsedMethods.forEach((pm: PaymentMethod) => {
             paymentMethodMap.set(pm.id, pm);
         });
@@ -277,7 +274,6 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   const deleteBranch = useCallback((id: string, name: string) => {
     setSettings(s => {
         const newBranches = s.branches.filter(b => b.id !== id);
-        // If the deleted branch was the default, reset the default
         const newDefaultId = id === s.defaultBranchId ? (newBranches[0]?.id || null) : s.defaultBranchId;
         return {...s, branches: newBranches, defaultBranchId: newDefaultId };
     });
@@ -400,5 +396,21 @@ export const useSettings = () => {
   if (context === undefined) {
     throw new Error('useSettings must be used within a SettingsProvider');
   }
-  return context;
+
+  // Correctly derive state in the hook, not the provider
+  const { orders } = useOrders();
+  const occupiedTableIds = useMemo(() => {
+    const ids = orders
+        .filter(o => o.orderType === 'Dine-In' && o.tableId && ['Pending', 'Preparing', 'Ready', 'Partial Ready'].includes(o.status))
+        .map(o => o.tableId!);
+    return new Set(ids);
+  }, [orders]);
+
+  return {
+    ...context,
+    settings: {
+        ...context.settings,
+        occupiedTableIds,
+    }
+  };
 };
