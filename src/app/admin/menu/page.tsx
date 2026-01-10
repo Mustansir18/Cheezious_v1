@@ -406,15 +406,6 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
                     ))}
                 </div>
             </ScrollArea>
-             <div className="mt-4 p-4 border rounded-lg bg-muted/50 space-y-2">
-                <p className="text-sm font-medium">Create New Add-on</p>
-                <div className="grid grid-cols-3 gap-2">
-                    <Input placeholder="Code (e.g. A-01)" value={newAddonId} onChange={e => setNewAddonId(e.target.value)} />
-                    <Input placeholder="Name" value={newAddonName} onChange={e => setNewAddonName(e.target.value)} />
-                    <Input type="number" placeholder="Price" value={newAddonPrice} onChange={e => setNewAddonPrice(Number(e.target.value))} />
-                </div>
-                <Button type="button" size="sm" className="w-full" onClick={handleAddAddon}>Add to Library & Select</Button>
-            </div>
         </div>
         <div className="mt-4">
             <Label htmlFor="item-image">Item Image</Label>
