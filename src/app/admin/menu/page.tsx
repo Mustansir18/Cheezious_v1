@@ -261,9 +261,12 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
   }
   
   const handleVariantChange = (index: number, field: 'name' | 'price', value: string | number) => {
-    const newVariants = [...variants];
-    newVariants[index] = { ...newVariants[index], [field]: value };
-    setVariants(newVariants);
+    setVariants(currentVariants => {
+        const newVariants = [...currentVariants];
+        const updatedVariant = { ...newVariants[index], [field]: value };
+        newVariants[index] = updatedVariant;
+        return newVariants;
+    });
   };
   
   const addVariant = () => {
