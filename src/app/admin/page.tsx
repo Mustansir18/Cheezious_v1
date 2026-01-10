@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import Link from 'next/link';
@@ -15,16 +16,19 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     // If user is a branch admin, redirect them directly to their default page
-    if (!isLoading && user?.role === 'admin') {
-      router.push('/admin/orders');
+    if (!isLoading && user) {
+      if (user.role === 'admin') router.push('/admin/orders');
+      if (user.role === 'kds') router.push('/admin/kds');
+      if (user.role === 'make-station') router.push('/admin/kds/pizza');
+      if (user.role === 'pasta-station') router.push('/admin/kds/pasta');
+      if (user.role === 'fried-station') router.push('/admin/kds/fried');
+      if (user.role === 'bar-station') router.push('/admin/kds/bar');
+      if (user.role === 'cutt-station') router.push('/admin/kds/master');
     }
   }, [user, isLoading, router]);
 
 
-  // If the user is loading or an admin (who will be redirected),
-  // we return a loading state to prevent the rest of the component from rendering
-  // and causing a flash of incorrect content or a race condition with navigation.
-  if (isLoading || (user && user.role === 'admin')) {
+  if (isLoading || (user && user.role !== 'root')) {
       return (
           <div className="flex h-screen items-center justify-center">
             <Loader className="h-12 w-12 animate-spin text-primary" />
@@ -110,7 +114,7 @@ export default function AdminDashboardPage() {
   const visibleSections = adminSections.filter(section => user?.role && section.role.includes(user.role));
   
   return (
-    <div className="w-full">
+    <div className="w-full p-4 sm:p-6 md:p-8">
       <header className="mb-8">
         <h1 className="font-headline text-4xl font-bold">Admin Dashboard</h1>
         <p className="text-muted-foreground">

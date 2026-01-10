@@ -1,4 +1,5 @@
 
+
 export const ALL_PERMISSIONS = [
     {
         id: 'admin:*',
@@ -17,8 +18,33 @@ export const ALL_PERMISSIONS = [
     },
     {
         id: '/admin/kds',
-        name: 'Kitchen Display System',
+        name: 'Kitchen Display System (Full)',
         description: 'Access to all KDS stations for order preparation and dispatch.'
+    },
+    {
+        id: '/admin/kds/pizza',
+        name: 'KDS - MAKE Station',
+        description: 'Access to the MAKE (Pizza) station display.'
+    },
+    {
+        id: '/admin/kds/pasta',
+        name: 'KDS - PASTA Station',
+        description: 'Access to the PASTA station display.'
+    },
+    {
+        id: '/admin/kds/fried',
+        name: 'KDS - FRIED Station',
+        description: 'Access to the FRIED station display.'
+    },
+    {
+        id: '/admin/kds/bar',
+        name: 'KDS - BEVERAGES Station',
+        description: 'Access to the BEVERAGES station display.'
+    },
+    {
+        id: '/admin/kds/master',
+        name: 'KDS - CUTT Station',
+        description: 'Access to the CUTT (Assembly) station display.'
     },
     {
         id: '/admin/queue',

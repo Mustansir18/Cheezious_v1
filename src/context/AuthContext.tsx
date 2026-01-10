@@ -52,7 +52,13 @@ const initialUsers: User[] = [
         username: 'markeeting',
         password: 'markeeting',
         role: 'marketing',
-    }
+    },
+    { id: 'CH-KDS-01', username: 'kds', password: 'KDS', role: 'kds', branchId: defaultBranchId },
+    { id: 'CH-KDS-02', username: 'fried', password: 'FRIED', role: 'fried-station', branchId: defaultBranchId },
+    { id: 'CH-KDS-03', username: 'make', password: 'MAKE', role: 'make-station', branchId: defaultBranchId },
+    { id: 'CH-KDS-04', username: 'cutt', password: 'CUTT', role: 'cutt-station', branchId: defaultBranchId },
+    { id: 'CH-KDS-05', username: 'bar', password: 'BAR', role: 'bar-station', branchId: defaultBranchId },
+    { id: 'CH-KDS-06', username: 'pasta', password: 'PASTA', role: 'pasta-station', branchId: defaultBranchId },
 ];
 
 const USERS_STORAGE_KEY = 'cheeziousUsers';

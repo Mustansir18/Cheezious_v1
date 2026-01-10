@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Link from 'next/link';
@@ -38,7 +39,7 @@ function AdminSidebar() {
   const navLinks = [
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, role: ['root', 'admin'] },
     { href: '/admin/orders', label: 'Orders', icon: ShoppingCart, role: ['root', 'admin'] },
-    { href: '/admin/kds', label: 'KDS', icon: ChefHat, role: ['root', 'admin'] },
+    { href: '/admin/kds', label: 'KDS', icon: ChefHat, role: ['root', 'admin', 'kds', 'make-station', 'pasta-station', 'fried-station', 'bar-station', 'cutt-station'] },
     { href: '/admin/queue', label: 'Queue', icon: Monitor, role: ['root', 'admin'] },
     { href: '/admin/reporting', label: 'Sales Reports', icon: BarChart, role: ['root'] },
     { href: '/admin/menu', label: 'Menu', icon: Package, role: ['root'] },
@@ -116,11 +117,9 @@ export default function AdminLayout({
     <AdminRouteGuard>
         <div className="flex min-h-screen w-full flex-col bg-muted/40">
           <AdminSidebar />
-          <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
-            <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
+          <main className="w-full sm:pl-14">
               {children}
-            </main>
-          </div>
+          </main>
         </div>
     </AdminRouteGuard>
   );

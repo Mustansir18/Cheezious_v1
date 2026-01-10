@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect } from 'react';
@@ -32,23 +33,29 @@ export function AdminRouteGuard({ children }: { children: React.ReactNode }) {
 
     // Check if the user's role grants access to the current path.
     // The 'admin:*' permission gives access to all admin pages.
-    const hasAccess = userRole.permissions.includes('admin:*') || userRole.permissions.includes(pathname);
+    // The '/admin/kds' permission also gives access to all sub-routes.
+    const hasAccess = userRole.permissions.includes('admin:*') 
+        || userRole.permissions.includes(pathname)
+        || (userRole.permissions.includes('/admin/kds') && pathname.startsWith('/admin/kds'));
+
 
     if (!hasAccess) {
         // If no access, redirect to a default page.
-        if (user.role === 'cashier') {
-             router.push('/cashier');
-        } else if (user.role === 'marketing') {
-            router.push('/marketing/reporting');
-        } else {
-             router.push('/login');
-        }
+        // Check for specific KDS roles and redirect them to their allowed page if they stray.
+        if (user.role === 'make-station') router.push('/admin/kds/pizza');
+        else if (user.role === 'pasta-station') router.push('/admin/kds/pasta');
+        else if (user.role === 'fried-station') router.push('/admin/kds/fried');
+        else if (user.role === 'bar-station') router.push('/admin/kds/bar');
+        else if (user.role === 'cutt-station') router.push('/admin/kds/master');
+        else if (user.role === 'kds') router.push('/admin/kds');
+        else if (user.role === 'cashier') router.push('/cashier');
+        else if (user.role === 'marketing') router.push('/marketing/reporting');
+        else router.push('/login'); // Fallback redirect
         return;
     }
 
   }, [user, isLoading, router, pathname, settings.roles]);
 
-  // Initial loading state or if redirection is about to happen
   if (isLoading || !user) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -59,7 +66,11 @@ export function AdminRouteGuard({ children }: { children: React.ReactNode }) {
   }
 
   const userRole = settings.roles.find(role => role.id === user.role);
-  const hasAccess = userRole && (userRole.permissions.includes('admin:*') || userRole.permissions.includes(pathname));
+  const hasAccess = userRole && (
+      userRole.permissions.includes('admin:*') 
+      || userRole.permissions.includes(pathname)
+      || (userRole.permissions.includes('/admin/kds') && pathname.startsWith('/admin/kds'))
+  );
 
   if (!hasAccess) {
      return (

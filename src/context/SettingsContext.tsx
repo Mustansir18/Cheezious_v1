@@ -11,37 +11,16 @@ import { ALL_PERMISSIONS } from '@/config/permissions';
 import { useOrders } from './OrderContext';
 
 const defaultRoles: Role[] = [
-    {
-        id: "root",
-        name: "Root",
-        permissions: ["admin:*"]
-    },
-    {
-        id: "admin",
-        name: "Branch Admin",
-        permissions: [
-            "/admin",
-            "/admin/orders",
-            "/admin/queue",
-        ]
-    },
-    {
-        id: "cashier",
-        name: "Cashier",
-        permissions: [
-            "/cashier"
-        ]
-    },
-    {
-        id: "marketing",
-        name: "Marketing",
-        permissions: [
-            "/marketing/reporting",
-            "/marketing/hourly-report",
-            "/marketing/feedback",
-            "/marketing/target"
-        ]
-    }
+    { id: "root", name: "Root", permissions: ["admin:*"] },
+    { id: "admin", name: "Branch Admin", permissions: ["/admin", "/admin/orders", "/admin/kds", "/admin/queue"] },
+    { id: "cashier", name: "Cashier", permissions: ["/cashier"] },
+    { id: "marketing", name: "Marketing", permissions: ["/marketing/reporting", "/marketing/feedback", "/marketing/target"] },
+    { id: "kds", name: "KDS (Full Access)", permissions: ["/admin/kds"] },
+    { id: "make-station", name: "MAKE Station", permissions: ["/admin/kds/pizza"] },
+    { id: "pasta-station", name: "PASTA Station", permissions: ["/admin/kds/pasta"] },
+    { id: "fried-station", name: "FRIED Station", permissions: ["/admin/kds/fried"] },
+    { id: "bar-station", name: "BEVERAGES Station", permissions: ["/admin/kds/bar"] },
+    { id: "cutt-station", name: "CUTT Station", permissions: ["/admin/kds/master"] },
 ];
 
 interface Settings {
