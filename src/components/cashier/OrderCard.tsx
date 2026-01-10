@@ -488,8 +488,8 @@ const OrderTypeIcon = getOrderTypeIcon();
                          <div className="pl-4 text-xs text-muted-foreground border-l-2 ml-1 mt-1 pt-1 space-y-0.5">
                             <p className="font-semibold text-gray-500">Includes:</p>
                             {aggregatedComponents.map(comp => (
-                                <div key={comp.name} className="text-xs text-muted-foreground">
-                                    - {comp.quantity}x {comp.name}
+                                <div key={comp.name} className="flex justify-between items-center">
+                                  <span>- {comp.quantity}x {comp.name}</span>
                                 </div>
                             ))}
                         </div>
@@ -624,5 +624,6 @@ OrderCard.Skeleton = function OrderCardSkeleton() {
   };
 
     
+
 
 
