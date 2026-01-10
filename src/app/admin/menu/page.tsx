@@ -356,7 +356,7 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
             <Label>Manage Variants (Sizes)</Label>
             <div className="p-4 border rounded-lg bg-muted/50 space-y-3">
                 {variants.map((variant, index) => (
-                    <div key={variant.id} className="grid grid-cols-3 gap-2 items-center">
+                    <div key={index} className="grid grid-cols-3 gap-2 items-center">
                         <Input placeholder="Variant Name (e.g., Small)" value={variant.name} onChange={e => handleVariantChange(index, 'name', e.target.value)} />
                         <Input type="number" placeholder="Price" value={variant.price} onChange={e => handleVariantChange(index, 'price', Number(e.target.value))} />
                         <Button type="button" variant="destructive" size="sm" onClick={() => removeVariant(index)}>
