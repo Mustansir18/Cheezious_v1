@@ -12,6 +12,7 @@ import { ScrollArea } from '../ui/scroll-area';
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
 import { cn } from '@/lib/utils';
+import { useMemo } from 'react';
 
 interface MasterOrderSlipProps {
     order: Order;
@@ -27,6 +28,16 @@ export default function MasterOrderSlip({ order, onDispatchItem }: MasterOrderSl
             onDispatchItem(order.id, itemId);
         }
     };
+    
+    // Filter out the parent deal items, so we only show actual components.
+    const dispatchableItems = useMemo(() => {
+        return order.items.filter(item => {
+            // An item is dispatchable if it's NOT a deal itself.
+            // A deal is an item that is not a component but has dealItems defined on its menu data.
+            // We're essentially filtering for items that ARE components OR standalone items.
+            return item.isDealComponent || !item.dealItems || item.dealItems.length === 0;
+        });
+    }, [order.items]);
 
     return (
         <Card className="break-inside-avoid shadow-lg border-2 border-primary/20">
@@ -53,7 +64,7 @@ export default function MasterOrderSlip({ order, onDispatchItem }: MasterOrderSl
             <CardContent className="p-4 pt-0">
                 <ScrollArea className="h-full max-h-96">
                     <div className="space-y-3 pr-2">
-                        {order.items.map((item, index) => {
+                        {dispatchableItems.map((item, index) => {
                             const isPrepared = !!item.isPrepared;
                             const isDispatchOnly = !item.stationId;
                             const isDispatched = !!item.isDispatched;
