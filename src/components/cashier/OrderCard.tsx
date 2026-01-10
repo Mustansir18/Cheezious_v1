@@ -272,34 +272,27 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
     const regulars: OrderItem[] = [];
     const dealParentIds = new Set<string>();
 
-    // First pass: identify all parent deal items
+    // First pass: identify all parent deal items from the order
     order.items.forEach(item => {
-        if (item.isDealComponent === false) { // It's a main item
-             // Check if it's a deal by checking for dealItems property from menu data
-            const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
-            if (menuItem?.dealItems && menuItem.dealItems.length > 0) {
-                 deals.set(item.id, { deal: item, components: [] });
-                 dealParentIds.add(item.id);
-            }
+        const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
+        // An item is a deal if it's not a component AND the source menu item has dealItems
+        if (item.isDealComponent === false && menuItem?.dealItems && menuItem.dealItems.length > 0) {
+            deals.set(item.id, { deal: item, components: [] });
+            dealParentIds.add(item.id);
         }
     });
 
     // Second pass: associate components and classify regular items
     order.items.forEach(item => {
-        if (item.parentDealId && dealParentIds.has(item.parentDealId)) {
+        if (item.parentDealId && deals.has(item.parentDealId)) {
             const dealEntry = deals.get(item.parentDealId);
-            if(dealEntry) {
-                dealEntry.components.push(item);
-            }
-        } else if (item.isDealComponent === false) {
-             const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
-             if (!menuItem?.dealItems || menuItem.dealItems.length === 0) {
-                regulars.push(item);
-             }
+            dealEntry?.components.push(item);
+        } else if (!item.isDealComponent && !deals.has(item.id)) {
+            regulars.push(item);
         }
     });
-    
-    return { dealItems: Array.from(deals.values()), regularItems: regulars };
+
+    return { dealItems: Array.from(deals.values()), regularItems };
 }, [order.items, menu.items]);
 
 
