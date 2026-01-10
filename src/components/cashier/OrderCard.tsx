@@ -269,27 +269,30 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
 
   const { dealItems, regularItems } = useMemo(() => {
     const dealsMap = new Map<string, { deal: OrderItem, components: OrderItem[] }>();
-    const regularItems: OrderItem[] = [];
-    
-    // First, find all parent deal items and initialize them in the map.
+    const regularItemsList: OrderItem[] = [];
+
+    // First, find all parent deal items and initialize their entries in the map.
     order.items.forEach(item => {
         const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
-        if (menuItem?.dealItems && menuItem.dealItems.length > 0 && !item.isDealComponent) {
+        const isParentDeal = menuItem?.dealItems && menuItem.dealItems.length > 0 && !item.isDealComponent;
+        if (isParentDeal) {
             dealsMap.set(item.id, { deal: item, components: [] });
         }
     });
 
-    // Now, categorize all items.
+    // Now, iterate through all items again to categorize them as either a component of a deal or a regular item.
     order.items.forEach(item => {
         if (item.parentDealId && dealsMap.has(item.parentDealId)) {
+            // This item is a component of a deal we've already mapped.
             dealsMap.get(item.parentDealId)?.components.push(item);
-        } else if (!dealsMap.has(item.id)) { // It's not a parent deal
-            regularItems.push(item);
+        } else if (!dealsMap.has(item.id)) {
+            // This item is not a deal component and not a parent deal itself, so it's a regular item.
+            regularItemsList.push(item);
         }
     });
 
-    return { dealItems: Array.from(dealsMap.values()), regularItems };
-  }, [order.items, menu.items]);
+    return { dealItems: Array.from(dealsMap.values()), regularItems: regularItemsList };
+}, [order.items, menu.items]);
 
 
   return (
@@ -321,7 +324,7 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
       <CardContent className="flex-grow">
         <ScrollArea className="h-40 pr-4">
             <div className="space-y-3">
-              {dealItems.map(({ deal, components }, index) => {
+              {dealItems.map(({ deal, components }) => {
                 const aggregatedComponents = components.reduce((acc, comp) => {
                     const existing = acc.find(a => a.name === comp.name);
                     if (existing) {
@@ -338,8 +341,9 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
                             <div>{deal.quantity}x {deal.name}</div>
                             <div className="font-mono">RS {Math.round(deal.itemPrice * deal.quantity)}</div>
                         </div>
-                        <div className="pl-4 text-xs text-muted-foreground border-l-2 ml-1 pl-2">
-                            {aggregatedComponents.map(comp => <div key={comp.name}>{comp.quantity}x {comp.name}</div>)}
+                        <div className="pl-4 text-xs text-muted-foreground border-l-2 ml-1 pl-2 space-y-0.5">
+                            <p className="font-semibold text-gray-500">Includes:</p>
+                            {aggregatedComponents.map(comp => <div key={comp.name}>- {comp.quantity}x {comp.name}</div>)}
                         </div>
                     </div>
                 )
