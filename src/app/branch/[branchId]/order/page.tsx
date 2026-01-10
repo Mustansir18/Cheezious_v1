@@ -47,6 +47,27 @@ export default function OrderConfirmationPage() {
   const taxAmount = useMemo(() => cartTotal * taxRate, [cartTotal, taxRate]);
   const grandTotal = useMemo(() => cartTotal + taxAmount, [cartTotal, taxAmount]);
 
+  const displayedItems = useMemo(() => {
+    const mainItems = items.filter(item => !item.isDealComponent);
+    return mainItems.map(mainItem => {
+        if (mainItem.categoryId === 'C-00001') { // It's a deal
+            const components = items.filter(i => i.parentDealId === mainItem.cartItemId);
+            const aggregatedComponents = components.reduce((acc, comp) => {
+                const existing = acc.find(a => a.name === comp.name);
+                if (existing) {
+                    existing.quantity += 1;
+                } else {
+                    acc.push({ name: comp.name, quantity: 1 });
+                }
+                return acc;
+            }, [] as { name: string; quantity: number }[]);
+            
+            return { ...mainItem, aggregatedComponents };
+        }
+        return mainItem;
+    });
+  }, [items]);
+
 
   if (!branchId || !orderType) {
     return (
@@ -87,7 +108,8 @@ export default function OrderConfirmationPage() {
             selectedVariant: item.selectedVariant ? { name: item.selectedVariant.name, price: item.selectedVariant.price } : undefined,
             stationId: category?.stationId,
             isPrepared: !category?.stationId,
-            dealName: item.dealName,
+            isDealComponent: !!item.isDealComponent,
+            parentDealId: item.parentDealId,
             instructions: item.instructions,
         };
     });
@@ -162,7 +184,7 @@ export default function OrderConfirmationPage() {
                 {orderType === 'Dine-In' && table && (<p><strong>Table:</strong> {table.name} ({floor?.name})</p>)}
             </div>
 
-            {items.map((item, index) => (
+            {displayedItems.map((item, index) => (
               <div key={item.cartItemId}>
                 <div className="flex items-start gap-4 py-2">
                   <Image
@@ -174,13 +196,28 @@ export default function OrderConfirmationPage() {
                   />
                   <div className="flex-grow">
                     <p className="font-semibold text-left">{item.quantity}x {item.name} {item.selectedVariant ? `(${item.selectedVariant.name})` : ''}</p>
-                    <div className="text-sm text-muted-foreground text-left">
-                        {item.selectedAddons.map(addon => (<p key={addon.id}>+ {addon.quantity}x {addon.name}</p>))}
-                    </div>
+                     
+                     {/* For regular items with addons */}
+                    {item.selectedAddons.length > 0 && (
+                        <div className="pl-4 text-sm text-muted-foreground text-left border-l-2 ml-2 mt-1">
+                            {item.selectedAddons.map(addon => (<p key={addon.name}>+ {addon.quantity}x {addon.name}</p>))}
+                        </div>
+                    )}
+                    
+                    {/* For deals/bundles */}
+                    {(item as any).aggregatedComponents && (
+                        <div className="pl-4 text-xs text-muted-foreground border-l-2 ml-2 mt-1">
+                            <p className="font-semibold">Includes:</p>
+                            {(item as any).aggregatedComponents.map((component: any) => (
+                                <p key={component.name}>- {component.quantity}x {component.name}</p>
+                            ))}
+                        </div>
+                    )}
+
                      {item.instructions && (
-                        <p className="text-sm text-blue-600 italic text-left">"{item.instructions}"</p>
+                        <p className="text-sm text-blue-600 italic text-left mt-1">"{item.instructions}"</p>
                      )}
-                    <p className="text-sm text-muted-foreground text-left">
+                    <p className="text-sm text-muted-foreground text-left mt-1">
                       Item price: RS {Math.round(item.price)}
                     </p>
                   </div>
@@ -188,7 +225,7 @@ export default function OrderConfirmationPage() {
                     RS {Math.round(item.quantity * item.price)}
                   </p>
                 </div>
-                {index < items.length - 1 && <Separator />}
+                {index < displayedItems.length - 1 && <Separator />}
               </div>
             ))}
             <Separator />
