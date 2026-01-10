@@ -49,6 +49,14 @@ export function OrderReceipt({ order }: OrderReceiptProps) {
                         <span className="font-bold">{floor.name} - {table.name}</span>
                     </div>
                  )}
+                 {order.orderType === 'Delivery' && (
+                    <>
+                        {order.deliveryMode && <div className="flex justify-between"><span>Via:</span><span className="font-bold">{order.deliveryMode}</span></div>}
+                        {order.customerName && <div className="flex justify-between"><span>To:</span><span className="font-bold">{order.customerName}</span></div>}
+                        {order.customerPhone && <div className="flex justify-between"><span>Phone:</span><span className="font-bold">{order.customerPhone}</span></div>}
+                        {order.customerAddress && <p className="font-bold break-all">Address: {order.customerAddress}</p>}
+                    </>
+                 )}
             </div>
 
             <hr className="border-dashed border-black my-2" />

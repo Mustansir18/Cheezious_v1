@@ -116,6 +116,10 @@ export type Order = {
     floorId?: string;
     tableId?: string;
     deliveryMode?: string;
+    // New fields for delivery orders
+    customerName?: string;
+    customerPhone?: string;
+    customerAddress?: string;
     // Tax fields
     subtotal: number;
     taxRate: number;
@@ -270,6 +274,10 @@ export const SyncOrderInputSchema = z.object({
   floorId: z.string().optional().describe('The identifier for the floor.'),
   tableId: z.string().optional().describe('The identifier for the table.'),
   deliveryMode: z.string().optional().describe('The source of the delivery order (e.g. Website, App, Call Centre).'),
+   // Optional fields for delivery
+  customerName: z.string().optional().describe("The customer's full name for delivery."),
+  customerPhone: z.string().optional().describe("The customer's phone number for delivery."),
+  customerAddress: z.string().optional().describe("The customer's full address for delivery."),
   paymentMethod: z.string().optional().describe('The selected payment method.'),
 });
 export type SyncOrderInput = z.infer<typeof SyncOrderInputSchema>;

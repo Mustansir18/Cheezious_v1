@@ -15,6 +15,11 @@ interface AddToCartOptions {
     instructions: string;
     selectedVariant?: MenuItemVariant;
 }
+interface CustomerDetails {
+    name: string;
+    phone: string;
+    address: string;
+}
 interface CartContextType {
   items: CartItem[];
   branchId: string | null;
@@ -22,6 +27,9 @@ interface CartContextType {
   tableId: string | null;
   floorId: string | null;
   deliveryMode: string | null;
+  customerName: string | null;
+  customerPhone: string | null;
+  customerAddress: string | null;
   isCartOpen: boolean;
   setIsCartOpen: React.Dispatch<React.SetStateAction<boolean>>;
   addItem: (options: AddToCartOptions) => void;
@@ -29,6 +37,7 @@ interface CartContextType {
   clearCart: () => void;
   closeCart: () => void;
   setOrderDetails: (details: { branchId: string; orderType: OrderType; deliveryMode?: string }) => void;
+  setCustomerDetails: (details: CustomerDetails) => void;
   setTable: (tableId: string, floorId: string) => void;
   cartCount: number;
   cartTotal: number;
@@ -43,6 +52,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [tableId, setTableId] = useState<string | null>(null);
   const [floorId, setFloorId] = useState<string | null>(null);
   const [deliveryMode, setDeliveryMode] = useState<string | null>(null);
+  const [customerName, setCustomerName] = useState<string | null>(null);
+  const [customerPhone, setCustomerPhone] = useState<string | null>(null);
+  const [customerAddress, setCustomerAddress] = useState<string | null>(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { toast } = useToast();
   const { menu } = useMenu();
@@ -51,13 +63,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     try {
       const storedCart = sessionStorage.getItem('cheeziousCart');
       if (storedCart) {
-        const { items, branchId, orderType, floorId, tableId, deliveryMode } = JSON.parse(storedCart);
+        const { items, branchId, orderType, floorId, tableId, deliveryMode, customerName, customerPhone, customerAddress } = JSON.parse(storedCart);
         setItems(items || []);
         setBranchId(branchId || null);
         setOrderType(orderType || null);
         setFloorId(floorId || null);
         setTableId(tableId || null);
         setDeliveryMode(deliveryMode || null);
+        setCustomerName(customerName || null);
+        setCustomerPhone(customerPhone || null);
+        setCustomerAddress(customerAddress || null);
       }
     } catch (error) {
       console.error("Could not load cart from session storage", error);
@@ -66,12 +81,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     try {
-      const cartState = JSON.stringify({ items, branchId, orderType, floorId, tableId, deliveryMode });
+      const cartState = JSON.stringify({ items, branchId, orderType, floorId, tableId, deliveryMode, customerName, customerPhone, customerAddress });
       sessionStorage.setItem('cheeziousCart', cartState);
     } catch (error) {
       console.error("Could not save cart to session storage", error);
     }
-  }, [items, branchId, orderType, floorId, tableId, deliveryMode]);
+  }, [items, branchId, orderType, floorId, tableId, deliveryMode, customerName, customerPhone, customerAddress]);
 
   const setOrderDetails = useCallback((details: { branchId: string; orderType: OrderType; deliveryMode?: string; }) => {
     const hasChanged = details.branchId !== branchId || details.orderType !== orderType || details.deliveryMode !== deliveryMode;
@@ -93,8 +108,18 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     
     if (hasChanged) {
       setItems([]);
+      setCustomerName(null);
+      setCustomerPhone(null);
+      setCustomerAddress(null);
     }
   }, [branchId, orderType, deliveryMode]);
+
+  const setCustomerDetails = useCallback((details: CustomerDetails) => {
+    setCustomerName(details.name);
+    setCustomerPhone(details.phone);
+    setCustomerAddress(details.address);
+  }, []);
+
 
   const setTable = useCallback((newTableId: string, newFloorId: string) => {
     setTableId(newTableId);
@@ -204,6 +229,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setTableId(null);
     setFloorId(null);
     setDeliveryMode(null);
+    setCustomerName(null);
+    setCustomerPhone(null);
+    setCustomerAddress(null);
   }, []);
   
   const closeCart = useCallback(() => {
@@ -232,6 +260,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         tableId,
         floorId,
         deliveryMode,
+        customerName,
+        customerPhone,
+        customerAddress,
         isCartOpen,
         setIsCartOpen,
         addItem,
@@ -239,6 +270,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         clearCart,
         closeCart,
         setOrderDetails,
+        setCustomerDetails,
         setTable,
         cartCount,
         cartTotal,

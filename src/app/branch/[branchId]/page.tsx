@@ -12,6 +12,8 @@ import { cn } from "@/lib/utils";
 import { useCart } from "@/context/CartContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { CustomerInfoDialogs } from "@/components/cart/CustomerInfoDialogs";
+
 
 function DeliveryModeDialog({ open, onOpenChange, onSelect, deliveryModes }: { open: boolean; onOpenChange: (open: boolean) => void; onSelect: (mode: string) => void; deliveryModes: { id: string; name: string }[] }) {
     return (
@@ -46,6 +48,8 @@ export default function ModeSelectionPage() {
   const branchId = params.branchId as string;
   const dealId = searchParams.get('dealId');
   const [isDeliveryDialogOpen, setDeliveryDialogOpen] = useState(false);
+  const [isCustomerInfoDialogOpen, setCustomerInfoDialogOpen] = useState(false);
+  const [selectedDeliveryMode, setSelectedDeliveryMode] = useState<string | null>(null);
 
   const { settings } = useSettings();
   const { setOrderDetails } = useCart();
@@ -74,11 +78,18 @@ export default function ModeSelectionPage() {
   
   const handleSelectDeliveryMode = (deliveryMode: string) => {
     setDeliveryDialogOpen(false);
-    setOrderDetails({ branchId, orderType: 'Delivery', deliveryMode });
-    const url = `/branch/${branchId}/menu?mode=Delivery&deliveryMode=${encodeURIComponent(deliveryMode)}`;
+    setSelectedDeliveryMode(deliveryMode);
+    setCustomerInfoDialogOpen(true);
+  }
+
+  const handleCustomerInfoComplete = () => {
+    if (!selectedDeliveryMode) return;
+    setCustomerInfoDialogOpen(false);
+    setOrderDetails({ branchId, orderType: 'Delivery', deliveryMode: selectedDeliveryMode });
+    const url = `/branch/${branchId}/menu?mode=Delivery&deliveryMode=${encodeURIComponent(selectedDeliveryMode)}`;
     const finalUrl = dealId ? `${url}&dealId=${dealId}` : url;
     router.push(finalUrl);
-  }
+  };
 
 
   if (!branch) {
@@ -192,6 +203,11 @@ export default function ModeSelectionPage() {
             onOpenChange={setDeliveryDialogOpen}
             onSelect={handleSelectDeliveryMode}
             deliveryModes={settings.deliveryModes}
+        />
+        <CustomerInfoDialogs
+            isOpen={isCustomerInfoDialogOpen}
+            onComplete={handleCustomerInfoComplete}
+            onCancel={() => setCustomerInfoDialogOpen(false)}
         />
     </div>
   );

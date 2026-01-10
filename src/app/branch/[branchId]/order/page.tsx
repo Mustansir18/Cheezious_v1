@@ -25,7 +25,7 @@ import { useMenu } from "@/context/MenuContext";
 const FALLBACK_IMAGE_URL = "https://picsum.photos/seed/placeholder/400/300";
 
 export default function OrderConfirmationPage() {
-  const { items, cartTotal, branchId, orderType, floorId, tableId, deliveryMode, clearCart, closeCart, setIsCartOpen } = useCart();
+  const { items, cartTotal, branchId, orderType, floorId, tableId, deliveryMode, customerName, customerPhone, customerAddress, clearCart, closeCart, setIsCartOpen } = useCart();
   const { addOrder } = useOrders();
   const { settings } = useSettings();
   const { menu } = useMenu();
@@ -45,7 +45,7 @@ export default function OrderConfirmationPage() {
   const selectedPaymentMethod = useMemo(() => settings.paymentMethods.find(pm => pm.name === paymentMethod), [paymentMethod, settings.paymentMethods]);
   const taxRate = useMemo(() => selectedPaymentMethod?.taxRate || 0, [selectedPaymentMethod]);
   const taxAmount = useMemo(() => cartTotal * taxRate, [cartTotal, taxRate]);
-  const grandTotal = useMemo(() => cartTotal + taxAmount, [cartTotal, taxAmount]);
+  const grandTotal = useMemo(() => cartTotal + taxAmount, [cartTotal, taxRate]);
 
   const displayedItems = useMemo(() => {
     const mainItems = items.filter(item => !item.isDealComponent);
@@ -131,6 +131,9 @@ export default function OrderConfirmationPage() {
         floorId: orderType === 'Dine-In' ? floorId : undefined,
         tableId: orderType === 'Dine-In' ? tableId : undefined,
         deliveryMode: orderType === 'Delivery' ? deliveryMode : undefined,
+        customerName: orderType === 'Delivery' ? customerName || undefined : undefined,
+        customerPhone: orderType === 'Delivery' ? customerPhone || undefined : undefined,
+        customerAddress: orderType === 'Delivery' ? customerAddress || undefined : undefined,
     };
     
     syncOrderToExternalSystem({
@@ -184,7 +187,13 @@ export default function OrderConfirmationPage() {
                 <p><strong>Branch:</strong> {branch?.name}</p>
                 <p><strong>Order Type:</strong> {orderType}</p>
                 {orderType === 'Dine-In' && table && (<p><strong>Table:</strong> {table.name} ({floor?.name})</p>)}
-                {orderType === 'Delivery' && deliveryMode && (<p><strong>Delivery via:</strong> {deliveryMode}</p>)}
+                {orderType === 'Delivery' && deliveryMode && (
+                    <>
+                        <p><strong>Delivery via:</strong> {deliveryMode}</p>
+                        {customerName && <p><strong>Customer:</strong> {customerName} ({customerPhone})</p>}
+                        {customerAddress && <p><strong>Address:</strong> {customerAddress}</p>}
+                    </>
+                )}
             </div>
 
             {displayedItems.map((item, index) => (
