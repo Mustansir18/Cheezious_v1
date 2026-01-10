@@ -201,12 +201,48 @@ const baseMenuItems: MenuItem[] = [
   // Dips
   { id: 'I-00041', name: 'Garlic Mayo Dip', description: 'Creamy garlic mayo dip.', price: 40, categoryId: 'C-00009', subCategoryId: 'SC-00016', imageUrl: getImage('fries'), availableAddonIds: [] },
 
+  // Desserts
+  {
+    id: 'I-D-001', name: 'Milk Cake',
+    description: 'A decadent and moist milk-soaked cake.',
+    price: 0, categoryId: 'C-00008', subCategoryId: 'SC-00015', imageUrl: getImage('deal-1'),
+    variants: [
+        { name: 'Lotus', price: 523.8 },
+        { name: 'Chocolate', price: 523.8 },
+        { name: 'Pistachio', price: 523.8 },
+    ]
+  },
+  {
+    id: 'I-D-002', name: 'Cheesecake',
+    description: 'Creamy and rich cheesecake.',
+    price: 0, categoryId: 'C-00008', subCategoryId: 'SC-00015', imageUrl: getImage('deal-2'),
+    variants: [
+        { name: 'Baked', price: 523.8 },
+        { name: 'Lotus', price: 530 },
+    ]
+  },
+  {
+    id: 'I-D-003', name: 'Fudge Cake',
+    description: 'A rich and dense chocolate fudge cake.',
+    price: 380.95, categoryId: 'C-00008', subCategoryId: 'SC-00015', imageUrl: getImage('deal-3')
+  },
+
   // Drinks
-  { id: 'I-00036', name: 'Regular Soft Drink', description: 'A regular-sized soft drink (345ml).', price: 30, categoryId: 'C-00010', subCategoryId: 'SC-00017', imageUrl: getImage('drink-1'), availableAddonIds: [] },
-  { id: 'I-00037', name: '1 Liter Soft Drink', description: '1 Liter soft drink bottle.', price: 60, categoryId: 'C-00010', subCategoryId: 'SC-00017', imageUrl: getImage('drink-liter'), availableAddonIds: [] },
-  { id: 'I-00038', name: '1.5 Liter Soft Drink', description: '1.5 Liter soft drink bottle.', price: 70, categoryId: 'C-00010', subCategoryId: 'SC-00017', imageUrl: getImage('drink-1.5-liter'), availableAddonIds: [] },
-  { id: 'I-00039', name: 'Small Water Bottle', description: 'A small bottle of mineral water.', price: 30, categoryId: 'C-00010', subCategoryId: 'SC-00017', imageUrl: getImage('drink-2'), availableAddonIds: [] },
-  { id: 'I-00040', name: 'Small Juice', description: 'A small carton of juice.', price: 30, categoryId: 'C-00010', subCategoryId: 'SC-00017', imageUrl: getImage('juice-small'), availableAddonIds: [] },
+  {
+    id: 'I-DR-001', name: 'Soft Drink 1.5L',
+    description: '1.5 Liter soft drink bottle.',
+    price: 209.52, categoryId: 'C-00010', subCategoryId: 'SC-00017', imageUrl: getImage('drink-1.5-liter')
+  },
+  {
+    id: 'I-DR-002', name: 'Soft Drink 1L',
+    description: '1 Liter soft drink bottle.',
+    price: 180.95, categoryId: 'C-00010', subCategoryId: 'SC-00017', imageUrl: getImage('drink-liter')
+  },
+  {
+    id: 'I-DR-003', name: 'Mineral Water (500ml)',
+    description: 'A 500ml bottle of mineral water.',
+    price: 57.14, categoryId: 'C-00010', subCategoryId: 'SC-00017', imageUrl: getImage('drink-2')
+  },
 ];
 
 
@@ -222,7 +258,6 @@ export const initialDeals: MenuItem[] = [
     dealItems: [
       { menuItemId: 'I-00029', quantity: 2 },
       { menuItemId: 'I-00034', quantity: 1 },
-      { menuItemId: 'I-00036', quantity: 2 },
     ]
   },
   { 
@@ -237,7 +272,6 @@ export const initialDeals: MenuItem[] = [
       { menuItemId: 'I-00029', quantity: 2 },
       { menuItemId: 'I-00032', quantity: 2 },
       { menuItemId: 'I-00034', quantity: 1 },
-      { menuItemId: 'I-00036', quantity: 2 },
     ]
   },
   { 
@@ -251,7 +285,7 @@ export const initialDeals: MenuItem[] = [
     dealItems: [
       { menuItemId: 'I-00029', quantity: 3 },
       { menuItemId: 'I-00034', quantity: 1 },
-      { menuItemId: 'I-00037', quantity: 1 },
+      { menuItemId: 'I-DR-002', quantity: 1 },
     ]
   },
   { 
@@ -265,7 +299,7 @@ export const initialDeals: MenuItem[] = [
     dealItems: [
       { menuItemId: 'I-00029', quantity: 3 },
       { menuItemId: 'I-00032', quantity: 3 },
-      { menuItemId: 'I-00037', quantity: 1 },
+      { menuItemId: 'I-DR-002', quantity: 1 },
     ]
   },
   { 
@@ -278,7 +312,6 @@ export const initialDeals: MenuItem[] = [
     subCategoryId: 'SC-00001',
     dealItems: [
       { menuItemId: 'I-P-001', quantity: 1 },
-      { menuItemId: 'I-00036', quantity: 1 },
   ]},
 ];
 
@@ -287,4 +320,3 @@ export const menuItems: MenuItem[] = [
   ...baseMenuItems,
   ...initialDeals
 ];
-
