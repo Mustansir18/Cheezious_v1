@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
@@ -6,7 +7,7 @@ import { useRouter } from "next/navigation";
 import * as Tone from "tone";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { CheckCircle, Loader, Utensils, Printer, Info } from "lucide-react";
+import { CheckCircle, Loader, Utensils, Printer, Info, Bike } from "lucide-react";
 import type { Order, PlacedOrder } from "@/lib/types";
 import { useOrders } from "@/context/OrderContext";
 import { useSettings } from "@/context/SettingsContext";
@@ -81,7 +82,7 @@ export default function OrderStatusPage() {
       if (document.body.contains(printContainer)) {
           document.body.removeChild(printContainer);
       }
-      document.body.classList.remove('printing-active');
+      document.body.classList.add('printing-active');
     }, 500);
   }, [order, resetIdleTimer]);
   
@@ -199,6 +200,12 @@ export default function OrderStatusPage() {
             <p><strong>Branch:</strong> {placedOrder.branchName}</p>
             {placedOrder.orderType === 'Dine-In' && placedOrder.tableName && (
               <p><strong>Table:</strong> {placedOrder.tableName} ({placedOrder.floorName})</p>
+            )}
+            {placedOrder.orderType === 'Delivery' && placedOrder.deliveryMode && (
+              <p className="flex items-center gap-2">
+                <Bike className="h-4 w-4"/>
+                <strong>Delivery via:</strong> {placedOrder.deliveryMode}
+              </p>
             )}
             <p><strong>Total:</strong> <span className="font-bold">RS {Math.round(placedOrder.total)}</span></p>
           </div>

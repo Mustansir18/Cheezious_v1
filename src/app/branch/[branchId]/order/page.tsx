@@ -1,6 +1,6 @@
 
 
-"use client";
+'use client';
 
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -25,7 +25,7 @@ import { useMenu } from "@/context/MenuContext";
 const FALLBACK_IMAGE_URL = "https://picsum.photos/seed/placeholder/400/300";
 
 export default function OrderConfirmationPage() {
-  const { items, cartTotal, branchId, orderType, floorId, tableId, clearCart, closeCart, setIsCartOpen } = useCart();
+  const { items, cartTotal, branchId, orderType, floorId, tableId, deliveryMode, clearCart, closeCart, setIsCartOpen } = useCart();
   const { addOrder } = useOrders();
   const { settings } = useSettings();
   const { menu } = useMenu();
@@ -130,6 +130,7 @@ export default function OrderConfirmationPage() {
         instructions,
         floorId: orderType === 'Dine-In' ? floorId : undefined,
         tableId: orderType === 'Dine-In' ? tableId : undefined,
+        deliveryMode: orderType === 'Delivery' ? deliveryMode : undefined,
     };
     
     syncOrderToExternalSystem({
@@ -160,6 +161,7 @@ export default function OrderConfirmationPage() {
         total: grandTotal,
         branchName: branch.name,
         orderType,
+        deliveryMode: newOrder.deliveryMode,
         ...(table && { tableName: table.name }),
         ...(floor && { floorName: floor.name }),
     };
@@ -182,6 +184,7 @@ export default function OrderConfirmationPage() {
                 <p><strong>Branch:</strong> {branch?.name}</p>
                 <p><strong>Order Type:</strong> {orderType}</p>
                 {orderType === 'Dine-In' && table && (<p><strong>Table:</strong> {table.name} ({floor?.name})</p>)}
+                {orderType === 'Delivery' && deliveryMode && (<p><strong>Delivery via:</strong> {deliveryMode}</p>)}
             </div>
 
             {displayedItems.map((item, index) => (

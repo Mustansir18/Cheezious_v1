@@ -1,6 +1,6 @@
 
 
-"use client";
+'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
 import type { CartItem, MenuItem, OrderType, Addon, Deal, MenuItemVariant, SelectedAddon } from '@/lib/types';
@@ -21,13 +21,14 @@ interface CartContextType {
   orderType: OrderType | null;
   tableId: string | null;
   floorId: string | null;
+  deliveryMode: string | null;
   isCartOpen: boolean;
   setIsCartOpen: React.Dispatch<React.SetStateAction<boolean>>;
   addItem: (options: AddToCartOptions) => void;
   updateQuantity: (cartItemId: string, change: number) => void;
   clearCart: () => void;
   closeCart: () => void;
-  setOrderDetails: (details: { branchId: string; orderType: OrderType; }) => void;
+  setOrderDetails: (details: { branchId: string; orderType: OrderType; deliveryMode?: string }) => void;
   setTable: (tableId: string, floorId: string) => void;
   cartCount: number;
   cartTotal: number;
@@ -41,6 +42,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [orderType, setOrderType] = useState<OrderType | null>(null);
   const [tableId, setTableId] = useState<string | null>(null);
   const [floorId, setFloorId] = useState<string | null>(null);
+  const [deliveryMode, setDeliveryMode] = useState<string | null>(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { toast } = useToast();
   const { menu } = useMenu();
@@ -49,12 +51,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     try {
       const storedCart = sessionStorage.getItem('cheeziousCart');
       if (storedCart) {
-        const { items, branchId, orderType, floorId, tableId } = JSON.parse(storedCart);
+        const { items, branchId, orderType, floorId, tableId, deliveryMode } = JSON.parse(storedCart);
         setItems(items || []);
         setBranchId(branchId || null);
         setOrderType(orderType || null);
         setFloorId(floorId || null);
         setTableId(tableId || null);
+        setDeliveryMode(deliveryMode || null);
       }
     } catch (error) {
       console.error("Could not load cart from session storage", error);
@@ -63,24 +66,29 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     try {
-      const cartState = JSON.stringify({ items, branchId, orderType, floorId, tableId });
+      const cartState = JSON.stringify({ items, branchId, orderType, floorId, tableId, deliveryMode });
       sessionStorage.setItem('cheeziousCart', cartState);
     } catch (error) {
       console.error("Could not save cart to session storage", error);
     }
-  }, [items, branchId, orderType, floorId, tableId]);
+  }, [items, branchId, orderType, floorId, tableId, deliveryMode]);
 
-  const setOrderDetails = (details: { branchId: string; orderType: OrderType; }) => {
-    const hasChanged = details.branchId !== branchId || details.orderType !== orderType;
+  const setOrderDetails = (details: { branchId: string; orderType: OrderType; deliveryMode?: string; }) => {
+    const hasChanged = details.branchId !== branchId || details.orderType !== orderType || details.deliveryMode !== deliveryMode;
     
     setBranchId(details.branchId);
     setOrderType(details.orderType);
 
-    if (details.orderType === 'Dine-In') {
-        // Don't set table here, it will be set by `setTable`
-    } else {
+    if (details.orderType === 'Delivery') {
+        setDeliveryMode(details.deliveryMode || null);
         setFloorId(null);
         setTableId(null);
+    } else if (details.orderType === 'Dine-In') {
+        setDeliveryMode(null);
+    } else { // Take-Away
+        setFloorId(null);
+        setTableId(null);
+        setDeliveryMode(null);
     }
     
     if (hasChanged) {
@@ -195,6 +203,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setItems([]);
     setTableId(null);
     setFloorId(null);
+    setDeliveryMode(null);
   };
   
   const closeCart = () => {
@@ -222,6 +231,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         orderType,
         tableId,
         floorId,
+        deliveryMode,
         isCartOpen,
         setIsCartOpen,
         addItem,

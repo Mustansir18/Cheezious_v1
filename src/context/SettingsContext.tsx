@@ -1,9 +1,9 @@
 
 
-"use client";
+'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useMemo } from 'react';
-import type { Floor, Table, PaymentMethod, Branch, Role, UserRole } from '@/lib/types';
+import type { Floor, Table, PaymentMethod, Branch, Role, UserRole, DeliveryMode } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
@@ -33,6 +33,7 @@ interface Settings {
     businessDayStart: string; // "HH:MM"
     businessDayEnd: string; // "HH:MM"
     roles: Role[];
+    deliveryModes: DeliveryMode[];
 }
 
 interface SettingsContextType {
@@ -50,13 +51,14 @@ interface SettingsContextType {
   updateBranch: (id: string, name: string, orderPrefix: string) => void;
   deleteBranch: (id: string, name: string) => void;
   setDefaultBranch: (id: string) => void;
-  toggleService: (branchId: string, service: 'dineInEnabled' | 'takeAwayEnabled', enabled: boolean) => void;
+  toggleService: (branchId: string, service: 'dineInEnabled' | 'takeAwayEnabled' | 'deliveryEnabled', enabled: boolean) => void;
   updateBusinessDayHours: (start: string, end: string) => void;
   updateCompanyName: (name: string) => void;
-  // Role management
   addRole: (role: Role) => void;
   updateRole: (role: Role) => void;
   deleteRole: (id: UserRole) => void;
+  addDeliveryMode: (id: string, name: string) => void;
+  deleteDeliveryMode: (id: string, name: string) => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -69,7 +71,7 @@ const defaultPaymentMethods: PaymentMethod[] = [
 ];
 
 const initialBranches: Branch[] = [
-    { id: 'B-00001', name: 'CHZ J3, JOHAR TOWN LAHORE', dineInEnabled: true, takeAwayEnabled: true, orderPrefix: 'G3' }
+    { id: 'B-00001', name: 'CHZ J3, JOHAR TOWN LAHORE', dineInEnabled: true, takeAwayEnabled: true, deliveryEnabled: true, orderPrefix: 'G3' }
 ];
 
 const floorsData: { id: string, name: string, prefix: string }[] = [
@@ -90,6 +92,12 @@ const initialTables: Table[] = floorsData.flatMap(floor =>
     }))
 );
 
+const initialDeliveryModes: DeliveryMode[] = [
+    { id: 'DM-001', name: 'Website' },
+    { id: 'DM-002', name: 'App' },
+    { id: 'DM-003', name: 'Call Centre' },
+];
+
 
 const initialSettings: Settings = {
     floors: initialFloors,
@@ -102,6 +110,7 @@ const initialSettings: Settings = {
     businessDayStart: "11:00",
     businessDayEnd: "04:00",
     roles: defaultRoles,
+    deliveryModes: initialDeliveryModes,
 };
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
@@ -148,6 +157,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
             businessDayStart: parsed.businessDayStart || "11:00",
             businessDayEnd: parsed.businessDayEnd || "04:00",
             roles: Array.from(roleMap.values()),
+            deliveryModes: parsed.deliveryModes && parsed.deliveryModes.length > 0 ? parsed.deliveryModes : initialDeliveryModes,
         });
       } else {
         setSettings(initialSettings);
@@ -254,7 +264,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
       toast({ variant: 'destructive', title: 'Error', description: `A branch with the code '${id}' already exists.` });
       return;
     }
-    const newBranch: Branch = { id, name, orderPrefix, dineInEnabled: true, takeAwayEnabled: true };
+    const newBranch: Branch = { id, name, orderPrefix, dineInEnabled: true, takeAwayEnabled: true, deliveryEnabled: true };
     setSettings(s => ({...s, branches: [...s.branches, newBranch]}));
     logActivity(`Added branch: '${name}'.`, user?.username || 'System', 'Settings');
   }, [logActivity, user, settings.branches, toast]);
@@ -280,10 +290,10 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
       logActivity(`Set default branch to: '${branchName}'.`, user?.username || 'System', 'Settings');
   }, [logActivity, settings.branches, user]);
   
-  const toggleService = useCallback((branchId: string, service: 'dineInEnabled' | 'takeAwayEnabled', enabled: boolean) => {
+  const toggleService = useCallback((branchId: string, service: 'dineInEnabled' | 'takeAwayEnabled' | 'deliveryEnabled', enabled: boolean) => {
     setSettings(s => ({...s, branches: s.branches.map(b => b.id === branchId ? {...b, [service]: enabled} : b)}));
     const branchName = settings.branches.find(b => b.id === branchId)?.name;
-    const serviceName = service === 'dineInEnabled' ? 'Dine-In' : 'Take Away';
+    const serviceName = service === 'dineInEnabled' ? 'Dine-In' : service === 'takeAwayEnabled' ? 'Take Away' : 'Delivery';
     logActivity(`Set ${serviceName} service to ${enabled ? 'ON' : 'OFF'} for branch '${branchName}'.`, user?.username || 'System', 'Settings');
   }, [logActivity, settings.branches, user]);
 
@@ -332,6 +342,25 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     }));
     logActivity(`Deleted role: '${roleName}'.`, user?.username || 'System', 'Settings');
   }, [settings.roles, toast, logActivity, user]);
+  
+  const addDeliveryMode = useCallback((id: string, name: string) => {
+    if (!id || !name) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Mode Code and Name are required.' });
+      return;
+    }
+    if (settings.deliveryModes.some(dm => dm.id === id)) {
+      toast({ variant: 'destructive', title: 'Error', description: `A delivery mode with the code '${id}' already exists.` });
+      return;
+    }
+    const newMode: DeliveryMode = { id, name };
+    setSettings(s => ({ ...s, deliveryModes: [...s.deliveryModes, newMode] }));
+    logActivity(`Added delivery mode: '${name}'.`, user?.username || 'System', 'Settings');
+  }, [logActivity, user, settings.deliveryModes, toast]);
+
+  const deleteDeliveryMode = useCallback((id: string, name: string) => {
+    setSettings(s => ({ ...s, deliveryModes: s.deliveryModes.filter(dm => dm.id !== id) }));
+    logActivity(`Deleted delivery mode: '${name}'.`, user?.username || 'System', 'Settings');
+  }, [logActivity, user]);
 
 
   return (
@@ -357,6 +386,8 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         addRole,
         updateRole,
         deleteRole,
+        addDeliveryMode,
+        deleteDeliveryMode,
       }}
     >
       {children}

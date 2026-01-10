@@ -2,11 +2,17 @@
 
 import { z } from 'zod';
 
+export type DeliveryMode = {
+  id: string;
+  name: string;
+}
+
 export type Branch = {
   id: string;
   name: string;
   dineInEnabled: boolean;
   takeAwayEnabled: boolean;
+  deliveryEnabled: boolean;
   orderPrefix: string;
 };
 
@@ -90,7 +96,7 @@ export type CartItem = Omit<MenuItem, 'price' | 'availableAddonIds'> & {
 };
 
 
-export type OrderType = 'Dine-In' | 'Take-Away';
+export type OrderType = 'Dine-In' | 'Take-Away' | 'Delivery';
 
 export type OrderStatus = 'Pending' | 'Preparing' | 'Partial Ready' | 'Ready' | 'Completed' | 'Cancelled';
 
@@ -109,6 +115,7 @@ export type Order = {
     // New fields for dine-in orders
     floorId?: string;
     tableId?: string;
+    deliveryMode?: string;
     // Tax fields
     subtotal: number;
     taxRate: number;
@@ -150,6 +157,7 @@ export type PlacedOrder = {
     total: number;
     branchName: string;
     orderType: OrderType;
+    deliveryMode?: string;
     tableName?: string;
     floorName?: string;
 };
@@ -252,7 +260,7 @@ export const SyncOrderInputSchema = z.object({
   id: z.string().describe('The unique identifier for the order.'),
   branchId: z.string().describe('The identifier for the branch where the order was placed.'),
   orderDate: z.string().describe('The ISO 8601 timestamp when the order was placed.'),
-  orderType: z.enum(['Dine-In', 'Take-Away']).describe('The type of order.'),
+  orderType: z.enum(['Dine-In', 'Take-Away', 'Delivery']).describe('The type of order.'),
   status: z.string().describe('The current status of the order (e.g., "Pending").'),
   totalAmount: z.number().describe('The total cost of the order.'),
   orderNumber: z.string().describe('The human-readable order number.'),
@@ -261,6 +269,7 @@ export const SyncOrderInputSchema = z.object({
   // Optional fields for dine-in
   floorId: z.string().optional().describe('The identifier for the floor.'),
   tableId: z.string().optional().describe('The identifier for the table.'),
+  deliveryMode: z.string().optional().describe('The source of the delivery order (e.g. Website, App, Call Centre).'),
   paymentMethod: z.string().optional().describe('The selected payment method.'),
 });
 export type SyncOrderInput = z.infer<typeof SyncOrderInputSchema>;

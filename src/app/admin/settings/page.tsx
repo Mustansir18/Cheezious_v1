@@ -1,6 +1,6 @@
 
 
-"use client";
+'use client';
 
 import { useState, useEffect } from "react";
 import { useSettings } from "@/context/SettingsContext";
@@ -238,7 +238,7 @@ function AdvancedSettingsGate({ onUnlock }: { onUnlock: () => void }) {
 }
 
 export default function AdminSettingsPage() {
-    const { settings, addFloor, deleteFloor, addTable, deleteTable, addPaymentMethod, deletePaymentMethod, toggleAutoPrint, updateBranch, toggleService, updateBusinessDayHours, addBranch, deleteBranch, setDefaultBranch, updateCompanyName, updatePaymentMethodTaxRate } = useSettings();
+    const { settings, addFloor, deleteFloor, addTable, deleteTable, addPaymentMethod, deletePaymentMethod, toggleAutoPrint, updateBranch, toggleService, updateBusinessDayHours, addBranch, deleteBranch, setDefaultBranch, updateCompanyName, updatePaymentMethodTaxRate, addDeliveryMode, deleteDeliveryMode } = useSettings();
     const { user } = useAuth();
     
     const [isAdvancedSettingsUnlocked, setAdvancedSettingsUnlocked] = useState(false);
@@ -254,6 +254,8 @@ export default function AdminSettingsPage() {
     const [editingBranchName, setEditingBranchName] = useState("");
     const [editingBranchPrefix, setEditingBranchPrefix] = useState("");
     const [companyName, setCompanyName] = useState(settings.companyName);
+    const [newDeliveryModeId, setNewDeliveryModeId] = useState('');
+    const [newDeliveryModeName, setNewDeliveryModeName] = useState('');
     
     const [businessDayStart, setBusinessDayStart] = useState(settings.businessDayStart);
     const [businessDayEnd, setBusinessDayEnd] = useState(settings.businessDayEnd);
@@ -282,6 +284,14 @@ export default function AdminSettingsPage() {
             addTable(newTableId.trim(), newTableName.trim(), selectedFloorForNewTable);
             setNewTableId("");
             setNewTableName("");
+        }
+    };
+    
+    const handleAddDeliveryMode = () => {
+        if (newDeliveryModeId.trim() && newDeliveryModeName.trim()) {
+            addDeliveryMode(newDeliveryModeId.trim(), newDeliveryModeName.trim());
+            setNewDeliveryModeId("");
+            setNewDeliveryModeName("");
         }
     };
 
@@ -534,6 +544,7 @@ export default function AdminSettingsPage() {
                                                 <TableHead>Order Prefix</TableHead>
                                                 <TableHead>Dine-In</TableHead>
                                                 <TableHead>Take Away</TableHead>
+                                                <TableHead>Delivery</TableHead>
                                                 <TableHead className="text-right w-[120px]">Actions</TableHead>
                                             </TableRow>
                                         </TableHeader>
@@ -555,6 +566,13 @@ export default function AdminSettingsPage() {
                                                             checked={branch.takeAwayEnabled}
                                                             onCheckedChange={(checked) => toggleService(branch.id, 'takeAwayEnabled', checked)}
                                                             aria-label="Toggle Take Away"
+                                                        />
+                                                    </TableCell>
+                                                     <TableCell>
+                                                        <Switch
+                                                            checked={branch.deliveryEnabled}
+                                                            onCheckedChange={(checked) => toggleService(branch.id, 'deliveryEnabled', checked)}
+                                                            aria-label="Toggle Delivery"
                                                         />
                                                     </TableCell>
                                                     <TableCell className="text-right">
@@ -728,6 +746,53 @@ export default function AdminSettingsPage() {
                                                             title={`Delete Method "${method.name}"?`}
                                                             description={<>This action will permanently delete the payment method <strong>{method.name}</strong>.</>}
                                                             onConfirm={() => deletePaymentMethod(method.id, method.name)}
+                                                        />
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </CardContent>
+                            </Card>
+
+                             {/* Delivery Modes Management */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Manage Delivery Modes</CardTitle>
+                                    <CardDescription>Add or remove delivery sources like Website, App, or Call Centre.</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="flex flex-col md:flex-row gap-2 mb-4">
+                                        <Input
+                                            placeholder="New mode code (e.g., DM-01)"
+                                            value={newDeliveryModeId}
+                                            onChange={(e) => setNewDeliveryModeId(e.target.value)}
+                                        />
+                                        <Input
+                                            placeholder="New mode name (e.g., Website)"
+                                            value={newDeliveryModeName}
+                                            onChange={(e) => setNewDeliveryModeName(e.target.value)}
+                                        />
+                                        <Button onClick={handleAddDeliveryMode} className="w-full md:w-auto">Add Mode</Button>
+                                    </div>
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Mode Name</TableHead>
+                                                <TableHead>Code</TableHead>
+                                                <TableHead className="text-right w-[80px]">Actions</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {settings.deliveryModes.map(mode => (
+                                                <TableRow key={mode.id}>
+                                                    <TableCell>{mode.name}</TableCell>
+                                                    <TableCell className="font-mono text-xs">{mode.id}</TableCell>
+                                                    <TableCell className="text-right">
+                                                        <DeleteConfirmationDialog
+                                                            title={`Delete Delivery Mode "${mode.name}"?`}
+                                                            description={<>This will permanently delete the delivery mode <strong>{mode.name}</strong>.</>}
+                                                            onConfirm={() => deleteDeliveryMode(mode.id, mode.name)}
                                                         />
                                                     </TableCell>
                                                 </TableRow>
