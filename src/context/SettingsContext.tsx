@@ -8,7 +8,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
 import { ALL_PERMISSIONS } from '@/config/permissions';
-import { useOrders } from './OrderContext';
 
 const defaultRoles: Role[] = [
     { id: "root", name: "Root", permissions: ["admin:*"] },
@@ -34,7 +33,6 @@ interface Settings {
     businessDayStart: string; // "HH:MM"
     businessDayEnd: string; // "HH:MM"
     roles: Role[];
-    occupiedTableIds: string[];
 }
 
 interface SettingsContextType {
@@ -93,7 +91,7 @@ const initialTables: Table[] = floorsData.flatMap(floor =>
 );
 
 
-const initialSettings: Omit<Settings, 'occupiedTableIds'> = {
+const initialSettings: Settings = {
     floors: initialFloors,
     tables: initialTables,
     paymentMethods: defaultPaymentMethods,
@@ -107,19 +105,11 @@ const initialSettings: Omit<Settings, 'occupiedTableIds'> = {
 };
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
-  const [settings, setSettings] = useState<Omit<Settings, 'occupiedTableIds'>>(initialSettings);
+  const [settings, setSettings] = useState<Settings>(initialSettings);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const { logActivity } = useActivityLog();
   const { user } = useAuth();
-  const { orders } = useOrders();
-
-  const occupiedTableIds = useMemo(() => {
-    return orders
-        .filter(o => o.orderType === 'Dine-In' && o.tableId && ['Pending', 'Preparing', 'Ready'].includes(o.status))
-        .map(o => o.tableId!);
-  }, [orders]);
-
 
   useEffect(() => {
     try {
@@ -343,16 +333,11 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     logActivity(`Deleted role: '${roleName}'.`, user?.username || 'System', 'Settings');
   }, [settings.roles, toast, logActivity, user]);
 
-  const finalSettings = useMemo(() => ({
-    ...settings,
-    occupiedTableIds,
-  }), [settings, occupiedTableIds]);
-
 
   return (
     <SettingsContext.Provider
       value={{
-        settings: finalSettings,
+        settings,
         isLoading,
         addFloor,
         deleteFloor,

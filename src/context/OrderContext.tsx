@@ -2,15 +2,17 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef } from 'react';
-import type { Order, OrderStatus, OrderItem } from '@/lib/types';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef, useMemo } from 'react';
+import type { Order, OrderStatus, OrderItem, CartItem } from '@/lib/types';
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
+import { useMenu } from './MenuContext';
 
 interface OrderContextType {
   orders: Order[];
   isLoading: boolean;
   addOrder: (order: Order) => void;
+  addItemsToOrder: (orderId: string, itemsToAdd: CartItem[]) => void;
   updateOrderStatus: (orderId: string, status: OrderStatus, reason?: string) => void;
   toggleItemPrepared: (orderId: string, itemIds: string[]) => void;
   dispatchItem: (orderId: string, itemId: string) => void;
@@ -23,6 +25,7 @@ interface OrderContextType {
         complementaryReason?: string 
     }) => void;
   clearOrders: () => void;
+  occupiedTableIds: Set<string>;
 }
 
 const OrderContext = createContext<OrderContextType | undefined>(undefined);
@@ -43,7 +46,15 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const { logActivity } = useActivityLog();
   const { user } = useAuth();
+  const { menu } = useMenu();
   const prevOrders = usePrevious(orders);
+
+  const occupiedTableIds = useMemo(() => {
+    const ids = orders
+        .filter(o => o.orderType === 'Dine-In' && o.tableId && ['Pending', 'Preparing', 'Ready', 'Partial Ready'].includes(o.status))
+        .map(o => o.tableId!);
+    return new Set(ids);
+  }, [orders]);
 
 
   // Load orders from sessionStorage on initial render
@@ -124,6 +135,53 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
     logActivity(`Placed new Order #${order.orderNumber}.`, user?.username || 'System', 'Order');
   }, [logActivity, user]);
 
+  const addItemsToOrder = useCallback((orderId: string, itemsToAdd: CartItem[]) => {
+    setOrders(prevOrders => {
+        const orderToUpdate = prevOrders.find(o => o.id === orderId);
+        if (!orderToUpdate) return prevOrders;
+
+        const newOrderItems: OrderItem[] = itemsToAdd.map((item: CartItem) => {
+            const menuItem = menu.items.find(mi => mi.id === item.id);
+            const category = menu.categories.find(c => c.id === menuItem?.categoryId);
+            return {
+                id: crypto.randomUUID(),
+                orderId: orderId,
+                menuItemId: item.id,
+                name: item.name,
+                quantity: item.quantity,
+                itemPrice: item.price,
+                baseItemPrice: item.basePrice,
+                selectedAddons: item.selectedAddons.map(a => ({ name: a.name, price: a.price, quantity: a.quantity })),
+                selectedVariant: item.selectedVariant ? { name: item.selectedVariant.name, price: item.selectedVariant.price } : undefined,
+                stationId: category?.stationId,
+                isPrepared: !category?.stationId, // Auto-prepared if no station
+                instructions: item.instructions,
+            };
+        });
+
+        const newItemsTotal = newOrderItems.reduce((sum, item) => sum + (item.itemPrice * item.quantity), 0);
+        
+        const updatedItems = [...orderToUpdate.items, ...newOrderItems];
+        const updatedSubtotal = orderToUpdate.subtotal + newItemsTotal;
+        const updatedTaxAmount = updatedSubtotal * orderToUpdate.taxRate;
+        const updatedTotalAmount = updatedSubtotal + updatedTaxAmount;
+
+        const updatedOrder = {
+            ...orderToUpdate,
+            items: updatedItems,
+            subtotal: updatedSubtotal,
+            taxAmount: updatedTaxAmount,
+            totalAmount: updatedTotalAmount,
+            originalTotalAmount: orderToUpdate.originalTotalAmount ? orderToUpdate.originalTotalAmount + newItemsTotal : undefined,
+        };
+
+        const itemNames = itemsToAdd.map(i => `${i.quantity}x ${i.name}`).join(', ');
+        logActivity(`Added items to Order #${orderToUpdate.orderNumber}: ${itemNames}.`, user?.username || 'System', 'Order');
+        
+        return prevOrders.map(o => o.id === orderId ? updatedOrder : o);
+    });
+  }, [menu.items, menu.categories, logActivity, user]);
+
   const updateOrderStatus = useCallback((orderId: string, status: OrderStatus, reason?: string) => {
     setOrders(prevOrders => {
         const orderToUpdate = prevOrders.find(o => o.id === orderId);
@@ -177,19 +235,22 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
           item.id === itemId ? { ...item, isDispatched: true } : item
         );
         
-        // An item is considered "fulfilled" if it is dispatched OR if it was dispatch-only to begin with.
-        const allItemsFulfilled = newItems.every(item => {
-             const isDispatchOnly = !item.stationId;
-             return item.isDispatched || isDispatchOnly;
+        const allPhysicalItems = newItems.filter(item => {
+            const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
+            if (!menuItem) return false;
+            // A deal's "parent" item in the cart is not a physical component to be dispatched.
+            return !(!item.isDealComponent && menuItem.dealItems && menuItem.dealItems.length > 0);
         });
+        
+        const allDispatched = allPhysicalItems.every(item => item.isDispatched);
 
-        const newStatus = allItemsFulfilled ? 'Ready' : 'Partial Ready';
+        const newStatus = allDispatched ? 'Ready' : 'Partial Ready';
         
         return { ...order, items: newItems, status: newStatus };
       }
       return order;
     }));
-  }, []);
+  }, [menu.items]);
 
 
    const applyDiscountOrComplementary = useCallback((orderId: string, details: { discountType?: 'percentage' | 'amount', discountValue?: number, isComplementary?: boolean, complementaryReason?: string }) => {
@@ -251,11 +312,13 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
         orders,
         isLoading,
         addOrder,
+        addItemsToOrder,
         updateOrderStatus,
         toggleItemPrepared,
         dispatchItem,
         applyDiscountOrComplementary,
         clearOrders,
+        occupiedTableIds,
       }}
     >
       {children}

@@ -19,7 +19,7 @@ import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 
 const FALLBACK_IMAGE_URL = "https://picsum.photos/seed/placeholder/400/300";
 
-function AddToCartDialog({ item, onAddToCart }: { item: MenuItem; onAddToCart: (options: { selectedAddons: { addon: Addon; quantity: number }[], itemQuantity: number, instructions: string, selectedVariant?: MenuItemVariant }) => void; }) {
+export function AddToCartDialog({ item, onAddToCart, triggerButton }: { item: MenuItem; onAddToCart: (options: { selectedAddons: { addon: Addon; quantity: number }[], itemQuantity: number, instructions: string, selectedVariant?: MenuItemVariant }) => void; triggerButton?: React.ReactNode; }) {
     const { menu } = useMenu();
     const [selectedVariant, setSelectedVariant] = useState<MenuItemVariant | undefined>(item.variants?.[0]);
     const [selectedAddons, setSelectedAddons] = useState<Map<string, { addon: Addon; quantity: number }>>(new Map());
@@ -86,10 +86,12 @@ function AddToCartDialog({ item, onAddToCart }: { item: MenuItem; onAddToCart: (
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                 <Button variant="default">
-                    <PlusCircle className="mr-2 h-5 w-5" />
-                    Add to Cart
-                </Button>
+                 {triggerButton || (
+                    <Button variant="default">
+                        <PlusCircle className="mr-2 h-5 w-5" />
+                        Add to Cart
+                    </Button>
+                )}
             </DialogTrigger>
             <DialogContent className="max-h-[90vh] flex flex-col">
                 <DialogHeader>

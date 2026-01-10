@@ -22,6 +22,7 @@ export default function TableSelectionPage() {
 
     const { settings, isLoading } = useSettings();
     const { setOrderDetails } = useCart();
+    const { occupiedTableIds } = useOrders();
     const router = useRouter();
 
     const [selectedFloorId, setSelectedFloorId] = useState<string>("");
@@ -29,10 +30,6 @@ export default function TableSelectionPage() {
     
     const availableTables = settings.tables.filter(table => table.floorId === selectedFloorId);
     
-    const occupiedTableIds = useMemo(() => {
-        return new Set(settings.occupiedTableIds);
-    }, [settings.occupiedTableIds]);
-
 
     const handleProceedToMenu = () => {
         if (selectedFloorId && selectedTableId) {

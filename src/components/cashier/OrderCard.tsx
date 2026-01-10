@@ -17,7 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { formatDistanceToNow } from "date-fns";
 import { Skeleton } from "../ui/skeleton";
 import { ScrollArea } from "../ui/scroll-area";
-import { Utensils, ShoppingBag, Check, CheckCircle, CookingPot, Loader, CreditCard, Printer, Info, XCircle, Tag, Gift, MessageSquareText, CheckCheck } from "lucide-react";
+import { Utensils, ShoppingBag, Check, CheckCircle, CookingPot, Loader, CreditCard, Printer, Info, XCircle, Tag, Gift, MessageSquareText, CheckCheck, PlusCircle } from "lucide-react";
 import { useMemo, useState, useCallback } from "react";
 import { useSettings } from "@/context/SettingsContext";
 import { OrderReceipt } from "./OrderReceipt";
@@ -31,6 +31,7 @@ import { useOrders } from "@/context/OrderContext";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useMenu } from "@/context/MenuContext";
+import { AddToCartDialog } from "../menu/MenuItemCard";
 
 const statusConfig = {
     Pending: { icon: Loader, color: "text-gray-500", label: "Pending" },
@@ -40,6 +41,109 @@ const statusConfig = {
     Completed: { icon: CheckCircle, color: "text-green-500", label: "Completed" },
     Cancelled: { icon: XCircle, color: "text-red-500", label: "Cancelled" },
 };
+
+function AddItemsToOrderDialog({ order }: { order: Order }) {
+    const { menu } = useMenu();
+    const { addItemsToOrder } = useOrders();
+    const [isDialogOpen, setDialogOpen] = useState(false);
+    const [itemsToAdd, setItemsToAdd] = useState<CartItem[]>([]);
+
+    const handleAddItem = (options: { selectedAddons: any[], itemQuantity: number, instructions: string, selectedVariant?: any }, item: MenuItem) => {
+        const cartItemId = crypto.randomUUID();
+        const addonPrice = options.selectedAddons.reduce((sum, { addon, quantity }) => sum + (addon.price * quantity), 0);
+        const basePrice = options.selectedVariant ? options.selectedVariant.price : item.price;
+        const finalPrice = basePrice + addonPrice;
+
+        const newItem: CartItem = {
+            ...item,
+            cartItemId,
+            quantity: options.itemQuantity,
+            price: finalPrice,
+            basePrice: basePrice,
+            selectedAddons: options.selectedAddons.map(({ addon, quantity }) => ({ ...addon, quantity })),
+            selectedVariant: options.selectedVariant,
+            instructions: options.instructions,
+        };
+        setItemsToAdd(prev => [...prev, newItem]);
+    };
+    
+    const handleConfirm = () => {
+        if (itemsToAdd.length > 0) {
+            addItemsToOrder(order.id, itemsToAdd);
+            setDialogOpen(false);
+            setItemsToAdd([]);
+        }
+    };
+
+    return (
+         <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+                <Button variant="secondary" size="sm" className="w-full">
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Items
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
+                <DialogHeader>
+                    <DialogTitle>Add Items to Order #{order.orderNumber}</DialogTitle>
+                    <DialogDescription>Select items to add to this existing order. The order total will be recalculated.</DialogDescription>
+                </DialogHeader>
+                <div className="flex-grow grid grid-cols-2 gap-6 overflow-hidden">
+                    <ScrollArea className="border rounded-lg p-4">
+                        <div className="space-y-2">
+                            <h4 className="font-semibold">Available Items</h4>
+                             {menu.items.map(item => (
+                                <div key={item.id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted">
+                                    <span>{item.name}</span>
+                                    <AddToCartDialog 
+                                        item={item} 
+                                        onAddToCart={(options) => handleAddItem(options, item)} 
+                                        triggerButton={<Button size="sm" variant="outline">Add</Button>}
+                                    />
+                                </div>
+                             ))}
+                        </div>
+                    </ScrollArea>
+                    <div className="border rounded-lg p-4 flex flex-col">
+                        <h4 className="font-semibold mb-2">Items to Add</h4>
+                        {itemsToAdd.length === 0 ? (
+                            <div className="flex-grow flex items-center justify-center text-muted-foreground">
+                                No items selected yet.
+                            </div>
+                        ) : (
+                            <ScrollArea className="flex-grow">
+                                <div className="space-y-2">
+                                {itemsToAdd.map(item => (
+                                    <div key={item.cartItemId} className="text-sm">
+                                        <div className="flex justify-between font-semibold">
+                                            <span>{item.quantity}x {item.name}</span>
+                                            <span>RS {Math.round(item.price * item.quantity)}</span>
+                                        </div>
+                                         {item.selectedAddons.length > 0 && (
+                                            <div className="pl-4 text-xs text-muted-foreground">
+                                                {item.selectedAddons.map(addon => <p key={addon.id}>+ {addon.quantity}x {addon.name}</p>)}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                                </div>
+                            </ScrollArea>
+                        )}
+                         <div className="mt-4 border-t pt-4">
+                            <div className="flex justify-between font-bold text-lg">
+                                <span>New Items Total:</span>
+                                <span>RS {Math.round(itemsToAdd.reduce((sum, item) => sum + item.price * item.quantity, 0))}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="secondary" onClick={() => { setDialogOpen(false); setItemsToAdd([]); }}>Cancel</Button>
+                    <Button onClick={handleConfirm} disabled={itemsToAdd.length === 0}>Add {itemsToAdd.length} Item(s) to Order</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
 
 function CancellationDialog({ orderId, onConfirm }: { orderId: string, onConfirm: (orderId: string, reason: string) => void }) {
     const [isOpen, setIsOpen] = useState(false);
@@ -269,39 +373,29 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
 
   const { dealItems, regularItems } = useMemo(() => {
     const dealsMap = new Map<string, { deal: OrderItem, components: OrderItem[] }>();
-    const regularItemsList: OrderItem[] = [];
+    const regulars: OrderItem[] = [];
 
-    // First, find all parent deal items and initialize their entries in the map.
-    order.items.forEach(item => {
+    const parentDeals = new Set(order.items.filter(item => {
         const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
-        if (!menuItem) return;
-        // A deal's "parent" item in the cart is not a deal component itself, but it DOES have dealItems.
-        const isParentDeal = menuItem.dealItems && menuItem.dealItems.length > 0 && !item.isDealComponent;
-        if (isParentDeal) {
+        return menuItem && menuItem.dealItems && menuItem.dealItems.length > 0 && !item.isDealComponent;
+    }).map(item => item.id));
+
+    order.items.forEach(item => {
+        if (parentDeals.has(item.id)) {
             dealsMap.set(item.id, { deal: item, components: [] });
         }
     });
 
-    // Now, iterate through all items again to categorize them.
     order.items.forEach(item => {
         if (item.parentDealId && dealsMap.has(item.parentDealId)) {
-            // This item is a component of a deal we've already mapped.
-            dealsMap.get(item.parentDealId)?.components.push(item);
-        } else {
-            // If it's not a deal component, check if it's a parent deal itself.
-            const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
-            if(menuItem) {
-                const isParentDeal = menuItem.dealItems && menuItem.dealItems.length > 0 && !item.isDealComponent;
-                 if (!isParentDeal) {
-                    regularItemsList.push(item);
-                }
-            }
+            dealsMap.get(item.parentDealId)!.components.push(item);
+        } else if (!parentDeals.has(item.id)) {
+            regulars.push(item);
         }
     });
-
-    return { dealItems: Array.from(dealsMap.values()), regularItems: regularItemsList };
-  }, [order.items, menu.items]);
-
+    
+    return { dealItems: Array.from(dealsMap.values()), regularItems: regulars };
+}, [order.items, menu.items]);
 
   return (
     <Card className="flex h-full flex-col">
@@ -345,11 +439,11 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
 
                 return (
                     <div key={deal.id} className="text-sm">
-                        <div className="flex justify-between items-center font-semibold">
-                            <div>{deal.quantity}x {deal.name}</div>
-                            <div className="font-mono">RS {Math.round(deal.itemPrice * deal.quantity)}</div>
+                        <div className="flex justify-between items-center">
+                            <div className="font-semibold">{deal.quantity}x {deal.name}</div>
+                            <div className="font-mono font-semibold">RS {Math.round(deal.itemPrice * deal.quantity)}</div>
                         </div>
-                        <div className="pl-4 text-xs text-muted-foreground border-l-2 ml-1 pl-2 space-y-0.5">
+                         <div className="pl-4 text-xs text-muted-foreground border-l-2 ml-1 mt-1 pt-1 space-y-0.5">
                             <p className="font-semibold text-gray-500">Includes:</p>
                             {aggregatedComponents.map(comp => <div key={comp.name}>- {comp.quantity}x {comp.name}</div>)}
                         </div>
@@ -440,7 +534,10 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
                      </div>
                  )}
                  {(order.status === 'Preparing' || order.status === 'Ready' || order.status === 'Partial Ready') && isModifiableByUser && (
-                     <OrderModificationDialog order={order} />
+                     <div className="grid grid-cols-2 gap-2">
+                        <AddItemsToOrderDialog order={order} />
+                        <OrderModificationDialog order={order} />
+                    </div>
                  )}
             </div>
          )}
