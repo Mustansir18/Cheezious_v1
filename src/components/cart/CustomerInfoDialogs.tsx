@@ -8,8 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { MapPin, LocateFixed } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { MapPin } from 'lucide-react';
 
 interface CustomerInfoDialogsProps {
   isOpen: boolean;
@@ -23,7 +22,6 @@ export function CustomerInfoDialogs({ isOpen, onComplete, onCancel }: CustomerIn
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
-  const { toast } = useToast();
 
   const handleNameSubmit = () => {
     if (name.trim()) {
@@ -42,16 +40,6 @@ export function CustomerInfoDialogs({ isOpen, onComplete, onCancel }: CustomerIn
       setCustomerDetails({ name, phone, address });
       onComplete();
     }
-  };
-  
-  const handleUseLocation = () => {
-    // In a real app, you would use navigator.geolocation and a reverse geocoding API.
-    // For this prototype, we'll simulate the result with a clear message.
-    toast({
-        title: "Simulating Location Fetch",
-        description: "In a real app, this would use your GPS. For this demo, a sample address will be used."
-    });
-    setAddress("House #456, Block B, Gulberg III, Lahore, Punjab, Pakistan");
   };
 
   const handleClose = () => {
@@ -105,7 +93,7 @@ export function CustomerInfoDialogs({ isOpen, onComplete, onCancel }: CustomerIn
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Enter Your Delivery Address</DialogTitle>
-            <DialogDescription>Please provide the full address for delivery, or use your current location.</DialogDescription>
+            <DialogDescription>Please provide the full address for delivery.</DialogDescription>
           </DialogHeader>
           <div className="py-4 space-y-4">
             <div className="space-y-2">
@@ -114,10 +102,6 @@ export function CustomerInfoDialogs({ isOpen, onComplete, onCancel }: CustomerIn
                         <MapPin className="h-4 w-4" />
                         Home Address
                     </Label>
-                     <Button variant="outline" size="sm" onClick={handleUseLocation}>
-                        <LocateFixed className="mr-2 h-4 w-4" />
-                        Use Sample Location
-                    </Button>
                 </div>
                 <Textarea 
                 id="customer-address" 
@@ -127,7 +111,7 @@ export function CustomerInfoDialogs({ isOpen, onComplete, onCancel }: CustomerIn
                 className="min-h-[100px]"
                 />
                  <p className="text-xs text-muted-foreground pt-1">
-                 Please type your address manually or use your current location. The map is for visual reference only.
+                 Please type your address manually. The map is for visual reference only.
                 </p>
             </div>
              <div className="rounded-lg overflow-hidden border">
