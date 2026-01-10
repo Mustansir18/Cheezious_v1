@@ -4,7 +4,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
-import type { MenuItem, Addon, CartItem, MenuItemVariant } from "@/lib/types";
+import type { MenuItem, Addon, CartItem, MenuItemVariant, SelectedAddon } from "@/lib/types";
 import { useCart } from "@/context/CartContext";
 import { useMenu } from "@/context/MenuContext";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 
 const FALLBACK_IMAGE_URL = "https://picsum.photos/seed/placeholder/400/300";
 
-export function AddToCartDialog({ item, onAddToCart, triggerButton }: { item: MenuItem; onAddToCart: (options: { selectedAddons: { addon: Addon; quantity: number }[], itemQuantity: number, instructions: string, selectedVariant?: MenuItemVariant }) => void; triggerButton?: React.ReactNode; }) {
+export function AddToCartDialog({ item, onAddToCart, triggerButton }: { item: MenuItem; onAddToCart: (options: { selectedAddons: SelectedAddon[], itemQuantity: number, instructions: string, selectedVariant?: MenuItemVariant }) => void; triggerButton?: React.ReactNode; }) {
     const { menu } = useMenu();
     const [selectedVariant, setSelectedVariant] = useState<MenuItemVariant | undefined>(item.variants?.[0]);
     const [selectedAddons, setSelectedAddons] = useState<Map<string, { addon: Addon; quantity: number }>>(new Map());
@@ -70,16 +70,39 @@ export function AddToCartDialog({ item, onAddToCart, triggerButton }: { item: Me
 
     const handleConfirm = () => {
         if (hasVariants && !selectedVariant) {
-            // In a real app, you'd show a toast notification here.
             console.error("Please select a size.");
             return;
         }
-        const addonsArray = Array.from(selectedAddons.values());
-        onAddToCart({ selectedAddons: addonsArray, itemQuantity, instructions, selectedVariant });
+
+        const addonsWithPrice = Array.from(selectedAddons.values()).map(({ addon, quantity }) => {
+            let selectedPrice = 0;
+            if (addon.type === 'topping' && addon.prices && selectedVariant) {
+                selectedPrice = addon.prices[selectedVariant.name] || 0;
+            } else {
+                selectedPrice = addon.price || 0;
+            }
+            return { addon, quantity, selectedPrice };
+        });
+
+        onAddToCart({ 
+            selectedAddons: addonsWithPrice.map(({ addon, quantity, selectedPrice }) => ({ ...addon, quantity, selectedPrice })),
+            itemQuantity, 
+            instructions, 
+            selectedVariant 
+        });
         setIsOpen(false);
     };
     
-    const totalAddonPrice = Array.from(selectedAddons.values()).reduce((sum, { addon, quantity }) => sum + (addon.price * quantity), 0);
+    const totalAddonPrice = Array.from(selectedAddons.values()).reduce((sum, { addon, quantity }) => {
+        let addonPrice = 0;
+        if (addon.type === 'topping' && addon.prices && selectedVariant) {
+            addonPrice = addon.prices[selectedVariant.name] || 0;
+        } else {
+            addonPrice = addon.price || 0;
+        }
+        return sum + (addonPrice * quantity);
+    }, 0);
+
     const baseItemPrice = hasVariants ? (selectedVariant?.price || 0) : item.price;
     const finalPrice = (baseItemPrice + totalAddonPrice) * itemQuantity;
     
@@ -143,6 +166,10 @@ export function AddToCartDialog({ item, onAddToCart, triggerButton }: { item: Me
                                 {availableAddons.map(addon => {
                                     const isSelected = selectedAddons.has(addon.id);
                                     const selectedInfo = selectedAddons.get(addon.id);
+                                    let displayPrice = addon.price || 0;
+                                    if(addon.type === 'topping' && addon.prices && selectedVariant) {
+                                        displayPrice = addon.prices[selectedVariant.name] || 0;
+                                    }
 
                                     return (
                                         <div key={addon.id} className={cn("p-2 rounded-md hover:bg-muted/50", isSelected && "bg-muted/50")}>
@@ -157,7 +184,7 @@ export function AddToCartDialog({ item, onAddToCart, triggerButton }: { item: Me
                                                 <Label htmlFor={`addon-dialog-${addon.id}`} className="flex-grow font-normal cursor-pointer text-base">
                                                     {addon.name}
                                                 </Label>
-                                                <span className="text-sm font-semibold">+RS {Math.round(addon.price)}</span>
+                                                {displayPrice > 0 && <span className="text-sm font-semibold">+RS {Math.round(displayPrice)}</span>}
                                             </div>
                                             {isSelected && selectedInfo && (
                                                 <div className="flex items-center justify-end gap-2 mt-2">
@@ -207,7 +234,7 @@ export function AddToCartDialog({ item, onAddToCart, triggerButton }: { item: Me
 export function MenuItemCard({ item }: { item: MenuItem }) {
   const { addItem, items: cartItems } = useCart();
 
-  const handleAddToCart = (options: { selectedAddons: { addon: Addon; quantity: number }[], itemQuantity: number, instructions: string, selectedVariant?: MenuItemVariant }) => {
+  const handleAddToCart = (options: { selectedAddons: SelectedAddon[], itemQuantity: number, instructions: string, selectedVariant?: MenuItemVariant }) => {
     addItem({ item, ...options });
   };
   

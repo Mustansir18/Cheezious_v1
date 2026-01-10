@@ -44,13 +44,38 @@ export const menuCategories: MenuCategory[] = [
 ];
 
 export const addons: Addon[] = [
-    { id: 'A-00001', name: 'Extra Cheese', price: 50 },
-    { id: 'A-00002', name: 'Olives', price: 30 },
-    { id: 'A-00003', name: 'Jalapenos', price: 30 },
-    { id: 'A-00004', name: 'Mushrooms', price: 30 },
-    { id: 'A-00005', name: 'Dip Sauce', price: 20 },
-    { id: 'A-00006', name: 'Spicy Mayo Sauce', price: 25 },
+    // Standard Add-ons
+    { id: 'A-00002', name: 'Olives', price: 30, type: 'standard' },
+    { id: 'A-00003', name: 'Jalapenos', price: 30, type: 'standard' },
+    { id: 'A-00004', name: 'Mushrooms', price: 30, type: 'standard' },
+    { id: 'A-00005', name: 'Dip Sauce', price: 20, type: 'standard' },
+    { id: 'A-00006', name: 'Spicy Mayo Sauce', price: 25, type: 'standard' },
+    
+    // Size-based Toppings
+    {
+        id: 'A-T-001',
+        name: 'Extra Veggie/Meat',
+        type: 'topping',
+        prices: {
+            'Small': 114.29,
+            'Regular': 142.86,
+            'Large': 209.52,
+            'Party': 314.29,
+        }
+    },
+    {
+        id: 'A-T-002',
+        name: 'Extra Cheese',
+        type: 'topping',
+        prices: {
+            'Small': 114.29,
+            'Regular': 142.86,
+            'Large': 209.52,
+            'Party': 314.29,
+        }
+    }
 ];
+
 
 const getImage = (id: string) => PlaceHolderImages.find(i => i.id === id)?.imageUrl || `https://picsum.photos/seed/${id}/400/300`;
 
@@ -60,7 +85,7 @@ const baseMenuItems: MenuItem[] = [
     id: 'I-P-001', name: 'Chicken Tikka Pizza',
     description: 'Made with pizza sauce, cheese mix, topped with tasty tikka and onions for a delightful taste experience.',
     price: 0, categoryId: 'C-00002', subCategoryId: 'SC-00002', imageUrl: getImage('chicken-tikka'),
-    availableAddonIds: ['A-00001', 'A-00002', 'A-00003', 'A-00004'],
+    availableAddonIds: ['A-00002', 'A-00003', 'A-00004', 'A-T-001', 'A-T-002'],
     variants: [
       { name: 'Small', price: 200 },
       { name: 'Regular', price: 390 },
@@ -70,7 +95,7 @@ const baseMenuItems: MenuItem[] = [
     id: 'I-P-002', name: 'Chicken Fajita Pizza',
     description: 'An authentic taste of Fajita marinated chicken, onions, cheese, pizza sauce, and bell peppers.',
     price: 0, categoryId: 'C-00002', subCategoryId: 'SC-00002', imageUrl: getImage('chicken-fajita'),
-    availableAddonIds: ['A-00001', 'A-00002', 'A-00003', 'A-00004'],
+    availableAddonIds: ['A-00002', 'A-00003', 'A-00004', 'A-T-001', 'A-T-002'],
     variants: [
       { name: 'Small', price: 200 },
       { name: 'Regular', price: 390 },
@@ -80,7 +105,7 @@ const baseMenuItems: MenuItem[] = [
     id: 'I-P-003', name: 'Chicken Supreme Pizza',
     description: 'Featuring smoky chicken tikka, fajita, onions, capsicums, mushrooms, pizza sauce, black olives, and cheese mix.',
     price: 0, categoryId: 'C-00002', subCategoryId: 'SC-00003', imageUrl: getImage('chicken-supreme'),
-    availableAddonIds: ['A-00001', 'A-00002', 'A-00003', 'A-00004'],
+    availableAddonIds: ['A-00002', 'A-00003', 'A-00004', 'A-T-001', 'A-T-002'],
     variants: [
       { name: 'Small', price: 200 },
       { name: 'Regular', price: 390 },
@@ -90,7 +115,7 @@ const baseMenuItems: MenuItem[] = [
     id: 'I-P-004', name: 'Behari Kebab Pizza',
     description: 'Loaded with cheese mix, onions, jalapenos, sauce, garnish, tikka, and juicy seekh kebab topping.',
     price: 0, categoryId: 'C-00002', subCategoryId: 'SC-00003', imageUrl: getImage('behari-kebab'),
-    availableAddonIds: ['A-00001', 'A-00002', 'A-00003', 'A-00004'],
+    availableAddonIds: ['A-00002', 'A-00003', 'A-00004', 'A-T-001', 'A-T-002'],
     variants: [
         { name: 'Small', price: 657 },
         { name: 'Regular', price: 1476 },
@@ -102,7 +127,7 @@ const baseMenuItems: MenuItem[] = [
     id: 'I-P-005', name: 'Crown Crust Pizza',
     description: 'A flavorful blend of special sauce, cheese & mughlai tikka, all crowned with capsicums, onions and black olives on top.',
     price: 0, categoryId: 'C-00002', subCategoryId: 'SC-00004', imageUrl: getImage('crown-crust'),
-    availableAddonIds: ['A-00001', 'A-00002', 'A-00003', 'A-00004'],
+    availableAddonIds: ['A-00002', 'A-00003', 'A-00004', 'A-T-001', 'A-T-002'],
     variants: [
         { name: 'Small', price: 657 },
         { name: 'Regular', price: 1476 },
@@ -114,7 +139,7 @@ const baseMenuItems: MenuItem[] = [
     id: 'I-P-006', name: 'Stuffed Crust Pizza',
     description: 'Special sauce, kebab dip, cheese Mix with onions, capsicums, mushrooms, green olives & three mouth watering flavours of topping.',
     price: 0, categoryId: 'C-00002', subCategoryId: 'SC-00004', imageUrl: getImage('stuff-crust'),
-    availableAddonIds: ['A-00001', 'A-00002', 'A-00003', 'A-00004'],
+    availableAddonIds: ['A-00002', 'A-00003', 'A-00004', 'A-T-001', 'A-T-002'],
     variants: [
         { name: 'Small', price: 657 },
         { name: 'Regular', price: 1524 },
@@ -126,7 +151,7 @@ const baseMenuItems: MenuItem[] = [
     id: 'I-P-007', name: 'Cheezious Special Pizza',
     description: 'Cheeziness overload with onions, capsicums, mushrooms, black olives, sauce, cheese mix with four combination of topping.',
     price: 0, categoryId: 'C-00002', subCategoryId: 'SC-00005', imageUrl: getImage('cheezious-special'),
-    availableAddonIds: ['A-00001', 'A-00002', 'A-00003', 'A-00004'],
+    availableAddonIds: ['A-00002', 'A-00003', 'A-00004', 'A-T-001', 'A-T-002'],
     variants: [
         { name: 'Small', price: 657 },
         { name: 'Regular', price: 1476 },
@@ -138,7 +163,7 @@ const baseMenuItems: MenuItem[] = [
     id: 'I-P-008', name: 'Chicken Extreme Pizza',
     description: 'A pizza for extreme chicken lovers, loaded with chicken and cheese.',
     price: 0, categoryId: 'C-00002', subCategoryId: 'SC-00005', imageUrl: getImage('chicken-supreme'),
-    availableAddonIds: ['A-00001', 'A-00002', 'A-00003', 'A-00004'],
+    availableAddonIds: ['A-00002', 'A-00003', 'A-00004', 'A-T-001', 'A-T-002'],
     variants: [
         { name: 'Small', price: 657 },
         { name: 'Regular', price: 1476 },
@@ -150,7 +175,7 @@ const baseMenuItems: MenuItem[] = [
     id: 'I-P-009', name: 'Peri Peri / Malai Tikka Pizza',
     description: 'A spicy and creamy delight with your choice of Peri Peri or Malai Tikka chicken.',
     price: 0, categoryId: 'C-00002', subCategoryId: 'SC-00005', imageUrl: getImage('chicken-tikka'),
-    availableAddonIds: ['A-00001', 'A-00002', 'A-00003', 'A-00004'],
+    availableAddonIds: ['A-00002', 'A-00003', 'A-00004', 'A-T-001', 'A-T-002'],
     variants: [
         { name: 'Small', price: 657 },
         { name: 'Regular', price: 1524 },
@@ -184,19 +209,19 @@ const baseMenuItems: MenuItem[] = [
       { name: 'Large', price: 333.33 },
     ]
   },
-  { id: 'I-00021', name: 'Fettuccine Alfredo Pasta', description: 'Fettuccine pasta tossed in creamy white sauce with mushrooms and chicken chunks.', price: 1000.00, categoryId: 'C-00005', subCategoryId: 'SC-00011', imageUrl: getImage('fettuccine-alfredo'), availableAddonIds: ['A-00001', 'A-00004'] },
-  { id: 'I-00022', name: 'Crunchy Chicken Pasta', description: 'Yummiest macaroni pasta in white sauce topped with crispy chicken & cheese.', price: 904.76, categoryId: 'C-00005', subCategoryId: 'SC-00011', imageUrl: getImage('crunchy-pasta'), availableAddonIds: ['A-00001'] },
+  { id: 'I-00021', name: 'Fettuccine Alfredo Pasta', description: 'Fettuccine pasta tossed in creamy white sauce with mushrooms and chicken chunks.', price: 1000.00, categoryId: 'C-00005', subCategoryId: 'SC-00011', imageUrl: getImage('fettuccine-alfredo'), availableAddonIds: ['A-00004', 'A-T-002'] },
+  { id: 'I-00022', name: 'Crunchy Chicken Pasta', description: 'Yummiest macaroni pasta in white sauce topped with crispy chicken & cheese.', price: 904.76, categoryId: 'C-00005', subCategoryId: 'SC-00011', imageUrl: getImage('crunchy-pasta'), availableAddonIds: ['A-T-002'] },
   { id: 'I-00023', name: 'Special Roasted Platter', description: '4 pcs behari rolls, 6 pcs wings with fries & dip sauce.', price: 350, categoryId: 'C-00005', subCategoryId: 'SC-00012', imageUrl: getImage('roasted-platter'), availableAddonIds: ['A-00005'] },
   { id: 'I-00024', name: 'Classic Roll Platter', description: '4 pcs behari rolls, 4 pcs arabic rolls served with fries & dip sauce.', price: 350, categoryId: 'C-00005', subCategoryId: 'SC-00012', imageUrl: getImage('roll-platter'), availableAddonIds: ['A-00005'] },
   
   // Burgers
-  { id: 'I-00028', name: 'Reggy Burger', description: 'Classic Reggy burger.', price: 371.43, categoryId: 'C-00011', subCategoryId: 'SC-00018', imageUrl: getImage('reggy-burger'), availableAddonIds: ['A-00001', 'A-00006'] },
-  { id: 'I-00029', name: 'Bazinga Burger', description: 'A large crispy chicken zinger burger.', price: 533.33, categoryId: 'C-00011', subCategoryId: 'SC-00018', imageUrl: getImage('bazinga-burger'), availableAddonIds: ['A-00001', 'A-00006'] },
+  { id: 'I-00028', name: 'Reggy Burger', description: 'Classic Reggy burger.', price: 371.43, categoryId: 'C-00011', subCategoryId: 'SC-00018', imageUrl: getImage('reggy-burger'), availableAddonIds: ['A-00006', 'A-T-002'] },
+  { id: 'I-00029', name: 'Bazinga Burger', description: 'A large crispy chicken zinger burger.', price: 533.33, categoryId: 'C-00011', subCategoryId: 'SC-00018', imageUrl: getImage('bazinga-burger'), availableAddonIds: ['A-00006', 'A-T-002'] },
 
   // Meltz
-  { id: 'I-00025', name: 'Euro Sandwich', description: 'Chicken tikka with special sauce, cheese, lettuce, and pineapples in soft and crispy buns, served with fries.', price: 280, categoryId: 'C-00007', subCategoryId: 'SC-00014', imageUrl: getImage('euro-sandwich'), availableAddonIds: ['A-00001', 'A-00006'] },
-  { id: 'I-00026', name: 'Mexican Sandwich', description: 'Black pepper chicken with fresh tomatoes, cucumbers, sweet corn, lettuce, and our special dip sauce, all in soft, crispy buns served with fries.', price: 280, categoryId: 'C-00007', subCategoryId: 'SC-00014', imageUrl: getImage('mexican-sandwich'), availableAddonIds: ['A-00001', 'A-00006'] },
-  { id: 'I-00027', name: 'Pizza Stacker', description: 'A unique blend of delicious sauce, crispy chicken and pizza crust.', price: 280, categoryId: 'C-00007', subCategoryId: 'SC-00014', imageUrl: getImage('pizza-stacker'), availableAddonIds: ['A-00001', 'A-00006'] },
+  { id: 'I-00025', name: 'Euro Sandwich', description: 'Chicken tikka with special sauce, cheese, lettuce, and pineapples in soft and crispy buns, served with fries.', price: 280, categoryId: 'C-00007', subCategoryId: 'SC-00014', imageUrl: getImage('euro-sandwich'), availableAddonIds: ['A-00006', 'A-T-002'] },
+  { id: 'I-00026', name: 'Mexican Sandwich', description: 'Black pepper chicken with fresh tomatoes, cucumbers, sweet corn, lettuce, and our special dip sauce, all in soft, crispy buns served with fries.', price: 280, categoryId: 'C-00007', subCategoryId: 'SC-00014', imageUrl: getImage('mexican-sandwich'), availableAddonIds: ['A-00006', 'A-T-002'] },
+  { id: 'I-00027', name: 'Pizza Stacker', description: 'A unique blend of delicious sauce, crispy chicken and pizza crust.', price: 280, categoryId: 'C-00007', subCategoryId: 'SC-00014', imageUrl: getImage('pizza-stacker'), availableAddonIds: ['A-00006', 'A-T-002'] },
   
   // Dips
   { id: 'I-00041', name: 'Garlic Mayo Dip', description: 'Creamy garlic mayo dip.', price: 40, categoryId: 'C-00009', subCategoryId: 'SC-00016', imageUrl: getImage('fries'), availableAddonIds: [] },

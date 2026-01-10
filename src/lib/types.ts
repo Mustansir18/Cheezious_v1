@@ -26,8 +26,11 @@ export type MenuCategory = {
 export type Addon = {
   id: string;
   name: string;
-  price: number;
+  price?: number; // For simple, fixed-price addons
+  prices?: { [size: string]: number }; // For size-based pricing
+  type?: 'topping' | 'standard'; // To differentiate logic
 };
+
 
 export type AddonCategory = {
     id: string;
@@ -69,7 +72,8 @@ export type Deal = {
   items: DealItem[];
 };
 
-export type SelectedAddon = Addon & { quantity: number };
+export type SelectedAddon = Addon & { quantity: number; selectedPrice: number };
+
 
 export type CartItem = Omit<MenuItem, 'price' | 'availableAddonIds'> & {
   cartItemId: string; // Unique ID for the cart instance of an item

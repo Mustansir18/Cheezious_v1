@@ -3,14 +3,14 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
-import type { CartItem, MenuItem, OrderType, Addon, Deal, MenuItemVariant } from '@/lib/types';
+import type { CartItem, MenuItem, OrderType, Addon, Deal, MenuItemVariant, SelectedAddon } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useMenu } from './MenuContext';
 
 
 interface AddToCartOptions {
     item: MenuItem;
-    selectedAddons?: { addon: Addon; quantity: number }[];
+    selectedAddons?: SelectedAddon[];
     itemQuantity: number;
     instructions: string;
     selectedVariant?: MenuItemVariant;
@@ -96,9 +96,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const addItem = ({ item: itemToAdd, selectedAddons = [], itemQuantity, instructions, selectedVariant }: AddToCartOptions) => {
     const isDeal = itemToAdd.categoryId === 'C-00001';
 
-    const getVariationId = (addons: { addon: Addon; quantity: number }[], instr: string, variant?: MenuItemVariant) => {
+    const getVariationId = (addons: SelectedAddon[], instr: string, variant?: MenuItemVariant) => {
       const addonString = addons.length > 0 
-        ? addons.map(a => `${a.addon.id}x${a.quantity}`).sort().join(',')
+        ? addons.map(a => `${a.id}x${a.quantity}`).sort().join(',')
         : 'no-addons';
       const instructionString = instr.trim().toLowerCase();
       const variantString = variant ? variant.name : 'no-variant';
@@ -123,7 +123,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         const newItems: CartItem[] = [];
         const parentDealId = crypto.randomUUID();
 
-        const addonPrice = selectedAddons.reduce((sum, { addon, quantity }) => sum + (addon.price * quantity), 0);
+        const addonPrice = selectedAddons.reduce((sum, addon) => sum + (addon.selectedPrice * addon.quantity), 0);
         const basePrice = isDeal ? itemToAdd.price : (selectedVariant ? selectedVariant.price : itemToAdd.price);
         const finalPrice = basePrice + addonPrice;
 
@@ -133,7 +133,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             uniqueVariationId: variationId,
             price: finalPrice,
             basePrice: basePrice,
-            selectedAddons: selectedAddons.map(({ addon, quantity }) => ({ ...addon, quantity })),
+            selectedAddons: selectedAddons,
             selectedVariant: selectedVariant,
             quantity: itemQuantity,
             instructions: instructions.trim() || undefined,
