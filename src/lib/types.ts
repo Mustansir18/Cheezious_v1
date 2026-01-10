@@ -46,6 +46,7 @@ export type AddonCategory = {
 export type KitchenStation = 'pizza' | 'pasta' | 'fried' | 'bar';
 
 export type MenuItemVariant = {
+  id: string;
   name: string; // e.g., "Small", "Regular", "Large"
   price: number;
 };

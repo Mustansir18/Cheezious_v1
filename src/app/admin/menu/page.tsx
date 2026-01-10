@@ -22,7 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Trash2, Edit, PlusCircle, FileText, FileDown, ChefHat } from 'lucide-react';
-import type { MenuCategory, MenuItem, Addon, KitchenStation, SubCategory } from '@/lib/types';
+import type { MenuCategory, MenuItem, Addon, KitchenStation, SubCategory, MenuItemVariant } from '@/lib/types';
 import imageCompression from 'browser-image-compression';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -204,6 +204,7 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
   const [imageUrl, setImageUrl] = useState(item?.imageUrl || '');
   const [isCompressing, setIsCompressing] = useState(false);
   const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>(item?.availableAddonIds || []);
+  const [variants, setVariants] = useState<MenuItemVariant[]>(item?.variants || []);
   const [isIdInvalid, setIsIdInvalid] = useState(false);
   
   // State for new addon form
@@ -258,6 +259,21 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
     setNewAddonName('');
     setNewAddonPrice(0);
   }
+  
+  const handleVariantChange = (index: number, field: 'name' | 'price', value: string | number) => {
+    const newVariants = [...variants];
+    newVariants[index] = { ...newVariants[index], [field]: value };
+    setVariants(newVariants);
+  };
+  
+  const addVariant = () => {
+    setVariants([...variants, { id: crypto.randomUUID(), name: '', price: 0 }]);
+  };
+  
+  const removeVariant = (index: number) => {
+    setVariants(variants.filter((_, i) => i !== index));
+  };
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -265,7 +281,9 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
     
     if (!item && !validateId(id)) return; // Don't save if validation fails on create
 
-    const data = { name, description, price, categoryId, subCategoryId, imageUrl, availableAddonIds: selectedAddonIds };
+    const finalPrice = variants.length > 0 ? 0 : price;
+
+    const data = { name, description, price: finalPrice, categoryId, subCategoryId, imageUrl, availableAddonIds: selectedAddonIds, variants };
     if (item) {
       onSave({ ...item, ...data });
     } else {
@@ -299,9 +317,10 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
                 <Label htmlFor="item-name">Item Name</Label>
                 <Input id="item-name" value={name} onChange={(e) => setName(e.target.value)} required disabled={!item && isIdInvalid} />
             </div>
-            <div>
+             <div>
                 <Label htmlFor="item-price">Base Price</Label>
-                <Input id="item-price" type="number" value={price} onChange={(e) => setPrice(Number(e.target.value))} required disabled={!item && isIdInvalid} />
+                <Input id="item-price" type="number" value={price} onChange={(e) => setPrice(Number(e.target.value))} required disabled={!item && isIdInvalid || variants.length > 0} />
+                {variants.length > 0 && <p className="text-xs text-muted-foreground mt-1">Price is controlled by variants.</p>}
             </div>
         </div>
         <div className="mt-4">
@@ -329,6 +348,25 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
                 </Select>
             </div>
         </div>
+        
+        <div className="mt-4">
+            <Label>Manage Variants (Sizes)</Label>
+            <div className="p-4 border rounded-lg bg-muted/50 space-y-3">
+                {variants.map((variant, index) => (
+                    <div key={variant.id} className="grid grid-cols-3 gap-2 items-center">
+                        <Input placeholder="Variant Name (e.g., Small)" value={variant.name} onChange={e => handleVariantChange(index, 'name', e.target.value)} />
+                        <Input type="number" placeholder="Price" value={variant.price} onChange={e => handleVariantChange(index, 'price', Number(e.target.value))} />
+                        <Button type="button" variant="destructive" size="sm" onClick={() => removeVariant(index)}>
+                            <Trash2 className="mr-2 h-4 w-4" /> Remove
+                        </Button>
+                    </div>
+                ))}
+                <Button type="button" variant="secondary" className="w-full" onClick={addVariant}>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Variant
+                </Button>
+            </div>
+        </div>
+
 
         <div className="mt-4">
             <Label>Available Add-ons</Label>
@@ -343,7 +381,7 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
                                 disabled={!item && isIdInvalid}
                             />
                             <Label htmlFor={`addon-${addon.id}`} className="font-normal flex-grow">{addon.name}</Label>
-                            <span className="text-sm text-muted-foreground mr-2">+RS {Math.round(addon.price)}</span>
+                            <span className="text-sm text-muted-foreground mr-2">+RS {Math.round(addon.price || 0)}</span>
                              <DeleteConfirmationDialog
                                 title={`Delete Add-on "${addon.name}"?`}
                                 description={<>This will permanently delete the add-on <strong>{addon.name}</strong> from the library and remove it from all items.</>}
@@ -487,7 +525,7 @@ export default function MenuManagementPage() {
             case 'addons':
                 title = "Add-ons Library";
                 columns = [{ key: 'id', label: 'Code' }, { key: 'name', label: 'Name' }, { key: 'price', label: 'Price (RS)' }];
-                data = menu.addons.map(a => ({...a, price: Math.round(a.price)}));
+                data = menu.addons.map(a => ({...a, price: Math.round(a.price || 0)}));
                 break;
             case 'items':
                 title = "Menu Items";
@@ -575,7 +613,7 @@ export default function MenuManagementPage() {
                         </div>
                     </CardHeader>
                     <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Code</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
-                        <TableBody>{menu.addons.map(addon => (<TableRow key={addon.id}><TableCell>{addon.name}</TableCell><TableCell className="font-mono text-xs">{addon.id}</TableCell><TableCell className="text-right">RS {Math.round(addon.price)}</TableCell>
+                        <TableBody>{menu.addons.map(addon => (<TableRow key={addon.id}><TableCell>{addon.name}</TableCell><TableCell className="font-mono text-xs">{addon.id}</TableCell><TableCell className="text-right">RS {Math.round(addon.price || 0)}</TableCell>
                             <TableCell className="text-right">
                                 <Button variant="ghost" size="icon" onClick={() => { setEditingAddon(addon); setAddonOpen(true); }}><Edit className="h-4 w-4" /></Button>
                                 <DeleteConfirmationDialog
