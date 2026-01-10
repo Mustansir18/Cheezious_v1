@@ -86,8 +86,11 @@ export default function ModeSelectionPage() {
     if (!selectedDeliveryMode) return;
     setCustomerInfoDialogOpen(false);
     setOrderDetails({ branchId, orderType: 'Delivery', deliveryMode: selectedDeliveryMode });
+    
+    // Read dealId from searchParams again to ensure it's available
+    const currentDealId = searchParams.get('dealId');
     const url = `/branch/${branchId}/menu?mode=Delivery&deliveryMode=${encodeURIComponent(selectedDeliveryMode)}`;
-    const finalUrl = dealId ? `${url}&dealId=${dealId}` : url;
+    const finalUrl = currentDealId ? `${url}&dealId=${currentDealId}` : url;
     router.push(finalUrl);
   };
 
