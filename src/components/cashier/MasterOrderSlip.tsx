@@ -34,10 +34,11 @@ export default function MasterOrderSlip({ order, onDispatchItem }: MasterOrderSl
     // Filter to show only "physical" items to be assembled, excluding the parent deal wrapper.
     const dispatchableItems = useMemo(() => {
         return order.items.filter(item => {
-            // A deal's "parent" item in the cart is not a physical component to be dispatched.
-            // We identify it because it is NOT a deal component itself, but it DOES have dealItems.
             const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
-            const isParentDeal = !item.isDealComponent && menuItem?.dealItems && menuItem.dealItems.length > 0;
+            if (!menuItem) return false; // Should not happen
+            
+            // A deal's "parent" item in the cart is not a physical component to be dispatched.
+            const isParentDeal = !item.isDealComponent && menuItem.dealItems && menuItem.dealItems.length > 0;
             
             // We want to show everything that is NOT a parent deal.
             return !isParentDeal;
@@ -106,7 +107,7 @@ export default function MasterOrderSlip({ order, onDispatchItem }: MasterOrderSl
                                             ) : isDispatchOnly ? (
                                                  <Badge variant="outline" className="border-blue-500 text-blue-600">Direct</Badge>
                                             ) : (
-                                                <Badge variant="secondary">Pending</Badge>
+                                                <Badge variant="secondary">Preparing</Badge>
                                             )}
                                         </div>
                                     </div>
