@@ -24,12 +24,12 @@ export default function MenuPage() {
   const router = useRouter();
   const branchId = params.branchId as string;
   const searchParams = useSearchParams();
-  const { setOrderDetails, tableId, setTable, addItem, items: cartItems } = useCart();
+  const { setOrderDetails, tableId, setTable, addItem, items: cartItems, orderType } = useCart();
   const { menu, isLoading: isMenuLoading } = useMenu();
 
   const { items: menuItems, categories } = menu;
 
-  const orderType = searchParams.get("mode") as OrderType | null;
+  const modeFromUrl = searchParams.get("mode") as OrderType | null;
   const tableIdFromUrl = searchParams.get("tableId");
   const floorIdFromUrl = searchParams.get("floorId");
   const dealId = searchParams.get("dealId");
@@ -67,8 +67,8 @@ export default function MenuPage() {
   
   // Effect to add deal to cart
   useEffect(() => {
-    // Only run if a dealId exists, menu is loaded, and the deal hasn't been processed yet
-    if (dealId && !isMenuLoading && !dealProcessedRef.current) {
+    // Only run if a dealId exists, menu is loaded, cart context is ready, and the deal hasn't been processed yet
+    if (dealId && !isMenuLoading && orderType === modeFromUrl && !dealProcessedRef.current) {
       const dealItem = menuItems.find(item => item.id === dealId);
       
       if (dealItem) {
@@ -88,7 +88,7 @@ export default function MenuPage() {
         router.replace(`${window.location.pathname}?${newParams.toString()}`, { scroll: false });
       }
     }
-  }, [dealId, isMenuLoading, menuItems, addItem, router, searchParams]);
+  }, [dealId, isMenuLoading, menuItems, addItem, router, searchParams, orderType, modeFromUrl]);
 
 
   const handleCategoryChange = (categoryId: string) => {
