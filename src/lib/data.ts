@@ -7,6 +7,9 @@ export const menuCategories: MenuCategory[] = [
     { id: 'C-00001', name: 'Deals', icon: 'Tag', subCategories: [
       { id: 'SC-00001', name: 'Amazing Deals' },
     ]},
+    { id: 'C-KIT-01', name: 'KIT Items', icon: 'Package', subCategories: [
+      { id: 'SC-KIT-01', name: 'Bundles' },
+    ]},
     { id: 'C-00002', name: 'Pizzas', icon: 'Pizza', stationId: 'pizza', subCategories: [
         { id: 'SC-00002', name: 'Classic Flavors' },
         { id: 'SC-00003', name: 'Favorite Flavors' },
@@ -87,8 +90,8 @@ const baseMenuItems: MenuItem[] = [
     price: 0, categoryId: 'C-00002', subCategoryId: 'SC-00002', imageUrl: getImage('chicken-tikka'),
     availableAddonIds: ['A-00002', 'A-00003', 'A-00004', 'A-T-001', 'A-T-002'],
     variants: [
-      { name: 'Small', price: 200 },
-      { name: 'Regular', price: 390 },
+      { id: 'v1', name: 'Small', price: 200 },
+      { id: 'v2', name: 'Regular', price: 390 },
     ]
   },
   {
@@ -97,8 +100,8 @@ const baseMenuItems: MenuItem[] = [
     price: 0, categoryId: 'C-00002', subCategoryId: 'SC-00002', imageUrl: getImage('chicken-fajita'),
     availableAddonIds: ['A-00002', 'A-00003', 'A-00004', 'A-T-001', 'A-T-002'],
     variants: [
-      { name: 'Small', price: 200 },
-      { name: 'Regular', price: 390 },
+      { id: 'v1', name: 'Small', price: 200 },
+      { id: 'v2', name: 'Regular', price: 390 },
     ]
   },
   {
@@ -107,8 +110,8 @@ const baseMenuItems: MenuItem[] = [
     price: 0, categoryId: 'C-00002', subCategoryId: 'SC-00003', imageUrl: getImage('chicken-supreme'),
     availableAddonIds: ['A-00002', 'A-00003', 'A-00004', 'A-T-001', 'A-T-002'],
     variants: [
-      { name: 'Small', price: 200 },
-      { name: 'Regular', price: 390 },
+      { id: 'v1', name: 'Small', price: 200 },
+      { id: 'v2', name: 'Regular', price: 390 },
     ]
   },
    {
@@ -117,10 +120,10 @@ const baseMenuItems: MenuItem[] = [
     price: 0, categoryId: 'C-00002', subCategoryId: 'SC-00003', imageUrl: getImage('behari-kebab'),
     availableAddonIds: ['A-00002', 'A-00003', 'A-00004', 'A-T-001', 'A-T-002'],
     variants: [
-        { name: 'Small', price: 657 },
-        { name: 'Regular', price: 1476 },
-        { name: 'Large', price: 1952 },
-        { name: 'Party', price: 3048 },
+        { id: 'v1', name: 'Small', price: 657 },
+        { id: 'v2', name: 'Regular', price: 1476 },
+        { id: 'v3', name: 'Large', price: 1952 },
+        { id: 'v4', name: 'Party', price: 3048 },
     ]
   },
   {
@@ -129,10 +132,10 @@ const baseMenuItems: MenuItem[] = [
     price: 0, categoryId: 'C-00002', subCategoryId: 'SC-00004', imageUrl: getImage('crown-crust'),
     availableAddonIds: ['A-00002', 'A-00003', 'A-00004', 'A-T-001', 'A-T-002'],
     variants: [
-        { name: 'Small', price: 657 },
-        { name: 'Regular', price: 1476 },
-        { name: 'Large', price: 1952 },
-        { name: 'Party', price: 3048 },
+        { id: 'v1', name: 'Small', price: 657 },
+        { id: 'v2', name: 'Regular', price: 1476 },
+        { id: 'v3', name: 'Large', price: 1952 },
+        { id: 'v4', name: 'Party', price: 3048 },
     ]
   },
   {
@@ -141,10 +144,10 @@ const baseMenuItems: MenuItem[] = [
     price: 0, categoryId: 'C-00002', subCategoryId: 'SC-00004', imageUrl: getImage('stuff-crust'),
     availableAddonIds: ['A-00002', 'A-00003', 'A-00004', 'A-T-001', 'A-T-002'],
     variants: [
-        { name: 'Small', price: 657 },
-        { name: 'Regular', price: 1524 },
-        { name: 'Large', price: 2333 },
-        { name: 'Party', price: 3381 },
+        { id: 'v1', name: 'Small', price: 657 },
+        { id: 'v2', name: 'Regular', price: 1524 },
+        { id: 'v3', name: 'Large', price: 2333 },
+        { id: 'v4', name: 'Party', price: 3381 },
     ]
   },
    {
@@ -153,10 +156,10 @@ const baseMenuItems: MenuItem[] = [
     price: 0, categoryId: 'C-00002', subCategoryId: 'SC-00005', imageUrl: getImage('cheezious-special'),
     availableAddonIds: ['A-00002', 'A-00003', 'A-00004', 'A-T-001', 'A-T-002'],
     variants: [
-        { name: 'Small', price: 657 },
-        { name: 'Regular', price: 1476 },
-        { name: 'Large', price: 1952 },
-        { name: 'Party', price: 3048 },
+        { id: 'v1', name: 'Small', price: 657 },
+        { id: 'v2', name: 'Regular', price: 1476 },
+        { id: 'v3', name: 'Large', price: 1952 },
+        { id: 'v4', name: 'Party', price: 3048 },
     ]
   },
   {
@@ -165,10 +168,10 @@ const baseMenuItems: MenuItem[] = [
     price: 0, categoryId: 'C-00002', subCategoryId: 'SC-00005', imageUrl: getImage('chicken-supreme'),
     availableAddonIds: ['A-00002', 'A-00003', 'A-00004', 'A-T-001', 'A-T-002'],
     variants: [
-        { name: 'Small', price: 657 },
-        { name: 'Regular', price: 1476 },
-        { name: 'Large', price: 1952 },
-        { name: 'Party', price: 3048 },
+        { id: 'v1', name: 'Small', price: 657 },
+        { id: 'v2', name: 'Regular', price: 1476 },
+        { id: 'v3', name: 'Large', price: 1952 },
+        { id: 'v4', name: 'Party', price: 3048 },
     ]
   },
     {
@@ -177,9 +180,9 @@ const baseMenuItems: MenuItem[] = [
     price: 0, categoryId: 'C-00002', subCategoryId: 'SC-00005', imageUrl: getImage('chicken-tikka'),
     availableAddonIds: ['A-00002', 'A-00003', 'A-00004', 'A-T-001', 'A-T-002'],
     variants: [
-        { name: 'Small', price: 657 },
-        { name: 'Regular', price: 1524 },
-        { name: 'Large', price: 2333 },
+        { id: 'v1', name: 'Small', price: 657 },
+        { id: 'v2', name: 'Regular', price: 1524 },
+        { id: 'v3', name: 'Large', price: 2333 },
     ]
   },
 
@@ -195,8 +198,8 @@ const baseMenuItems: MenuItem[] = [
   {
     id: 'I-00005', name: 'Flaming Wings', description: 'Fresh oven baked wings tossed in hot peri peri sauce & served with dip sauce.', price: 0, categoryId: 'C-00004', subCategoryId: 'SC-00009', imageUrl: getImage('flaming-wings'), availableAddonIds: ['A-00005'],
     variants: [
-      { name: '6 Pcs', price: 619.05 },
-      { name: '12 Pcs', price: 1190.48 },
+      { id: 'v1', name: '6 Pcs', price: 619.05 },
+      { id: 'v2', name: '12 Pcs', price: 1190.48 },
     ]
   },
   
@@ -205,8 +208,8 @@ const baseMenuItems: MenuItem[] = [
   {
     id: 'I-00034', name: 'Fries', description: 'A serving of crispy french fries.', price: 0, categoryId: 'C-00005', subCategoryId: 'SC-00010', imageUrl: getImage('fries'), availableAddonIds: ['A-00005'],
     variants: [
-      { name: 'Regular', price: 209.52 },
-      { name: 'Large', price: 333.33 },
+      { id: 'v1', name: 'Regular', price: 209.52 },
+      { id: 'v2', name: 'Large', price: 333.33 },
     ]
   },
   { id: 'I-00021', name: 'Fettuccine Alfredo Pasta', description: 'Fettuccine pasta tossed in creamy white sauce with mushrooms and chicken chunks.', price: 1000.00, categoryId: 'C-00005', subCategoryId: 'SC-00011', imageUrl: getImage('fettuccine-alfredo'), availableAddonIds: ['A-00004', 'A-T-002'] },
@@ -232,9 +235,9 @@ const baseMenuItems: MenuItem[] = [
     description: 'A decadent and moist milk-soaked cake.',
     price: 0, categoryId: 'C-00008', subCategoryId: 'SC-00015', imageUrl: getImage('deal-1'),
     variants: [
-        { name: 'Lotus', price: 523.8 },
-        { name: 'Chocolate', price: 523.8 },
-        { name: 'Pistachio', price: 523.8 },
+        { id: 'v1', name: 'Lotus', price: 523.8 },
+        { id: 'v2', name: 'Chocolate', price: 523.8 },
+        { id: 'v3', name: 'Pistachio', price: 523.8 },
     ]
   },
   {
@@ -242,8 +245,8 @@ const baseMenuItems: MenuItem[] = [
     description: 'Creamy and rich cheesecake.',
     price: 0, categoryId: 'C-00008', subCategoryId: 'SC-00015', imageUrl: getImage('deal-2'),
     variants: [
-        { name: 'Baked', price: 523.8 },
-        { name: 'Lotus', price: 530 },
+        { id: 'v1', name: 'Baked', price: 523.8 },
+        { id: 'v2', name: 'Lotus', price: 530 },
     ]
   },
   {

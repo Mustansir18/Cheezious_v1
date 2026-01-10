@@ -14,6 +14,7 @@ import {
   DialogTrigger,
   DialogFooter,
   DialogClose,
+  DialogDescription
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,8 +22,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2, Edit, PlusCircle, FileText, FileDown, ChefHat } from 'lucide-react';
-import type { MenuCategory, MenuItem, Addon, KitchenStation, SubCategory, MenuItemVariant } from '@/lib/types';
+import { Trash2, Edit, PlusCircle, FileText, FileDown, ChefHat, Package, Minus, Plus } from 'lucide-react';
+import type { MenuCategory, MenuItem, Addon, KitchenStation, SubCategory, MenuItemVariant, DealItem } from '@/lib/types';
 import imageCompression from 'browser-image-compression';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -32,6 +33,8 @@ import { cn } from '@/lib/utils';
 import { exportListDataAs } from '@/lib/exporter';
 import { useSettings } from '@/context/SettingsContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 
 
 async function handleImageUpload(file: File) {
@@ -193,7 +196,7 @@ function CategoryForm({ category, onSave }: { category?: MenuCategory; onSave: (
 
 // Item Form
 function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuItem, 'id'> | MenuItem, id?: string) => void; }) {
-  const { menu, addAddon: addNewAddon, deleteAddon } = useMenu();
+  const { menu } = useMenu();
   const { toast } = useToast();
   const [id, setId] = useState(item?.id || '');
   const [name, setName] = useState(item?.name || '');
@@ -207,11 +210,6 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
   const [variants, setVariants] = useState<MenuItemVariant[]>(item?.variants || []);
   const [isIdInvalid, setIsIdInvalid] = useState(false);
   
-  // State for new addon form
-  const [newAddonId, setNewAddonId] = useState('');
-  const [newAddonName, setNewAddonName] = useState('');
-  const [newAddonPrice, setNewAddonPrice] = useState(0);
-
   const selectedCategory = menu.categories.find(c => c.id === categoryId);
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -240,24 +238,6 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
     }
     setIsIdInvalid(false);
     return true;
-  }
-  
-  const handleAddAddon = () => {
-    if (!newAddonId || !newAddonName) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Add-on Code and Name are required.' });
-        return;
-    }
-     if (menu.addons.some(a => a.id === newAddonId)) {
-      toast({ variant: 'destructive', title: 'Error', description: `An add-on with the code '${newAddonId}' already exists.` });
-      return;
-    }
-    addNewAddon({ id: newAddonId, name: newAddonName, price: newAddonPrice });
-    // Also select the newly added addon
-    setSelectedAddonIds(prev => [...prev, newAddonId]);
-    // Clear the form
-    setNewAddonId('');
-    setNewAddonName('');
-    setNewAddonPrice(0);
   }
   
   const handleVariantChange = (index: number, field: 'name' | 'price', value: string | number) => {
@@ -467,6 +447,195 @@ function AddonForm({ addon, onSave }: { addon?: Addon; onSave: (addon: Omit<Addo
     );
 }
 
+// KIT Item Form
+function KitForm({
+  kit,
+  onSave,
+}: {
+  kit?: MenuItem;
+  onSave: (kitData: Omit<MenuItem, 'id'> | MenuItem, id?: string) => void;
+}) {
+  const [id, setId] = useState(kit?.id || '');
+  const [name, setName] = useState(kit?.name || '');
+  const [description, setDescription] = useState(kit?.description || '');
+  const [price, setPrice] = useState(kit?.price || 0);
+  const [imageUrl, setImageUrl] = useState(kit?.imageUrl || '');
+  const [items, setItems] = useState<DealItem[]>(kit?.dealItems || []);
+  const [isCompressing, setIsCompressing] = useState(false);
+  const { menu } = useMenu();
+  const { toast } = useToast();
+  const [isIdInvalid, setIsIdInvalid] = useState(false);
+  const [isItemPopoverOpen, setItemPopoverOpen] = useState(false);
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setIsCompressing(true);
+      const compressedDataUrl = await handleImageUpload(file);
+      setImageUrl(compressedDataUrl);
+      setIsCompressing(false);
+    }
+  };
+
+  const validateId = (value: string) => {
+    if (menu.items.some(d => d.id === value && d.id !== kit?.id)) {
+      toast({
+        variant: 'destructive',
+        title: 'Duplicate Code',
+        description: `The code "${value}" is already in use by another item.`,
+      });
+      setIsIdInvalid(true);
+      return false;
+    }
+    setIsIdInvalid(false);
+    return true;
+  };
+  
+  const handleItemSelect = (menuItem: MenuItem) => {
+    setItems(currentItems => {
+        const existing = currentItems.find(i => i.menuItemId === menuItem.id);
+        if (existing) {
+            return currentItems.map(i => i.menuItemId === menuItem.id ? {...i, quantity: i.quantity + 1} : i);
+        }
+        return [...currentItems, { menuItemId: menuItem.id, quantity: 1}];
+    });
+    setItemPopoverOpen(false);
+  };
+  
+  const handleItemQuantityChange = (menuItemId: string, change: number) => {
+      setItems(currentItems => {
+          const newQuantity = (currentItems.find(i => i.menuItemId === menuItemId)?.quantity || 0) + change;
+          if (newQuantity <= 0) {
+              return currentItems.filter(i => i.menuItemId !== menuItemId);
+          }
+          return currentItems.map(i => i.menuItemId === menuItemId ? {...i, quantity: newQuantity} : i);
+      });
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isIdInvalid) return;
+    if (!kit && !validateId(id)) return;
+    if (items.length === 0) {
+        toast({ variant: 'destructive', title: 'No Items in Kit', description: 'Please add at least one item to the kit.' });
+        return;
+    }
+    
+    const data = { 
+        name, 
+        description, 
+        price, 
+        imageUrl, 
+        dealItems: items,
+        categoryId: 'C-KIT-01',
+        subCategoryId: 'SC-KIT-01',
+    };
+    if (kit) {
+      onSave({ ...kit, ...data });
+    } else {
+      onSave(data, id);
+    }
+  };
+
+  const availableItems = menu.items.filter(item => item.categoryId !== 'C-00001' && item.categoryId !== 'C-KIT-01');
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {kit ? (
+        <div>
+          <Label htmlFor="kit-id">Kit Code</Label>
+          <Input id="kit-id" value={kit.id} disabled />
+        </div>
+      ) : (
+        <div>
+          <Label htmlFor="kit-id">Kit Code</Label>
+          <Input id="kit-id" value={id} onChange={e => { setId(e.target.value); setIsIdInvalid(false); }} onBlur={e => validateId(e.target.value)} required placeholder="e.g., K-00001" />
+        </div>
+      )}
+      <div className={cn(kit ? '' : isIdInvalid && 'blur-out')}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div>
+            <Label htmlFor="kit-name">Kit Name</Label>
+            <Input id="kit-name" value={name} onChange={e => setName(e.target.value)} required disabled={!kit && isIdInvalid} />
+          </div>
+          <div>
+            <Label htmlFor="kit-price">Total Price</Label>
+            <Input id="kit-price" type="number" value={price} onChange={e => setPrice(Number(e.target.value))} required disabled={!kit && isIdInvalid} />
+          </div>
+        </div>
+        <div className="mt-4">
+          <Label htmlFor="kit-description">Description</Label>
+          <Textarea id="kit-description" value={description} onChange={e => setDescription(e.target.value)} required disabled={!kit && isIdInvalid} />
+        </div>
+        
+        <div className="mt-4">
+          <Label>Included Items</Label>
+            <ScrollArea className="h-40 rounded-md border p-4">
+                {items.length === 0 && <p className="text-sm text-muted-foreground">No items added yet.</p>}
+                <div className="space-y-2">
+                    {items.map(dealItem => {
+                        const menuItem = menu.items.find(i => i.id === dealItem.menuItemId);
+                        if (!menuItem) return null;
+                        return (
+                            <div key={dealItem.menuItemId} className="flex items-center justify-between text-sm">
+                                <span>{menuItem.name}</span>
+                                <div className="flex items-center gap-2">
+                                    <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleItemQuantityChange(dealItem.menuItemId, -1)}><Minus className="h-3 w-3"/></Button>
+                                    <span className="font-bold">{dealItem.quantity}</span>
+                                    <Button type="button" variant="outline" size="icon" className="h-6 w-6" onClick={() => handleItemQuantityChange(dealItem.menuItemId, 1)}><Plus className="h-3 w-3"/></Button>
+                                </div>
+                            </div>
+                        )
+                    })}
+                </div>
+            </ScrollArea>
+             <Popover open={isItemPopoverOpen} onOpenChange={setItemPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Button type="button" variant="outline" className="w-full mt-2">
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Item to Kit
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[300px] p-0">
+                  <Command>
+                    <CommandInput placeholder="Search menu item..." />
+                    <CommandEmpty>No item found.</CommandEmpty>
+                    <CommandGroup>
+                        <ScrollArea className="h-48">
+                            {availableItems.map((item) => (
+                                <CommandItem
+                                key={item.id}
+                                onSelect={() => handleItemSelect(item)}
+                                >
+                                {item.name}
+                                </CommandItem>
+                            ))}
+                        </ScrollArea>
+                    </CommandGroup>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+        </div>
+        
+        <div className="mt-4">
+          <Label htmlFor="kit-image">Kit Image</Label>
+          <Input id="kit-image" type="file" accept="image/*" onChange={handleImageChange} className="file:text-foreground" disabled={!kit && isIdInvalid} />
+          {isCompressing && <p className="text-sm text-blue-500 mt-2">Compressing image...</p>}
+          {imageUrl && !isCompressing && (
+            <div className="mt-4">
+              <p className="text-sm font-medium mb-2">Image Preview:</p>
+              <Image src={imageUrl} alt="Image preview" width={100} height={100} className="rounded-md object-cover" />
+            </div>
+          )}
+        </div>
+      </div>
+      <DialogFooter>
+        <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
+        <Button type="submit" disabled={isIdInvalid || items.length === 0}>Save Kit</Button>
+      </DialogFooter>
+    </form>
+  );
+}
+
 // Main Page Component
 export default function MenuManagementPage() {
   const { menu, isLoading, addCategory, updateCategory, deleteCategory, addItem, updateItem, deleteItem, addAddon, updateAddon, deleteAddon } = useMenu();
@@ -474,10 +643,14 @@ export default function MenuManagementPage() {
   const [isCategoryOpen, setCategoryOpen] = useState(false);
   const [isItemOpen, setItemOpen] = useState(false);
   const [isAddonOpen, setAddonOpen] = useState(false);
+  const [isKitOpen, setKitOpen] = useState(false);
   
   const [editingCategory, setEditingCategory] = useState<MenuCategory | undefined>();
   const [editingItem, setEditingItem] = useState<MenuItem | undefined>();
   const [editingAddon, setEditingAddon] = useState<Addon | undefined>();
+  const [editingKit, setEditingKit] = useState<MenuItem | undefined>();
+
+  const kitItems = menu.items.filter(item => item.categoryId === 'C-KIT-01');
 
   const handleSaveCategory = (categoryData: Omit<MenuCategory, 'id'> | MenuCategory, id?: string) => {
       if ('id' in categoryData) {
@@ -496,6 +669,15 @@ export default function MenuManagementPage() {
       }
       setItemOpen(false);
   }
+  
+  const handleSaveKit = (kitData: Omit<MenuItem, 'id'> | MenuItem, id?: string) => {
+    if ('id' in kitData) {
+      updateItem(kitData as MenuItem);
+    } else if (id) {
+      addItem({ id, ...kitData } as MenuItem);
+    }
+    setKitOpen(false);
+  };
 
   const handleSaveAddon = (addonData: Omit<Addon, 'id'> | Addon, id?: string) => {
       if ('id' in addonData) {
@@ -506,7 +688,7 @@ export default function MenuManagementPage() {
       setAddonOpen(false);
   }
 
-  const handleExport = (list: 'categories' | 'addons' | 'items', format: 'pdf' | 'csv') => {
+  const handleExport = (list: 'categories' | 'addons' | 'items' | 'kits', format: 'pdf' | 'csv') => {
         let data: any[], columns: any[], title: string;
         const headerInfo = { companyName: settings.companyName, branchName: "All Branches" };
 
@@ -542,6 +724,23 @@ export default function MenuManagementPage() {
                     categoryName: menu.categories.find(c => c.id === i.categoryId)?.name || 'N/A',
                 }));
                 break;
+            case 'kits':
+                title = "KIT Items";
+                columns = [
+                  { key: 'id', label: 'Code' },
+                  { key: 'name', label: 'Name' },
+                  { key: 'price', label: 'Price (RS)' },
+                  { key: 'items', label: 'Included Items'},
+                ];
+                data = kitItems.map(d => ({ 
+                    ...d, 
+                    price: Math.round(d.price),
+                    items: d.dealItems?.map(item => {
+                        const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
+                        return `${item.quantity}x ${menuItem?.name || 'Unknown Item'}`;
+                    }).join(', '),
+                }));
+                break;
         }
         exportListDataAs(format, data, columns, title, headerInfo);
     };
@@ -557,8 +756,9 @@ export default function MenuManagementPage() {
         </header>
 
         <Tabs defaultValue="items" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="items">Menu Items</TabsTrigger>
+                <TabsTrigger value="kits">KIT Items</TabsTrigger>
                 <TabsTrigger value="categories">Categories</TabsTrigger>
                 <TabsTrigger value="addons">Add-ons</TabsTrigger>
             </TabsList>
@@ -627,6 +827,83 @@ export default function MenuManagementPage() {
                     </CardContent>
                 </Card>
             </TabsContent>
+            
+            <TabsContent value="kits" className="mt-6">
+                <Card>
+                  <CardHeader className="flex flex-row justify-between items-center">
+                    <div>
+                      <CardTitle className="font-headline text-4xl font-bold">KIT Items</CardTitle>
+                      <CardDescription>Create and manage bundled products.</CardDescription>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={() => handleExport('kits', 'csv')}><FileDown className="mr-2 h-4 w-4" /> CSV</Button>
+                      <Button variant="outline" onClick={() => handleExport('kits', 'pdf')}><FileText className="mr-2 h-4 w-4" /> PDF</Button>
+                      <Dialog open={isKitOpen} onOpenChange={setKitOpen}>
+                        <DialogTrigger asChild>
+                          <Button onClick={() => { setEditingKit(undefined); setKitOpen(true); }}>
+                            <PlusCircle className="mr-2 h-4 w-4" /> Add KIT Item
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-h-[90vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>{editingKit ? 'Edit KIT Item' : 'Add New KIT Item'}</DialogTitle>
+                            <DialogDescription>A KIT Item is a bundle of menu items sold at a specific price.</DialogDescription>
+                          </DialogHeader>
+                          <KitForm kit={editingKit} onSave={handleSaveKit} />
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Image</TableHead>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Code</TableHead>
+                          <TableHead>Included Items</TableHead>
+                          <TableHead className="text-right">Price</TableHead>
+                          <TableHead className="text-right w-[120px]">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {kitItems.map(kit => (
+                          <TableRow key={kit.id}>
+                            <TableCell>
+                              <Image src={kit.imageUrl} alt={kit.name} width={64} height={64} className="rounded-md object-cover" />
+                            </TableCell>
+                            <TableCell className="font-medium">{kit.name}</TableCell>
+                            <TableCell className="font-mono text-xs">{kit.id}</TableCell>
+                             <TableCell className="text-xs text-muted-foreground">
+                                 <div className="flex flex-col gap-1">
+                                     {kit.dealItems?.map(item => {
+                                         const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
+                                         return (
+                                          <div key={item.menuItemId} className="flex items-center gap-2">
+                                              <span>{item.quantity}x {menuItem?.name || 'Unknown'}</span>
+                                          </div>
+                                         )
+                                     })}
+                                 </div>
+                             </TableCell>
+                            <TableCell className="text-right">RS {Math.round(kit.price)}</TableCell>
+                            <TableCell className="text-right">
+                              <Button variant="ghost" size="icon" onClick={() => { setEditingKit(kit); setKitOpen(true); }}>
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <DeleteConfirmationDialog
+                                title={`Delete KIT Item "${kit.name}"?`}
+                                description={<>This action cannot be undone. This will permanently delete the KIT item <strong>{kit.name}</strong>.</>}
+                                onConfirm={() => deleteItem(kit.id, kit.name)}
+                              />
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+            </TabsContent>
 
             <TabsContent value="items" className="mt-6">
                 <Card>
@@ -641,7 +918,7 @@ export default function MenuManagementPage() {
                         </div>
                     </CardHeader>
                     <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Code</TableHead><TableHead>Category</TableHead><TableHead>Sub-Category</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
-                        <TableBody>{menu.items.map(item => {
+                        <TableBody>{menu.items.filter(i => i.categoryId !== 'C-00001' && i.categoryId !== 'C-KIT-01').map(item => {
                             const category = menu.categories.find(c => c.id === item.categoryId);
                             const subCategory = category?.subCategories?.find(sc => sc.id === item.subCategoryId);
                             return (
