@@ -17,7 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { formatDistanceToNow } from "date-fns";
 import { Skeleton } from "../ui/skeleton";
 import { ScrollArea } from "../ui/scroll-area";
-import { Utensils, ShoppingBag, Check, CheckCircle, CookingPot, Loader, CreditCard, Printer, Info, XCircle, Tag, Gift, MessageSquareText, CheckCheck, PlusCircle, Bike } from "lucide-react";
+import { Utensils, ShoppingBag, Check, CheckCircle, CookingPot, Loader, CreditCard, Printer, Info, XCircle, Tag, Gift, MessageSquareText, CheckCheck, PlusCircle, Bike, Search } from "lucide-react";
 import { useMemo, useState, useCallback } from "react";
 import { useSettings } from "@/context/SettingsContext";
 import { OrderReceipt } from "./OrderReceipt";
@@ -47,6 +47,7 @@ function AddItemsToOrderDialog({ order }: { order: Order }) {
     const { addItemsToOrder } = useOrders();
     const [isDialogOpen, setDialogOpen] = useState(false);
     const [itemsToAdd, setItemsToAdd] = useState<CartItem[]>([]);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const handleAddItem = (options: { selectedAddons: any[], itemQuantity: number, instructions: string, selectedVariant?: any }, item: MenuItem) => {
         const cartItemId = crypto.randomUUID();
@@ -72,8 +73,16 @@ function AddItemsToOrderDialog({ order }: { order: Order }) {
             addItemsToOrder(order.id, itemsToAdd);
             setDialogOpen(false);
             setItemsToAdd([]);
+            setSearchTerm('');
         }
     };
+    
+    const filteredMenuItems = useMemo(() => {
+        return menu.items.filter(item => 
+            item.name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [menu.items, searchTerm]);
+
 
     return (
          <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
@@ -88,21 +97,35 @@ function AddItemsToOrderDialog({ order }: { order: Order }) {
                     <DialogDescription>Select items to add to this existing order. The order total will be recalculated.</DialogDescription>
                 </DialogHeader>
                 <div className="flex-grow grid grid-cols-2 gap-6 overflow-hidden">
-                    <ScrollArea className="border rounded-lg p-4">
-                        <div className="space-y-2">
-                            <h4 className="font-semibold">Available Items</h4>
-                             {menu.items.map(item => (
-                                <div key={item.id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted">
-                                    <span>{item.name}</span>
-                                    <AddToCartDialog 
-                                        item={item} 
-                                        onAddToCart={(options) => handleAddItem(options, item)} 
-                                        triggerButton={<Button size="sm" variant="outline">Add</Button>}
-                                    />
-                                </div>
-                             ))}
+                    <div className="flex flex-col gap-4">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Search available items..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="pl-10"
+                            />
                         </div>
-                    </ScrollArea>
+                        <ScrollArea className="border rounded-lg p-4 flex-grow">
+                            <div className="space-y-2">
+                                <h4 className="font-semibold">Available Items</h4>
+                                {filteredMenuItems.map(item => (
+                                    <div key={item.id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted">
+                                        <span>{item.name}</span>
+                                        <AddToCartDialog 
+                                            item={item} 
+                                            onAddToCart={(options) => handleAddItem(options, item)} 
+                                            triggerButton={<Button size="sm" variant="outline">Add</Button>}
+                                        />
+                                    </div>
+                                ))}
+                                {filteredMenuItems.length === 0 && (
+                                    <p className="text-sm text-muted-foreground text-center py-4">No items match your search.</p>
+                                )}
+                            </div>
+                        </ScrollArea>
+                    </div>
                     <div className="border rounded-lg p-4 flex flex-col">
                         <h4 className="font-semibold mb-2">Items to Add</h4>
                         {itemsToAdd.length === 0 ? (
@@ -137,7 +160,7 @@ function AddItemsToOrderDialog({ order }: { order: Order }) {
                     </div>
                 </div>
                 <DialogFooter>
-                    <Button variant="secondary" onClick={() => { setDialogOpen(false); setItemsToAdd([]); }}>Cancel</Button>
+                    <Button variant="secondary" onClick={() => { setDialogOpen(false); setItemsToAdd([]); setSearchTerm(''); }}>Cancel</Button>
                     <Button onClick={handleConfirm} disabled={itemsToAdd.length === 0}>Add {itemsToAdd.length} Item(s) to Order</Button>
                 </DialogFooter>
             </DialogContent>
