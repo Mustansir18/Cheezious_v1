@@ -50,7 +50,7 @@ function AddItemsToOrderDialog({ order }: { order: Order }) {
 
     const handleAddItem = (options: { selectedAddons: any[], itemQuantity: number, instructions: string, selectedVariant?: any }, item: MenuItem) => {
         const cartItemId = crypto.randomUUID();
-        const addonPrice = options.selectedAddons.reduce((sum, { addon, quantity }) => sum + (addon.price * quantity), 0);
+        const addonPrice = options.selectedAddons.reduce((sum, addonData) => sum + (addonData.addon.price * addonData.quantity), 0);
         const basePrice = options.selectedVariant ? options.selectedVariant.price : item.price;
         const finalPrice = basePrice + addonPrice;
 
