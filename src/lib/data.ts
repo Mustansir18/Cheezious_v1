@@ -26,8 +26,8 @@ export const menuCategories: MenuCategory[] = [
         { id: 'SC-00011', name: 'Pastas' },
         { id: 'SC-00012', name: 'Platters' },
     ]},
-    { id: 'C-00006', name: 'My Box', icon: 'Box', stationId: 'fried', subCategories: [
-        { id: 'SC-00013', name: 'Value Boxes' },
+    { id: 'C-00011', name: 'Burgers', icon: 'Beef', stationId: 'fried', subCategories: [
+        { id: 'SC-00018', name: 'Value Burgers' },
     ]},
     { id: 'C-00007', name: 'Meltz', icon: 'Sandwich', stationId: 'fried', subCategories: [
         { id: 'SC-00014', name: 'All Meltz' },
@@ -167,21 +167,31 @@ const baseMenuItems: MenuItem[] = [
   { id: 'I-00032', name: 'Fried Chicken (1pc)', description: '1 piece of crispy fried chicken.', price: 90, categoryId: 'C-00004', subCategoryId: 'SC-00008', imageUrl: getImage('fried-chicken-single'), availableAddonIds: [] },
   { id: 'I-00003', name: 'Oven Baked Wings (6pcs)', description: 'Fresh oven baked wings served with dip sauce.', price: 170, categoryId: 'C-00004', subCategoryId: 'SC-00009', imageUrl: getImage('baked-wings'), availableAddonIds: ['A-00005'] },
   { id: 'I-00004', name: 'Oven Baked Wings (12pcs)', description: 'Fresh oven baked wings served with dip sauce.', price: 340, categoryId: 'C-00004', subCategoryId: 'SC-00009', imageUrl: getImage('baked-wings'), availableAddonIds: ['A-00005'] },
-  { id: 'I-00005', name: 'Flaming Wings (6pcs)', description: 'Fresh oven baked wings tossed in hot peri peri sauce & served with dip sauce.', price: 190, categoryId: 'C-00004', subCategoryId: 'SC-00009', imageUrl: getImage('flaming-wings'), availableAddonIds: ['A-00005'] },
-  { id: 'I-00006', name: 'Flaming Wings (12pcs)', description: 'Fresh oven baked wings tossed in hot peri peri sauce & served with dip sauce.', price: 370, categoryId: 'C-00004', subCategoryId: 'SC-00009', imageUrl: getImage('flaming-wings'), availableAddonIds: ['A-00005'] },
-
+  {
+    id: 'I-00005', name: 'Flaming Wings', description: 'Fresh oven baked wings tossed in hot peri peri sauce & served with dip sauce.', price: 0, categoryId: 'C-00004', subCategoryId: 'SC-00009', imageUrl: getImage('flaming-wings'), availableAddonIds: ['A-00005'],
+    variants: [
+      { name: '6 Pcs', price: 619.05 },
+      { name: '12 Pcs', price: 1190.48 },
+    ]
+  },
+  
   // Sides
-  { id: 'I-00033', name: 'Chicken Nuggets', description: '5 pieces of chicken nuggets.', price: 130, categoryId: 'C-00005', subCategoryId: 'SC-00010', imageUrl: getImage('nuggets'), availableAddonIds: ['A-00005'] },
-  { id: 'I-00034', name: 'Fries (Large)', description: 'A large serving of crispy french fries.', price: 100, categoryId: 'C-00005', subCategoryId: 'SC-00010', imageUrl: getImage('fries'), availableAddonIds: ['A-00005'] },
-  { id: 'I-00035', name: 'Fries (Regular)', description: 'A regular serving of crispy french fries.', price: 70, categoryId: 'C-00005', subCategoryId: 'SC-00010', imageUrl: getImage('fries'), availableAddonIds: ['A-00005'] },
-  { id: 'I-00021', name: 'Fettuccine Alfredo Pasta', description: 'Fettuccine pasta tossed in creamy white sauce with mushrooms and chicken chunks.', price: 310, categoryId: 'C-00005', subCategoryId: 'SC-00011', imageUrl: getImage('fettuccine-alfredo'), availableAddonIds: ['A-00001', 'A-00004'] },
-  { id: 'I-00022', name: 'Crunchy Chicken Pasta', description: 'Yummiest macaroni pasta in white sauce topped with crispy chicken & cheese.', price: 280, categoryId: 'C-00005', subCategoryId: 'SC-00011', imageUrl: getImage('crunchy-pasta'), availableAddonIds: ['A-00001'] },
+  { id: 'I-00033', name: 'Chicken Nuggets', description: '5 pieces of chicken nuggets.', price: 428.57, categoryId: 'C-00005', subCategoryId: 'SC-00010', imageUrl: getImage('nuggets'), availableAddonIds: ['A-00005'] },
+  {
+    id: 'I-00034', name: 'Fries', description: 'A serving of crispy french fries.', price: 0, categoryId: 'C-00005', subCategoryId: 'SC-00010', imageUrl: getImage('fries'), availableAddonIds: ['A-00005'],
+    variants: [
+      { name: 'Regular', price: 209.52 },
+      { name: 'Large', price: 333.33 },
+    ]
+  },
+  { id: 'I-00021', name: 'Fettuccine Alfredo Pasta', description: 'Fettuccine pasta tossed in creamy white sauce with mushrooms and chicken chunks.', price: 1000.00, categoryId: 'C-00005', subCategoryId: 'SC-00011', imageUrl: getImage('fettuccine-alfredo'), availableAddonIds: ['A-00001', 'A-00004'] },
+  { id: 'I-00022', name: 'Crunchy Chicken Pasta', description: 'Yummiest macaroni pasta in white sauce topped with crispy chicken & cheese.', price: 904.76, categoryId: 'C-00005', subCategoryId: 'SC-00011', imageUrl: getImage('crunchy-pasta'), availableAddonIds: ['A-00001'] },
   { id: 'I-00023', name: 'Special Roasted Platter', description: '4 pcs behari rolls, 6 pcs wings with fries & dip sauce.', price: 350, categoryId: 'C-00005', subCategoryId: 'SC-00012', imageUrl: getImage('roasted-platter'), availableAddonIds: ['A-00005'] },
   { id: 'I-00024', name: 'Classic Roll Platter', description: '4 pcs behari rolls, 4 pcs arabic rolls served with fries & dip sauce.', price: 350, categoryId: 'C-00005', subCategoryId: 'SC-00012', imageUrl: getImage('roll-platter'), availableAddonIds: ['A-00005'] },
   
-  // My Box
-  { id: 'I-00028', name: 'Reggy Burger', description: 'Classic Reggy burger.', price: 120, categoryId: 'C-00006', subCategoryId: 'SC-00013', imageUrl: getImage('reggy-burger'), availableAddonIds: ['A-00001', 'A-00006'] },
-  { id: 'I-00029', name: 'Bazinga Burger', description: 'A large crispy chicken zinger burger.', price: 250, categoryId: 'C-00006', subCategoryId: 'SC-00013', imageUrl: getImage('bazinga-burger'), availableAddonIds: ['A-00001', 'A-00006'] },
+  // Burgers
+  { id: 'I-00028', name: 'Reggy Burger', description: 'Classic Reggy burger.', price: 371.43, categoryId: 'C-00011', subCategoryId: 'SC-00018', imageUrl: getImage('reggy-burger'), availableAddonIds: ['A-00001', 'A-00006'] },
+  { id: 'I-00029', name: 'Bazinga Burger', description: 'A large crispy chicken zinger burger.', price: 533.33, categoryId: 'C-00011', subCategoryId: 'SC-00018', imageUrl: getImage('bazinga-burger'), availableAddonIds: ['A-00001', 'A-00006'] },
 
   // Meltz
   { id: 'I-00025', name: 'Euro Sandwich', description: 'Chicken tikka with special sauce, cheese, lettuce, and pineapples in soft and crispy buns, served with fries.', price: 280, categoryId: 'C-00007', subCategoryId: 'SC-00014', imageUrl: getImage('euro-sandwich'), availableAddonIds: ['A-00001', 'A-00006'] },
@@ -211,7 +221,7 @@ export const initialDeals: MenuItem[] = [
     subCategoryId: 'SC-00001',
     dealItems: [
       { menuItemId: 'I-00029', quantity: 2 },
-      { menuItemId: 'I-00035', quantity: 1 },
+      { menuItemId: 'I-00034', quantity: 1 },
       { menuItemId: 'I-00036', quantity: 2 },
     ]
   },
@@ -277,3 +287,4 @@ export const menuItems: MenuItem[] = [
   ...baseMenuItems,
   ...initialDeals
 ];
+
