@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { MapPin } from 'lucide-react';
+import { MapPin, LocateFixed, Loader } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface CustomerInfoDialogsProps {
   isOpen: boolean;
@@ -22,6 +23,8 @@ export function CustomerInfoDialogs({ isOpen, onComplete, onCancel }: CustomerIn
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
+  const [isLocating, setIsLocating] = useState(false);
+  const { toast } = useToast();
 
   const handleNameSubmit = () => {
     if (name.trim()) {
@@ -41,6 +44,40 @@ export function CustomerInfoDialogs({ isOpen, onComplete, onCancel }: CustomerIn
       onComplete();
     }
   };
+
+  const handleGetCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast({
+        variant: 'destructive',
+        title: 'Geolocation Not Supported',
+        description: 'Your browser does not support location services.',
+      });
+      return;
+    }
+
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const addressString = `Lat: ${latitude.toFixed(4)}, Lng: ${longitude.toFixed(4)}`;
+        setAddress(addressString);
+        setIsLocating(false);
+        toast({
+          title: 'Location Found',
+          description: 'Address field has been updated with your coordinates.',
+        });
+      },
+      (error) => {
+        setIsLocating(false);
+        toast({
+          variant: 'destructive',
+          title: 'Location Error',
+          description: error.message || 'Could not retrieve your location.',
+        });
+      }
+    );
+  };
+
 
   const handleClose = () => {
     setStep(1);
@@ -93,7 +130,7 @@ export function CustomerInfoDialogs({ isOpen, onComplete, onCancel }: CustomerIn
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Enter Your Delivery Address</DialogTitle>
-            <DialogDescription>Please provide the full address for delivery.</DialogDescription>
+            <DialogDescription>Please provide the full address or use your current location.</DialogDescription>
           </DialogHeader>
           <div className="py-4 space-y-4">
             <div className="space-y-2">
@@ -102,16 +139,20 @@ export function CustomerInfoDialogs({ isOpen, onComplete, onCancel }: CustomerIn
                         <MapPin className="h-4 w-4" />
                         Home Address
                     </Label>
+                     <Button variant="outline" size="sm" onClick={handleGetCurrentLocation} disabled={isLocating}>
+                        {isLocating ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <LocateFixed className="mr-2 h-4 w-4" />}
+                        Use My Current Location
+                    </Button>
                 </div>
                 <Textarea 
                 id="customer-address" 
                 value={address} 
                 onChange={(e) => setAddress(e.target.value)} 
-                placeholder="e.g., House #123, Street 4, Block C, Example Town, Lahore"
+                placeholder="e.g., House #123, Street 4, Block C, Example Town, Lahore&#10;Or your coordinates: Lat: 31.5204, Lng: 74.3587"
                 className="min-h-[100px]"
                 />
                  <p className="text-xs text-muted-foreground pt-1">
-                 Please type your address manually. The map is for visual reference only.
+                 You can type your address manually or use the button to get your GPS coordinates.
                 </p>
             </div>
              <div className="rounded-lg overflow-hidden border">
