@@ -359,9 +359,16 @@ function ItemForm({ item, onSave }: { item?: MenuItem; onSave: (item: Omit<MenuI
                     <div key={index} className="grid grid-cols-3 gap-2 items-center">
                         <Input placeholder="Variant Name (e.g., Small)" value={variant.name} onChange={e => handleVariantChange(index, 'name', e.target.value)} />
                         <Input type="number" placeholder="Price" value={variant.price} onChange={e => handleVariantChange(index, 'price', Number(e.target.value))} />
-                        <Button type="button" variant="destructive" size="sm" onClick={() => removeVariant(index)}>
-                            <Trash2 className="mr-2 h-4 w-4" /> Remove
-                        </Button>
+                        <DeleteConfirmationDialog
+                            title={`Delete Variant "${variant.name || 'Untitled'}"?`}
+                            description={<>This will permanently delete this size variant from the item.</>}
+                            onConfirm={() => removeVariant(index)}
+                            triggerButton={
+                                <Button type="button" variant="destructive" size="sm">
+                                    <Trash2 className="mr-2 h-4 w-4" /> Remove
+                                </Button>
+                            }
+                        />
                     </div>
                 ))}
                 <Button type="button" variant="secondary" className="w-full" onClick={addVariant}>
