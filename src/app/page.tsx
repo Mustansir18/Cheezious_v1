@@ -93,7 +93,7 @@ function DealsCarousel() {
       >
         <CarouselContent className="-ml-4">
           {deals.map((deal) => (
-            <CarouselItem key={deal.id} className="md:basis-1/2 lg:basis-1/3 pl-4">
+            <CarouselItem key={deal.id} className="pl-4 md:basis-1/2 lg:basis-2/5">
               <div className="block p-1 group cursor-pointer" onClick={() => handleDealClick(deal)}>
                   <Card className="overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:scale-105">
                     <CardContent className="flex aspect-video items-center justify-center p-0">
