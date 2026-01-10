@@ -268,32 +268,28 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
   }, [settings.floors, table]);
 
   const { dealItems, regularItems } = useMemo(() => {
-    const deals = new Map<string, { deal: OrderItem; components: OrderItem[] }>();
-    const regulars: OrderItem[] = [];
-    const dealParentIds = new Set<string>();
-
-    // First pass: identify all parent deal items from the order
+    const dealsMap = new Map<string, { deal: OrderItem, components: OrderItem[] }>();
+    const regularItems: OrderItem[] = [];
+    
+    // First, find all parent deal items and initialize them in the map.
     order.items.forEach(item => {
         const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
-        // An item is a deal if it's not a component AND the source menu item has dealItems
-        if (item.isDealComponent === false && menuItem?.dealItems && menuItem.dealItems.length > 0) {
-            deals.set(item.id, { deal: item, components: [] });
-            dealParentIds.add(item.id);
+        if (menuItem?.dealItems && menuItem.dealItems.length > 0 && !item.isDealComponent) {
+            dealsMap.set(item.id, { deal: item, components: [] });
         }
     });
 
-    // Second pass: associate components and classify regular items
+    // Now, categorize all items.
     order.items.forEach(item => {
-        if (item.parentDealId && deals.has(item.parentDealId)) {
-            const dealEntry = deals.get(item.parentDealId);
-            dealEntry?.components.push(item);
-        } else if (!item.isDealComponent && !deals.has(item.id)) {
-            regulars.push(item);
+        if (item.parentDealId && dealsMap.has(item.parentDealId)) {
+            dealsMap.get(item.parentDealId)?.components.push(item);
+        } else if (!dealsMap.has(item.id)) { // It's not a parent deal
+            regularItems.push(item);
         }
     });
 
-    return { dealItems: Array.from(deals.values()), regularItems };
-}, [order.items, menu.items]);
+    return { dealItems: Array.from(dealsMap.values()), regularItems };
+  }, [order.items, menu.items]);
 
 
   return (
