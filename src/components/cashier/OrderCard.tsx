@@ -274,25 +274,33 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
     // First, find all parent deal items and initialize their entries in the map.
     order.items.forEach(item => {
         const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
-        const isParentDeal = menuItem?.dealItems && menuItem.dealItems.length > 0 && !item.isDealComponent;
+        if (!menuItem) return;
+        // A deal's "parent" item in the cart is not a deal component itself, but it DOES have dealItems.
+        const isParentDeal = menuItem.dealItems && menuItem.dealItems.length > 0 && !item.isDealComponent;
         if (isParentDeal) {
             dealsMap.set(item.id, { deal: item, components: [] });
         }
     });
 
-    // Now, iterate through all items again to categorize them as either a component of a deal or a regular item.
+    // Now, iterate through all items again to categorize them.
     order.items.forEach(item => {
         if (item.parentDealId && dealsMap.has(item.parentDealId)) {
             // This item is a component of a deal we've already mapped.
             dealsMap.get(item.parentDealId)?.components.push(item);
-        } else if (!dealsMap.has(item.id)) {
-            // This item is not a deal component and not a parent deal itself, so it's a regular item.
-            regularItemsList.push(item);
+        } else {
+            // If it's not a deal component, check if it's a parent deal itself.
+            const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
+            if(menuItem) {
+                const isParentDeal = menuItem.dealItems && menuItem.dealItems.length > 0 && !item.isDealComponent;
+                 if (!isParentDeal) {
+                    regularItemsList.push(item);
+                }
+            }
         }
     });
 
     return { dealItems: Array.from(dealsMap.values()), regularItems: regularItemsList };
-}, [order.items, menu.items]);
+  }, [order.items, menu.items]);
 
 
   return (
@@ -471,3 +479,5 @@ OrderCard.Skeleton = function OrderCardSkeleton() {
       </Card>
     );
   };
+
+    
