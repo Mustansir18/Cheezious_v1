@@ -103,7 +103,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
 
   // Log activities when order status or item preparation status changes
   useEffect(() => {
-    if (!prevOrders || isLoading) return;
+    if (!prevOrders || isLoading || !orders.length) return;
     const username = user?.username || 'System';
 
     orders.forEach(currentOrder => {

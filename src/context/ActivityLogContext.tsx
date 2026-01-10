@@ -52,7 +52,13 @@ export const ActivityLogProvider = ({ children }: { children: ReactNode }) => {
       message: message,
       category: category,
     };
-    setLogs((prevLogs) => [newLog, ...prevLogs]);
+    
+    // Use a function form of setState to prevent issues during render cycles
+    setLogs(prevLogs => {
+      // Create a new array to ensure React detects the state change
+      const newLogs = [newLog, ...prevLogs];
+      return newLogs;
+    });
   }, []);
 
   const clearLogs = useCallback(() => {
