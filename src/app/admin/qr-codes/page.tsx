@@ -272,7 +272,7 @@ export default function QRCodesPage() {
   const takeAwayUrl = `${origin}/branch/${selectedBranchId}/menu?mode=Take-Away`;
 
   return (
-    <div className="container mx-auto p-4 lg:p-8 space-y-8">
+    <div className="w-full space-y-8">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center print-hidden">
         <div>
           <h1 className="font-headline text-4xl font-bold">Printable QR Codes</h1>

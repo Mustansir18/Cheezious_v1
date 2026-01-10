@@ -215,7 +215,7 @@ export default function SalesTargetPage() {
       : "Pick a date range";
 
     return (
-        <div className="container mx-auto p-4 lg:p-8">
+        <div className="w-full p-4 lg:p-8">
             <header className="mb-8">
                 <h1 className="font-headline text-4xl font-bold">Sales Targets</h1>
                 <p className="text-muted-foreground">Set and track sales goals for items or categories.</p>

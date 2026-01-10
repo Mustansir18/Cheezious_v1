@@ -110,7 +110,7 @@ export default function AdminDashboardPage() {
   const visibleSections = adminSections.filter(section => user?.role && section.role.includes(user.role));
   
   return (
-    <div className="container mx-auto p-4 lg:p-8">
+    <div className="w-full">
       <header className="mb-8">
         <h1 className="font-headline text-4xl font-bold">Admin Dashboard</h1>
         <p className="text-muted-foreground">

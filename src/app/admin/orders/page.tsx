@@ -140,7 +140,7 @@ export default function AdminOrdersPage() {
   }
 
   return (
-    <div className="container mx-auto p-4 lg:p-8">
+    <div className="w-full">
       <header className="mb-8 flex flex-col md:flex-row justify-between items-start gap-4">
         <div>
             <h1 className="font-headline text-4xl font-bold">Order Management</h1>

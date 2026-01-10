@@ -51,7 +51,7 @@ export default function TableSelectionPage() {
     }
 
     return (
-        <div className="container mx-auto flex flex-col items-center justify-center px-4 py-12">
+        <div className="w-full h-[calc(100vh-4rem)] flex flex-col items-center justify-center px-4">
             <Card className="w-full max-w-md">
                 <CardHeader>
                     <CardTitle className="font-headline text-center text-2xl">Select Your Table</CardTitle>

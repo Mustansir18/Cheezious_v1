@@ -1,3 +1,4 @@
+
 import Header from "@/components/layout/Header";
 
 export default function BranchLayout({
@@ -10,7 +11,7 @@ export default function BranchLayout({
   return (
     <div className="min-h-screen bg-background">
       <Header branchId={params.branchId} />
-      <main>{children}</main>
+      <main className="w-full">{children}</main>
     </div>
   );
 }

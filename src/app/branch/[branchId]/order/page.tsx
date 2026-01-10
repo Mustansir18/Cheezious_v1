@@ -71,7 +71,7 @@ export default function OrderConfirmationPage() {
 
   if (!branchId || !orderType) {
     return (
-        <div className="container mx-auto flex h-[calc(100vh-4rem)] flex-col items-center justify-center text-center">
+        <div className="w-full h-[calc(100vh-4rem)] flex flex-col items-center justify-center text-center px-4">
             <h1 className="font-headline text-2xl font-bold">Something went wrong</h1>
             <p className="mt-2 text-muted-foreground">Please start your order again.</p>
             <Button asChild className="mt-4"><Link href="/">Go Home</Link></Button>
@@ -171,8 +171,8 @@ export default function OrderConfirmationPage() {
   };
 
   return (
-    <div className="container mx-auto max-w-2xl px-4 py-12">
-      <Card className="shadow-xl">
+    <div className="w-full px-4 py-12 lg:px-8">
+      <Card className="shadow-xl max-w-2xl mx-auto">
         <CardHeader>
           <CardTitle className="font-headline text-3xl text-center">Confirm Your Order</CardTitle>
         </CardHeader>

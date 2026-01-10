@@ -81,7 +81,7 @@ export default function CashierPage() {
   }
 
   return (
-    <div className="container mx-auto p-4 lg:p-8">
+    <div className="w-full p-4 lg:p-8">
       <header className="mb-8 flex flex-col sm:flex-row justify-between items-start gap-4">
         <div>
             <h1 className="font-headline text-4xl font-bold">Cashier Dashboard</h1>

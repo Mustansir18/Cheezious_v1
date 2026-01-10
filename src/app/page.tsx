@@ -135,7 +135,7 @@ export default function Home() {
   return (
     <>
     <Header />
-    <main className="container mx-auto px-4">
+    <main className="w-full px-4 lg:px-8">
       <div className="flex flex-col items-center justify-center space-y-6 pt-20 text-center">
         <Pizza className="h-24 w-24 text-primary animate-icon-blink" />
         <div className="space-y-2">

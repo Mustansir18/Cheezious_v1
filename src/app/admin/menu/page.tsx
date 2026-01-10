@@ -511,7 +511,7 @@ export default function MenuManagementPage() {
   if (isLoading) return <div>Loading menu...</div>;
 
   return (
-    <div className="container mx-auto p-4 lg:p-8">
+    <div className="w-full">
         <header className="mb-8">
             <h1 className="font-headline text-4xl font-bold">Menu Management</h1>
             <p className="text-muted-foreground">Manage categories, items, and add-ons for your restaurant menu.</p>

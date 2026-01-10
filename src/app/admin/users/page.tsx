@@ -201,7 +201,7 @@ export default function UserManagementPage() {
   }
 
   return (
-    <div className="container mx-auto p-4 lg:p-8 space-y-8">
+    <div className="w-full space-y-8">
       <Card>
         <CardHeader className="flex flex-row justify-between items-center">
           <div>

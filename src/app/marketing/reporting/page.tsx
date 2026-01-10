@@ -572,7 +572,7 @@ export default function ReportingPage() {
   
   if (!reportData || orders.length === 0 || !defaultBranch) {
       return (
-        <div className="container mx-auto p-4 lg:p-8 text-center">
+        <div className="w-full p-4 lg:p-8 text-center">
              <header className="mb-8">
                 <h1 className="font-headline text-4xl font-bold">{settings.companyName} Reports</h1>
                 <p className="text-muted-foreground">No sales data available for the current session.</p>
@@ -618,7 +618,7 @@ export default function ReportingPage() {
 
   return (
     <TooltipProvider>
-    <div className="container mx-auto p-4 lg:p-8">
+    <div className="w-full p-4 lg:p-8">
       <header className="mb-8 flex flex-col md:flex-row justify-between items-start gap-4">
         <div>
             <h1 className="font-headline text-4xl font-bold">{settings.companyName} Reports</h1>

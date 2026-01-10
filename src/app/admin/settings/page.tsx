@@ -332,7 +332,7 @@ export default function AdminSettingsPage() {
         : settings.branches;
 
     return (
-        <div className="container mx-auto p-4 lg:p-8 space-y-8">
+        <div className="w-full space-y-8">
             <header>
                 <h1 className="font-headline text-4xl font-bold">Admin Settings</h1>
                 <p className="text-muted-foreground">Manage restaurant layout, payments, and branch settings.</p>

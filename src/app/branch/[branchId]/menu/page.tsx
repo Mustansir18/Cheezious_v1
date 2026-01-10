@@ -119,7 +119,7 @@ export default function MenuPage() {
   );
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="w-full px-4 py-8 lg:px-8">
       <div className="text-center mb-8">
         <h1 className="font-headline text-4xl font-bold tracking-tight">Our Menu</h1>
         <p className="mt-2 text-lg text-muted-foreground">Explore our delicious offerings</p>
