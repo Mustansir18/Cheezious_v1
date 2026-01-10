@@ -270,25 +270,37 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
   const { dealItems, regularItems } = useMemo(() => {
     const deals = new Map<string, { deal: OrderItem; components: OrderItem[] }>();
     const regulars: OrderItem[] = [];
+    const dealParentIds = new Set<string>();
 
-    // First, find all parent deal items
+    // First pass: identify all parent deal items
     order.items.forEach(item => {
-        if (item.menuItemId.startsWith('D-')) { // Assuming deals have a "D-" prefix
-            deals.set(item.id, { deal: item, components: [] });
+        if (item.isDealComponent === false) { // It's a main item
+             // Check if it's a deal by checking for dealItems property from menu data
+            const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
+            if (menuItem?.dealItems && menuItem.dealItems.length > 0) {
+                 deals.set(item.id, { deal: item, components: [] });
+                 dealParentIds.add(item.id);
+            }
         }
     });
 
-    // Then, associate components with their parent deal or classify as regular
+    // Second pass: associate components and classify regular items
     order.items.forEach(item => {
-        if (item.parentDealId && deals.has(item.parentDealId)) {
-            deals.get(item.parentDealId)!.components.push(item);
-        } else if (!item.menuItemId.startsWith('D-')) {
-            regulars.push(item);
+        if (item.parentDealId && dealParentIds.has(item.parentDealId)) {
+            const dealEntry = deals.get(item.parentDealId);
+            if(dealEntry) {
+                dealEntry.components.push(item);
+            }
+        } else if (item.isDealComponent === false) {
+             const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
+             if (!menuItem?.dealItems || menuItem.dealItems.length === 0) {
+                regulars.push(item);
+             }
         }
     });
     
-    return { dealItems: Array.from(deals.values()), regularItems };
-}, [order.items]);
+    return { dealItems: Array.from(deals.values()), regularItems: regulars };
+}, [order.items, menu.items]);
 
 
   return (
