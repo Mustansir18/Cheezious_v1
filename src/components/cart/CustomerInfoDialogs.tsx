@@ -59,13 +59,11 @@ export function CustomerInfoDialogs({ isOpen, onComplete, onCancel }: CustomerIn
     navigator.geolocation.getCurrentPosition(
       (position) => {
         // In a real app, you would send these coordinates to a reverse geocoding API.
-        // For this prototype, we will simulate the result with a sample address.
-        const sampleAddress = "123 Johar Town, Block G, Lahore, Punjab, Pakistan";
-        setAddress(sampleAddress);
+        // For this prototype, we will just show a success message.
         setIsLocating(false);
         toast({
-          title: 'Location Found (Sample)',
-          description: 'A sample address has been used to demonstrate this feature.',
+          title: 'Location Found!',
+          description: 'A production app would now convert these GPS coordinates into a street address.',
         });
       },
       (error) => {
@@ -153,7 +151,7 @@ export function CustomerInfoDialogs({ isOpen, onComplete, onCancel }: CustomerIn
                 className="min-h-[100px]"
                 />
                  <p className="text-xs text-muted-foreground pt-1">
-                 You can type your address manually or use the button to get your current location (uses a sample address for this demo).
+                 You can type your address manually or use the location button.
                 </p>
             </div>
              <div className="rounded-lg overflow-hidden border">
