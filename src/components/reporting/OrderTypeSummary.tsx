@@ -10,10 +10,10 @@ import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/componen
 import { cn } from '@/lib/utils';
 import type { ElementType } from 'react';
 import { exportOrderTypeDetailsAs } from '@/lib/exporter';
-import type { Order } from '@/lib/types';
+import type { Order, OrderType } from '@/lib/types';
 
 export interface OrderTypeData {
-  type: 'Dine-In' | 'Take-Away';
+  type: OrderType;
   count: number;
   sales: number;
   icon: ElementType;

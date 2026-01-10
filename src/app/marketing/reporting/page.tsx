@@ -7,7 +7,7 @@ import { useSettings } from "@/context/SettingsContext";
 import { useMemo, useState, useEffect, useCallback } from "react";
 import type { Order } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Calendar as CalendarIcon, ShoppingCart, DollarSign, Utensils, Loader, Printer, Scale, FileDown, Tag, Gift, XCircle, ShoppingBag, FileArchive, FileText, Landmark, Clock } from "lucide-react";
+import { Calendar as CalendarIcon, ShoppingCart, DollarSign, Utensils, Loader, Printer, Scale, FileDown, Tag, Gift, XCircle, ShoppingBag, FileArchive, FileText, Landmark, Clock, Bike } from "lucide-react";
 import { HourlySalesReport } from "@/components/reporting/HourlySalesReport";
 import { DailySalesReport, type DailySale } from "@/components/reporting/DailySalesReport";
 import { TopSellingItems } from "@/components/reporting/TopSellingItems";
@@ -212,6 +212,7 @@ function HourlyReportDetail() {
                                                 <SelectItem value="all">All Types</SelectItem>
                                                 <SelectItem value="Dine-In">Dine-In</SelectItem>
                                                 <SelectItem value="Take-Away">Take-Away</SelectItem>
+                                                <SelectItem value="Delivery">Delivery</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </TableHead>
@@ -357,6 +358,7 @@ export default function ReportingPage() {
     });
     const dineInOrders = orderTypeFiltered.filter((o) => o.orderType === "Dine-In");
     const takeAwayOrders = orderTypeFiltered.filter((o) => o.orderType === "Take-Away");
+    const deliveryOrders = orderTypeFiltered.filter((o) => o.orderType === "Delivery");
 
     let paymentFiltered = baseFilteredOrders.filter(o => selectedOrderType ? o.orderType === selectedOrderType : true);
      paymentFiltered = paymentFiltered.filter(o => {
@@ -435,6 +437,7 @@ export default function ReportingPage() {
     const orderTypeChartData: OrderTypeData[] = [
         { type: 'Dine-In', count: dineInOrders.length, sales: dineInOrders.reduce((sum, o) => sum + o.totalAmount, 0), icon: Utensils, fill: 'hsl(var(--chart-1))', orders: dineInOrders },
         { type: 'Take-Away', count: takeAwayOrders.length, sales: takeAwayOrders.reduce((sum, o) => sum + o.totalAmount, 0), icon: ShoppingBag, fill: 'hsl(var(--chart-2))', orders: takeAwayOrders },
+        { type: 'Delivery', count: deliveryOrders.length, sales: deliveryOrders.reduce((sum, o) => sum + o.totalAmount, 0), icon: Bike, fill: 'hsl(var(--chart-3))', orders: deliveryOrders },
     ];
     
     const adjustmentChartData: OrderAdjustmentData[] = [

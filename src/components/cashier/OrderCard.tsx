@@ -17,7 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { formatDistanceToNow } from "date-fns";
 import { Skeleton } from "../ui/skeleton";
 import { ScrollArea } from "../ui/scroll-area";
-import { Utensils, ShoppingBag, Check, CheckCircle, CookingPot, Loader, CreditCard, Printer, Info, XCircle, Tag, Gift, MessageSquareText, CheckCheck, PlusCircle } from "lucide-react";
+import { Utensils, ShoppingBag, Check, CheckCircle, CookingPot, Loader, CreditCard, Printer, Info, XCircle, Tag, Gift, MessageSquareText, CheckCheck, PlusCircle, Bike } from "lucide-react";
 import { useMemo, useState, useCallback } from "react";
 import { useSettings } from "@/context/SettingsContext";
 import { OrderReceipt } from "./OrderReceipt";
@@ -397,6 +397,17 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
     return { dealItems: Array.from(dealsMap.values()), regularItems: regulars };
 }, [order.items, menu.items]);
 
+const getOrderTypeIcon = () => {
+    switch (order.orderType) {
+        case 'Dine-In': return Utensils;
+        case 'Take-Away': return ShoppingBag;
+        case 'Delivery': return Bike;
+        default: return Info;
+    }
+};
+
+const OrderTypeIcon = getOrderTypeIcon();
+
   return (
     <Card className="flex h-full flex-col">
       <CardHeader>
@@ -407,7 +418,7 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
                 <Button variant="ghost" size="icon" className="h-8 w-8 print-hidden" onClick={handlePrint}><Printer className="h-4 w-4" /></Button>
                  <div className="flex flex-col items-center">
                     <Badge variant="secondary">
-                        {order.orderType === 'Dine-In' ? <Utensils className="mr-1 h-4 w-4"/> : <ShoppingBag className="mr-1 h-4 w-4" />} 
+                        <OrderTypeIcon className="mr-1 h-4 w-4"/>
                         {order.orderType}
                         {order.orderType === 'Dine-In' && table && (
                             <span className="font-bold ml-2">{table.name}</span>
