@@ -2,12 +2,11 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import type { Floor, Table, PaymentMethod, Branch, Role, UserRole, DeliveryMode } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
-import { ALL_PERMISSIONS } from '@/config/permissions';
 
 const defaultRoles: Role[] = [
     { id: "root", name: "Root", permissions: ["admin:*"] },
@@ -126,36 +125,26 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
       if (storedSettings) {
         const parsed = JSON.parse(storedSettings);
         
-        const parsedMethods = parsed.paymentMethods || [];
-        const paymentMethodMap = new Map<string, PaymentMethod>();
+        // Merge stored settings with initial settings to ensure all keys are present
+        const mergedSettings: Settings = {
+          ...initialSettings,
+          ...parsed,
+          // Deep merge for nested arrays to prevent wiping them out if they are empty in one source
+          branches: parsed.branches && parsed.branches.length > 0 ? parsed.branches.map((b: Branch) => {
+              const initialBranch = initialSettings.branches.find(ib => ib.id === b.id);
+              return initialBranch ? { ...initialBranch, ...b } : b;
+          }) : initialSettings.branches,
+          roles: parsed.roles && parsed.roles.length > 0 ? parsed.roles : initialSettings.roles,
+          paymentMethods: parsed.paymentMethods && parsed.paymentMethods.length > 0 ? parsed.paymentMethods : initialSettings.paymentMethods,
+          floors: parsed.floors && parsed.floors.length > 0 ? parsed.floors : initialSettings.floors,
+          tables: parsed.tables && parsed.tables.length > 0 ? parsed.tables : initialSettings.tables,
+          deliveryModes: parsed.deliveryModes && parsed.deliveryModes.length > 0 ? parsed.deliveryModes : initialSettings.deliveryModes,
+          // Ensure default branch ID is valid
+          defaultBranchId: parsed.defaultBranchId || (parsed.branches?.[0]?.id) || initialSettings.defaultBranchId,
+        };
 
-        defaultPaymentMethods.forEach(dpm => paymentMethodMap.set(dpm.id, dpm));
-        
-        parsedMethods.forEach((pm: PaymentMethod) => {
-            paymentMethodMap.set(pm.id, pm);
-        });
+        setSettings(mergedSettings);
 
-        const loadedBranches = parsed.branches && parsed.branches.length > 0 ? parsed.branches : initialBranches;
-        
-        const loadedRoles = parsed.roles && parsed.roles.length > 0 ? parsed.roles : defaultRoles;
-        const roleMap = new Map<string, Role>();
-        defaultRoles.forEach(r => roleMap.set(r.id, r));
-        loadedRoles.forEach((r: Role) => roleMap.set(r.id, r));
-
-
-        setSettings({
-            floors: parsed.floors && parsed.floors.length > 0 ? parsed.floors : initialFloors,
-            tables: parsed.tables && parsed.tables.length > 0 ? parsed.tables : initialTables,
-            paymentMethods: Array.from(paymentMethodMap.values()),
-            autoPrintReceipts: parsed.autoPrintReceipts || false,
-            companyName: parsed.companyName || "Cheezious",
-            branches: loadedBranches,
-            defaultBranchId: parsed.defaultBranchId || loadedBranches[0]?.id || null,
-            businessDayStart: parsed.businessDayStart || "11:00",
-            businessDayEnd: parsed.businessDayEnd || "04:00",
-            roles: Array.from(roleMap.values()),
-            deliveryModes: parsed.deliveryModes && parsed.deliveryModes.length > 0 ? parsed.deliveryModes : initialDeliveryModes,
-        });
       } else {
         setSettings(initialSettings);
       }
