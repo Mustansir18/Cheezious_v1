@@ -58,13 +58,14 @@ export function CustomerInfoDialogs({ isOpen, onComplete, onCancel }: CustomerIn
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const { latitude, longitude } = position.coords;
-        const addressString = `Lat: ${latitude.toFixed(4)}, Lng: ${longitude.toFixed(4)}`;
-        setAddress(addressString);
+        // In a real app, you would send these coordinates to a reverse geocoding API.
+        // For this prototype, we will simulate the result with a sample address.
+        const sampleAddress = "123 Johar Town, Block G, Lahore, Punjab, Pakistan";
+        setAddress(sampleAddress);
         setIsLocating(false);
         toast({
-          title: 'Location Found',
-          description: 'Address field has been updated with your coordinates.',
+          title: 'Location Found (Sample)',
+          description: 'A sample address has been used to demonstrate this feature.',
         });
       },
       (error) => {
@@ -148,11 +149,11 @@ export function CustomerInfoDialogs({ isOpen, onComplete, onCancel }: CustomerIn
                 id="customer-address" 
                 value={address} 
                 onChange={(e) => setAddress(e.target.value)} 
-                placeholder="e.g., House #123, Street 4, Block C, Example Town, Lahore&#10;Or your coordinates: Lat: 31.5204, Lng: 74.3587"
+                placeholder="e.g., House #123, Street 4, Block C, Example Town, Lahore"
                 className="min-h-[100px]"
                 />
                  <p className="text-xs text-muted-foreground pt-1">
-                 You can type your address manually or use the button to get your GPS coordinates.
+                 You can type your address manually or use the button to get your current location (uses a sample address for this demo).
                 </p>
             </div>
              <div className="rounded-lg overflow-hidden border">
