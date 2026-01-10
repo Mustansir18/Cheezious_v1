@@ -89,8 +89,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, [items, branchId, orderType, floorId, tableId, deliveryMode, customerName, customerPhone, customerAddress]);
 
   const setOrderDetails = useCallback((details: { branchId: string; orderType: OrderType; deliveryMode?: string; }) => {
-    const hasChanged = details.branchId !== branchId || details.orderType !== orderType || details.deliveryMode !== deliveryMode;
-    
+    // Only clear the cart if the user is actively changing an *existing* order type or branch.
+    // Do not clear it if the order details are being set for the first time (i.e., from null).
+    const isChangingContext = 
+      (branchId !== null && details.branchId !== branchId) ||
+      (orderType !== null && details.orderType !== orderType);
+
     setBranchId(details.branchId);
     setOrderType(details.orderType);
 
@@ -106,13 +110,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         setDeliveryMode(null);
     }
     
-    if (hasChanged) {
+    if (isChangingContext) {
       setItems([]);
       setCustomerName(null);
       setCustomerPhone(null);
       setCustomerAddress(null);
     }
-  }, [branchId, orderType, deliveryMode]);
+  }, [branchId, orderType]);
 
   const setCustomerDetails = useCallback((details: CustomerDetails) => {
     setCustomerName(details.name);
