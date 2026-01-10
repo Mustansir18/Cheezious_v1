@@ -10,7 +10,7 @@ import { Utensils, ShoppingBag, Check } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 
 interface StationOrderCardProps {
@@ -19,21 +19,62 @@ interface StationOrderCardProps {
     onItemsPrepared: (orderId: string, itemIds: string[]) => void;
 }
 
+interface AggregatedStationItem {
+    id: string; // Unique ID for the aggregated group
+    name: string;
+    totalQuantity: number;
+    addons: { name: string; price: number; quantity: number }[];
+    componentItemIds: string[]; // IDs of the original OrderItem objects
+}
+
 export default function StationOrderCard({ order, stationItems, onItemsPrepared }: StationOrderCardProps) {
     const { settings } = useSettings();
     const table = settings.tables.find(t => t.id === order.tableId);
-    const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
+    const [selectedAggregatedIds, setSelectedAggregatedIds] = useState<string[]>([]);
     
-    const handleToggleItem = (itemId: string) => {
-        setSelectedItemIds(prev => prev.includes(itemId) ? prev.filter(id => id !== itemId) : [...prev, itemId]);
+    const aggregatedItems = useMemo(() => {
+        const itemMap = new Map<string, AggregatedStationItem>();
+
+        stationItems.forEach(item => {
+            // Create a unique key based on the item and its addons
+            const addonsKey = (item.selectedAddons || []).map(a => `${a.name}:${a.quantity}`).sort().join(',');
+            const aggregationKey = `${item.menuItemId}-${addonsKey}`;
+
+            if (itemMap.has(aggregationKey)) {
+                const existing = itemMap.get(aggregationKey)!;
+                existing.totalQuantity += item.quantity;
+                existing.componentItemIds.push(item.id);
+            } else {
+                itemMap.set(aggregationKey, {
+                    id: aggregationKey,
+                    name: item.name,
+                    totalQuantity: item.quantity,
+                    addons: item.selectedAddons || [],
+                    componentItemIds: [item.id],
+                });
+            }
+        });
+        return Array.from(itemMap.values());
+    }, [stationItems]);
+
+    const handleToggleGroup = (aggregatedId: string) => {
+        setSelectedAggregatedIds(prev => prev.includes(aggregatedId) ? prev.filter(id => id !== aggregatedId) : [...prev, aggregatedId]);
     };
 
     const handleMarkAsPrepared = () => {
-        if(selectedItemIds.length > 0) {
-            onItemsPrepared(order.id, selectedItemIds);
-            setSelectedItemIds([]);
+        const itemIdsToPrepare = aggregatedItems
+            .filter(aggItem => selectedAggregatedIds.includes(aggItem.id))
+            .flatMap(aggItem => aggItem.componentItemIds);
+
+        if(itemIdsToPrepare.length > 0) {
+            onItemsPrepared(order.id, itemIdsToPrepare);
+            setSelectedAggregatedIds([]);
         }
     };
+    
+    const selectedItemCount = aggregatedItems
+        .filter(aggItem => selectedAggregatedIds.includes(aggItem.id))
+        .reduce((sum, item) => sum + item.totalQuantity, 0);
 
     return (
         <Card className="break-inside-avoid shadow-lg border-2 border-primary/20 bg-card">
@@ -60,19 +101,19 @@ export default function StationOrderCard({ order, stationItems, onItemsPrepared 
             </CardHeader>
             <CardContent className="p-4 pt-0">
                 <div className="space-y-3">
-                    {stationItems.map(item => (
-                        <div key={item.id} className="flex items-start gap-3 p-2 rounded-md transition-colors hover:bg-muted/50">
+                    {aggregatedItems.map(aggItem => (
+                        <div key={aggItem.id} className="flex items-start gap-3 p-2 rounded-md transition-colors hover:bg-muted/50">
                             <Checkbox 
-                                id={`item-${item.id}`} 
+                                id={`agg-item-${aggItem.id}`} 
                                 className="mt-1 h-5 w-5"
-                                checked={selectedItemIds.includes(item.id)}
-                                onCheckedChange={() => handleToggleItem(item.id)}
+                                checked={selectedAggregatedIds.includes(aggItem.id)}
+                                onCheckedChange={() => handleToggleGroup(aggItem.id)}
                             />
-                            <Label htmlFor={`item-${item.id}`} className="flex-grow cursor-pointer">
-                                <p className="font-semibold text-base">{item.quantity}x {item.name}</p>
-                                {item.selectedAddons && item.selectedAddons.length > 0 && (
+                            <Label htmlFor={`agg-item-${aggItem.id}`} className="flex-grow cursor-pointer">
+                                <p className="font-semibold text-base">{aggItem.totalQuantity}x {aggItem.name}</p>
+                                {aggItem.addons && aggItem.addons.length > 0 && (
                                     <div className="pl-4 text-xs font-normal text-muted-foreground">
-                                        {item.selectedAddons.map(addon => (
+                                        {aggItem.addons.map(addon => (
                                             <p key={addon.name}>+ {addon.quantity}x {addon.name}</p>
                                         ))}
                                     </div>
@@ -85,10 +126,10 @@ export default function StationOrderCard({ order, stationItems, onItemsPrepared 
             <CardFooter className="p-4">
                 <Button 
                     className="w-full"
-                    disabled={selectedItemIds.length === 0}
+                    disabled={selectedAggregatedIds.length === 0}
                     onClick={handleMarkAsPrepared}
                 >
-                    <Check className="mr-2 h-4 w-4" /> Mark {selectedItemIds.length} Item(s) as Prepared
+                    <Check className="mr-2 h-4 w-4" /> Mark {selectedItemCount} Item(s) as Prepared
                 </Button>
             </CardFooter>
         </Card>
