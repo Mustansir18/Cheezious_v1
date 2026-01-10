@@ -7,9 +7,6 @@ export const menuCategories: MenuCategory[] = [
     { id: 'C-00001', name: 'Deals', icon: 'Tag', subCategories: [
       { id: 'SC-00001', name: 'Amazing Deals' },
     ]},
-    { id: 'C-KIT-01', name: 'KIT Items', icon: 'Package', subCategories: [
-      { id: 'SC-KIT-01', name: 'Bundles' },
-    ]},
     { id: 'C-00002', name: 'Pizzas', icon: 'Pizza', stationId: 'pizza', subCategories: [
         { id: 'SC-00002', name: 'Classic Flavors' },
         { id: 'SC-00003', name: 'Favorite Flavors' },
