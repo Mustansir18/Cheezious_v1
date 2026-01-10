@@ -53,12 +53,7 @@ export const ActivityLogProvider = ({ children }: { children: ReactNode }) => {
       category: category,
     };
     
-    // Use a function form of setState to prevent issues during render cycles
-    setLogs(prevLogs => {
-      // Create a new array to ensure React detects the state change
-      const newLogs = [newLog, ...prevLogs];
-      return newLogs;
-    });
+    setLogs(prevLogs => [newLog, ...prevLogs]);
   }, []);
 
   const clearLogs = useCallback(() => {
