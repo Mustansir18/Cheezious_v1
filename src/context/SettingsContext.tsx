@@ -8,7 +8,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
 import { ALL_PERMISSIONS } from '@/config/permissions';
-import { useOrders } from './OrderContext';
 
 const defaultRoles: Role[] = [
     { id: "root", name: "Root", permissions: ["admin:*"] },
@@ -397,21 +396,5 @@ export const useSettings = () => {
   if (context === undefined) {
     throw new Error('useSettings must be used within a SettingsProvider');
   }
-
-  // Correctly derive state in the hook, not the provider
-  const { orders } = useOrders();
-  const occupiedTableIds = useMemo(() => {
-    const ids = orders
-        .filter(o => o.orderType === 'Dine-In' && o.tableId && ['Pending', 'Preparing', 'Ready', 'Partial Ready'].includes(o.status))
-        .map(o => o.tableId!);
-    return new Set(ids);
-  }, [orders]);
-
-  return {
-    ...context,
-    settings: {
-        ...context.settings,
-        occupiedTableIds,
-    }
-  };
+  return context;
 };
