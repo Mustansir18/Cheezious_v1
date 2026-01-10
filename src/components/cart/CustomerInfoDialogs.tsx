@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { MapPin } from 'lucide-react';
 
 interface CustomerInfoDialogsProps {
   isOpen: boolean;
@@ -94,9 +95,21 @@ export function CustomerInfoDialogs({ isOpen, onComplete, onCancel }: CustomerIn
             <DialogTitle>Enter Your Delivery Address</DialogTitle>
             <DialogDescription>Please provide the full address for delivery.</DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <Label htmlFor="customer-address">Home Address</Label>
-            <Textarea id="customer-address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="e.g., House #123, Street 4, Block C, Example Town, Lahore" />
+          <div className="py-4 space-y-2">
+            <Label htmlFor="customer-address" className="flex items-center gap-2">
+              <MapPin className="h-4 w-4" />
+              Home Address
+            </Label>
+            <Textarea 
+              id="customer-address" 
+              value={address} 
+              onChange={(e) => setAddress(e.target.value)} 
+              placeholder="e.g., House #123, Street 4, Block C, Example Town, Lahore"
+              className="min-h-[100px]"
+            />
+             <p className="text-xs text-muted-foreground pt-1">
+              A full map integration can be added here in the future. For now, please type your address manually.
+            </p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setStep(2)}>Back</Button>
