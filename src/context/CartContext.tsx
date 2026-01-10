@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
 import type { CartItem, MenuItem, OrderType, Addon, Deal, MenuItemVariant, SelectedAddon } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useMenu } from './MenuContext';
@@ -73,7 +73,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [items, branchId, orderType, floorId, tableId, deliveryMode]);
 
-  const setOrderDetails = (details: { branchId: string; orderType: OrderType; deliveryMode?: string; }) => {
+  const setOrderDetails = useCallback((details: { branchId: string; orderType: OrderType; deliveryMode?: string; }) => {
     const hasChanged = details.branchId !== branchId || details.orderType !== orderType || details.deliveryMode !== deliveryMode;
     
     setBranchId(details.branchId);
@@ -94,14 +94,14 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     if (hasChanged) {
       setItems([]);
     }
-  };
+  }, [branchId, orderType, deliveryMode]);
 
-  const setTable = (newTableId: string, newFloorId: string) => {
+  const setTable = useCallback((newTableId: string, newFloorId: string) => {
     setTableId(newTableId);
     setFloorId(newFloorId);
-  }
+  }, []);
 
-  const addItem = ({ item: itemToAdd, selectedAddons = [], itemQuantity, instructions, selectedVariant }: AddToCartOptions) => {
+  const addItem = useCallback(({ item: itemToAdd, selectedAddons = [], itemQuantity, instructions, selectedVariant }: AddToCartOptions) => {
     const isDeal = itemToAdd.categoryId === 'C-00001';
 
     const getVariationId = (addons: SelectedAddon[], instr: string, variant?: MenuItemVariant) => {
@@ -174,10 +174,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         title: "Added to Cart",
         description: `${itemQuantity}x ${itemToAdd.name} ${selectedVariant ? `(${selectedVariant.name})` : ''} is now in your order.`,
     });
-  };
+  }, [menu.items, toast]);
 
 
-  const updateQuantity = (cartItemId: string, change: number) => {
+  const updateQuantity = useCallback((cartItemId: string, change: number) => {
     setItems((prevItems) => {
       const itemToUpdate = prevItems.find(item => item.cartItemId === cartItemId);
       
@@ -197,18 +197,18 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         item.cartItemId === cartItemId ? { ...item, quantity: newQuantity } : item
       );
     });
-  };
+  }, []);
 
-  const clearCart = () => {
+  const clearCart = useCallback(() => {
     setItems([]);
     setTableId(null);
     setFloorId(null);
     setDeliveryMode(null);
-  };
+  }, []);
   
-  const closeCart = () => {
+  const closeCart = useCallback(() => {
     setIsCartOpen(false);
-  }
+  }, []);
 
   const cartTotal = useMemo(() => {
     return items.reduce((total, item) => {
@@ -256,3 +256,5 @@ export const useCart = () => {
   }
   return context;
 };
+
+    
