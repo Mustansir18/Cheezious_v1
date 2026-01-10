@@ -51,7 +51,7 @@ function AddItemsToOrderDialog({ order }: { order: Order }) {
 
     const handleAddItem = (options: { selectedAddons: any[], itemQuantity: number, instructions: string, selectedVariant?: any }, item: MenuItem) => {
         const cartItemId = crypto.randomUUID();
-        const addonPrice = options.selectedAddons.reduce((sum, addonData) => sum + (addonData.price * addonData.quantity), 0);
+        const addonPrice = options.selectedAddons.reduce((sum, addonData) => sum + (addonData.selectedPrice * addonData.quantity), 0);
         const basePrice = options.selectedVariant ? options.selectedVariant.price : item.price;
         const finalPrice = basePrice + addonPrice;
 
@@ -78,8 +78,11 @@ function AddItemsToOrderDialog({ order }: { order: Order }) {
     };
     
     const filteredMenuItems = useMemo(() => {
+        if (!searchTerm) {
+            return menu.items.filter(item => item.categoryId !== 'C-00001'); // Exclude deals from being added
+        }
         return menu.items.filter(item => 
-            item.name.toLowerCase().includes(searchTerm.toLowerCase())
+            item.categoryId !== 'C-00001' && item.name.toLowerCase().includes(searchTerm.toLowerCase())
         );
     }, [menu.items, searchTerm]);
 
@@ -398,27 +401,31 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
     const dealsMap = new Map<string, { deal: OrderItem, components: OrderItem[] }>();
     const regulars: OrderItem[] = [];
 
-    const parentDeals = new Set(order.items.filter(item => {
+    // First, identify all parent deal items in the order
+    const parentDealItems = order.items.filter(item => {
         const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
-        return menuItem && menuItem.dealItems && menuItem.dealItems.length > 0 && !item.isDealComponent;
-    }).map(item => item.id));
-
-    order.items.forEach(item => {
-        if (parentDeals.has(item.id)) {
-            dealsMap.set(item.id, { deal: item, components: [] });
-        }
+        // It's a parent deal if it's not a component itself AND it's a deal type
+        return !item.isDealComponent && menuItem && menuItem.categoryId === 'C-00001';
     });
 
+    // Initialize the map with parent deals
+    parentDealItems.forEach(dealItem => {
+        dealsMap.set(dealItem.id, { deal: dealItem, components: [] });
+    });
+
+    // Now, associate components with their parent deals, and collect regular items
     order.items.forEach(item => {
         if (item.parentDealId && dealsMap.has(item.parentDealId)) {
             dealsMap.get(item.parentDealId)!.components.push(item);
-        } else if (!parentDeals.has(item.id)) {
+        } else if (!parentDealItems.some(parent => parent.id === item.id)) {
+            // It's a regular item if it's not a parent deal itself
             regulars.push(item);
         }
     });
     
     return { dealItems: Array.from(dealsMap.values()), regularItems: regulars };
 }, [order.items, menu.items]);
+
 
 const getOrderTypeIcon = () => {
     switch (order.orderType) {
@@ -612,3 +619,4 @@ OrderCard.Skeleton = function OrderCardSkeleton() {
   };
 
     
+
