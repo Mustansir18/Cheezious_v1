@@ -13,6 +13,7 @@ import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
+import { useMenu } from '@/context/MenuContext';
 
 interface MasterOrderSlipProps {
     order: Order;
@@ -21,6 +22,7 @@ interface MasterOrderSlipProps {
 
 export default function MasterOrderSlip({ order, onDispatchItem }: MasterOrderSlipProps) {
     const { settings } = useSettings();
+    const { menu } = useMenu();
     const table = settings.tables.find(t => t.id === order.tableId);
 
     const handleDispatchToggle = (itemId: string, isSelectable: boolean, isDispatched: boolean) => {
@@ -29,15 +31,18 @@ export default function MasterOrderSlip({ order, onDispatchItem }: MasterOrderSl
         }
     };
     
-    // Filter out the parent deal items, so we only show actual components.
+    // Filter to show only "physical" items to be assembled, excluding the parent deal wrapper.
     const dispatchableItems = useMemo(() => {
         return order.items.filter(item => {
-            // An item is dispatchable if it's NOT a deal itself.
-            // A deal is an item that is not a component but has dealItems defined on its menu data.
-            // We're essentially filtering for items that ARE components OR standalone items.
-            return item.isDealComponent || !item.dealItems || item.dealItems.length === 0;
+            // A deal's "parent" item in the cart is not a physical component to be dispatched.
+            // We identify it because it is NOT a deal component itself, but it DOES have dealItems.
+            const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
+            const isParentDeal = !item.isDealComponent && menuItem?.dealItems && menuItem.dealItems.length > 0;
+            
+            // We want to show everything that is NOT a parent deal.
+            return !isParentDeal;
         });
-    }, [order.items]);
+    }, [order.items, menu.items]);
 
     return (
         <Card className="break-inside-avoid shadow-lg border-2 border-primary/20">
