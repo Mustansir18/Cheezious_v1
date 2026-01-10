@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -45,10 +46,10 @@ export function CustomerInfoDialogs({ isOpen, onComplete, onCancel }: CustomerIn
   
   const handleUseLocation = () => {
     // In a real app, you would use navigator.geolocation and a reverse geocoding API.
-    // For this prototype, we'll simulate the result.
+    // For this prototype, we'll simulate the result with a clear message.
     toast({
-        title: "Fetching location...",
-        description: "For this prototype, we'll use a sample address."
+        title: "Simulating Location Fetch",
+        description: "In a real app, this would use your GPS. For this demo, a sample address will be used."
     });
     setAddress("House #456, Block B, Gulberg III, Lahore, Punjab, Pakistan");
   };
@@ -115,7 +116,7 @@ export function CustomerInfoDialogs({ isOpen, onComplete, onCancel }: CustomerIn
                     </Label>
                      <Button variant="outline" size="sm" onClick={handleUseLocation}>
                         <LocateFixed className="mr-2 h-4 w-4" />
-                        Use My Current Location
+                        Use Sample Location
                     </Button>
                 </div>
                 <Textarea 
