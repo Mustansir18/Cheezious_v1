@@ -90,26 +90,39 @@ export function CustomerInfoDialogs({ isOpen, onComplete, onCancel }: CustomerIn
 
       {/* Address Dialog */}
       <Dialog open={isOpen && step === 3} onOpenChange={(open) => !open && handleClose()}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Enter Your Delivery Address</DialogTitle>
             <DialogDescription>Please provide the full address for delivery.</DialogDescription>
           </DialogHeader>
-          <div className="py-4 space-y-2">
-            <Label htmlFor="customer-address" className="flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
-              Home Address
-            </Label>
-            <Textarea 
-              id="customer-address" 
-              value={address} 
-              onChange={(e) => setAddress(e.target.value)} 
-              placeholder="e.g., House #123, Street 4, Block C, Example Town, Lahore"
-              className="min-h-[100px]"
-            />
-             <p className="text-xs text-muted-foreground pt-1">
-              A full map integration can be added here in the future. For now, please type your address manually.
-            </p>
+          <div className="py-4 space-y-4">
+            <div className="space-y-2">
+                <Label htmlFor="customer-address" className="flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                Home Address
+                </Label>
+                <Textarea 
+                id="customer-address" 
+                value={address} 
+                onChange={(e) => setAddress(e.target.value)} 
+                placeholder="e.g., House #123, Street 4, Block C, Example Town, Lahore"
+                className="min-h-[100px]"
+                />
+                 <p className="text-xs text-muted-foreground pt-1">
+                 Please type your address manually above. The map is for visual reference.
+                </p>
+            </div>
+             <div className="rounded-lg overflow-hidden border">
+                  <iframe
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d435518.6817142436!2d74.05414473406693!3d31.48322087524954!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39190483e58107d9%3A0xc23abe6ccc7e2462!2sLahore%2C%20Punjab%2C%20Pakistan!5e0!3m2!1sen!2sus!4v1689255877587!5m2!1sen!2sus"
+                    width="100%"
+                    height="250"
+                    style={{ border: 0 }}
+                    allowFullScreen={true}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  ></iframe>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setStep(2)}>Back</Button>
