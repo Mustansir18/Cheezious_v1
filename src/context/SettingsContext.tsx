@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
@@ -115,12 +114,58 @@ const initialSettings: Settings = {
     deliveryModes: initialDeliveryModes,
 };
 
+const SETTINGS_STORAGE_KEY = 'cheeziousSettingsV2';
+
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   const [settings, setSettings] = useState<Settings>(initialSettings);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const { logActivity } = useActivityLog();
   const { user } = useAuth();
+  
+  useEffect(() => {
+    try {
+      const storedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
+      if (storedSettings) {
+        const parsed = JSON.parse(storedSettings);
+        // Merge stored settings with initial settings to ensure all keys are present
+        setSettings(s => ({ ...s, ...parsed }));
+      }
+    } catch (error) {
+      console.error("Could not load settings from local storage", error);
+      setSettings(initialSettings);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+        if (!isLoading) {
+            localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+        }
+    } catch (error) {
+      console.error("Could not save settings to local storage", error);
+    }
+  }, [settings, isLoading]);
+
+  // Listen for storage changes from other tabs
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === SETTINGS_STORAGE_KEY && event.newValue) {
+        try {
+          const parsed = JSON.parse(event.newValue);
+          setSettings(s => ({ ...s, ...parsed }));
+        } catch (error) {
+          console.error("Failed to parse settings from storage event", error);
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
   
   const addFloor = useCallback((id: string, name: string) => {
     if (!id || !name) {
