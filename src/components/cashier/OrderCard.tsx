@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import type { Order, OrderItem, OrderStatus, CartItem, MenuItem, SelectedAddon } from "@/lib/types";
@@ -79,9 +78,6 @@ function AddItemsToOrderDialog({ order }: { order: Order }) {
     };
     
     const filteredMenuItems = useMemo(() => {
-        if (!searchTerm) {
-            return menu.items;
-        }
         return menu.items.filter(item => 
             item.name.toLowerCase().includes(searchTerm.toLowerCase())
         );
@@ -91,7 +87,7 @@ function AddItemsToOrderDialog({ order }: { order: Order }) {
     return (
          <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-                <Button variant="secondary" size="sm" className="w-full">
+                <Button variant="outline" size="sm" className="w-full">
                     <PlusCircle className="mr-2 h-4 w-4" /> Add Items
                 </Button>
             </DialogTrigger>
@@ -399,28 +395,28 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
   }, [settings.floors, table]);
 
   const visibleItems = useMemo(() => {
-    const mainItems = order.items.filter(i => !i.isDealComponent);
+        const mainItems = order.items.filter(i => !i.isDealComponent);
 
-    return mainItems.map(main => {
-        const components = order.items.filter(
-            c => c.isDealComponent && c.parentDealCartItemId === main.id
-        );
+        return mainItems.map(main => {
+            const components = order.items.filter(
+                c => c.isDealComponent && c.parentDealCartItemId === main.id
+            );
 
-        const aggregated = components.reduce((acc, c) => {
-            const key = c.menuItemId;
-            if (!acc[key]) {
-                acc[key] = { name: c.name, quantity: 0 };
-            }
-            acc[key].quantity += c.quantity;
-            return acc;
-        }, {} as Record<string, { name: string; quantity: number }>);
+            const aggregated = components.reduce((acc, c) => {
+                const key = c.menuItemId;
+                if (!acc[key]) {
+                    acc[key] = { name: c.name, quantity: 0 };
+                }
+                acc[key].quantity += c.quantity;
+                return acc;
+            }, {} as Record<string, { name: string; quantity: number }>);
 
-        return {
-            ...main,
-            aggregatedDealComponents: Object.values(aggregated),
-        };
-    });
-  }, [order.items]);
+            return {
+                ...main,
+                aggregatedDealComponents: Object.values(aggregated),
+            };
+        });
+    }, [order.items]);
 
 
 const getOrderTypeIcon = () => {
@@ -549,21 +545,26 @@ const StatusIcon = statusConfig[order.status]?.icon || Loader;
              </div>
          )}
          {workflow === 'cashier' && (
-            <div className="grid grid-cols-1 gap-2">
-                {order.status === 'Pending' && <Button onClick={() => handleUpdateStatus('Preparing')} size="sm" className="w-full" disabled={!isMutable}><CookingPot className="mr-2 h-4 w-4" /> Accept & Prepare</Button>}
-                 {order.status === 'Preparing' && <Button onClick={() => handleUpdateStatus('Ready')} size="sm" className="w-full bg-yellow-500 hover:bg-yellow-600 text-black" disabled={!isMutable}><Check className="mr-2 h-4 w-4" /> Mark as Ready</Button>}
-                {order.status === 'Ready' && <Button onClick={() => handleUpdateStatus('Completed')} size="sm" className="w-full bg-green-500 hover:bg-green-600" disabled={!isMutable}><CheckCircle className="mr-2 h-4 w-4" /> Mark as Completed</Button>}
-                 {(order.status === 'Pending' && isMutable) && (
-                     <div className="grid grid-cols-1 gap-2">
+            <div className="grid grid-cols-1 gap-2 w-full">
+                {order.status === 'Pending' && (
+                    <div className="grid grid-cols-2 gap-2">
+                        <Button onClick={() => handleUpdateStatus('Preparing')} size="sm" className="w-full" disabled={!isMutable}><CookingPot className="mr-2 h-4 w-4" /> Accept</Button>
                         {canModify && <CancellationDialog orderId={order.id} onConfirm={handleCancelOrder} />}
-                     </div>
-                 )}
-                 {(order.status === 'Preparing' || order.status === 'Ready' || order.status === 'Partial Ready') && canAddItems && (
-                     <AddItemsToOrderDialog order={order} />
-                 )}
-                  {canModify && (order.status === 'Pending' || order.status === 'Preparing' || order.status === 'Ready' || order.status === 'Partial Ready' || order.status === 'Completed') && (
-                     <OrderModificationDialog order={order} />
-                 )}
+                    </div>
+                )}
+                 {(order.status === 'Preparing' || order.status === 'Partial Ready') && (
+                    <div className="grid grid-cols-2 gap-2">
+                        <Button onClick={() => handleUpdateStatus('Ready')} size="sm" className="w-full bg-yellow-500 hover:bg-yellow-600 text-black" disabled={!isMutable}><Check className="mr-2 h-4 w-4" /> Mark as Ready</Button>
+                        {canAddItems && <AddItemsToOrderDialog order={order} />}
+                    </div>
+                )}
+                {order.status === 'Ready' && (
+                    <div className="grid grid-cols-2 gap-2">
+                         <Button onClick={() => handleUpdateStatus('Completed')} size="sm" className="w-full bg-green-500 hover:bg-green-600" disabled={!isMutable}><CheckCircle className="mr-2 h-4 w-4" /> Mark as Completed</Button>
+                         {canAddItems && <AddItemsToOrderDialog order={order} />}
+                    </div>
+                )}
+                {order.status === 'Completed' && canModify && <OrderModificationDialog order={order} />}
             </div>
          )}
       </CardFooter>
@@ -601,4 +602,5 @@ OrderCard.Skeleton = function OrderCardSkeleton() {
 
 
 
+    
     
