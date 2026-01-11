@@ -402,21 +402,17 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
     const dealsMap = new Map<string, { deal: OrderItem, components: OrderItem[] }>();
     const regulars: OrderItem[] = [];
 
-    // First, identify all parent deal items in the order
     const parentDealItems = order.items.filter(item => {
         const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
         return !item.isDealComponent && menuItem && menuItem.categoryId === 'C-00001';
     });
 
-    // Initialize the map with all parent deals
     parentDealItems.forEach(dealItem => {
         dealsMap.set(dealItem.id, { deal: dealItem, components: [] });
     });
 
-    // Now, iterate through all items to classify them
     order.items.forEach(item => {
         if (item.parentDealId) {
-            // This item is a component of a deal. Find its parent deal in the order.
             const parentDealInOrder = order.items.find(parent => parent.id === item.parentDealId);
             if (parentDealInOrder) {
                  const dealInMap = dealsMap.get(parentDealInOrder.id);
@@ -425,7 +421,6 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
                  }
             }
         } else if (!dealsMap.has(item.id)) {
-            // This is a regular item (not a deal component and not a deal itself)
             regulars.push(item);
         }
     });
@@ -630,6 +625,7 @@ OrderCard.Skeleton = function OrderCardSkeleton() {
   };
 
     
+
 
 
 
