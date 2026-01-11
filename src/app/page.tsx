@@ -53,7 +53,6 @@ export default function Home() {
   const { settings, isLoading } = useSettings();
   const { menu, isLoading: isMenuLoading } = useMenu();
   const router = useRouter();
-  const [isMounted, setIsMounted] = useState(false);
   const [isPromoOpen, setPromoOpen] = useState(false);
   
   const allPromotableItems = menu.items;
@@ -68,12 +67,11 @@ export default function Home() {
 
 
   useEffect(() => {
-    setIsMounted(true);
-    // Show the pop-up on every page load if it's enabled in settings.
-    if (settings.promotion.isEnabled && promoItem) {
-        setPromoOpen(true);
+    // This effect now correctly triggers on every component mount (page load/refresh).
+    if (!isLoading && settings.promotion.isEnabled && promoItem) {
+      setPromoOpen(true);
     }
-  }, [promoItem, settings.promotion.isEnabled]);
+  }, [isLoading, settings.promotion.isEnabled, promoItem]);
 
 
   const handleStartOrder = (itemId?: string) => {
@@ -102,7 +100,7 @@ export default function Home() {
       <Header />
       <main className="flex-grow flex flex-col items-center justify-center p-4 text-center">
         <div className="space-y-1">
-          {isMounted && settings.companyLogo ? (
+          {settings.companyLogo ? (
             <Image src={settings.companyLogo} alt={settings.companyName} width={120} height={120} className="object-contain mx-auto" />
           ) : (
             <div style={{ width: 120, height: 120 }} className="mx-auto" />
@@ -171,7 +169,7 @@ export default function Home() {
                         ))}
                     </CarouselContent>
                     <CarouselPrevious className="hidden sm:flex" />
-                    <CarouselNext className="hidden sm:flex" />
+                    <CarouselNext className="hidden sm-flex" />
                 </Carousel>
             </div>
         )}
