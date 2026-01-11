@@ -56,12 +56,7 @@ export default function Home() {
   const { deals, isLoading: isDealsLoading } = useDeals();
   const router = useRouter();
   const [isPromoOpen, setPromoOpen] = useState(false);
-  const [isClient, setIsClient] = useState(false);
 
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-  
   const allItems = useMemo(() => [...menu.items, ...deals], [menu.items, deals]);
 
   const promoItem = useMemo(() => {
@@ -69,12 +64,15 @@ export default function Home() {
     return allItems.find(d => d.id === settings.promotion.itemId);
   }, [isMenuLoading, isDealsLoading, allItems, settings.promotion.itemId]);
   
+  const isLoading = isSettingsLoading || isMenuLoading || isDealsLoading;
+  
   useEffect(() => {
-    const isReady = isClient && !isSettingsLoading && !isMenuLoading && !isDealsLoading;
-    if (isReady && settings.promotion.isEnabled && promoItem) {
+    // This effect runs whenever the loading states or promotion settings change.
+    // It will reliably open the dialog once all data is loaded.
+    if (!isLoading && settings.promotion.isEnabled && promoItem) {
       setPromoOpen(true);
     }
-  }, [isClient, isSettingsLoading, isMenuLoading, isDealsLoading, settings.promotion.isEnabled, promoItem]);
+  }, [isLoading, settings.promotion.isEnabled, promoItem]);
 
 
   const handleStartOrder = (itemId?: string) => {
@@ -96,8 +94,6 @@ export default function Home() {
     setPromoOpen(false);
     handleStartOrder(promoItem.id);
   };
-  
-  const isLoading = isSettingsLoading || isMenuLoading || isDealsLoading;
 
   return (
     <div className="flex flex-col min-h-screen">
