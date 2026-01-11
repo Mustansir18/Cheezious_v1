@@ -117,36 +117,36 @@ const initialSettings: Settings = {
     deliveryModes: initialDeliveryModes,
 };
 
+
+// Function to safely get initial state from localStorage
+const getInitialState = () => {
+    // This check is crucial for SSR, where `window` is not defined.
+    if (typeof window === 'undefined') {
+        return initialSettings;
+    }
+    try {
+        const storedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
+        if (storedSettings) {
+            const parsed = JSON.parse(storedSettings);
+            return { ...initialSettings, ...parsed };
+        }
+    } catch (error) {
+        console.error("Could not load settings from local storage", error);
+    }
+    return initialSettings;
+};
+
+
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
-  const [settings, setSettings] = useState<Settings>(initialSettings);
-  const [isLoading, setIsLoading] = useState(true);
+  const [settings, setSettings] = useState<Settings>(getInitialState);
+  const [isLoading, setIsLoading] = useState(true); // Still useful for indicating initial load
   const { toast } = useToast();
   const { logActivity } = useActivityLog();
   const { user } = useAuth();
   
   useEffect(() => {
-    try {
-      const storedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
-      if (storedSettings) {
-        const parsed = JSON.parse(storedSettings);
-        
-        // Merge stored settings with initial settings to ensure all keys are present
-        const mergedSettings: Settings = {
-          ...initialSettings,
-          ...parsed,
-        };
-
-        setSettings(mergedSettings);
-
-      } else {
-        setSettings(initialSettings);
-      }
-    } catch (error) {
-      console.error("Could not load settings from local storage", error);
-      setSettings(initialSettings);
-    } finally {
-      setIsLoading(false);
-    }
+    // Since we now initialize state synchronously, we can just set loading to false.
+    setIsLoading(false);
   }, []);
 
   useEffect(() => {
