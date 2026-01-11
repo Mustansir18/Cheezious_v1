@@ -152,8 +152,8 @@ export default function Home() {
           <div style={{ width: 120, height: 120 }} /> 
         )}
 
-        <div className="space-y-2 mt-6">
-            <h1 className="font-headline text-5xl font-bold tracking-tight">Welcome to {settings.companyName}</h1>
+        <div className="space-y-2">
+            <h1 className="font-headline text-4xl font-bold tracking-tight">Welcome to {settings.companyName}</h1>
             <p className="text-lg text-muted-foreground">The best place for pizza and fast food lovers.</p>
         </div>
         
