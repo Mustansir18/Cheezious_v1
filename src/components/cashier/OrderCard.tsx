@@ -482,7 +482,7 @@ const OrderTypeIcon = getOrderTypeIcon();
                     {item.aggregatedDealComponents && item.aggregatedDealComponents.length > 0 && (
                         <div className="pl-4 text-xs text-muted-foreground border-l-2 ml-1 mt-1 pt-1 space-y-0.5">
                             <p className="font-semibold text-gray-500">Includes:</p>
-                             {item.aggregatedDealComponents.map((comp: any) => (
+                             {item.aggregatedDealComponents.map((comp) => (
                                 <div key={comp.name} className="flex justify-between items-center">
                                   <span>- {comp.quantity}x {comp.name}</span>
                                 </div>
@@ -514,7 +514,7 @@ const OrderTypeIcon = getOrderTypeIcon();
                 <span>Tax ({(order.taxRate * 100).toFixed(0)}%)</span>
                 <span>RS {Math.round(order.taxAmount)}</span>
             </div>
-            {order.discountAmount > 0 && (
+            {order.discountAmount && order.discountAmount > 0 && (
                  <div className="flex justify-between text-destructive">
                     <span>Discount</span>
                     <span>-RS {Math.round(order.discountAmount)}</span>
@@ -599,3 +599,5 @@ OrderCard.Skeleton = function OrderCardSkeleton() {
       </Card>
     );
   };
+
+    
