@@ -398,33 +398,32 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
   }, [settings.floors, table]);
 
   const visibleItems = useMemo(() => {
-    // Separate main items (including parent deals) from deal components
     const mainItems = order.items.filter(item => !item.isDealComponent);
     const dealComponents = order.items.filter(item => item.isDealComponent);
 
     return mainItems.map(mainItem => {
-        const menuItem = menu.items.find(mi => mi.id === mainItem.menuItemId);
-        const isDeal = menuItem?.categoryId === 'C-00001';
+      const menuItem = menu.items.find(mi => mi.id === mainItem.menuItemId);
+      const isDeal = menuItem?.dealItems && menuItem.dealItems.length > 0;
 
-        if (isDeal) {
-            // Find all components in this order that belong to this specific deal instance
-            const componentsForThisDeal = dealComponents.filter(c => c.parentDealId === mainItem.id);
-            
-            // Aggregate them for display (e.g., 2x Fries)
-            const aggregatedComponents = componentsForThisDeal.reduce((acc, comp) => {
-                const existing = acc.find(a => a.name === comp.name);
-                if (existing) {
-                    existing.quantity += comp.quantity;
-                } else {
-                    acc.push({ name: comp.name, quantity: comp.quantity });
-                }
-                return acc;
-            }, [] as { name: string; quantity: number }[];
-
-            return { ...mainItem, aggregatedDealComponents: aggregatedComponents };
-        }
+      if (isDeal) {
+        // Find all components in this order that belong to this specific deal instance
+        const componentsForThisDeal = dealComponents.filter(c => c.parentDealId === mainItem.id);
         
-        return { ...mainItem, aggregatedDealComponents: [] };
+        // Aggregate them for display (e.g., 2x Fries)
+        const aggregatedComponents = componentsForThisDeal.reduce((acc, comp) => {
+            const existing = acc.find(a => a.name === comp.name);
+            if (existing) {
+                existing.quantity += comp.quantity;
+            } else {
+                acc.push({ name: comp.name, quantity: comp.quantity });
+            }
+            return acc;
+        }, [] as { name: string; quantity: number }[]);
+
+        return { ...mainItem, aggregatedDealComponents: aggregatedComponents };
+      }
+      
+      return { ...mainItem, aggregatedDealComponents: [] };
     });
   }, [order.items, menu.items]);
 
@@ -607,5 +606,3 @@ OrderCard.Skeleton = function OrderCardSkeleton() {
       </Card>
     );
   };
-
-    
