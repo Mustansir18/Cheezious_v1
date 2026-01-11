@@ -65,8 +65,6 @@ interface SettingsContextType {
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
-const SETTINGS_STORAGE_KEY = 'cheeziousSettings';
-
 const defaultPaymentMethods: PaymentMethod[] = [
     { id: 'PM-00001', name: 'Cash', taxRate: 0.16 },
     { id: 'PM-00002', name: 'Credit/Debit Card', taxRate: 0.05 }
@@ -117,79 +115,13 @@ const initialSettings: Settings = {
     deliveryModes: initialDeliveryModes,
 };
 
-
-// Function to safely get initial state from localStorage
-const getInitialState = () => {
-    // This check is crucial for SSR, where `window` is not defined.
-    if (typeof window === 'undefined') {
-        return initialSettings;
-    }
-    try {
-        const storedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
-        if (storedSettings) {
-            const parsed = JSON.parse(storedSettings);
-            // Deep merge to ensure new default fields are added if not in storage
-            return {
-                ...initialSettings,
-                ...parsed,
-                roles: parsed.roles && parsed.roles.length > 0 ? parsed.roles : initialSettings.roles,
-                branches: parsed.branches && parsed.branches.length > 0 ? parsed.branches : initialSettings.branches,
-                floors: parsed.floors && parsed.floors.length > 0 ? parsed.floors : initialSettings.floors,
-                tables: parsed.tables && parsed.tables.length > 0 ? parsed.tables : initialSettings.tables,
-                paymentMethods: parsed.paymentMethods && parsed.paymentMethods.length > 0 ? parsed.paymentMethods : initialSettings.paymentMethods,
-            };
-        }
-    } catch (error) {
-        console.error("Could not load settings from local storage", error);
-    }
-    return initialSettings;
-};
-
-
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
-  const [settings, setSettings] = useState<Settings>(getInitialState);
-  const [isLoading, setIsLoading] = useState(true); // Still useful for indicating initial load
+  const [settings, setSettings] = useState<Settings>(initialSettings);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { logActivity } = useActivityLog();
   const { user } = useAuth();
   
-  useEffect(() => {
-    // Since we now initialize state synchronously, we can just set loading to false.
-    setIsLoading(false);
-  }, []);
-
-  useEffect(() => {
-    try {
-        if (!isLoading) {
-            localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-        }
-    } catch (error) {
-      console.error("Could not save settings to local storage", error);
-    }
-  }, [settings, isLoading]);
-
-  // Listen for storage changes from other tabs
-  useEffect(() => {
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === SETTINGS_STORAGE_KEY && event.newValue) {
-        try {
-          const parsed = JSON.parse(event.newValue);
-          const mergedSettings: Settings = {
-            ...initialSettings,
-            ...parsed,
-          };
-          setSettings(mergedSettings);
-        } catch (error) {
-          console.error("Failed to parse settings from storage event", error);
-        }
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
-
   const addFloor = useCallback((id: string, name: string) => {
     if (!id || !name) {
       toast({ variant: 'destructive', title: 'Error', description: 'Floor Code and Name are required.' });
