@@ -252,7 +252,14 @@ export default function AdminOrdersPage() {
                         const Icon = tabIcons[status];
                         const count = status === "All" ? filteredOrders.length : getOrdersByStatus(status).length;
                         return (
-                            <TabsTrigger key={status} value={status} className="flex gap-2 flex-wrap py-2">
+                            <TabsTrigger 
+                                key={status} 
+                                value={status} 
+                                className={cn(
+                                    "flex gap-2 flex-wrap py-2",
+                                    activeTab === status && "bg-yellow-400 text-black shadow-md hover:bg-yellow-500"
+                                )}
+                            >
                                 <Icon className="h-4 w-4" />
                                 {status} ({count})
                             </TabsTrigger>
