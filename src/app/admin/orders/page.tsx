@@ -18,6 +18,8 @@ import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { exportOrderListAs } from "@/lib/exporter";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 
 function getBusinessDay(date: Date, start: string, end: string): { start: Date, end: Date } {
@@ -63,6 +65,8 @@ export default function AdminOrdersPage() {
   const { settings, isLoading: isSettingsLoading } = useSettings();
   const [activeTab, setActiveTab] = useState<OrderStatus | "All">("All");
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedFloor, setSelectedFloor] = useState<string>('all');
+  const [selectedOrderType, setSelectedOrderType] = useState<string>('all');
 
   const [date, setDate] = useState<Date | undefined>(new Date());
 
@@ -79,28 +83,42 @@ export default function AdminOrdersPage() {
         return orderDate >= businessDayStart && orderDate <= businessDayEnd;
     });
 
+    // 1. Filter by Order Type Dropdown
+    if (selectedOrderType !== 'all') {
+        dateFilteredOrders = dateFilteredOrders.filter(order => order.orderType === selectedOrderType);
+    }
+    
+    // 2. Filter by Floor Dropdown
+    if (selectedFloor !== 'all') {
+        dateFilteredOrders = dateFilteredOrders.filter(order => {
+            if (order.orderType !== 'Dine-In') return false; // Only Dine-In orders have a floor
+            const table = settings.tables.find(t => t.id === order.tableId);
+            return table?.floorId === selectedFloor;
+        });
+    }
+
+    // 3. Filter by Search Term
+    if (searchTerm) {
+        const lowercasedTerm = searchTerm.toLowerCase();
+        dateFilteredOrders = dateFilteredOrders.filter(order => {
+            const table = settings.tables.find(t => t.id === order.tableId);
+            const floor = settings.floors.find(f => f.id === table?.floorId);
+
+            const orderNumberMatch = order.orderNumber.toLowerCase().includes(lowercasedTerm);
+            const orderTypeMatch = order.orderType.toLowerCase().includes(lowercasedTerm);
+            const tableMatch = table && table.name.toLowerCase().includes(lowercasedTerm);
+            const floorMatch = floor && floor.name.toLowerCase().includes(lowercasedTerm);
+            
+            return orderNumberMatch || orderTypeMatch || tableMatch || floorMatch;
+        });
+    }
+
     // Sort all orders by date, newest first
     dateFilteredOrders.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
 
-    if (!searchTerm) {
-        return dateFilteredOrders;
-    }
+    return dateFilteredOrders;
 
-    const lowercasedTerm = searchTerm.toLowerCase();
-
-    return dateFilteredOrders.filter(order => {
-        const table = settings.tables.find(t => t.id === order.tableId);
-        const floor = settings.floors.find(f => f.id === table?.floorId);
-
-        const orderNumberMatch = order.orderNumber.toLowerCase().includes(lowercasedTerm);
-        const orderTypeMatch = order.orderType.toLowerCase().includes(lowercasedTerm);
-        const tableMatch = table && table.name.toLowerCase().includes(lowercasedTerm);
-        const floorMatch = floor && floor.name.toLowerCase().includes(lowercasedTerm);
-        
-        return orderNumberMatch || orderTypeMatch || tableMatch || floorMatch;
-    });
-
-  }, [orders, date, settings, searchTerm]);
+  }, [orders, date, settings, searchTerm, selectedFloor, selectedOrderType]);
 
 
   const getOrdersByStatus = (status: OrderStatus) => filteredOrders.filter(o => o.status === status);
@@ -140,22 +158,13 @@ export default function AdminOrdersPage() {
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full p-4 md:p-6 lg:p-8">
       <header className="mb-8 flex flex-col md:flex-row justify-between items-start gap-4">
         <div>
             <h1 className="font-headline text-4xl font-bold">Order Management</h1>
             <p className="text-muted-foreground">Live view of all running, ready, and completed orders.</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-             <div className="relative w-full md:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                    placeholder="Filter by order #, table, floor..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                />
-            </div>
              <Popover>
                 <PopoverTrigger asChild>
                 <Button
@@ -182,6 +191,50 @@ export default function AdminOrdersPage() {
             </Popover>
         </div>
       </header>
+
+      <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+                <Label htmlFor="search-filter">Search</Label>
+                <div className="relative w-full">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        id="search-filter"
+                        placeholder="Filter by order #, table..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                    />
+                </div>
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="floor-filter">Filter by Floor</Label>
+                 <Select value={selectedFloor} onValueChange={setSelectedFloor}>
+                    <SelectTrigger id="floor-filter">
+                        <SelectValue placeholder="All Floors" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Floors</SelectItem>
+                        {settings.floors.map(floor => (
+                            <SelectItem key={floor.id} value={floor.id}>{floor.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+             <div className="space-y-2">
+                <Label htmlFor="type-filter">Filter by Order Type</Label>
+                <Select value={selectedOrderType} onValueChange={setSelectedOrderType}>
+                    <SelectTrigger id="type-filter">
+                        <SelectValue placeholder="All Types" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Order Types</SelectItem>
+                        <SelectItem value="Dine-In">Dine-In</SelectItem>
+                        <SelectItem value="Take-Away">Take-Away</SelectItem>
+                        <SelectItem value="Delivery">Delivery</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+      </div>
       
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
             <div className="flex justify-between items-center mb-8">
@@ -214,7 +267,7 @@ export default function AdminOrdersPage() {
                         <Search className="h-16 w-16 text-muted-foreground/50 mb-4" />
                         <h3 className="font-headline text-xl font-semibold">No orders found</h3>
                         <p className="text-muted-foreground">
-                            {searchTerm ? "No orders match your search criteria." : "There are no orders with this status for the selected business day."}
+                            {searchTerm || selectedFloor !== 'all' || selectedOrderType !== 'all' ? "No orders match your search or filter criteria." : "There are no orders with this status for the selected business day."}
                         </p>
                     </Card>
                     )}
