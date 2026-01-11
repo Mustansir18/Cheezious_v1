@@ -62,21 +62,24 @@ export default function Home() {
 
   // Find the specific item to be used in the promotion from settings
   const promoItem = useMemo(() => {
-    if (!settings.promotion.isEnabled || !settings.promotion.itemId) return null;
+    if (!settings.promotion.itemId) return null;
     return allPromotableItems.find(d => d.id === settings.promotion.itemId);
-  }, [allPromotableItems, settings.promotion]);
+  }, [allPromotableItems, settings.promotion.itemId]);
 
 
   useEffect(() => {
     setIsMounted(true);
-    if (promoItem) {
+    // Check if the promotion is enabled in settings
+    if (settings.promotion.isEnabled && promoItem) {
+        // Check if it has been shown in this session
         const promoShown = sessionStorage.getItem('promoShown');
         if (!promoShown) {
+            // If not shown, show it and mark it as shown for the session
             setPromoOpen(true);
             sessionStorage.setItem('promoShown', 'true');
         }
     }
-  }, [promoItem]);
+  }, [promoItem, settings.promotion.isEnabled]);
 
 
   const handleStartOrder = (itemId?: string) => {
@@ -183,7 +186,7 @@ export default function Home() {
       <div className="fixed bottom-8 right-8">
           <RatingDialog />
       </div>
-       {promoItem && (
+       {promoItem && settings.promotion.imageUrl && (
         <PromotionModal
             promoImageUrl={settings.promotion.imageUrl}
             isOpen={isPromoOpen}
@@ -194,4 +197,3 @@ export default function Home() {
     </div>
   );
 }
-
