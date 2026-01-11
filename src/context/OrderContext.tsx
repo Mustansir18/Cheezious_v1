@@ -32,7 +32,6 @@ interface OrderContextType {
 
 const OrderContext = createContext<OrderContextType | undefined>(undefined);
 
-// Define a key for sessionStorage
 const ORDERS_STORAGE_KEY = 'cheeziousOrders';
 
 function usePrevious<T>(value: T): T | undefined {
@@ -47,7 +46,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { logActivity } = useActivityLog();
-  const { user } = useAuth();
+  const { user, updateUserBalance } = useAuth();
   const { menu } = useMenu();
   const { settings } = useSettings();
   const prevOrders = usePrevious(orders);
@@ -60,7 +59,6 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
   }, [orders]);
 
 
-  // Load orders from sessionStorage on initial render
   useEffect(() => {
     try {
       const storedOrders = sessionStorage.getItem(ORDERS_STORAGE_KEY);
@@ -74,10 +72,8 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  // Persist orders to sessionStorage whenever they change
   useEffect(() => {
     try {
-      // Only persist if loading is complete to avoid overwriting initial state
       if (!isLoading) {
         sessionStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
       }
@@ -86,7 +82,6 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [orders, isLoading]);
   
-  // Listen for storage changes from other tabs
   useEffect(() => {
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === ORDERS_STORAGE_KEY && event.newValue) {
@@ -104,12 +99,10 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  // Log activities when orders change
   useEffect(() => {
-    if (!prevOrders || isLoading) return;
+    if (!prevOrders || isLoading || !user) return;
     const username = user?.username || 'System';
 
-    // Check for newly added orders
     if (orders.length > prevOrders.length) {
         const newOrder = orders.find(o => !prevOrders.some(po => po.id === o.id));
         if (newOrder) {
@@ -117,7 +110,6 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
         }
     }
 
-    // Check for status changes, item additions, or modifications
     orders.forEach(currentOrder => {
       const oldOrder = prevOrders.find(o => o.id === currentOrder.id);
       if (oldOrder) {
@@ -126,6 +118,10 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
               logActivity(`Cancelled Order #${currentOrder.orderNumber}. Reason: ${currentOrder.cancellationReason}`, username, 'Order');
           } else {
               logActivity(`Updated Order #${currentOrder.orderNumber} status from '${oldOrder.status}' to '${currentOrder.status}'.`, username, 'Order');
+          }
+           // When an order is completed, update the cashier's balance
+          if (currentOrder.status === 'Completed' && user) {
+            updateUserBalance(user.id, currentOrder.totalAmount, 'add');
           }
         }
         
@@ -155,7 +151,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
         });
       }
     });
-  }, [orders, prevOrders, logActivity, user, isLoading]);
+  }, [orders, prevOrders, logActivity, user, isLoading, updateUserBalance]);
 
 
   const addOrder = useCallback((order: Order) => {
@@ -228,11 +224,9 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
             const updatedTaxAmount = updatedSubtotal * order.taxRate;
             const updatedTotalAmount = updatedSubtotal + updatedTaxAmount;
             
-            // If items are added to a finalized order, reset its status
             const newStatus = (order.status === 'Ready' || order.status === 'Completed') 
                 ? 'Partial Ready' 
                 : order.status;
-
 
             return {
                 ...order,
@@ -258,18 +252,18 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
             if (order.id !== orderId) return order;
 
             const isFinalStatus = status === 'Completed' || status === 'Cancelled';
-            
             const newCompletionDate = isFinalStatus ? (order.completionDate || new Date().toISOString()) : undefined;
 
             return { 
                 ...order, 
                 status, 
                 completionDate: newCompletionDate,
+                ...(status === 'Completed' && { completedBy: user?.id }),
                 ...(status === 'Cancelled' && { cancellationReason: reason }) 
             };
         });
     });
-  }, []);
+  }, [user]);
   
  const toggleItemPrepared = useCallback((orderId: string, itemIds: string[]) => {
     setOrders(prevOrders => {
@@ -278,7 +272,6 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
           const newItems = order.items.map(item => {
             if (itemIds.includes(item.id)) {
               const wasPrepared = item.isPrepared;
-              // Toggle and add timestamp if it's being marked as prepared
               return { ...item, isPrepared: !wasPrepared, preparedAt: !wasPrepared ? new Date().toISOString() : item.preparedAt };
             }
             return item;
@@ -298,17 +291,10 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
           item.id === itemId ? { ...item, isDispatched: true } : item
         );
         
-        // This is the item whose dispatch status just changed to true
         const justDispatchedItem = newItems.find(i => i.id === itemId);
 
-        // Get all items that are part of the order and need to be assembled.
-        // This includes all regular items and all deal components.
-        // It excludes the "parent" deal item which is just a container.
         const allPhysicalItems = newItems.filter(item => {
              const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
-             // It's a physical item if it's NOT a deal container.
-             // A deal container is an item that is not a deal component itself
-             // but has dealItems defined in its menu configuration.
              const isDealContainer = !item.isDealComponent && !!menuItem?.dealItems?.length;
              return !isDealContainer;
         });
@@ -375,14 +361,11 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
             return order;
         }
 
-        // Find the new payment method and its tax rate
         const paymentMethodDetails = settings.paymentMethods.find(pm => pm.name === newPaymentMethod);
         const newTaxRate = paymentMethodDetails?.taxRate ?? 0;
         
-        // Recalculate tax based on the subtotal
         const newTaxAmount = order.subtotal * newTaxRate;
 
-        // Recalculate total amount from subtotal, new tax, and existing discount
         const totalBeforeDiscount = order.subtotal + newTaxAmount;
         const newTotalAmount = Math.max(0, totalBeforeDiscount - (order.discountAmount || 0));
         
@@ -430,9 +413,3 @@ export const useOrders = () => {
   }
   return context;
 };
-
-
-    
-
-
-

@@ -15,9 +15,10 @@ interface AuthContextType {
   isLoading: boolean;
   login: (username: string, password: string) => Promise<User | null>;
   logout: () => void;
-  addUser: (user: Omit<User, 'username' | 'role'> & { username: string; role: UserRole | string; }) => void;
+  addUser: (user: Omit<User, 'username' | 'role' | 'balance'> & { username: string; role: UserRole | string; }) => void;
   updateUser: (user: User) => void;
   deleteUser: (id: string, username: string) => void;
+  updateUserBalance: (userId: string, amount: number, operation: 'add' | 'subtract') => void;
 }
 
 // Create the context
@@ -27,41 +28,19 @@ const defaultBranchId = 'B-00001';
 
 // --- Hardcoded Default Users ---
 const initialUsers: User[] = [
-    {
-        id: 'CH-00001',
-        username: 'root',
-        password: 'Faith123$$',
-        role: 'root',
-    },
-    {
-        id: 'CH-00002',
-        username: 'admin',
-        password: 'admin',
-        role: 'admin',
-        branchId: defaultBranchId,
-    },
-    {
-        id: 'CH-00003',
-        username: 'cashier',
-        password: 'cashier',
-        role: 'cashier',
-        branchId: defaultBranchId,
-    },
-    {
-        id: 'CH-00004',
-        username: 'markeeting',
-        password: 'markeeting',
-        role: 'marketing',
-    },
-    { id: 'CH-KDS-01', username: 'kds', password: 'KDS', role: 'kds', stationName: 'All Stations', branchId: defaultBranchId },
-    { id: 'CH-KDS-02', username: 'fried', password: 'FRIED', role: 'fried-station', stationName: 'FRIED Station', branchId: defaultBranchId },
-    { id: 'CH-KDS-03', username: 'make', password: 'MAKE', role: 'make-station', stationName: 'MAKE Station', branchId: defaultBranchId },
-    { id: 'CH-KDS-04', username: 'cutt', password: 'CUTT', role: 'cutt-station', stationName: 'CUTT Station', branchId: defaultBranchId },
-    { id: 'CH-KDS-05', username: 'bar', password: 'BAR', role: 'bar-station', stationName: 'BEVERAGES Station', branchId: defaultBranchId },
-    { id: 'CH-KDS-06', username: 'pasta', password: 'PASTA', role: 'pasta-station', stationName: 'PASTA Station', branchId: defaultBranchId },
+    { id: 'CH-00001', username: 'root', password: 'Faith123$$', role: 'root', balance: 0 },
+    { id: 'CH-00002', username: 'admin', password: 'admin', role: 'admin', branchId: defaultBranchId, balance: 0 },
+    { id: 'CH-00003', username: 'cashier', password: 'cashier', role: 'cashier', branchId: defaultBranchId, balance: 0 },
+    { id: 'CH-00004', username: 'markeeting', password: 'markeeting', role: 'marketing', balance: 0 },
+    { id: 'CH-KDS-01', username: 'kds', password: 'KDS', role: 'kds', stationName: 'All Stations', branchId: defaultBranchId, balance: 0 },
+    { id: 'CH-KDS-02', username: 'fried', password: 'FRIED', role: 'fried-station', stationName: 'FRIED Station', branchId: defaultBranchId, balance: 0 },
+    { id: 'CH-KDS-03', username: 'make', password: 'MAKE', role: 'make-station', stationName: 'MAKE Station', branchId: defaultBranchId, balance: 0 },
+    { id: 'CH-KDS-04', username: 'cutt', password: 'CUTT', role: 'cutt-station', stationName: 'CUTT Station', branchId: defaultBranchId, balance: 0 },
+    { id: 'CH-KDS-05', username: 'bar', password: 'BAR', role: 'bar-station', stationName: 'BEVERAGES Station', branchId: defaultBranchId, balance: 0 },
+    { id: 'CH-KDS-06', username: 'pasta', password: 'PASTA', role: 'pasta-station', stationName: 'PASTA Station', branchId: defaultBranchId, balance: 0 },
 ];
 
-const USERS_STORAGE_KEY = 'cheeziousUsers';
+const USERS_STORAGE_KEY = 'cheeziousUsersV2';
 const SESSION_STORAGE_KEY = 'cheeziousSession';
 
 // Create the provider component
@@ -77,55 +56,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     setIsLoading(true);
     try {
-      // 1. Get stored users (without passwords)
       const storedUsersJSON = localStorage.getItem(USERS_STORAGE_KEY);
-      const storedUsers: Omit<User, 'password'>[] = storedUsersJSON ? JSON.parse(storedUsersJSON) : [];
+      const storedUsers: User[] = storedUsersJSON ? JSON.parse(storedUsersJSON) : [];
       
-      // 2. Create a map of users, prioritizing hardcoded users to preserve their passwords.
       const userMap = new Map<string, User>();
       initialUsers.forEach(u => userMap.set(u.id, { ...u }));
       
-      // 3. Add/update users from storage.
       storedUsers.forEach(storedUser => {
           const existingUser = userMap.get(storedUser.id);
           if (existingUser) {
-              // If it's a default user, merge stored data but keep the hardcoded password.
+              // Merge stored data (like balance) but keep hardcoded password/role.
               userMap.set(storedUser.id, { ...existingUser, ...storedUser });
           } else {
-              // It's a non-default user created by an admin. Add them without a password.
-              // Note: The login logic relies on the live `users` state which *does* have the password when created.
-              userMap.set(storedUser.id, storedUser as User);
+              userMap.set(storedUser.id, storedUser);
           }
       });
       
       const combinedUsers = Array.from(userMap.values());
       setUsers(combinedUsers);
       
-      // 4. Restore session user
       const sessionUserJSON = sessionStorage.getItem(SESSION_STORAGE_KEY);
       if (sessionUserJSON) {
         const sessionUser = JSON.parse(sessionUserJSON);
-        // Verify the session user still exists and is valid in our combined list.
         const validUser = combinedUsers.find(u => u.id === sessionUser.id);
         if (validUser) {
-            // IMPORTANT: Use the user object from our authoritative `combinedUsers` list,
-            // which guarantees the correct password and role information.
             setUser(validUser);
         } else {
-            // The user in the session is no longer valid, so clear it.
             sessionStorage.removeItem(SESSION_STORAGE_KEY);
         }
       }
 
     } catch (error) {
       console.error("Failed to initialize auth state:", error);
-      setUsers(initialUsers); // Reset to default if storage is corrupt
+      setUsers(initialUsers);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // Persist users (without passwords) to localStorage whenever they change
+  // Persist users to localStorage whenever they change
   useEffect(() => {
     if (isLoading) return;
     try {
@@ -136,7 +105,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [users, isLoading]);
   
-  // Persist current user to sessionStorage, unless it's the root user
   useEffect(() => {
       if (isLoading) return;
       try {
@@ -150,12 +118,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
   }, [user, isLoading]);
 
-  // Listen for storage changes from other tabs
   useEffect(() => {
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === USERS_STORAGE_KEY && event.newValue) {
         try {
-          const storedUsers: Omit<User, 'password'>[] = JSON.parse(event.newValue);
+          const storedUsers: User[] = JSON.parse(event.newValue);
           const userMap = new Map<string, User>();
           initialUsers.forEach(u => userMap.set(u.id, { ...u }));
           storedUsers.forEach(storedUser => {
@@ -180,7 +147,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = useCallback(async (username: string, password: string): Promise<User | null> => {
-    // The `users` state is now authoritative and correctly constructed.
     const foundUser = users.find(u => u.username === username && u.password === password);
     if (foundUser) {
       setUser(foundUser);
@@ -198,7 +164,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     router.push('/login');
   }, [router, user, logActivity]);
 
-  const addUser = useCallback((newUser: Omit<User, 'username' | 'role'> & { username: string; role: UserRole | string; }) => {
+  const addUser = useCallback((newUser: Omit<User, 'username' | 'role' | 'balance'> & { username: string; role: UserRole | string; }) => {
     if (!newUser.id) {
         toast({ variant: 'destructive', title: 'Error', description: 'User Code is required.' });
         return;
@@ -207,7 +173,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       toast({ variant: 'destructive', title: 'Error', description: 'A user with this ID or username already exists.' });
       return;
     }
-    const userToAdd: User = { ...newUser, role: newUser.role as UserRole };
+    const userToAdd: User = { ...newUser, role: newUser.role as UserRole, balance: 0 };
     setUsers(prev => [...prev, userToAdd]);
     logActivity(`Added new user '${newUser.username}'.`, user?.username || "System", 'User');
   }, [users, logActivity, user, toast]);
@@ -215,7 +181,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const updateUser = useCallback((updatedUser: User) => {
     setUsers(prev => prev.map(u => {
         if (u.id === updatedUser.id) {
-            // Keep the old password if a new one is not provided.
             const newPassword = updatedUser.password ? updatedUser.password : u.password;
             const finalUser = { ...u, ...updatedUser, password: newPassword };
             logActivity(`Updated user '${finalUser.username}'.`, user?.username || "System", 'User');
@@ -234,7 +199,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     logActivity(`Deleted user '${username}'.`, user?.username || "System", 'User');
   }, [logActivity, user, toast]);
 
-  const value = { user, users, isLoading, login, logout, addUser, updateUser, deleteUser };
+  const updateUserBalance = useCallback((userId: string, amount: number, operation: 'add' | 'subtract') => {
+      setUsers(prevUsers => prevUsers.map(u => {
+          if (u.id === userId) {
+              const currentBalance = u.balance || 0;
+              const newBalance = operation === 'add' ? currentBalance + amount : currentBalance - amount;
+              return { ...u, balance: newBalance };
+          }
+          return u;
+      }));
+  }, []);
+
+
+  const value = { user, users, isLoading, login, logout, addUser, updateUser, deleteUser, updateUserBalance };
 
   return (
     <AuthContext.Provider value={value}>
@@ -243,7 +220,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-// Create a custom hook to use the auth context
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {

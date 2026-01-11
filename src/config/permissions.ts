@@ -57,6 +57,16 @@ export const ALL_PERMISSIONS = [
         description: 'View sales analytics and performance reports.'
     },
     {
+        id: '/admin/sale-verification',
+        name: 'Sale Verification Report',
+        description: 'View a report of which user completed which sale.'
+    },
+    {
+        id: '/admin/cash-management',
+        name: 'Cash Management',
+        description: 'Manage cashier balances, bleed, and safe deposit transactions.'
+    },
+    {
         id: '/admin/menu',
         name: 'Menu Management',
         description: 'Create, edit, and delete menu items and categories.'

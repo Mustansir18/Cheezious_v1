@@ -20,6 +20,8 @@ import {
   BarChart,
   ChefHat,
   Activity,
+  Landmark,
+  ShieldCheck,
 } from 'lucide-react';
 import {
   Tooltip,
@@ -51,6 +53,8 @@ function AdminSidebar() {
     { href: '/admin/kds', label: 'KDS', icon: ChefHat, role: ['root', 'admin', 'kds', 'make-station', 'pasta-station', 'fried-station', 'bar-station', 'cutt-station'] },
     { href: '/admin/queue', label: 'Queue', icon: Monitor, role: ['root', 'admin'] },
     { href: '/admin/reporting', label: 'Sales Reports', icon: BarChart, role: ['root'] },
+    { href: '/admin/sale-verification', label: 'Sale Verification', icon: ShieldCheck, role: ['root'] },
+    { href: '/admin/cash-management', label: 'Cash Management', icon: Landmark, role: ['root'] },
     { href: '/admin/menu', label: 'Menu', icon: Package, role: ['root'] },
     { href: '/admin/deals', label: 'Deals', icon: Megaphone, role: ['root'] },
     { href: '/admin/qr-codes', label: 'QR Codes', icon: QrCode, role: ['root'] },

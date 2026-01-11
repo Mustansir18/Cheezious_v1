@@ -133,6 +133,8 @@ export type Order = {
     discountValue?: number;
     discountAmount?: number;
     originalTotalAmount?: number;
+    // Audit fields
+    completedBy?: string; // userId of user who marked as completed
 };
 
 export type OrderItem = {
@@ -196,6 +198,7 @@ export type User = {
     role: UserRole;
     branchId?: string; // Assigned branch for admins and cashiers
     stationName?: string; // Assigned station for KDS users
+    balance?: number; // Cashier balance
 };
 
 // --- Role Management Types ---
@@ -215,6 +218,19 @@ export type ActivityLog = {
     user: string; // username
     message: string;
     category: ActivityLogCategory;
+};
+
+// --- Cashier Log Types ---
+export type CashierLogEntry = {
+    id: string;
+    timestamp: string; // ISO string
+    type: 'bleed' | 'deposit';
+    amount: number;
+    cashierId: string;
+    cashierName: string;
+    adminId: string;
+    adminName: string;
+    notes?: string;
 };
 
 // --- Rating Type ---
