@@ -398,21 +398,23 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
 
   const visibleItems = useMemo(() => {
     const mainItems = order.items.filter(i => !i.isDealComponent);
-  
+
     return mainItems.map(main => {
+      // Find components that belong to THIS specific cart item instance
       const components = order.items.filter(
         c => c.isDealComponent && c.parentDealCartItemId === main.id
       );
-  
+
+      // Aggregate the found components
       const aggregated = components.reduce((acc, c) => {
-        const key = c.menuItemId;
+        const key = c.menuItemId; // Aggregate by the menu item ID
         if (!acc[key]) {
           acc[key] = { name: c.name, quantity: 0 };
         }
         acc[key].quantity += c.quantity;
         return acc;
       }, {} as Record<string, { name: string; quantity: number }>);
-  
+
       return {
         ...main,
         aggregatedDealComponents: Object.values(aggregated),
@@ -599,5 +601,3 @@ OrderCard.Skeleton = function OrderCardSkeleton() {
       </Card>
     );
   };
-
-    
