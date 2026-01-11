@@ -142,7 +142,7 @@ export default function Home() {
     <>
     <Header />
     <main className="w-full px-4 lg:px-8">
-      <div className="flex flex-col items-center justify-center space-y-6 pt-20 text-center">
+      <div className="flex flex-col items-center justify-center space-y-6 pt-8 text-center">
         
         {isMounted && settings.companyLogo ? (
           <Image src={settings.companyLogo} alt={settings.companyName} width={120} height={120} className="object-contain" />
