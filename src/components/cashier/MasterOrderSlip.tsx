@@ -35,6 +35,9 @@ export default function MasterOrderSlip({ order, onDispatchItem }: MasterOrderSl
     const dispatchableItems = useMemo(() => {
         const physicalItems = order.items.filter(item => {
             const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
+            // It's a physical item if it's NOT a deal container.
+            // A deal container is an item that is not a deal component itself
+            // but has dealItems defined in its menu configuration.
             const isDealContainer = !item.isDealComponent && !!menuItem?.dealItems?.length;
             return !isDealContainer;
         });
