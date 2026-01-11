@@ -98,8 +98,7 @@ export default function LoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder={user ? "Leave blank to keep current password" : ""}
-                  required={!user}
+                  required
                 />
                 <Button
                   type="button"
