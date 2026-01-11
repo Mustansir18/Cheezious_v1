@@ -9,14 +9,14 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import MasterOrderSlip from '@/components/cashier/MasterOrderSlip';
 
 
-const KDS_STATUSES: OrderStatus[] = ['Pending', 'Preparing', 'Partial Ready', 'Ready'];
+const KDS_STATUSES: OrderStatus[] = ['Pending', 'Preparing', 'Partial Ready'];
 
 export default function MasterCuttStationPage() {
   const { orders, isLoading, dispatchItem } = useOrders();
 
   const ordersForKDS = useMemo(() => {
     return orders
-        .filter((order) => KDS_STATUSES.includes(order.status) && order.status !== 'Ready')
+        .filter((order) => KDS_STATUSES.includes(order.status))
         .sort((a,b) => new Date(a.orderDate).getTime() - new Date(b.orderDate).getTime());
   }, [orders]);
 
