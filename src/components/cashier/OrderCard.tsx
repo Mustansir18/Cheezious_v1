@@ -384,7 +384,7 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
   };
   
   const StatusIcon = statusConfig[order.status]?.icon || Loader;
-  const isModifiableByUser = user?.role === 'admin' || user?.role === 'root';
+  const isModifiableByUser = user?.role === 'root' || user?.role === 'admin' || user?.role === 'cashier';
   
   const orderDate = useMemo(() => new Date(order.orderDate), [order.orderDate]);
   
@@ -630,6 +630,7 @@ OrderCard.Skeleton = function OrderCardSkeleton() {
   };
 
     
+
 
 
 
