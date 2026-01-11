@@ -383,7 +383,7 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
   };
   
   const isManager = user?.role === 'root' || user?.role === 'admin';
-  const canAddItems = isMutable && (isManager || user?.role === 'cashier');
+  const canAddItems = isMutable && (isManager || workflow === 'cashier');
   const canModify = isMutable && isManager; // Only managers can apply discounts/comps
   
   const orderDate = useMemo(() => new Date(order.orderDate), [order.orderDate]);
@@ -400,14 +400,15 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
 
   const visibleItems = useMemo(() => {
     const mainItems = order.items.filter(i => !i.isDealComponent);
+    const dealComponents = order.items.filter(i => i.isDealComponent);
   
     return mainItems.map(main => {
-      const components = order.items.filter(
-        c => c.isDealComponent && c.parentDealCartItemId === main.id
+      const components = dealComponents.filter(
+        c => c.parentDealCartItemId === main.id
       );
   
       const aggregated = components.reduce((acc, c) => {
-        const key = c.menuItemId; 
+        const key = c.menuItemId;
         if (!acc[key]) {
           acc[key] = { name: c.name, quantity: 0 };
         }
@@ -602,3 +603,6 @@ OrderCard.Skeleton = function OrderCardSkeleton() {
     );
   };
 
+
+
+    

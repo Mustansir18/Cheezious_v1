@@ -20,10 +20,11 @@ export function OrderReceipt({ order }: OrderReceiptProps) {
     
     const visibleItems = useMemo(() => {
         const mainItems = order.items.filter(i => !i.isDealComponent);
+        const dealComponents = order.items.filter(i => i.isDealComponent);
       
         return mainItems.map(main => {
-          const components = order.items.filter(
-            c => c.isDealComponent && c.parentDealCartItemId === main.id
+          const components = dealComponents.filter(
+            c => c.parentDealCartItemId === main.id
           );
       
           const aggregated = components.reduce((acc, c) => {
@@ -179,3 +180,5 @@ export function OrderReceipt({ order }: OrderReceiptProps) {
         </div>
     );
 }
+
+    
