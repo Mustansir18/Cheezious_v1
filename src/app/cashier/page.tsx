@@ -132,7 +132,7 @@ export default function CashierPage() {
                     {isLoading ? (
                         Array.from({ length: 6 }).map((_, i) => <OrderCard.Skeleton key={i} />)
                     ) : displayedOrders.length > 0 ? (
-                        displayedOrders.map((order) => <OrderCard key={order.id} order={order} workflow="cashier" onUpdateStatus={updateOrderStatus}><OrderInfoModal order={order} /></OrderCard>)
+                        displayedOrders.map((order) => <OrderCard key={order.id} order={order} workflow="cashier" onUpdateStatus={updateOrderStatus} isMutable={true}><OrderInfoModal order={order} /></OrderCard>)
                     ) : (
                         <Card className="lg:col-span-2 xl:col-span-3 flex flex-col items-center justify-center p-12 text-center">
                             <Clock className="h-16 w-16 text-muted-foreground/50 mb-4" />

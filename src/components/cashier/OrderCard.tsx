@@ -382,7 +382,7 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
   };
   
   const StatusIcon = statusConfig[order.status]?.icon || Loader;
-  const isModifiableByUser = user?.role === 'root' || user?.role === 'admin' || user?.role === 'cashier';
+  const isModifiableByUser = user?.role === 'root' || user?.role === 'admin'; // Removed cashier
   
   const orderDate = useMemo(() => new Date(order.orderDate), [order.orderDate]);
   
@@ -398,23 +398,23 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
 
   const visibleItems = useMemo(() => {
     const mainItems = order.items.filter(i => !i.isDealComponent);
-
+  
     return mainItems.map(main => {
-      // Find components that belong to THIS specific cart item instance
+      // Correctly find components belonging to this specific deal instance in the order
       const components = order.items.filter(
         c => c.isDealComponent && c.parentDealCartItemId === main.id
       );
-
-      // Aggregate the found components
+  
+      // Aggregate the found components by their menu item ID
       const aggregated = components.reduce((acc, c) => {
-        const key = c.menuItemId; // Aggregate by the menu item ID
+        const key = c.menuItemId; 
         if (!acc[key]) {
           acc[key] = { name: c.name, quantity: 0 };
         }
         acc[key].quantity += c.quantity;
         return acc;
       }, {} as Record<string, { name: string; quantity: number }>);
-
+  
       return {
         ...main,
         aggregatedDealComponents: Object.values(aggregated),
@@ -553,13 +553,13 @@ const OrderTypeIcon = getOrderTypeIcon();
                  {order.status === 'Preparing' && <Button onClick={() => handleUpdateStatus('Ready')} size="sm" className="w-full bg-yellow-500 hover:bg-yellow-600 text-black"><Check className="mr-2 h-4 w-4" /> Mark as Ready</Button>}
                 {order.status === 'Ready' && <Button onClick={() => handleUpdateStatus('Completed')} size="sm" className="w-full bg-green-500 hover:bg-green-600"><CheckCircle className="mr-2 h-4 w-4" /> Mark as Completed</Button>}
                  {(order.status === 'Pending') && isModifiableByUser && (
-                     <div className="grid grid-cols-2 gap-2">
+                     <div className="grid grid-cols-1 gap-2">
                         <CancellationDialog orderId={order.id} onConfirm={handleCancelOrder} />
                         <OrderModificationDialog order={order} />
                      </div>
                  )}
                  {(order.status === 'Preparing' || order.status === 'Ready' || order.status === 'Partial Ready') && isModifiableByUser && (
-                     <div className="grid grid-cols-2 gap-2">
+                     <div className="grid grid-cols-1 gap-2">
                         <AddItemsToOrderDialog order={order} />
                         <OrderModificationDialog order={order} />
                     </div>
