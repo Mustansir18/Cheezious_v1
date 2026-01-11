@@ -64,20 +64,13 @@ export default function MasterCuttStationPage() {
                 {ordersForKDS.length > 0 ? (
                 <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 2xl:columns-5 gap-6 space-y-6">
                     {ordersForKDS.map((order) => (
-                        <Fragment key={order.id}>
-                          <MasterOrderSlip 
-                            order={order} 
-                            selectedItemIds={selectedItems[order.id] || []}
-                            onToggleItem={handleToggleItemSelection}
-                            onDispatchSelected={handleDispatchSelected}
-                          />
-                          <MasterOrderSlip 
-                            order={order}
-                            selectedItemIds={selectedItems[order.id] || []}
-                            onToggleItem={handleToggleItemSelection}
-                            onDispatchSelected={handleDispatchSelected}
-                          />
-                        </Fragment>
+                        <MasterOrderSlip 
+                          key={order.id} 
+                          order={order} 
+                          selectedItemIds={selectedItems[order.id] || []}
+                          onToggleItem={handleToggleItemSelection}
+                          onDispatchSelected={handleDispatchSelected}
+                        />
                     ))}
                 </div>
                 ) : (
