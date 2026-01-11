@@ -1,52 +1,52 @@
 
-
 'use client';
 
 import type { Order } from '@/lib/types';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { formatDistanceToNow } from 'date-fns';
 import { useSettings } from "@/context/SettingsContext";
-import { Utensils, ShoppingBag, Check, CheckCircle } from "lucide-react";
+import { Utensils, ShoppingBag, Check } from "lucide-react";
 import { ScrollArea } from '../ui/scroll-area';
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
 import { useMenu } from '@/context/MenuContext';
+import { Button } from '../ui/button';
 
 interface MasterOrderSlipProps {
     order: Order;
-    onDispatchItem: (orderId: string, itemId: string) => void;
+    selectedItemIds: string[];
+    onToggleItem: (orderId: string, itemId: string) => void;
+    onDispatchSelected: (orderId: string) => void;
 }
 
-export default function MasterOrderSlip({ order, onDispatchItem }: MasterOrderSlipProps) {
+export default function MasterOrderSlip({ order, selectedItemIds, onToggleItem, onDispatchSelected }: MasterOrderSlipProps) {
     const { settings } = useSettings();
     const { menu } = useMenu();
     const table = settings.tables.find(t => t.id === order.tableId);
-
-    const handleDispatchToggle = (itemId: string, isSelectable: boolean, isDispatched: boolean) => {
-        if (isSelectable && !isDispatched) {
-            onDispatchItem(order.id, itemId);
-        }
-    };
     
-    // Correctly filter to show only physical items that have NOT yet been dispatched.
     const dispatchableItems = useMemo(() => {
         const physicalItems = order.items.filter(item => {
-            // Exclude items that are already dispatched
             if (item.isDispatched) return false;
 
             const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
-            // It's a physical item if it's NOT a deal container.
-            // A deal container is an item that is not a deal component itself
-            // but has dealItems defined in its menu configuration.
             const isDealContainer = !item.isDealComponent && !!menuItem?.dealItems?.length;
             return !isDealContainer;
         });
         return physicalItems;
     }, [order.items, menu.items]);
+    
+    const handleDispatchToggle = (itemId: string) => {
+        onToggleItem(order.id, itemId);
+    };
+
+    const handleDispatch = () => {
+        onDispatchSelected(order.id);
+    };
+
+    const selectedCount = selectedItemIds.length;
 
     return (
         <Card className="break-inside-avoid shadow-lg border-2 border-primary/20 flex flex-col">
@@ -76,46 +76,41 @@ export default function MasterOrderSlip({ order, onDispatchItem }: MasterOrderSl
                         {dispatchableItems.map((item, index) => {
                             const isPrepared = !!item.isPrepared;
                             const isDispatchOnly = !item.stationId;
-                            const isDispatched = !!item.isDispatched;
                             const isSelectable = isPrepared || isDispatchOnly;
+                            const isSelected = selectedItemIds.includes(item.id);
                             
                             return (
-                                <div key={item.id}>
-                                    {index > 0 && <Separator className="my-2" />}
-                                    <div className="flex justify-between items-start gap-2">
-                                        <div className={cn("flex items-start gap-2", !isSelectable && "opacity-50")}>
-                                            <Checkbox
-                                                id={`dispatch-${item.id}`}
-                                                checked={isDispatched}
-                                                disabled={!isSelectable || isDispatched}
-                                                onCheckedChange={() => handleDispatchToggle(item.id, isSelectable, isDispatched)}
-                                                className="mt-1"
-                                            />
-                                            <Label htmlFor={`dispatch-${item.id}`} className={cn("font-semibold", isSelectable && !isDispatched && "cursor-pointer")}>
-                                                <p>{item.quantity}x {item.name} {item.selectedVariant ? `(${item.selectedVariant.name})` : ''}</p>
-                                                {item.selectedAddons && item.selectedAddons.length > 0 && (
-                                                    <div className="pl-4 text-xs font-normal text-muted-foreground">
-                                                        {item.selectedAddons.map(addon => (
-                                                            <p key={addon.name}>+ {addon.quantity}x {addon.name}</p>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                                 {item.instructions && (
-                                                    <p className="text-xs italic text-blue-600">"{item.instructions}"</p>
-                                                 )}
-                                            </Label>
-                                        </div>
-                                        <div className="flex-shrink-0">
-                                            {isDispatched ? (
-                                                <Badge variant="default" className="bg-green-600 hover:bg-green-700">Dispatched</Badge>
-                                            ) : isPrepared ? (
-                                                <Badge variant="outline" className="border-yellow-500 text-yellow-600">Prepared</Badge>
-                                            ) : isDispatchOnly ? (
-                                                 <Badge variant="outline" className="border-blue-500 text-blue-600">Direct</Badge>
-                                            ) : (
-                                                <Badge variant="secondary">Preparing</Badge>
+                                <div key={item.id} className={cn("flex justify-between items-start gap-2 p-2 rounded-md", !isSelectable && "opacity-50")}>
+                                    <div className="flex items-start gap-2">
+                                        <Checkbox
+                                            id={`${order.id}-${item.id}`}
+                                            checked={isSelected}
+                                            disabled={!isSelectable}
+                                            onCheckedChange={() => handleDispatchToggle(item.id)}
+                                            className="mt-1"
+                                        />
+                                        <Label htmlFor={`${order.id}-${item.id}`} className={cn("font-semibold", isSelectable && "cursor-pointer")}>
+                                            <p>{item.quantity}x {item.name} {item.selectedVariant ? `(${item.selectedVariant.name})` : ''}</p>
+                                            {item.selectedAddons && item.selectedAddons.length > 0 && (
+                                                <div className="pl-4 text-xs font-normal text-muted-foreground">
+                                                    {item.selectedAddons.map(addon => (
+                                                        <p key={addon.name}>+ {addon.quantity}x {addon.name}</p>
+                                                    ))}
+                                                </div>
                                             )}
-                                        </div>
+                                             {item.instructions && (
+                                                <p className="text-xs italic text-blue-600">"{item.instructions}"</p>
+                                             )}
+                                        </Label>
+                                    </div>
+                                    <div className="flex-shrink-0">
+                                        {isPrepared ? (
+                                            <Badge variant="outline" className="border-yellow-500 text-yellow-600">Prepared</Badge>
+                                        ) : isDispatchOnly ? (
+                                             <Badge variant="outline" className="border-blue-500 text-blue-600">Direct</Badge>
+                                        ) : (
+                                            <Badge variant="secondary">Preparing</Badge>
+                                        )}
                                     </div>
                                 </div>
                             )
@@ -123,6 +118,15 @@ export default function MasterOrderSlip({ order, onDispatchItem }: MasterOrderSl
                     </div>
                 </ScrollArea>
             </CardContent>
+             <CardFooter className="p-2">
+                <Button 
+                    className="w-full"
+                    disabled={selectedCount === 0}
+                    onClick={handleDispatch}
+                >
+                    <Check className="mr-2 h-4 w-4" /> Dispatch {selectedCount} Item(s)
+                </Button>
+            </CardFooter>
         </Card>
     );
 }

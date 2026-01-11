@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useMemo, Fragment } from 'react';
+import { useMemo, Fragment, useState } from 'react';
 import type { Order, OrderStatus } from '@/lib/types';
 import { useOrders } from '@/context/OrderContext';
 import { Loader, ChefHat } from 'lucide-react';
@@ -13,7 +13,27 @@ const KDS_STATUSES: OrderStatus[] = ['Pending', 'Preparing', 'Partial Ready'];
 
 export default function MasterCuttStationPage() {
   const { orders, isLoading, dispatchItem } = useOrders();
+  const [selectedItems, setSelectedItems] = useState<Record<string, string[]>>({});
 
+  const handleToggleItemSelection = (orderId: string, itemId: string) => {
+    setSelectedItems(prev => {
+      const currentSelection = prev[orderId] || [];
+      const newSelection = currentSelection.includes(itemId)
+        ? currentSelection.filter(id => id !== itemId)
+        : [...currentSelection, itemId];
+      return { ...prev, [orderId]: newSelection };
+    });
+  };
+
+  const handleDispatchSelected = (orderId: string) => {
+    const itemsToDispatch = selectedItems[orderId] || [];
+    if (itemsToDispatch.length > 0) {
+      itemsToDispatch.forEach(itemId => dispatchItem(orderId, itemId));
+      // Clear selection for this order after dispatching
+      setSelectedItems(prev => ({ ...prev, [orderId]: [] }));
+    }
+  };
+  
   const ordersForKDS = useMemo(() => {
     // This filter now correctly shows only orders that require action at the CUTT station.
     return orders
@@ -45,8 +65,18 @@ export default function MasterCuttStationPage() {
                 <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 2xl:columns-5 gap-6 space-y-6">
                     {ordersForKDS.map((order) => (
                         <Fragment key={order.id}>
-                          <MasterOrderSlip order={order} onDispatchItem={dispatchItem} />
-                          <MasterOrderSlip order={order} onDispatchItem={dispatchItem} />
+                          <MasterOrderSlip 
+                            order={order} 
+                            selectedItemIds={selectedItems[order.id] || []}
+                            onToggleItem={handleToggleItemSelection}
+                            onDispatchSelected={handleDispatchSelected}
+                          />
+                          <MasterOrderSlip 
+                            order={order}
+                            selectedItemIds={selectedItems[order.id] || []}
+                            onToggleItem={handleToggleItemSelection}
+                            onDispatchSelected={handleDispatchSelected}
+                          />
                         </Fragment>
                     ))}
                 </div>
