@@ -32,7 +32,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PlusCircle, User, Edit, Key } from "lucide-react";
-import type { User as UserType, UserRole } from "@/lib/types";
+import type { User as UserType, UserRole, Role } from "@/lib/types";
 import {
   Select,
   SelectContent,
@@ -43,6 +43,178 @@ import {
 import { useSettings } from "@/context/SettingsContext";
 import { Badge } from "@/components/ui/badge";
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ALL_PERMISSIONS } from "@/config/permissions";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+
+function RoleForm({
+  role,
+  onSave,
+  onClose,
+}: {
+  role?: Role;
+  onSave: (role: Omit<Role, 'id'> | Role, id?: string) => void;
+  onClose: () => void;
+}) {
+  const [id, setId] = useState<UserRole | string>('');
+  const [name, setName] = useState(role?.name || '');
+  const [permissions, setPermissions] = useState<string[]>(role?.permissions || []);
+
+  const handlePermissionToggle = (permission: string) => {
+    setPermissions(prev =>
+      prev.includes(permission) ? prev.filter(p => p !== permission) : [...prev, permission]
+    );
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const data = { name, permissions };
+    if (role) {
+      onSave({ ...role, ...data });
+    } else {
+      onSave({ ...data }, id);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {role ? (
+        <div>
+          <Label htmlFor="role-id">Role Code</Label>
+          <Input id="role-id" value={role.id as string} disabled />
+        </div>
+      ) : (
+        <div>
+          <Label htmlFor="role-id">Role Code</Label>
+          <Input id="role-id" value={id} onChange={(e) => setId(e.target.value)} required placeholder="e.g. R-00001" />
+        </div>
+      )}
+      <div>
+        <Label htmlFor="role-name">Role Name</Label>
+        <Input id="role-name" value={name} onChange={(e) => setName(e.target.value)} required disabled={!!role?.id && ['root', 'admin', 'cashier', 'marketing'].includes(role.id as string)} />
+        {role?.id && ['root', 'admin', 'cashier', 'marketing'].includes(role.id as string) && <p className="text-xs text-muted-foreground mt-1">Default role names cannot be changed.</p>}
+      </div>
+      <div>
+        <Label>Permissions</Label>
+        <ScrollArea className="h-60 rounded-md border p-4">
+            <div className="space-y-2">
+                {ALL_PERMISSIONS.map(permission => (
+                     <div key={permission.id} className="flex items-start space-x-2">
+                        <Checkbox
+                            id={`perm-${permission.id}`}
+                            checked={permissions.includes(permission.id)}
+                            onCheckedChange={() => handlePermissionToggle(permission.id)}
+                            disabled={role?.id === 'root'}
+                        />
+                         <div className="grid gap-1.5 leading-none">
+                            <Label htmlFor={`perm-${permission.id}`} className="font-normal cursor-pointer">{permission.name}</Label>
+                            <p className="text-xs text-muted-foreground">{permission.description}</p>
+                        </div>
+                     </div>
+                ))}
+            </div>
+        </ScrollArea>
+      </div>
+      <DialogFooter>
+        <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+        <Button type="submit">Save Role</Button>
+      </DialogFooter>
+    </form>
+  );
+}
+
+function RoleManagement() {
+    const { settings, addRole, updateRole, deleteRole } = useSettings();
+    const [isDialogOpen, setDialogOpen] = useState(false);
+    const [editingRole, setEditingRole] = useState<Role | undefined>();
+
+    const openDialog = (role?: Role) => {
+        setEditingRole(role);
+        setDialogOpen(true);
+    };
+
+    const closeDialog = () => {
+        setEditingRole(undefined);
+        setDialogOpen(false);
+    };
+
+    const handleSave = (roleData: Omit<Role, 'id'> | Role, id?: string) => {
+        if ('id' in roleData) {
+            updateRole(roleData as Role);
+        } else if (id) {
+            addRole({ id, ...roleData });
+        }
+        closeDialog();
+    };
+
+    return (
+        <Card>
+            <CardHeader className="flex-row justify-between items-center">
+                 <div>
+                    <CardTitle>Role Management</CardTitle>
+                    <CardDescription>Define roles and their access permissions across the application.</CardDescription>
+                </div>
+                <Button onClick={() => openDialog()}>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Role
+                </Button>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Role</TableHead>
+                            <TableHead>Code</TableHead>
+                            <TableHead>Permissions</TableHead>
+                            <TableHead className="text-right w-[120px]">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {settings.roles.map(role => (
+                            <TableRow key={role.id}>
+                                <TableCell className="font-semibold capitalize">{role.name}</TableCell>
+                                <TableCell className="font-mono text-xs">{role.id}</TableCell>
+                                <TableCell>
+                                    <div className="flex flex-wrap gap-2 max-w-md">
+                                        {role.permissions.map(permission => (
+                                            <span key={permission} className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded-full">
+                                                {ALL_PERMISSIONS.find(p => p.id === permission)?.name || permission}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <Button variant="ghost" size="icon" onClick={() => openDialog(role)}>
+                                        <Edit className="h-4 w-4"/>
+                                    </Button>
+                                     <DeleteConfirmationDialog
+                                        title={`Delete Role "${role.name}"?`}
+                                        description={<>This will permanently delete the role. Users with this role will lose access.</>}
+                                        onConfirm={() => deleteRole(role.id as UserRole)}
+                                        triggerButton={
+                                            <Button variant="ghost" size="icon" disabled={['root', 'admin', 'cashier', 'marketing'].includes(role.id as string)}>
+                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                            </Button>
+                                        }
+                                    />
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </CardContent>
+             <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
+                <DialogContent className="max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>{editingRole ? `Edit Role: ${editingRole.name}` : 'Add New Role'}</DialogTitle>
+                    </DialogHeader>
+                    <RoleForm role={editingRole} onSave={handleSave} onClose={closeDialog} />
+                </DialogContent>
+            </Dialog>
+        </Card>
+    );
+}
 
 function UserForm({
   user,
@@ -235,100 +407,116 @@ export default function UserManagementPage() {
 
   return (
     <div className="w-full space-y-8">
-      <Card>
-        <CardHeader className="flex flex-row justify-between items-center">
-          <div>
-            <CardTitle className="font-headline text-4xl font-bold">
-              User Management
-            </CardTitle>
-            <CardDescription>
-              Create and manage cashier, admin, and marketing accounts.
-            </CardDescription>
-          </div>
+      <header>
+          <h1 className="font-headline text-4xl font-bold">User & Role Management</h1>
+          <p className="text-muted-foreground">Manage accounts and their permissions for staff members.</p>
+      </header>
 
-          <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={openAddDialog}>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add User
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>
-                  {editingUser ? "Edit User" : "Add New User"}
-                </DialogTitle>
-              </DialogHeader>
-              <UserForm user={editingUser} onSave={handleSaveUser} />
-            </DialogContent>
-          </Dialog>
-        </CardHeader>
+      <Tabs defaultValue="users">
+          <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="users">Users</TabsTrigger>
+              <TabsTrigger value="roles">Roles & Permissions</TabsTrigger>
+          </TabsList>
+          <TabsContent value="users" className="mt-6">
+              <Card>
+                <CardHeader className="flex flex-row justify-between items-center">
+                  <div>
+                    <CardTitle>
+                      User Accounts
+                    </CardTitle>
+                    <CardDescription>
+                      Create and manage cashier, admin, and marketing accounts.
+                    </CardDescription>
+                  </div>
 
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Username</TableHead>
-                <TableHead>Code</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Station</TableHead>
-                <TableHead>Branch</TableHead>
-                <TableHead className="text-right w-[120px]">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {displayableUsers.map((u) => (
-                <TableRow key={u.id}>
-                  <TableCell className="font-medium flex items-center">
-                    <User className="mr-2 h-4 w-4 text-muted-foreground" />
-                    {u.username}
-                  </TableCell>
-                  <TableCell className="font-mono text-xs">{u.id}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={u.role === "admin" ? "secondary" : "outline"}
-                    >
-                      {getRoleName(u.role)}
-                    </Badge>
-                  </TableCell>
-                   <TableCell>
-                      {u.stationName || "N/A"}
-                   </TableCell>
-                  <TableCell>
-                    {settings.branches.find((b) => b.id === u.branchId)?.name ??
-                      "N/A"}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => openEditDialog(u)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <DeleteConfirmationDialog
-                      title={`Delete User "${u.username}"?`}
-                      description={
-                        <>
-                          This action cannot be undone. This will permanently
-                          delete the user <strong>{u.username}</strong>.
-                        </>
-                      }
-                      onConfirm={() => deleteUser(u.id, u.username)}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-            {displayableUsers.length === 0 && (
-                <div className="text-center py-12">
-                    <p className="text-muted-foreground">No users found.</p>
-                    <p className="text-sm text-muted-foreground">Click "Add User" to create one.</p>
-                </div>
-            )}
-        </CardContent>
-      </Card>
+                  <Dialog open={isDialogOpen} onOpenChange={setDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button onClick={openAddDialog}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add User
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>
+                          {editingUser ? "Edit User" : "Add New User"}
+                        </DialogTitle>
+                      </DialogHeader>
+                      <UserForm user={editingUser} onSave={handleSaveUser} />
+                    </DialogContent>
+                  </Dialog>
+                </CardHeader>
+
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Username</TableHead>
+                        <TableHead>Code</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Station</TableHead>
+                        <TableHead>Branch</TableHead>
+                        <TableHead className="text-right w-[120px]">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {displayableUsers.map((u) => (
+                        <TableRow key={u.id}>
+                          <TableCell className="font-medium flex items-center">
+                            <User className="mr-2 h-4 w-4 text-muted-foreground" />
+                            {u.username}
+                          </TableCell>
+                          <TableCell className="font-mono text-xs">{u.id}</TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={u.role === "admin" ? "secondary" : "outline"}
+                            >
+                              {getRoleName(u.role)}
+                            </Badge>
+                          </TableCell>
+                           <TableCell>
+                              {u.stationName || "N/A"}
+                           </TableCell>
+                          <TableCell>
+                            {settings.branches.find((b) => b.id === u.branchId)?.name ??
+                              "N/A"}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openEditDialog(u)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <DeleteConfirmationDialog
+                              title={`Delete User "${u.username}"?`}
+                              description={
+                                <>
+                                  This action cannot be undone. This will permanently
+                                  delete the user <strong>{u.username}</strong>.
+                                </>
+                              }
+                              onConfirm={() => deleteUser(u.id, u.username)}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                    {displayableUsers.length === 0 && (
+                        <div className="text-center py-12">
+                            <p className="text-muted-foreground">No users found.</p>
+                            <p className="text-sm text-muted-foreground">Click "Add User" to create one.</p>
+                        </div>
+                    )}
+                </CardContent>
+              </Card>
+          </TabsContent>
+          <TabsContent value="roles" className="mt-6">
+              <RoleManagement />
+          </TabsContent>
+      </Tabs>
     </div>
   );
 }
