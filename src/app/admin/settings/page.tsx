@@ -273,7 +273,7 @@ function PromotionSettingsManager() {
         setPromotionState(settings.promotion);
     }, [settings.promotion]);
 
-    const deals = menu.items.filter(item => item.categoryId === 'C-00001');
+    const promotableItems = menu.items;
 
     const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -310,21 +310,21 @@ function PromotionSettingsManager() {
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="promo-deal-select">Featured Deal</Label>
+                    <Label htmlFor="promo-item-select">Featured Item or Deal</Label>
                     <Select 
-                        value={promotionState.dealId || ''}
-                        onValueChange={(value) => setPromotionState(prev => ({...prev, dealId: value}))}
+                        value={promotionState.itemId || ''}
+                        onValueChange={(value) => setPromotionState(prev => ({...prev, itemId: value}))}
                     >
-                        <SelectTrigger id="promo-deal-select">
-                            <SelectValue placeholder="Select a deal to feature" />
+                        <SelectTrigger id="promo-item-select">
+                            <SelectValue placeholder="Select an item or deal to feature" />
                         </SelectTrigger>
                         <SelectContent>
-                            {deals.map(deal => (
-                                <SelectItem key={deal.id} value={deal.id}>{deal.name}</SelectItem>
+                            {promotableItems.map(item => (
+                                <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
-                     <p className="text-xs text-muted-foreground">This is the deal that will be added to the cart when a user clicks the promotion.</p>
+                     <p className="text-xs text-muted-foreground">This is the item that will be added to the cart when a user clicks the promotion.</p>
                 </div>
                 
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">

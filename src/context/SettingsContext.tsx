@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
@@ -116,7 +117,7 @@ const initialSettings: Settings = {
     deliveryModes: initialDeliveryModes,
     promotion: {
         isEnabled: true,
-        dealId: 'D-00001',
+        itemId: 'D-00001',
         imageUrl: PlaceHolderImages.find(i => i.id === 'deal-1')?.imageUrl || ''
     }
 };

@@ -57,34 +57,35 @@ export default function Home() {
   
   const deals = menu.items.filter(item => item.categoryId === 'C-00001');
 
-  // Find the specific deal to be used in the promotion from settings
-  const promoDeal = useMemo(() => {
-    if (!settings.promotion.isEnabled || !settings.promotion.dealId) return null;
-    return deals.find(d => d.id === settings.promotion.dealId);
-  }, [deals, settings.promotion]);
+  // Find the specific item to be used in the promotion from settings
+  const promoItem = useMemo(() => {
+    if (!settings.promotion.isEnabled || !settings.promotion.itemId) return null;
+    return menu.items.find(d => d.id === settings.promotion.itemId);
+  }, [menu.items, settings.promotion]);
 
 
   useEffect(() => {
     setIsMounted(true);
     // If a promotion is configured and enabled, show the modal
-    if (promoDeal) {
+    if (promoItem) {
         const promoShown = sessionStorage.getItem('promoShown');
         if (!promoShown) {
             setPromoOpen(true);
             sessionStorage.setItem('promoShown', 'true');
         }
     }
-  }, [promoDeal]);
+  }, [promoItem]);
 
 
-  const handleStartOrder = (dealId?: string) => {
+  const handleStartOrder = (itemId?: string) => {
     if (isLoading) return;
     const targetBranchId = settings.defaultBranchId || (settings.branches.length > 0 ? settings.branches[0].id : null);
     
     if (targetBranchId) {
         let path = `/branch/${targetBranchId}`;
-        if (dealId) {
-            path += `?dealId=${dealId}`;
+        // The item ID is treated as a deal ID for the next step, which is fine as the logic handles it generically
+        if (itemId) {
+            path += `?dealId=${itemId}`;
         }
         router.push(path);
     } else {
@@ -93,9 +94,9 @@ export default function Home() {
   };
 
   const handleConfirmPromo = () => {
-    if (!promoDeal) return;
+    if (!promoItem) return;
     setPromoOpen(false);
-    handleStartOrder(promoDeal.id);
+    handleStartOrder(promoItem.id);
   };
 
   return (
@@ -181,7 +182,7 @@ export default function Home() {
       <div className="fixed bottom-8 right-8">
           <RatingDialog />
       </div>
-       {promoDeal && (
+       {promoItem && (
         <PromotionModal
             promoImageUrl={settings.promotion.imageUrl}
             isOpen={isPromoOpen}

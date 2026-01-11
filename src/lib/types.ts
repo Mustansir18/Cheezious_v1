@@ -228,7 +228,7 @@ export type Rating = {
 // --- Promotion Settings ---
 export type PromotionSettings = {
     isEnabled: boolean;
-    dealId: string | null;
+    itemId: string | null;
     imageUrl: string;
 };
 
