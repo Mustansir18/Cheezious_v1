@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, Fragment } from 'react';
 import type { Order, OrderStatus } from '@/lib/types';
 import { useOrders } from '@/context/OrderContext';
 import { Loader, ChefHat } from 'lucide-react';
@@ -44,7 +44,10 @@ export default function MasterCuttStationPage() {
                 {ordersForKDS.length > 0 ? (
                 <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 2xl:columns-5 gap-6 space-y-6">
                     {ordersForKDS.map((order) => (
-                        <MasterOrderSlip key={order.id} order={order} onDispatchItem={dispatchItem} />
+                        <Fragment key={order.id}>
+                          <MasterOrderSlip order={order} onDispatchItem={dispatchItem} />
+                          <MasterOrderSlip order={order} onDispatchItem={dispatchItem} />
+                        </Fragment>
                     ))}
                 </div>
                 ) : (
