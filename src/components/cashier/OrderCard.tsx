@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import type { Order, OrderItem, OrderStatus, CartItem, MenuItem, SelectedAddon } from "@/lib/types";
@@ -381,8 +382,9 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
     }, 500);
   };
   
-  const StatusIcon = statusConfig[order.status]?.icon || Loader;
-  const isModifiableByUser = user?.role === 'root' || user?.role === 'admin'; // Removed cashier
+  const isManager = user?.role === 'root' || user?.role === 'admin';
+  const canAddItems = isMutable && (isManager || user?.role === 'cashier');
+  const canModify = isMutable && isManager; // Only managers can apply discounts/comps
   
   const orderDate = useMemo(() => new Date(order.orderDate), [order.orderDate]);
   
@@ -400,12 +402,10 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
     const mainItems = order.items.filter(i => !i.isDealComponent);
   
     return mainItems.map(main => {
-      // Correctly find components belonging to this specific deal instance in the order
       const components = order.items.filter(
         c => c.isDealComponent && c.parentDealCartItemId === main.id
       );
   
-      // Aggregate the found components by their menu item ID
       const aggregated = components.reduce((acc, c) => {
         const key = c.menuItemId; 
         if (!acc[key]) {
@@ -433,6 +433,7 @@ const getOrderTypeIcon = () => {
 };
 
 const OrderTypeIcon = getOrderTypeIcon();
+const StatusIcon = statusConfig[order.status]?.icon || Loader;
 
   return (
     <Card className="flex h-full flex-col">
@@ -552,21 +553,20 @@ const OrderTypeIcon = getOrderTypeIcon();
                 {order.status === 'Pending' && <Button onClick={() => handleUpdateStatus('Preparing')} size="sm" className="w-full"><CookingPot className="mr-2 h-4 w-4" /> Accept & Prepare</Button>}
                  {order.status === 'Preparing' && <Button onClick={() => handleUpdateStatus('Ready')} size="sm" className="w-full bg-yellow-500 hover:bg-yellow-600 text-black"><Check className="mr-2 h-4 w-4" /> Mark as Ready</Button>}
                 {order.status === 'Ready' && <Button onClick={() => handleUpdateStatus('Completed')} size="sm" className="w-full bg-green-500 hover:bg-green-600"><CheckCircle className="mr-2 h-4 w-4" /> Mark as Completed</Button>}
-                 {(order.status === 'Pending') && isModifiableByUser && (
+                 {(order.status === 'Pending') && canModify && (
                      <div className="grid grid-cols-1 gap-2">
                         <CancellationDialog orderId={order.id} onConfirm={handleCancelOrder} />
-                        <OrderModificationDialog order={order} />
                      </div>
                  )}
-                 {(order.status === 'Preparing' || order.status === 'Ready' || order.status === 'Partial Ready') && isModifiableByUser && (
-                     <div className="grid grid-cols-1 gap-2">
-                        <AddItemsToOrderDialog order={order} />
-                        <OrderModificationDialog order={order} />
-                    </div>
+                 {(order.status === 'Preparing' || order.status === 'Ready' || order.status === 'Partial Ready') && canAddItems && (
+                     <AddItemsToOrderDialog order={order} />
+                 )}
+                  {(order.status === 'Pending' || order.status === 'Preparing' || order.status === 'Ready' || order.status === 'Partial Ready') && canModify && (
+                     <OrderModificationDialog order={order} />
                  )}
             </div>
          )}
-         {order.status === 'Completed' && isModifiableByUser && isMutable && (
+         {order.status === 'Completed' && canModify && isMutable && (
              <div className="grid grid-cols-1 gap-2"><OrderModificationDialog order={order} /></div>
          )}
       </CardFooter>
@@ -601,3 +601,4 @@ OrderCard.Skeleton = function OrderCardSkeleton() {
       </Card>
     );
   };
+
