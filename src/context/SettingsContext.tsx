@@ -7,6 +7,7 @@ import type { Floor, Table, PaymentMethod, Branch, Role, UserRole, DeliveryMode 
 import { useToast } from '@/hooks/use-toast';
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 const defaultRoles: Role[] = [
     { id: "root", name: "Root", permissions: ["admin:*"] },
@@ -99,6 +100,7 @@ const initialDeliveryModes: DeliveryMode[] = [
     { id: 'DM-003', name: 'Call Centre' },
 ];
 
+const defaultLogo = PlaceHolderImages.find(img => img.id === 'cheezious-special')?.imageUrl || '';
 
 const initialSettings: Settings = {
     floors: initialFloors,
@@ -106,7 +108,7 @@ const initialSettings: Settings = {
     paymentMethods: defaultPaymentMethods,
     autoPrintReceipts: false,
     companyName: "Cheezious",
-    companyLogo: '',
+    companyLogo: defaultLogo,
     branches: initialBranches,
     defaultBranchId: initialBranches[0]?.id || null,
     businessDayStart: "11:00",
