@@ -19,6 +19,7 @@ import {
   Star,
   BarChart,
   ChefHat,
+  Activity,
 } from 'lucide-react';
 import {
   Tooltip,
@@ -54,6 +55,7 @@ function AdminSidebar() {
     { href: '/admin/deals', label: 'Deals', icon: Megaphone, role: ['root'] },
     { href: '/admin/qr-codes', label: 'QR Codes', icon: QrCode, role: ['root'] },
     { href: '/admin/feedback', label: 'Feedback', icon: Star, role: ['root'] },
+    { href: '/admin/activity-log', label: 'Activity Log', icon: Activity, role: ['root'] },
     { href: '/admin/users', label: 'Users', icon: Users, role: ['root'] },
     { href: '/admin/settings', label: 'Settings', icon: Settings, role: ['root'] },
   ];
@@ -68,7 +70,7 @@ function AdminSidebar() {
           className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
         >
           {isMounted && settings.companyLogo ? (
-            <Image src={settings.companyLogo} alt={settings.companyName} width={32} height={32} className="object-contain rounded-full" />
+            <Image src={settings.companyLogo} alt={settings.companyName} width={32} height={32} className="object-contain" />
           ) : (
              <div style={{ width: 32, height: 32 }} />
           )}
@@ -129,7 +131,7 @@ export default function AdminLayout({
     <AdminRouteGuard>
         <div className="flex min-h-screen w-full flex-col bg-muted/40">
           <AdminSidebar />
-          <main className="w-full sm:pl-14">
+          <main className="w-full sm:pl-14 p-4 sm:p-6 md:p-8">
               {children}
           </main>
         </div>

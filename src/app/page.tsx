@@ -5,7 +5,7 @@
 import { useRouter } from 'next/navigation';
 import { useSettings } from '@/context/SettingsContext';
 import { useMenu } from '@/context/MenuContext';
-import { Loader } from 'lucide-react';
+import { Loader, X } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
@@ -19,114 +19,58 @@ import { useState, useEffect } from 'react';
 import type { MenuItem } from '@/lib/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 
-function DealConfirmationDialog({ deal, onConfirm, isOpen, onOpenChange }: { deal: MenuItem | null; onConfirm: () => void; isOpen: boolean; onOpenChange: (open: boolean) => void; }) {
+function PromotionModal({ deal, onConfirm, isOpen, onOpenChange }: { deal: MenuItem | null; onConfirm: () => void; isOpen: boolean; onOpenChange: (open: boolean) => void; }) {
     if (!deal) return null;
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle className="font-headline text-2xl">Add Deal to Order?</DialogTitle>
-                    <DialogDescription>You are about to add the "{deal.name}" deal to your order.</DialogDescription>
-                </DialogHeader>
-                <div className="py-4">
-                    <div className="relative h-48 w-full rounded-md overflow-hidden">
-                        <Image src={deal.imageUrl} alt={deal.name} layout="fill" objectFit="cover" />
-                    </div>
-                    <h3 className="font-semibold mt-4 text-lg">{deal.name}</h3>
-                    <p className="text-sm text-muted-foreground">{deal.description}</p>
-                    <p className="font-bold text-lg mt-2">RS {Math.round(deal.price)}</p>
+            <DialogContent className="p-0 border-0 max-w-2xl" hideCloseButton={true}>
+                <div className="relative">
+                     <button 
+                        onClick={() => onOpenChange(false)}
+                        className="absolute top-2 right-2 z-20 bg-white/70 hover:bg-white rounded-full p-1 transition-all"
+                        aria-label="Close"
+                     >
+                        <X className="h-5 w-5 text-gray-800" />
+                    </button>
+                    <Image 
+                        src={deal.imageUrl} 
+                        alt={deal.name} 
+                        width={800} 
+                        height={600} 
+                        className="object-cover w-full h-full cursor-pointer"
+                        onClick={onConfirm}
+                    />
                 </div>
-                <DialogFooter>
-                    <DialogClose asChild>
-                        <Button type="button" variant="outline">Cancel</Button>
-                    </DialogClose>
-                    <Button onClick={onConfirm}>Continue</Button>
-                </DialogFooter>
             </DialogContent>
         </Dialog>
     );
 }
 
-
-function DealsCarousel() {
-  const { menu, isLoading } = useMenu();
-  const { settings } = useSettings();
-  const router = useRouter();
-  const [selectedDeal, setSelectedDeal] = useState<MenuItem | null>(null);
-  const [isDialogOpen, setDialogOpen] = useState(false);
-  
-  const deals = menu.items.filter(item => item.categoryId === 'C-00001');
-  const targetBranchId = settings.defaultBranchId || (settings.branches.length > 0 ? settings.branches[0].id : null);
-
-  const handleDealClick = (deal: MenuItem) => {
-    setSelectedDeal(deal);
-    setDialogOpen(true);
-  };
-
-  const handleConfirmDeal = () => {
-    if (!selectedDeal || !targetBranchId) return;
-    
-    setDialogOpen(false);
-    
-    router.push(`/branch/${targetBranchId}?dealId=${selectedDeal.id}`);
-  };
-
-
-  if (isLoading) {
-    return (
-        <div className="flex items-center justify-center p-12">
-            <Loader className="h-8 w-8 animate-spin text-primary" />
-        </div>
-    );
-  }
-
-  if (deals.length === 0 || !targetBranchId) {
-      return null;
-  }
-
-  return (
-    <div className="relative w-full">
-      <Carousel 
-          opts={{ align: "start", loop: true }}
-          plugins={[Autoplay({ delay: 5000, stopOnInteraction: false })]}
-          className="w-full"
-      >
-        <CarouselContent className="-ml-4">
-          {deals.map((deal) => (
-            <CarouselItem key={deal.id} className="pl-4 md:basis-1/2 lg:basis-2/5">
-              <div className="block p-1 group cursor-pointer" onClick={() => handleDealClick(deal)}>
-                  <Card className="overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:scale-105">
-                    <CardContent className="flex aspect-video items-center justify-center p-0">
-                      <Image src={deal.imageUrl} alt={deal.name} width={600} height={400} className="object-cover w-full h-full" />
-                    </CardContent>
-                  </Card>
-              </div>
-            </CarouselItem>
-          ))}
-        </CarouselContent>
-        <CarouselPrevious className="absolute left-[-50px] top-1/2 -translate-y-1/2 z-10 h-10 w-10 bg-background/80 text-foreground border hover:bg-accent" />
-        <CarouselNext className="absolute right-[-50px] top-1/2 -translate-y-1/2 z-10 h-10 w-10 bg-background/80 text-foreground border hover:bg-accent" />
-      </Carousel>
-      <DealConfirmationDialog 
-        deal={selectedDeal}
-        onConfirm={handleConfirmDeal}
-        isOpen={isDialogOpen}
-        onOpenChange={setDialogOpen}
-      />
-    </div>
-  );
-}
-
-
 export default function Home() {
   const { settings, isLoading } = useSettings();
+  const { menu, isLoading: isMenuLoading } = useMenu();
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
+  const [promoDeal, setPromoDeal] = useState<MenuItem | null>(null);
+  const [isPromoOpen, setPromoOpen] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
-  }, []);
+    // Find a deal to feature in the promo
+    const deals = menu.items.filter(item => item.categoryId === 'C-00001');
+    if (deals.length > 0) {
+        // For now, just pick the first one. Could be randomized.
+        setPromoDeal(deals[0]);
+        
+        // Check if the promo has been shown this session
+        const promoShown = sessionStorage.getItem('promoShown');
+        if (!promoShown) {
+            setPromoOpen(true);
+            sessionStorage.setItem('promoShown', 'true');
+        }
+    }
+  }, [menu.items]);
 
 
   const handleStartOrder = () => {
@@ -138,55 +82,64 @@ export default function Home() {
         alert("No branches are available at the moment. Please check back later.");
     }
   };
+  
+  const handleConfirmPromo = () => {
+    if (!promoDeal) return;
+    const targetBranchId = settings.defaultBranchId || (settings.branches.length > 0 ? settings.branches[0].id : null);
+    if (!targetBranchId) return;
+    
+    setPromoOpen(false);
+    router.push(`/branch/${targetBranchId}?dealId=${promoDeal.id}`);
+  };
 
   return (
-    <div className="flex flex-col h-screen">
-    <Header />
-    <main className="flex-grow flex flex-col items-center justify-between p-8">
-      <div /> 
-      <div className="flex flex-col items-center text-center">
-        
-        {isMounted && settings.companyLogo ? (
-          <Image src={settings.companyLogo} alt={settings.companyName} width={120} height={120} className="object-contain" />
-        ) : (
-          <div style={{ width: 120, height: 120 }} /> 
-        )}
+    <div className="flex flex-col min-h-screen">
+      <Header />
+      <main className="flex-grow flex flex-col items-center justify-center p-8 gap-10">
+        <div className="flex flex-col items-center text-center">
+          
+          {isMounted && settings.companyLogo ? (
+            <Image src={settings.companyLogo} alt={settings.companyName} width={120} height={120} className="object-contain" />
+          ) : (
+            <div style={{ width: 120, height: 120 }} /> 
+          )}
 
-        <div className="space-y-2">
-            <h1 className="font-headline text-4xl font-bold tracking-tight">Welcome to {settings.companyName}</h1>
-            <p className="text-lg text-muted-foreground">The best place for pizza and fast food lovers.</p>
+          <div className="space-y-2 mt-4">
+              <h1 className="font-headline text-4xl font-bold tracking-tight">Welcome to {settings.companyName}</h1>
+              <p className="text-lg text-muted-foreground">The best place for pizza and fast food lovers.</p>
+          </div>
+          
+          {isLoading ? (
+              <div className="flex items-center gap-2 py-10">
+                  <Loader className="h-8 w-8 animate-spin text-primary" />
+                  <span className="text-muted-foreground">Loading restaurant settings...</span>
+              </div>
+          ) : settings.branches.length === 0 ? (
+                <div className="py-10 text-center">
+                  <p className="mt-2 text-muted-foreground">No branches have been configured yet.</p>
+                  <p className="mt-1 text-sm text-muted-foreground">Please log in as an admin to add a branch.</p>
+              </div>
+          ) : (
+              <div className="py-6">
+                  <Button 
+                      onClick={handleStartOrder} 
+                      className="rounded-full h-16 w-auto px-8 text-lg font-bold shadow-lg transition-transform duration-300 hover:scale-105 bg-gradient-to-r from-primary to-amber-400 text-primary-foreground animate-pulse"
+                  >
+                      Start Your Order
+                  </Button>
+              </div>
+          )}
         </div>
-        
-        {isLoading ? (
-            <div className="flex items-center gap-2 py-10">
-                <Loader className="h-8 w-8 animate-spin text-primary" />
-                <span className="text-muted-foreground">Loading restaurant settings...</span>
-            </div>
-        ) : settings.branches.length === 0 ? (
-              <div className="py-10 text-center">
-                <p className="mt-2 text-muted-foreground">No branches have been configured yet.</p>
-                <p className="mt-1 text-sm text-muted-foreground">Please log in as an admin to add a branch.</p>
-            </div>
-        ) : (
-            <div className="py-6">
-                <Button 
-                    onClick={handleStartOrder} 
-                    className="rounded-full h-16 w-auto px-8 text-lg font-bold shadow-lg transition-transform duration-300 hover:scale-105 bg-gradient-to-r from-primary to-amber-400 text-primary-foreground animate-pulse"
-                >
-                    Start Your Order
-                </Button>
-            </div>
-        )}
+      </main>
+      <div className="fixed bottom-8 right-8">
+          <RatingDialog />
       </div>
-
-      <div className="w-full max-w-5xl">
-        <h2 className="text-2xl font-bold font-headline mb-4 text-center">Today's Hot Deals</h2>
-        <DealsCarousel />
-      </div>
-    </main>
-     <div className="fixed bottom-8 right-8">
-        <RatingDialog />
-    </div>
+       <PromotionModal 
+        deal={promoDeal}
+        isOpen={isPromoOpen}
+        onOpenChange={setPromoOpen}
+        onConfirm={handleConfirmPromo}
+      />
     </div>
   );
 }

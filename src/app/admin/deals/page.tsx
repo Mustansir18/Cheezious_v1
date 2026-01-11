@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState } from 'react';
@@ -133,8 +132,8 @@ function DealForm({
         price, 
         imageUrl, 
         dealItems: items,
-        categoryId: 'C-00001',
-        subCategoryId: 'SC-00001',
+        categoryId: 'C-00001', // This identifies it as a deal
+        subCategoryId: 'SC-00001', // Default sub-category for deals
     };
     if (deal) {
       onSave({ ...deal, ...data });
@@ -381,5 +380,3 @@ export default function DealsManagementPage() {
     </div>
   );
 }
-
-    
