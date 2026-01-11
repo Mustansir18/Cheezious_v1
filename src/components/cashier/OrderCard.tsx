@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import type { Order, OrderItem, OrderStatus, CartItem, MenuItem, SelectedAddon } from "@/lib/types";
@@ -398,34 +397,49 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
     return settings.floors.find(f => f.id === table.floorId);
   }, [settings.floors, table]);
 
-  const { dealItems, regularItems } = useMemo(() => {
-    const dealsMap = new Map<string, { deal: OrderItem, components: OrderItem[] }>();
-    const regulars: OrderItem[] = [];
+  const visibleItems = useMemo(() => {
+    // This will hold the items to be displayed: regular items and parent deal items.
+    const displayItems: OrderItem[] = [];
 
-    const parentDealItems = order.items.filter(item => {
-        const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
-        return !item.isDealComponent && menuItem && menuItem.categoryId === 'C-00001';
-    });
-
-    parentDealItems.forEach(dealItem => {
-        dealsMap.set(dealItem.id, { deal: dealItem, components: [] });
-    });
+    // This map will track the components of each deal instance.
+    const dealComponentsMap = new Map<string, OrderItem[]>();
 
     order.items.forEach(item => {
-        if (item.parentDealId) {
-            const parentDealInOrder = order.items.find(parent => parent.id === item.parentDealId);
-            if (parentDealInOrder) {
-                 const dealInMap = dealsMap.get(parentDealInOrder.id);
-                 if (dealInMap) {
-                    dealInMap.components.push(item);
-                 }
-            }
-        } else if (!dealsMap.has(item.id)) {
-            regulars.push(item);
+      if (item.isDealComponent && item.parentDealId) {
+        if (!dealComponentsMap.has(item.parentDealId)) {
+          dealComponentsMap.set(item.parentDealId, []);
         }
+        dealComponentsMap.get(item.parentDealId)!.push(item);
+      } else {
+        // This is a regular item or a parent deal item.
+        displayItems.push(item);
+      }
     });
-    
-    return { dealItems: Array.from(dealsMap.values()), regularItems: regulars };
+
+    // Now, enrich the parent deal items with their components.
+    return displayItems.map(item => {
+      const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
+      const isDeal = menuItem?.categoryId === 'C-00001';
+      
+      if (isDeal) {
+        // Aggregate components for display.
+        const components = dealComponentsMap.get(item.id) || [];
+        const aggregatedComponents = components.reduce((acc, comp) => {
+            const existing = acc.find(a => a.name === comp.name);
+            if (existing) {
+                existing.quantity += comp.quantity;
+            } else {
+                acc.push({ name: comp.name, quantity: comp.quantity });
+            }
+            return acc;
+        }, [] as { name: string; quantity: number }[]);
+
+        return { ...item, aggregatedDealComponents: aggregatedComponents };
+      }
+      
+      return { ...item, aggregatedDealComponents: [] };
+    });
+
   }, [order.items, menu.items]);
 
 
@@ -469,38 +483,12 @@ const OrderTypeIcon = getOrderTypeIcon();
       <CardContent className="flex-grow">
         <ScrollArea className="h-40 pr-4">
             <div className="space-y-3">
-              {dealItems.map(({ deal, components }) => {
-                const aggregatedComponents = components.reduce((acc, comp) => {
-                    const existing = acc.find(a => a.name === comp.name);
-                    if (existing) {
-                        existing.quantity += comp.quantity;
-                    } else {
-                        acc.push({ name: comp.name, quantity: comp.quantity });
-                    }
-                    return acc;
-                }, [] as { name: string; quantity: number }[]);
-
-                return (
-                    <div key={deal.id} className="text-sm">
-                        <div className="flex justify-between items-center">
-                            <div className="font-semibold">{deal.quantity}x {deal.name}</div>
-                            <div className="font-mono font-semibold">RS {Math.round(deal.itemPrice * deal.quantity)}</div>
-                        </div>
-                         <div className="pl-4 text-xs text-muted-foreground border-l-2 ml-1 mt-1 pt-1 space-y-0.5">
-                            <p className="font-semibold text-gray-500">Includes:</p>
-                             {aggregatedComponents.map(comp => (
-                                <div key={comp.name} className="flex justify-between items-center">
-                                  <span>- {comp.quantity}x {comp.name}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )
-              })}
-              {regularItems.map((item) => (
+              {visibleItems.map((item) => (
                 <div key={item.id} className="text-sm">
                   <div className="flex justify-between items-center">
-                    <div><span className="font-semibold">{item.quantity}x</span> {item.name} {item.selectedVariant ? `(${item.selectedVariant.name})` : ''}</div>
+                    <div>
+                      <span className="font-semibold">{item.quantity}x</span> {item.name} {item.selectedVariant ? `(${item.selectedVariant.name})` : ''}
+                    </div>
                     <div className="font-mono">RS {Math.round(item.baseItemPrice * item.quantity)}</div>
                   </div>
                    {item.selectedAddons && item.selectedAddons.length > 0 && (
@@ -513,8 +501,18 @@ const OrderTypeIcon = getOrderTypeIcon();
                             ))}
                         </div>
                     )}
+                    {(item as any).aggregatedDealComponents && (item as any).aggregatedDealComponents.length > 0 && (
+                        <div className="pl-4 text-xs text-muted-foreground border-l-2 ml-1 mt-1 pt-1 space-y-0.5">
+                            <p className="font-semibold text-gray-500">Includes:</p>
+                             {(item as any).aggregatedDealComponents.map((comp: any) => (
+                                <div key={comp.name} className="flex justify-between items-center">
+                                  <span>- {comp.quantity}x {comp.name}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
-            ))}
+              ))}
             </div>
         </ScrollArea>
         
@@ -574,10 +572,10 @@ const OrderTypeIcon = getOrderTypeIcon();
                 {order.status === 'Pending' && <Button onClick={() => handleUpdateStatus('Preparing')} size="sm" className="w-full"><CookingPot className="mr-2 h-4 w-4" /> Accept & Prepare</Button>}
                  {order.status === 'Preparing' && <Button onClick={() => handleUpdateStatus('Ready')} size="sm" className="w-full bg-yellow-500 hover:bg-yellow-600 text-black"><Check className="mr-2 h-4 w-4" /> Mark as Ready</Button>}
                 {order.status === 'Ready' && <Button onClick={() => handleUpdateStatus('Completed')} size="sm" className="w-full bg-green-500 hover:bg-green-600"><CheckCircle className="mr-2 h-4 w-4" /> Mark as Completed</Button>}
-                 {(order.status === 'Pending') && (
+                 {(order.status === 'Pending') && isModifiableByUser && (
                      <div className="grid grid-cols-2 gap-2">
                         <CancellationDialog orderId={order.id} onConfirm={handleCancelOrder} />
-                        {isModifiableByUser && <OrderModificationDialog order={order} />}
+                        <OrderModificationDialog order={order} />
                      </div>
                  )}
                  {(order.status === 'Preparing' || order.status === 'Ready' || order.status === 'Partial Ready') && isModifiableByUser && (
@@ -623,11 +621,3 @@ OrderCard.Skeleton = function OrderCardSkeleton() {
       </Card>
     );
   };
-
-    
-
-
-
-
-
-
