@@ -185,6 +185,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
                     isPrepared: !category?.stationId,
                     instructions: item.instructions,
                     isDealComponent: false,
+                    parentDealCartItemId: parentOrderItemId,
                 });
 
                 if (isDeal) {
@@ -219,6 +220,12 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
             const updatedSubtotal = order.subtotal + newItemsTotal;
             const updatedTaxAmount = updatedSubtotal * order.taxRate;
             const updatedTotalAmount = updatedSubtotal + updatedTaxAmount;
+            
+            // If items are added to a finalized order, reset its status
+            const newStatus = (order.status === 'Ready' || order.status === 'Completed') 
+                ? 'Partial Ready' 
+                : order.status;
+
 
             return {
                 ...order,
@@ -227,6 +234,8 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
                 taxAmount: updatedTaxAmount,
                 totalAmount: updatedTotalAmount,
                 originalTotalAmount: order.originalTotalAmount ? order.originalTotalAmount + newItemsTotal : updatedTotalAmount,
+                status: newStatus,
+                completionDate: newStatus === 'Partial Ready' ? undefined : order.completionDate,
             };
         });
     });
