@@ -15,6 +15,7 @@ export default function MasterCuttStationPage() {
   const { orders, isLoading, dispatchItem } = useOrders();
 
   const ordersForKDS = useMemo(() => {
+    // This filter now correctly shows only orders that require action at the CUTT station.
     return orders
         .filter((order) => KDS_STATUSES.includes(order.status))
         .sort((a,b) => new Date(a.orderDate).getTime() - new Date(b.orderDate).getTime());
