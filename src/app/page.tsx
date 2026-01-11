@@ -1,10 +1,10 @@
 
-
 'use client';
 
 import { useRouter } from 'next/navigation';
 import { useSettings } from '@/context/SettingsContext';
 import { useMenu } from '@/context/MenuContext';
+import { useDeals } from '@/context/DealsContext';
 import { Loader, X } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,7 +15,8 @@ import { RatingDialog } from '@/components/ui/rating-dialog';
 import Header from '@/components/layout/Header';
 import { useState, useEffect, useMemo } from 'react';
 import type { MenuItem } from '@/lib/types';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { DialogTitle } from '@radix-ui/react-dialog';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import Autoplay from "embla-carousel-autoplay";
 
@@ -52,6 +53,7 @@ function PromotionModal({ promoImageUrl, onConfirm, isOpen, onOpenChange }: { pr
 export default function Home() {
   const { settings, isLoading: isSettingsLoading } = useSettings();
   const { menu, isLoading: isMenuLoading } = useMenu();
+  const { deals, isLoading: isDealsLoading } = useDeals();
   const router = useRouter();
   const [isPromoOpen, setPromoOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
@@ -59,20 +61,20 @@ export default function Home() {
   useEffect(() => {
     setIsClient(true);
   }, []);
-
-  const deals = menu.items.filter(item => item.categoryId === 'C-00001');
+  
+  const allItems = useMemo(() => [...menu.items, ...deals], [menu.items, deals]);
 
   const promoItem = useMemo(() => {
-    if (isMenuLoading || !settings.promotion.itemId) return null;
-    return menu.items.find(d => d.id === settings.promotion.itemId);
-  }, [isMenuLoading, menu.items, settings.promotion.itemId]);
+    if (isMenuLoading || isDealsLoading || !settings.promotion.itemId) return null;
+    return allItems.find(d => d.id === settings.promotion.itemId);
+  }, [isMenuLoading, isDealsLoading, allItems, settings.promotion.itemId]);
   
   useEffect(() => {
-    const isReady = isClient && !isSettingsLoading && !isMenuLoading;
+    const isReady = isClient && !isSettingsLoading && !isMenuLoading && !isDealsLoading;
     if (isReady && settings.promotion.isEnabled && promoItem) {
       setPromoOpen(true);
     }
-  }, [isClient, isSettingsLoading, isMenuLoading, settings.promotion.isEnabled, promoItem]);
+  }, [isClient, isSettingsLoading, isMenuLoading, isDealsLoading, settings.promotion.isEnabled, promoItem]);
 
 
   const handleStartOrder = (itemId?: string) => {
@@ -95,7 +97,7 @@ export default function Home() {
     handleStartOrder(promoItem.id);
   };
   
-  const isLoading = isSettingsLoading || isMenuLoading;
+  const isLoading = isSettingsLoading || isMenuLoading || isDealsLoading;
 
   return (
     <div className="flex flex-col min-h-screen">

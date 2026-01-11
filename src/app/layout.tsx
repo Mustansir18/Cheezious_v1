@@ -7,6 +7,7 @@ import { Poppins, PT_Sans } from 'next/font/google';
 import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
 import { MenuProvider } from '@/context/MenuContext';
+import { DealsProvider } from '@/context/DealsContext';
 import { OrderProvider } from '@/context/OrderContext';
 import { SettingsProvider } from '@/context/SettingsContext';
 import { ActivityLogProvider } from '@/context/ActivityLogContext';
@@ -48,16 +49,18 @@ export default function RootLayout({
           <AuthProvider>
             <SettingsProvider>
               <MenuProvider>
-                <OrderProvider>
-                  <RatingProvider>
-                    <CartProvider>
-                      <AppLayout>
-                        {children}
-                      </AppLayout>
-                      <Toaster />
-                    </CartProvider>
-                  </RatingProvider>
-                </OrderProvider>
+                <DealsProvider>
+                  <OrderProvider>
+                    <RatingProvider>
+                      <CartProvider>
+                        <AppLayout>
+                          {children}
+                        </AppLayout>
+                        <Toaster />
+                      </CartProvider>
+                    </RatingProvider>
+                  </OrderProvider>
+                </DealsProvider>
               </MenuProvider>
             </SettingsProvider>
           </AuthProvider>

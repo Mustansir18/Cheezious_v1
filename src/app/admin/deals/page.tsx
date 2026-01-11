@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useMenu } from '@/context/MenuContext';
+import { useDeals } from '@/context/DealsContext';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -58,6 +59,7 @@ async function handleImageUpload(file: File) {
 function PromotionSettingsManager() {
     const { settings, updatePromotion } = useSettings();
     const { menu } = useMenu();
+    const { deals } = useDeals();
     const { toast } = useToast();
     
     const [promotionState, setPromotionState] = useState<PromotionSettings>(settings.promotion);
@@ -66,7 +68,7 @@ function PromotionSettingsManager() {
         setPromotionState(settings.promotion);
     }, [settings.promotion]);
 
-    const promotableItems = menu.items;
+    const promotableItems = useMemo(() => [...menu.items, ...deals], [menu.items, deals]);
 
     const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -167,6 +169,7 @@ function DealForm({
   const [items, setItems] = useState<DealItem[]>(deal?.dealItems || []);
   const [isCompressing, setIsCompressing] = useState(false);
   const { menu } = useMenu();
+  const { deals } = useDeals();
   const { toast } = useToast();
   const [isIdInvalid, setIsIdInvalid] = useState(false);
   const [isItemPopoverOpen, setItemPopoverOpen] = useState(false);
@@ -182,7 +185,7 @@ function DealForm({
   };
 
   const validateId = (value: string) => {
-    if (menu.items.some(d => d.id === value && d.id !== deal?.id)) {
+    if (menu.items.some(d => d.id === value) || deals.some(d => d.id === value && d.id !== deal?.id)) {
       toast({
         variant: 'destructive',
         title: 'Duplicate Code',
@@ -349,18 +352,17 @@ function DealForm({
 }
 
 export default function DealsManagementPage() {
-  const { menu, isLoading, addItem, updateItem, deleteItem } = useMenu();
+  const { menu, isLoading: isMenuLoading } = useMenu();
+  const { deals, isLoading: isDealsLoading, addDeal, updateDeal, deleteDeal } = useDeals();
   const { settings } = useSettings();
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [editingDeal, setEditingDeal] = useState<MenuItem | undefined>();
 
-  const deals = menu.items.filter(item => item.categoryId === 'C-00001');
-
   const handleSaveDeal = (dealData: Omit<MenuItem, 'id'> | MenuItem, id?: string) => {
-    if ('price' in dealData && 'id' in dealData) { // Simple check for MenuItem
-      updateItem(dealData as MenuItem);
+    if ('id' in dealData) {
+      updateDeal(dealData as MenuItem);
     } else if (id) {
-      addItem({ id, ...dealData } as MenuItem);
+      addDeal({ id, ...dealData } as MenuItem);
     }
     setDialogOpen(false);
   };
@@ -384,6 +386,8 @@ export default function DealsManagementPage() {
     const headerInfo = { companyName: settings.companyName, branchName: "All Branches" };
     exportListDataAs(format, data, columns, title, headerInfo);
   };
+
+  const isLoading = isMenuLoading || isDealsLoading;
 
   if (isLoading) {
     return (
@@ -469,7 +473,7 @@ export default function DealsManagementPage() {
                     <DeleteConfirmationDialog
                       title={`Delete Deal "${deal.name}"?`}
                       description={<>This action cannot be undone. This will permanently delete the deal <strong>{deal.name}</strong>.</>}
-                      onConfirm={() => deleteItem(deal.id, deal.name)}
+                      onConfirm={() => deleteDeal(deal.id, deal.name)}
                     />
                   </TableCell>
                 </TableRow>

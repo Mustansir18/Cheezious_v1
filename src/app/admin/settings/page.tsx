@@ -24,7 +24,7 @@ import {
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import type { Branch, Role, UserRole, DeliveryMode } from "@/lib/types";
+import type { Branch, Role, UserRole, DeliveryMode, PromotionSettings } from "@/lib/types";
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
 import { ALL_PERMISSIONS } from '@/config/permissions';
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -387,10 +387,9 @@ export default function AdminSettingsPage() {
             </header>
 
             <Tabs defaultValue="general">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="general">General</TabsTrigger>
                     <TabsTrigger value="roles">Roles & Permissions</TabsTrigger>
-                    <TabsTrigger value="advanced">Advanced</TabsTrigger>
                 </TabsList>
                 <TabsContent value="general" className="mt-6 space-y-8">
                      {/* Floors Management */}
@@ -502,7 +501,7 @@ export default function AdminSettingsPage() {
                  <TabsContent value="roles" className="mt-6">
                     <RoleManagement />
                 </TabsContent>
-                <TabsContent value="advanced">
+                 <TabsContent value="advanced">
                     {!isAdvancedSettingsUnlocked ? (
                         <AdvancedSettingsGate onUnlock={() => setAdvancedSettingsUnlocked(true)} />
                     ) : (
