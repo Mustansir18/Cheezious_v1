@@ -400,11 +400,10 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
 
   const visibleItems = useMemo(() => {
     const mainItems = order.items.filter(i => !i.isDealComponent);
-    const dealComponents = order.items.filter(i => i.isDealComponent);
   
     return mainItems.map(main => {
-      const components = dealComponents.filter(
-        c => c.parentDealCartItemId === main.id
+      const components = order.items.filter(
+        c => c.isDealComponent && c.parentDealCartItemId === main.id
       );
   
       const aggregated = components.reduce((acc, c) => {
@@ -554,9 +553,9 @@ const StatusIcon = statusConfig[order.status]?.icon || Loader;
                 {order.status === 'Pending' && <Button onClick={() => handleUpdateStatus('Preparing')} size="sm" className="w-full"><CookingPot className="mr-2 h-4 w-4" /> Accept & Prepare</Button>}
                  {order.status === 'Preparing' && <Button onClick={() => handleUpdateStatus('Ready')} size="sm" className="w-full bg-yellow-500 hover:bg-yellow-600 text-black"><Check className="mr-2 h-4 w-4" /> Mark as Ready</Button>}
                 {order.status === 'Ready' && <Button onClick={() => handleUpdateStatus('Completed')} size="sm" className="w-full bg-green-500 hover:bg-green-600"><CheckCircle className="mr-2 h-4 w-4" /> Mark as Completed</Button>}
-                 {(order.status === 'Pending') && canModify && (
+                 {(order.status === 'Pending') && (
                      <div className="grid grid-cols-1 gap-2">
-                        <CancellationDialog orderId={order.id} onConfirm={handleCancelOrder} />
+                        {canModify && <CancellationDialog orderId={order.id} onConfirm={handleCancelOrder} />}
                      </div>
                  )}
                  {(order.status === 'Preparing' || order.status === 'Ready' || order.status === 'Partial Ready') && canAddItems && (
