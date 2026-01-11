@@ -402,26 +402,27 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
     const dealComponents = order.items.filter(item => item.isDealComponent);
 
     return mainItems.map(mainItem => {
-      const menuItem = menu.items.find(mi => mi.id === mainItem.menuItemId);
-      const isDeal = menuItem?.dealItems && menuItem.dealItems.length > 0;
+        const menuItem = menu.items.find(mi => mi.id === mainItem.menuItemId);
+        const isDeal = menuItem?.dealItems && menuItem.dealItems.length > 0;
 
-      if (isDeal) {
-        // Find all components in this order that belong to this specific deal instance
-        const componentsForThisDeal = dealComponents.filter(c => c.parentDealId === mainItem.id);
-        
-        // Aggregate them for display (e.g., 2x Fries)
-        const aggregatedComponents = componentsForThisDeal.reduce((acc, comp) => {
-            const existing = acc.find(a => a.name === comp.name);
-            if (existing) {
-                existing.quantity += comp.quantity;
-            } else {
-                acc.push({ name: comp.name, quantity: comp.quantity });
-            }
-            return acc;
-        }, [] as { name: string; quantity: number }[]);
+        if (isDeal) {
+            // Find all components in this order that belong to this specific deal instance
+            // The parentDealId on a component corresponds to the main deal's `id` field in the OrderItem array.
+            const componentsForThisDeal = dealComponents.filter(c => c.parentDealId === mainItem.id);
+            
+            // Aggregate them for display (e.g., 2x Fries)
+            const aggregatedComponents = componentsForThisDeal.reduce((acc, comp) => {
+                const existing = acc.find(a => a.name === comp.name);
+                if (existing) {
+                    existing.quantity += comp.quantity;
+                } else {
+                    acc.push({ name: comp.name, quantity: comp.quantity });
+                }
+                return acc;
+            }, [] as { name: string; quantity: number }[]);
 
-        return { ...mainItem, aggregatedDealComponents: aggregatedComponents };
-      }
+            return { ...mainItem, aggregatedDealComponents };
+        }
       
       return { ...mainItem, aggregatedDealComponents: [] };
     });
@@ -470,11 +471,11 @@ const OrderTypeIcon = getOrderTypeIcon();
             <div className="space-y-3">
               {visibleItems.map((item) => (
                 <div key={item.id} className="text-sm">
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-start">
                     <div>
                       <span className="font-semibold">{item.quantity}x</span> {item.name} {item.selectedVariant ? `(${item.selectedVariant.name})` : ''}
                     </div>
-                    <div className="font-mono">RS {Math.round(item.baseItemPrice * item.quantity)}</div>
+                    <div className="font-mono text-right">RS {Math.round(item.itemPrice * item.quantity)}</div>
                   </div>
                    {item.selectedAddons && item.selectedAddons.length > 0 && (
                         <div className="pl-4 text-xs text-muted-foreground">
@@ -606,3 +607,5 @@ OrderCard.Skeleton = function OrderCardSkeleton() {
       </Card>
     );
   };
+
+    

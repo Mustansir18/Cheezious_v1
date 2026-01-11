@@ -1,8 +1,11 @@
 
+
 'use client';
 
 import { Order } from "@/lib/types";
 import { useSettings } from "@/context/SettingsContext";
+import { useMemo } from "react";
+import { useMenu } from "@/context/MenuContext";
 
 interface OrderReceiptProps {
     order: Order;
@@ -10,11 +13,40 @@ interface OrderReceiptProps {
 
 export function OrderReceipt({ order }: OrderReceiptProps) {
     const { settings } = useSettings();
+    const { menu } = useMenu();
     const branch = settings.branches.find(b => b.id === order.branchId);
     const table = settings.tables.find(t => t.id === order.tableId);
     const floor = settings.floors.find(f => f.id === table?.floorId);
 
     const displayTotal = order.originalTotalAmount ?? order.totalAmount;
+    
+    const visibleItems = useMemo(() => {
+        const mainItems = order.items.filter(item => !item.isDealComponent);
+        const dealComponents = order.items.filter(item => item.isDealComponent);
+
+        return mainItems.map(mainItem => {
+            const menuItem = menu.items.find(mi => mi.id === mainItem.menuItemId);
+            const isDeal = menuItem?.dealItems && menuItem.dealItems.length > 0;
+
+            if (isDeal) {
+                const componentsForThisDeal = dealComponents.filter(c => c.parentDealId === mainItem.id);
+                
+                const aggregatedComponents = componentsForThisDeal.reduce((acc, comp) => {
+                    const existing = acc.find(a => a.name === comp.name);
+                    if (existing) {
+                        existing.quantity += comp.quantity;
+                    } else {
+                        acc.push({ name: comp.name, quantity: comp.quantity });
+                    }
+                    return acc;
+                }, [] as { name: string; quantity: number }[]);
+
+                return { ...mainItem, aggregatedDealComponents };
+            }
+          
+            return { ...mainItem, aggregatedDealComponents: [] };
+        });
+    }, [order.items, menu.items]);
 
     return (
         <div className="p-4 bg-white text-black font-mono text-xs w-[300px] border border-gray-200">
@@ -67,12 +99,12 @@ export function OrderReceipt({ order }: OrderReceiptProps) {
                     <span>Item</span>
                     <span>Price</span>
                 </div>
-                {order.items.map(item => (
+                {visibleItems.map(item => (
                     <div key={item.id}>
                         <div className="flex justify-between items-start gap-2">
                             <span className="break-words w-4/5">{item.quantity}x {item.name} {item.selectedVariant ? `(${item.selectedVariant.name})` : ''}</span>
                             <span className="text-right tabular-nums whitespace-nowrap">
-                                {Math.round(item.baseItemPrice * item.quantity)}
+                                {Math.round(item.itemPrice * item.quantity)}
                             </span>
                         </div>
                         {item.selectedAddons && item.selectedAddons.length > 0 && (
@@ -83,6 +115,16 @@ export function OrderReceipt({ order }: OrderReceiptProps) {
                                         <span className="text-right tabular-nums whitespace-nowrap">
                                             {Math.round(addon.price * addon.quantity * item.quantity)}
                                         </span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        {(item as any).aggregatedDealComponents && (item as any).aggregatedDealComponents.length > 0 && (
+                            <div className="pl-4 text-gray-600">
+                                <p className="font-semibold text-gray-500">Includes:</p>
+                                {(item as any).aggregatedDealComponents.map((comp: any) => (
+                                    <div key={comp.name} className="flex justify-between items-center">
+                                      <span>- {comp.quantity}x {comp.name}</span>
                                     </div>
                                 ))}
                             </div>
@@ -143,3 +185,5 @@ export function OrderReceipt({ order }: OrderReceiptProps) {
         </div>
     );
 }
+
+    

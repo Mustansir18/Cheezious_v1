@@ -157,47 +157,81 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
 
   const addItemsToOrder = useCallback((orderId: string, itemsToAdd: CartItem[]) => {
     setOrders(prevOrders => {
-        const orderToUpdate = prevOrders.find(o => o.id === orderId);
-        if (!orderToUpdate) return prevOrders;
+        return prevOrders.map(order => {
+            if (order.id !== orderId) return order;
 
-        const newOrderItems: OrderItem[] = itemsToAdd.map((item: CartItem) => {
-            const menuItem = menu.items.find(mi => mi.id === item.id);
-            const category = menu.categories.find(c => c.id === menuItem?.categoryId);
+            const newOrderItems: OrderItem[] = [];
+            itemsToAdd.forEach(item => {
+                const menuItem = menu.items.find(mi => mi.id === item.id);
+                if (!menuItem) return;
+
+                const category = menu.categories.find(c => c.id === menuItem.categoryId);
+                
+                const isDeal = menuItem.dealItems && menuItem.dealItems.length > 0;
+
+                const parentOrderItemId = crypto.randomUUID();
+
+                newOrderItems.push({
+                    id: parentOrderItemId,
+                    orderId: orderId,
+                    menuItemId: item.id,
+                    name: item.name,
+                    quantity: item.quantity,
+                    itemPrice: item.price,
+                    baseItemPrice: item.basePrice,
+                    selectedAddons: item.selectedAddons.map(a => ({ name: a.name, price: a.price, quantity: a.quantity })),
+                    selectedVariant: item.selectedVariant,
+                    stationId: category?.stationId,
+                    isPrepared: !category?.stationId,
+                    instructions: item.instructions,
+                    isDealComponent: false,
+                });
+
+                if (isDeal) {
+                    menuItem.dealItems?.forEach(dealItemDef => {
+                        const componentMenuItem = menu.items.find(i => i.id === dealItemDef.menuItemId);
+                        if(componentMenuItem) {
+                            const componentCategory = menu.categories.find(c => c.id === componentMenuItem.categoryId);
+                            for (let i = 0; i < dealItemDef.quantity; i++) {
+                                newOrderItems.push({
+                                    id: crypto.randomUUID(),
+                                    orderId: orderId,
+                                    menuItemId: componentMenuItem.id,
+                                    name: componentMenuItem.name,
+                                    quantity: 1,
+                                    itemPrice: 0,
+                                    baseItemPrice: 0,
+                                    selectedAddons: [],
+                                    isDealComponent: true,
+                                    parentDealId: parentOrderItemId,
+                                    stationId: componentCategory?.stationId,
+                                    isPrepared: !componentCategory?.stationId
+                                });
+                            }
+                        }
+                    });
+                }
+            });
+
+            const newItemsTotal = newOrderItems.filter(i => !i.isDealComponent).reduce((sum, item) => sum + (item.itemPrice * item.quantity), 0);
+            
+            const updatedItems = [...order.items, ...newOrderItems];
+            const updatedSubtotal = order.subtotal + newItemsTotal;
+            const updatedTaxAmount = updatedSubtotal * order.taxRate;
+            const updatedTotalAmount = updatedSubtotal + updatedTaxAmount;
+
             return {
-                id: crypto.randomUUID(),
-                orderId: orderId,
-                menuItemId: item.id,
-                name: item.name,
-                quantity: item.quantity,
-                itemPrice: item.price,
-                baseItemPrice: item.basePrice,
-                selectedAddons: item.selectedAddons.map(a => ({ name: a.name, price: a.price, quantity: a.quantity })),
-                selectedVariant: item.selectedVariant ? { name: item.selectedVariant.name, price: item.selectedVariant.price } : undefined,
-                stationId: category?.stationId,
-                isPrepared: !category?.stationId, // Auto-prepared if no station
-                instructions: item.instructions,
+                ...order,
+                items: updatedItems,
+                subtotal: updatedSubtotal,
+                taxAmount: updatedTaxAmount,
+                totalAmount: updatedTotalAmount,
+                originalTotalAmount: order.originalTotalAmount ? order.originalTotalAmount + newItemsTotal : updatedTotalAmount,
             };
         });
-
-        const newItemsTotal = newOrderItems.reduce((sum, item) => sum + (item.itemPrice * item.quantity), 0);
-        
-        const updatedItems = [...orderToUpdate.items, ...newOrderItems];
-        const updatedSubtotal = orderToUpdate.subtotal + newItemsTotal;
-        const updatedTaxAmount = updatedSubtotal * orderToUpdate.taxRate;
-        const updatedTotalAmount = updatedSubtotal + updatedTaxAmount;
-
-        const updatedOrder = {
-            ...orderToUpdate,
-            items: updatedItems,
-            subtotal: updatedSubtotal,
-            taxAmount: updatedTaxAmount,
-            totalAmount: updatedTotalAmount,
-            originalTotalAmount: orderToUpdate.originalTotalAmount ? orderToUpdate.originalTotalAmount + newItemsTotal : undefined,
-        };
-
-        return prevOrders.map(o => o.id === orderId ? updatedOrder : o);
     });
-  }, [menu.items, menu.categories]);
+}, [menu.items, menu.categories]);
+
 
   const updateOrderStatus = useCallback((orderId: string, status: OrderStatus, reason?: string) => {
     setOrders(prevOrders => {
@@ -342,3 +376,5 @@ export const useOrders = () => {
   }
   return context;
 };
+
+    
