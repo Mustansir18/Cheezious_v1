@@ -41,7 +41,7 @@ export function OrderReceipt({ order }: OrderReceiptProps) {
                     return acc;
                 }, [] as { name: string; quantity: number }[]);
 
-                return { ...mainItem, aggregatedDealComponents };
+                return { ...mainItem, aggregatedDealComponents: aggregatedComponents };
             }
           
             return { ...mainItem, aggregatedDealComponents: [] };
