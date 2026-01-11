@@ -4,19 +4,26 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Pizza } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/context/CartContext";
 import { CartSheet } from "@/components/cart/CartSheet";
 import { Badge } from "@/components/ui/badge";
 import { useSettings } from "@/context/SettingsContext";
 import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
 
 export default function Header({ branchId }: { branchId?: string }) {
   const { cartCount } = useCart();
   const { settings } = useSettings();
   const router = useRouter();
   const branch = settings.branches.find((b) => b.id === branchId);
+
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleCheckStatus = () => {
     router.push('/queue');
@@ -26,7 +33,11 @@ export default function Header({ branchId }: { branchId?: string }) {
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-sm">
       <div className="w-full flex h-16 items-center justify-between px-4 lg:px-8">
         <Link href="/" className="flex items-center gap-2">
-          <Image src={settings.companyLogo || ''} alt={settings.companyName} width={40} height={40} className="object-contain" />
+          {isClient ? (
+            <Image src={settings.companyLogo || ''} alt={settings.companyName} width={40} height={40} className="object-contain" />
+          ) : (
+            <div style={{ width: 40, height: 40 }} /> // Placeholder to prevent layout shift
+          )}
           <span className="hidden font-headline text-xl font-bold text-primary sm:inline-block">
             {settings.companyName}
           </span>

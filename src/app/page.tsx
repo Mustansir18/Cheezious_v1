@@ -14,7 +14,7 @@ import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { RatingDialog } from '@/components/ui/rating-dialog';
 import Header from '@/components/layout/Header';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { MenuItem } from '@/lib/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 
@@ -121,6 +121,12 @@ function DealsCarousel() {
 export default function Home() {
   const { settings, isLoading } = useSettings();
   const router = useRouter();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
 
   const handleStartOrder = () => {
     if (!isLoading && settings.defaultBranchId) {
@@ -138,7 +144,11 @@ export default function Home() {
     <main className="w-full px-4 lg:px-8">
       <div className="flex flex-col items-center justify-center space-y-6 pt-20 text-center">
         
-        <Image src={settings.companyLogo || ''} alt={settings.companyName} width={96} height={96} className="object-contain" />
+        {isClient ? (
+          <Image src={settings.companyLogo || ''} alt={settings.companyName} width={96} height={96} className="object-contain" />
+        ) : (
+          <div style={{ width: 96, height: 96 }} /> // Placeholder
+        )}
 
         <div className="space-y-2">
             <h1 className="font-headline text-5xl font-bold tracking-tight">Welcome to {settings.companyName}</h1>

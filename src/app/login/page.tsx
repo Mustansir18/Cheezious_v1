@@ -1,8 +1,7 @@
 
-
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -24,6 +23,11 @@ export default function LoginPage() {
   const { settings } = useSettings();
   const router = useRouter();
   const { toast } = useToast();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,7 +72,11 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm">
         <form onSubmit={handleLogin}>
           <CardHeader className="text-center">
-             <Image src={settings.companyLogo || ''} alt={settings.companyName} width={80} height={80} className="mx-auto object-contain" />
+             {isClient ? (
+                <Image src={settings.companyLogo || ''} alt={settings.companyName} width={80} height={80} className="mx-auto object-contain" />
+             ) : (
+                <div style={{ width: 80, height: 80 }} className="mx-auto" />
+             )}
             <CardTitle className="font-headline text-2xl">Welcome to {settings.companyName}</CardTitle>
             <CardDescription>Enter your credentials to access your dashboard.</CardDescription>
           </CardHeader>
@@ -90,7 +98,8 @@ export default function LoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  required
+                  placeholder={user ? "Leave blank to keep current password" : ""}
+                  required={!user}
                 />
                 <Button
                   type="button"
