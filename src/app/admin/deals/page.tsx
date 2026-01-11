@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState } from 'react';
@@ -236,7 +237,7 @@ function DealForm({
           {imageUrl && !isCompressing && (
             <div className="mt-4">
               <p className="text-sm font-medium mb-2">Image Preview:</p>
-              <Image src={imageUrl} alt="Image preview" width={100} height={100} className="rounded-md object-cover" />
+              <Image src={imageUrl} alt="Image preview" width={100} height={100} className="rounded-md object-contain" />
             </div>
           )}
         </div>
@@ -338,7 +339,7 @@ export default function DealsManagementPage() {
               {deals.map(deal => (
                 <TableRow key={deal.id}>
                   <TableCell>
-                    <Image src={deal.imageUrl} alt={deal.name} width={64} height={64} className="rounded-md object-cover" />
+                    <Image src={deal.imageUrl} alt={deal.name} width={64} height={64} className="rounded-md object-contain" />
                   </TableCell>
                   <TableCell className="font-medium">{deal.name}</TableCell>
                   <TableCell className="font-mono text-xs">{deal.id}</TableCell>

@@ -44,7 +44,7 @@ export default function OrderConfirmationPage() {
   const selectedPaymentMethod = useMemo(() => settings.paymentMethods.find(pm => pm.name === paymentMethod), [paymentMethod, settings.paymentMethods]);
   const taxRate = useMemo(() => selectedPaymentMethod?.taxRate || 0, [selectedPaymentMethod]);
   const taxAmount = useMemo(() => cartTotal * taxRate, [cartTotal, taxRate]);
-  const grandTotal = useMemo(() => cartTotal + taxAmount, [cartTotal, taxRate]);
+  const grandTotal = useMemo(() => cartTotal + taxAmount, [cartTotal, taxAmount]);
 
   const displayedItems = useMemo(() => {
     const mainItems = items.filter(item => !item.isDealComponent);
@@ -205,7 +205,7 @@ export default function OrderConfirmationPage() {
                     alt={item.name}
                     width={48}
                     height={48}
-                    className="rounded-md object-cover"
+                    className="rounded-md object-contain"
                   />
                   <div className="flex-grow">
                     <p className="font-semibold text-left">{item.quantity}x {item.name} {item.selectedVariant ? `(${item.selectedVariant.name})` : ''}</p>

@@ -55,7 +55,7 @@ const CartItemDisplay = ({ item }: { item: CartItem }) => {
           alt={item.name}
           width={64}
           height={64}
-          className="rounded-md object-cover"
+          className="rounded-md object-contain"
           data-ai-hint="food item"
         />
         <div className="flex-grow space-y-1">

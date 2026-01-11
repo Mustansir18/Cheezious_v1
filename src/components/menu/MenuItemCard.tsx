@@ -254,7 +254,7 @@ export function MenuItemCard({ item }: { item: MenuItem }) {
             src={item.imageUrl || FALLBACK_IMAGE_URL}
             alt={item.name}
             fill
-            className="object-cover"
+            className="object-contain"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             data-ai-hint="food meal"
           />

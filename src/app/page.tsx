@@ -40,7 +40,7 @@ function PromotionModal({ promoImageUrl, onConfirm, isOpen, onOpenChange }: { pr
                         alt="Special Promotion"
                         width={800}
                         height={600}
-                        className="object-cover w-full h-full rounded-lg cursor-pointer"
+                        className="object-contain w-full h-full rounded-lg cursor-pointer"
                         onClick={onConfirm}
                     />
                 </div>
@@ -56,8 +56,10 @@ export default function Home() {
   const [isMounted, setIsMounted] = useState(false);
   const [isPromoOpen, setPromoOpen] = useState(false);
   
-  const deals = menu.items.filter(item => item.categoryId === 'C-00001');
-
+  // The first deal is the main promotion, the rest are for the carousel
+  const mainPromotion = menu.items.find(item => item.categoryId === 'C-00001');
+  const deals = menu.items.filter(item => item.id !== mainPromotion?.id && item.categoryId === 'C-00001');
+  
   // Find the specific item to be used in the promotion from settings
   const promoItem = useMemo(() => {
     if (!settings.promotion.isEnabled || !settings.promotion.itemId) return null;
@@ -157,7 +159,7 @@ export default function Home() {
                                             src={deal.imageUrl}
                                             alt={deal.name}
                                             fill
-                                            className="object-cover transition-transform group-hover:scale-105"
+                                            className="object-contain transition-transform group-hover:scale-105"
                                         />
                                     </div>
                                     <div className="p-4 flex-grow">
