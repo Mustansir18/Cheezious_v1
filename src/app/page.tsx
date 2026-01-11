@@ -137,7 +137,13 @@ export default function Home() {
     <Header />
     <main className="w-full px-4 lg:px-8">
       <div className="flex flex-col items-center justify-center space-y-6 pt-20 text-center">
-        <Pizza className="h-24 w-24 text-primary animate-icon-blink" />
+        
+        {settings.companyLogo ? (
+            <Image src={settings.companyLogo} alt={settings.companyName} width={96} height={96} className="object-contain" />
+        ) : (
+            <Pizza className="h-24 w-24 text-primary animate-icon-blink" />
+        )}
+
         <div className="space-y-2">
             <h1 className="font-headline text-5xl font-bold tracking-tight">Welcome to {settings.companyName}</h1>
             <p className="text-lg text-muted-foreground">The best place for pizza and fast food lovers.</p>
