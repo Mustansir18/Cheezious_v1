@@ -351,7 +351,6 @@ interface OrderCardProps {
 
 export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, children, isMutable = true }: OrderCardProps) {
   const { settings } = useSettings();
-  const { menu } = useMenu();
   const { user } = useAuth();
   
   const handleUpdateStatus = (newStatus: OrderStatus) => {
@@ -398,32 +397,28 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
   }, [settings.floors, table]);
 
   const visibleItems = useMemo(() => {
-    const mainItems = order.items.filter(item => !item.isDealComponent);
-    const dealComponents = order.items.filter(item => item.isDealComponent);
-
-    return mainItems.map(mainItem => {
-      const menuItem = menu.items.find(mi => mi.id === mainItem.menuItemId);
-      const isDeal = !!menuItem?.dealItems && menuItem.dealItems.length > 0;
-
-      if (isDeal) {
-        const componentsForThisDeal = dealComponents.filter(c => c.parentDealId === mainItem.id);
-        
-        const aggregatedComponents = componentsForThisDeal.reduce((acc, comp) => {
-          const existing = acc.find(a => a.name === comp.name);
-          if (existing) {
-            existing.quantity += comp.quantity;
-          } else {
-            acc.push({ name: comp.name, quantity: comp.quantity });
-          }
-          return acc;
-        }, [] as { name: string; quantity: number }[]);
-
-        return { ...mainItem, aggregatedDealComponents: aggregatedComponents };
-      }
-      
-      return { ...mainItem, aggregatedDealComponents: [] };
+    const mainItems = order.items.filter(i => !i.isDealComponent);
+  
+    return mainItems.map(main => {
+      const components = order.items.filter(
+        c => c.isDealComponent && c.parentDealCartItemId === main.id
+      );
+  
+      const aggregated = components.reduce((acc, c) => {
+        const key = c.menuItemId;
+        if (!acc[key]) {
+          acc[key] = { name: c.name, quantity: 0 };
+        }
+        acc[key].quantity += c.quantity;
+        return acc;
+      }, {} as Record<string, { name: string; quantity: number }>);
+  
+      return {
+        ...main,
+        aggregatedDealComponents: Object.values(aggregated),
+      };
     });
-  }, [order.items, menu.items]);
+  }, [order.items]);
 
 
 const getOrderTypeIcon = () => {
@@ -604,9 +599,3 @@ OrderCard.Skeleton = function OrderCardSkeleton() {
       </Card>
     );
   };
-
-    
-
-    
-
-    

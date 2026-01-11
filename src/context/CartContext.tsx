@@ -158,7 +158,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         }
 
         const newItems: CartItem[] = [];
-        const parentDealId = crypto.randomUUID();
+        const parentDealCartItemId = crypto.randomUUID();
 
         const addonPrice = selectedAddons.reduce((sum, addon) => sum + (addon.selectedPrice * addon.quantity), 0);
         const basePrice = isDeal ? itemToAdd.price : (selectedVariant ? selectedVariant.price : itemToAdd.price);
@@ -166,7 +166,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
         newItems.push({
             ...itemToAdd,
-            cartItemId: parentDealId,
+            cartItemId: parentDealCartItemId,
             uniqueVariationId: variationId,
             price: finalPrice,
             basePrice: basePrice,
@@ -181,7 +181,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             for (const dealItem of itemToAdd.dealItems) {
                 const componentItem = menu.items.find(i => i.id === dealItem.menuItemId);
                 if (componentItem) {
-                    for (let i = 0; i < dealItem.quantity; i++) {
+                    for (let i = 0; i < dealItem.quantity * itemQuantity; i++) {
                         newItems.push({
                             ...componentItem,
                             cartItemId: crypto.randomUUID(),
@@ -190,7 +190,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
                             basePrice: 0,
                             selectedAddons: [],
                             isDealComponent: true,
-                            parentDealId: parentDealId,
+                            parentDealCartItemId: parentDealCartItemId, // Corrected link
                         });
                     }
                 }
@@ -216,10 +216,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
       if (newQuantity <= 0) {
         // Filter out the item itself and any components that belong to it if it's a deal
-        if (itemToUpdate.categoryId === 'C-00001') {
-            return prevItems.filter(i => i.cartItemId !== cartItemId && i.parentDealId !== cartItemId);
-        }
-        return prevItems.filter((item) => item.cartItemId !== cartItemId);
+        return prevItems.filter(i => i.cartItemId !== cartItemId && i.parentDealCartItemId !== cartItemId);
       }
 
       return prevItems.map((item) =>
@@ -292,5 +289,3 @@ export const useCart = () => {
   }
   return context;
 };
-
-    

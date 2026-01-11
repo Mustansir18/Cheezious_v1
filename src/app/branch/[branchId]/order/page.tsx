@@ -20,7 +20,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CreditCard, MessageSquarePlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
-import { useMenu } from "@/context/MenuContext";
 
 const FALLBACK_IMAGE_URL = "https://picsum.photos/seed/placeholder/400/300";
 
@@ -28,7 +27,6 @@ export default function OrderConfirmationPage() {
   const { items, cartTotal, branchId, orderType, floorId, tableId, deliveryMode, customerName, customerPhone, customerAddress, clearCart, closeCart, setIsCartOpen } = useCart();
   const { addOrder } = useOrders();
   const { settings } = useSettings();
-  const { menu } = useMenu();
   const router = useRouter();
   const { toast } = useToast();
   const [paymentMethod, setPaymentMethod] = useState<string>('');
@@ -51,7 +49,7 @@ export default function OrderConfirmationPage() {
     const mainItems = items.filter(item => !item.isDealComponent);
     return mainItems.map(mainItem => {
         if (mainItem.categoryId === 'C-00001') { // It's a deal
-            const components = items.filter(i => i.parentDealId === mainItem.cartItemId);
+            const components = items.filter(i => i.isDealComponent && i.parentDealCartItemId === mainItem.cartItemId);
             const aggregatedComponents = components.reduce((acc, comp) => {
                 const existing = acc.find(a => a.name === comp.name);
                 if (existing) {
@@ -93,24 +91,24 @@ export default function OrderConfirmationPage() {
     const orderId = crypto.randomUUID();
     const orderNumber = `${branch.orderPrefix}-${Date.now().toString().slice(-6)}`;
 
-    const orderItems: OrderItem[] = items.map((item: CartItem) => {
-        const menuItem = menu.items.find(mi => mi.id === item.id);
+    const orderItems: OrderItem[] = items.map((cartItem: CartItem): OrderItem => {
+        const menuItem = menu.items.find(mi => mi.id === cartItem.id);
         const category = menu.categories.find(c => c.id === menuItem?.categoryId);
         return {
-            id: crypto.randomUUID(),
+            id: cartItem.cartItemId, // Use the unique cartItemId as the OrderItem ID
             orderId: orderId,
-            menuItemId: item.id,
-            name: item.name,
-            quantity: item.quantity,
-            itemPrice: item.price,
-            baseItemPrice: item.basePrice,
-            selectedAddons: item.selectedAddons.map(a => ({ name: a.name, price: a.price, quantity: a.quantity })),
-            selectedVariant: item.selectedVariant ? { name: item.selectedVariant.name, price: item.selectedVariant.price } : undefined,
+            menuItemId: cartItem.id,
+            name: cartItem.name,
+            quantity: cartItem.quantity,
+            itemPrice: cartItem.price,
+            baseItemPrice: cartItem.basePrice,
+            selectedAddons: cartItem.selectedAddons.map(a => ({ name: a.name, price: a.price, quantity: a.quantity })),
+            selectedVariant: cartItem.selectedVariant ? { name: cartItem.selectedVariant.name, price: cartItem.selectedVariant.price } : undefined,
             stationId: category?.stationId,
             isPrepared: !category?.stationId,
-            isDealComponent: !!item.isDealComponent,
-            parentDealId: item.parentDealId,
-            instructions: item.instructions,
+            isDealComponent: !!cartItem.isDealComponent,
+            parentDealCartItemId: cartItem.parentDealCartItemId,
+            instructions: cartItem.instructions,
         };
     });
 
@@ -175,6 +173,8 @@ export default function OrderConfirmationPage() {
     router.push("/order-status");
   };
 
+  const { menu } = useMenu();
+
   return (
     <div className="w-full px-4 py-12 lg:px-8">
       <Card className="shadow-xl max-w-2xl mx-auto">
@@ -212,7 +212,7 @@ export default function OrderConfirmationPage() {
                      {/* For regular items with addons */}
                     {item.selectedAddons.length > 0 && (
                         <div className="pl-4 text-sm text-muted-foreground text-left border-l-2 ml-2 mt-1">
-                            {item.selectedAddons.map(addon => (<p key={addon.name}>+ {addon.quantity}x {addon.name}</p>))}
+                            {item.selectedAddons.map(addon => (<p key={addon.id}>+ {addon.quantity}x {addon.name}</p>))}
                         </div>
                     )}
                     

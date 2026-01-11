@@ -91,7 +91,7 @@ export type CartItem = Omit<MenuItem, 'price' | 'availableAddonIds'> & {
   selectedAddons: SelectedAddon[];
   selectedVariant?: MenuItemVariant; // The chosen size/variant for this cart item
   isDealComponent?: boolean; // Flag to identify items added as part of a deal
-  parentDealId?: string; // ID of the parent deal item in the cart
+  parentDealCartItemId?: string; // Correct: ID of the parent deal's cart item instance
   dealName?: string;
   instructions?: string; // Special instructions for this specific cart item
 };
@@ -136,7 +136,7 @@ export type Order = {
 };
 
 export type OrderItem = {
-    id: string; // Will be a client-generated UUID
+    id: string; // Will be a client-generated UUID, unique for each line item instance
     orderId: string;
     menuItemId: string;
     quantity: number;
@@ -153,7 +153,7 @@ export type OrderItem = {
     order?: Order;
     instructions?: string; // Special instructions for this specific item
     isDealComponent?: boolean; // Is this item part of a deal bundle?
-    parentDealId?: string; // Which order item is the parent deal?
+    parentDealCartItemId?: string; // Correct: Which cart-item-level ID is the parent deal?
 };
 
 export type PlacedOrder = {

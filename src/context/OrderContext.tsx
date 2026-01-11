@@ -192,7 +192,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
                         const componentMenuItem = menu.items.find(i => i.id === dealItemDef.menuItemId);
                         if(componentMenuItem) {
                             const componentCategory = menu.categories.find(c => c.id === componentMenuItem.categoryId);
-                            for (let i = 0; i < dealItemDef.quantity; i++) {
+                            for (let i = 0; i < dealItemDef.quantity * item.quantity; i++) {
                                 newOrderItems.push({
                                     id: crypto.randomUUID(),
                                     orderId: orderId,
@@ -203,7 +203,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
                                     baseItemPrice: 0,
                                     selectedAddons: [],
                                     isDealComponent: true,
-                                    parentDealId: parentOrderItemId,
+                                    parentDealCartItemId: parentOrderItemId,
                                     stationId: componentCategory?.stationId,
                                     isPrepared: !componentCategory?.stationId
                                 });
@@ -376,5 +376,3 @@ export const useOrders = () => {
   }
   return context;
 };
-
-    

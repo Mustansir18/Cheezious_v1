@@ -23,23 +23,28 @@ import { useMenu } from "@/context/MenuContext";
 
 const FALLBACK_IMAGE_URL = "https://picsum.photos/seed/placeholder/400/300";
 
-const CartItemDisplay = ({ item, allItems }: { item: CartItem, allItems: CartItem[] }) => {
-  const { menu } = useMenu();
-
+const CartItemDisplay = ({ item }: { item: CartItem }) => {
+  const { items } = useCart();
+  
   if (item.isDealComponent) {
     return null;
   }
 
   const isDeal = item.categoryId === 'C-00001';
 
+  // Find and aggregate components for this specific deal instance
   const dealComponents = isDeal 
-    ? (item.dealItems || []).map(dealItem => {
-        const menuItem = menu.items.find(i => i.id === dealItem.menuItemId);
-        return {
-            name: menuItem?.name || 'Unknown Item',
-            quantity: dealItem.quantity,
-        };
-    })
+    ? items
+        .filter(c => c.isDealComponent && c.parentDealCartItemId === item.cartItemId)
+        .reduce((acc, component) => {
+            const existing = acc.find(a => a.name === component.name);
+            if (existing) {
+                existing.quantity += component.quantity;
+            } else {
+                acc.push({ name: component.name, quantity: component.quantity });
+            }
+            return acc;
+        }, [] as { name: string; quantity: number }[])
     : [];
 
   return (
@@ -101,7 +106,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             <ScrollArea className="flex-grow">
               <div className="pr-4">
                 {visibleItems.map((item) => (
-                  <CartItemDisplay key={item.cartItemId} item={item} allItems={items} />
+                  <CartItemDisplay key={item.cartItemId} item={item} />
                 ))}
               </div>
             </ScrollArea>
