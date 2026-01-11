@@ -72,8 +72,8 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm">
         <form onSubmit={handleLogin}>
           <CardHeader className="text-center">
-             {isClient ? (
-                <Image src={settings.companyLogo || ''} alt={settings.companyName} width={80} height={80} className="mx-auto object-contain" />
+             {isClient && settings.companyLogo ? (
+                <Image src={settings.companyLogo} alt={settings.companyName} width={80} height={80} className="mx-auto object-contain" />
              ) : (
                 <div style={{ width: 80, height: 80 }} className="mx-auto" />
              )}

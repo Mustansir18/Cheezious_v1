@@ -33,8 +33,8 @@ export default function Header({ branchId }: { branchId?: string }) {
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-sm">
       <div className="w-full flex h-16 items-center justify-between px-4 lg:px-8">
         <Link href="/" className="flex items-center gap-2">
-          {isClient ? (
-            <Image src={settings.companyLogo || ''} alt={settings.companyName} width={40} height={40} className="object-contain" />
+          {isClient && settings.companyLogo ? (
+            <Image src={settings.companyLogo} alt={settings.companyName} width={40} height={40} className="object-contain" />
           ) : (
             <div style={{ width: 40, height: 40 }} /> // Placeholder to prevent layout shift
           )}

@@ -144,8 +144,8 @@ export default function Home() {
     <main className="w-full px-4 lg:px-8">
       <div className="flex flex-col items-center justify-center space-y-6 pt-20 text-center">
         
-        {isClient ? (
-          <Image src={settings.companyLogo || ''} alt={settings.companyName} width={96} height={96} className="object-contain" />
+        {isClient && settings.companyLogo ? (
+          <Image src={settings.companyLogo} alt={settings.companyName} width={96} height={96} className="object-contain" />
         ) : (
           <div style={{ width: 96, height: 96 }} /> // Placeholder
         )}
