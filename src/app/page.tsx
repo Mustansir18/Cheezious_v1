@@ -54,26 +54,25 @@ export default function Home() {
   const { menu, isLoading: isMenuLoading } = useMenu();
   const router = useRouter();
   const [isPromoOpen, setPromoOpen] = useState(false);
-  
-  const allPromotableItems = menu.items;
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const deals = menu.items.filter(item => item.categoryId === 'C-00001');
 
-  // Find the specific item to be used in the promotion from settings
   const promoItem = useMemo(() => {
-    if (!settings.promotion.itemId) return null;
-    return allPromotableItems.find(d => d.id === settings.promotion.itemId);
-  }, [allPromotableItems, settings.promotion.itemId]);
-
-
-  // This effect now correctly triggers on every component mount (page load/refresh).
-  // It waits for both settings and menu to be loaded before checking.
+    if (isMenuLoading || !settings.promotion.itemId) return null;
+    return menu.items.find(d => d.id === settings.promotion.itemId);
+  }, [isMenuLoading, menu.items, settings.promotion.itemId]);
+  
   useEffect(() => {
-    const isReady = !isSettingsLoading && !isMenuLoading;
+    const isReady = isClient && !isSettingsLoading && !isMenuLoading;
     if (isReady && settings.promotion.isEnabled && promoItem) {
       setPromoOpen(true);
     }
-  }, [isSettingsLoading, isMenuLoading, settings.promotion.isEnabled, promoItem]);
+  }, [isClient, isSettingsLoading, isMenuLoading, settings.promotion.isEnabled, promoItem]);
 
 
   const handleStartOrder = (itemId?: string) => {
