@@ -1,11 +1,12 @@
 
+
 'use client';
 
 import { useRouter } from 'next/navigation';
 import { useSettings } from '@/context/SettingsContext';
 import { useMenu } from '@/context/MenuContext';
 import { useDeals } from '@/context/DealsContext';
-import { Loader, X } from 'lucide-react';
+import { Loader, X, ShoppingCart } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -15,10 +16,11 @@ import { RatingDialog } from '@/components/ui/rating-dialog';
 import Header from '@/components/layout/Header';
 import { useState, useEffect, useMemo } from 'react';
 import type { MenuItem } from '@/lib/types';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { DialogTitle } from '@radix-ui/react-dialog';
+import { Dialog, DialogContent, DialogDescription } from '@/components/ui/dialog';
+import { DialogTitle, DialogHeader, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import Autoplay from "embla-carousel-autoplay";
+import { Separator } from '@/components/ui/separator';
 
 
 function PromotionModal({ promoImageUrl, onConfirm, isOpen, onOpenChange }: { promoImageUrl: string; onConfirm: () => void; isOpen: boolean; onOpenChange: (open: boolean) => void; }) {
@@ -50,12 +52,63 @@ function PromotionModal({ promoImageUrl, onConfirm, isOpen, onOpenChange }: { pr
     );
 }
 
+function DealDetailDialog({ deal, isOpen, onOpenChange, onConfirm }: { deal: MenuItem | null; isOpen: boolean; onOpenChange: (open: boolean) => void; onConfirm: (dealId: string) => void; }) {
+    const { menu } = useMenu();
+    if (!deal) return null;
+
+    const includedItems = deal.dealItems?.map(dealItem => {
+        const item = menu.items.find(i => i.id === dealItem.menuItemId);
+        return {
+            ...dealItem,
+            name: item?.name || 'Unknown Item',
+        };
+    }) || [];
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle className="font-headline text-2xl">{deal.name}</DialogTitle>
+                    <DialogDescription>{deal.description}</DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                    <h4 className="font-semibold mb-2">What's Included:</h4>
+                    <div className="space-y-2 rounded-md border p-4">
+                        {includedItems.map(item => (
+                            <div key={item.menuItemId} className="flex justify-between">
+                                <span>{item.quantity}x {item.name}</span>
+                            </div>
+                        ))}
+                    </div>
+                    <Separator className="my-4"/>
+                    <div className="flex justify-between items-center">
+                        <span className="text-lg font-semibold">Total Price:</span>
+                        <span className="font-headline text-2xl font-bold text-primary">RS {Math.round(deal.price)}</span>
+                    </div>
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button variant="outline">Cancel</Button>
+                    </DialogClose>
+                    <Button onClick={() => onConfirm(deal.id)}>
+                        <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+
 export default function Home() {
   const { settings, isLoading: isSettingsLoading } = useSettings();
   const { menu, isLoading: isMenuLoading } = useMenu();
   const { deals, isLoading: isDealsLoading } = useDeals();
   const router = useRouter();
+
   const [isPromoOpen, setPromoOpen] = useState(false);
+  const [selectedDeal, setSelectedDeal] = useState<MenuItem | null>(null);
+  const [isDealDetailOpen, setDealDetailOpen] = useState(false);
 
   const allItems = useMemo(() => [...menu.items, ...deals], [menu.items, deals]);
 
@@ -67,8 +120,6 @@ export default function Home() {
   const isLoading = isSettingsLoading || isMenuLoading || isDealsLoading;
   
   useEffect(() => {
-    // This effect runs whenever the loading states or promotion settings change.
-    // It will reliably open the dialog once all data is loaded.
     if (!isLoading && settings.promotion.isEnabled && promoItem) {
       setPromoOpen(true);
     }
@@ -89,10 +140,20 @@ export default function Home() {
     }
   };
 
+  const handleDealClick = (deal: MenuItem) => {
+    setSelectedDeal(deal);
+    setDealDetailOpen(true);
+  };
+
+  const handleConfirmDeal = (dealId: string) => {
+    setDealDetailOpen(false);
+    handleStartOrder(dealId);
+  };
+
   const handleConfirmPromo = () => {
     if (!promoItem) return;
     setPromoOpen(false);
-    handleStartOrder(promoItem.id);
+    handleDealClick(promoItem);
   };
 
   return (
@@ -144,7 +205,7 @@ export default function Home() {
                             <div className="p-1 h-full">
                             <Card 
                                 className="overflow-hidden cursor-pointer group h-full flex flex-col"
-                                onClick={() => handleStartOrder(deal.id)}
+                                onClick={() => handleDealClick(deal)}
                             >
                                 <CardContent className="p-0 flex flex-col flex-grow">
                                     <div className="relative w-full h-48">
@@ -186,6 +247,12 @@ export default function Home() {
             onConfirm={handleConfirmPromo}
         />
        )}
+       <DealDetailDialog 
+            deal={selectedDeal}
+            isOpen={isDealDetailOpen}
+            onOpenChange={setDealDetailOpen}
+            onConfirm={handleConfirmDeal}
+       />
     </div>
   );
 }
