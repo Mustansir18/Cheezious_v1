@@ -4,7 +4,7 @@
 import { useRouter } from 'next/navigation';
 import { useSettings } from '@/context/SettingsContext';
 import { useMenu } from '@/context/MenuContext';
-import { Loader, Pizza } from 'lucide-react';
+import { Loader } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
@@ -17,7 +17,6 @@ import Header from '@/components/layout/Header';
 import { useState } from 'react';
 import type { MenuItem } from '@/lib/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { useIsClient } from '@/components/ui/use-is-client';
 
 function DealConfirmationDialog({ deal, onConfirm, isOpen, onOpenChange }: { deal: MenuItem | null; onConfirm: () => void; isOpen: boolean; onOpenChange: (open: boolean) => void; }) {
     if (!deal) return null;
@@ -122,7 +121,6 @@ function DealsCarousel() {
 export default function Home() {
   const { settings, isLoading } = useSettings();
   const router = useRouter();
-  const isClient = useIsClient();
 
   const handleStartOrder = () => {
     if (!isLoading && settings.defaultBranchId) {
@@ -140,11 +138,7 @@ export default function Home() {
     <main className="w-full px-4 lg:px-8">
       <div className="flex flex-col items-center justify-center space-y-6 pt-20 text-center">
         
-        {isClient && settings.companyLogo ? (
-            <Image src={settings.companyLogo} alt={settings.companyName} width={96} height={96} className="object-contain" />
-        ) : (
-            <Pizza className="h-24 w-24 text-primary animate-icon-blink" />
-        )}
+        <Image src={settings.companyLogo || ''} alt={settings.companyName} width={96} height={96} className="object-contain" />
 
         <div className="space-y-2">
             <h1 className="font-headline text-5xl font-bold tracking-tight">Welcome to {settings.companyName}</h1>

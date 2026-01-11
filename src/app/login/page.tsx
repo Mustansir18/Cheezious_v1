@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader, Eye, EyeOff, Pizza, Home } from 'lucide-react';
+import { Loader, Eye, EyeOff, Home } from 'lucide-react';
 import { useSettings } from '@/context/SettingsContext';
 
 export default function LoginPage() {
@@ -68,11 +68,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm">
         <form onSubmit={handleLogin}>
           <CardHeader className="text-center">
-             {settings.companyLogo ? (
-                <Image src={settings.companyLogo} alt={settings.companyName} width={80} height={80} className="mx-auto object-contain" />
-              ) : (
-                <Pizza className="mx-auto h-16 w-auto text-primary animate-icon-blink" />
-              )}
+             <Image src={settings.companyLogo || ''} alt={settings.companyName} width={80} height={80} className="mx-auto object-contain" />
             <CardTitle className="font-headline text-2xl">Welcome to {settings.companyName}</CardTitle>
             <CardDescription>Enter your credentials to access your dashboard.</CardDescription>
           </CardHeader>

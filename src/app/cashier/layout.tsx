@@ -2,21 +2,24 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { LogOut, Pizza } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { CashierRouteGuard } from '@/components/auth/CashierRouteGuard';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useSettings } from '@/context/SettingsContext';
 
 function CashierHeader() {
     const { logout } = useAuth();
+    const { settings } = useSettings();
     return (
         <header className="sticky top-0 z-40 w-full border-b bg-background">
             <div className="w-full flex h-16 items-center justify-between px-4 lg:px-8">
                 <Link href="/" className="flex items-center gap-2">
-                <Pizza className="h-8 w-8 text-primary animate-icon-blink" />
+                <Image src={settings.companyLogo || ''} alt={settings.companyName} width={36} height={36} className="object-contain" />
                 <span className="hidden font-headline text-xl font-bold text-primary sm:inline-block">
-                    Cheezious
+                    {settings.companyName}
                 </span>
                 </Link>
                 <div className="flex items-center gap-2">

@@ -2,16 +2,19 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { LogOut, Pizza, Star, BarChart, Target } from 'lucide-react';
+import { LogOut, Star, BarChart, Target } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { MarketingRouteGuard } from '@/components/auth/MarketingRouteGuard';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePathname } from 'next/navigation';
+import { useSettings } from '@/context/SettingsContext';
 
 function MarketingHeader() {
     const { logout } = useAuth();
     const pathname = usePathname();
+    const { settings } = useSettings();
     
     const navLinks = [
         { href: '/marketing/reporting', label: 'Sales Reports', icon: BarChart },
@@ -23,9 +26,9 @@ function MarketingHeader() {
         <header className="sticky top-0 z-40 w-full border-b bg-background">
             <div className="w-full flex h-16 items-center justify-between px-4 lg:px-8">
                 <Link href="/" className="flex items-center gap-2">
-                    <Pizza className="h-8 w-8 text-primary animate-icon-blink" />
+                    <Image src={settings.companyLogo || ''} alt={settings.companyName} width={36} height={36} className="object-contain" />
                     <span className="hidden font-headline text-xl font-bold text-primary sm:inline-block">
-                        Cheezious
+                        {settings.companyName}
                     </span>
                 </Link>
                 
