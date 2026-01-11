@@ -195,6 +195,7 @@ export type User = {
     password?: string; // Optional because we don't store it client-side for non-root users
     role: UserRole;
     branchId?: string; // Assigned branch for admins and cashiers
+    stationName?: string; // Assigned station for KDS users
 };
 
 // --- Role Management Types ---

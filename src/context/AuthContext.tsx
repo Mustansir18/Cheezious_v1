@@ -53,12 +53,12 @@ const initialUsers: User[] = [
         password: 'markeeting',
         role: 'marketing',
     },
-    { id: 'CH-KDS-01', username: 'kds', password: 'KDS', role: 'kds', branchId: defaultBranchId },
-    { id: 'CH-KDS-02', username: 'fried', password: 'FRIED', role: 'fried-station', branchId: defaultBranchId },
-    { id: 'CH-KDS-03', username: 'make', password: 'MAKE', role: 'make-station', branchId: defaultBranchId },
-    { id: 'CH-KDS-04', username: 'cutt', password: 'CUTT', role: 'cutt-station', branchId: defaultBranchId },
-    { id: 'CH-KDS-05', username: 'bar', password: 'BAR', role: 'bar-station', branchId: defaultBranchId },
-    { id: 'CH-KDS-06', username: 'pasta', password: 'PASTA', role: 'pasta-station', branchId: defaultBranchId },
+    { id: 'CH-KDS-01', username: 'kds', password: 'KDS', role: 'kds', stationName: 'All Stations', branchId: defaultBranchId },
+    { id: 'CH-KDS-02', username: 'fried', password: 'FRIED', role: 'fried-station', stationName: 'FRIED Station', branchId: defaultBranchId },
+    { id: 'CH-KDS-03', username: 'make', password: 'MAKE', role: 'make-station', stationName: 'MAKE Station', branchId: defaultBranchId },
+    { id: 'CH-KDS-04', username: 'cutt', password: 'CUTT', role: 'cutt-station', stationName: 'CUTT Station', branchId: defaultBranchId },
+    { id: 'CH-KDS-05', username: 'bar', password: 'BAR', role: 'bar-station', stationName: 'BEVERAGES Station', branchId: defaultBranchId },
+    { id: 'CH-KDS-06', username: 'pasta', password: 'PASTA', role: 'pasta-station', stationName: 'PASTA Station', branchId: defaultBranchId },
 ];
 
 const USERS_STORAGE_KEY = 'cheeziousUsers';

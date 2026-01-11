@@ -31,7 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { PlusCircle, User, Edit } from "lucide-react";
+import { PlusCircle, User, Edit, Key } from "lucide-react";
 import type { User as UserType, UserRole } from "@/lib/types";
 import {
   Select,
@@ -75,9 +75,41 @@ function UserForm({
       }
     }
   };
+  
+  const getStationNameForRole = (roleId: string): string | undefined => {
+    const kdsRoleMapping: Record<string, string> = {
+        'kds': 'All Stations',
+        'make-station': 'MAKE Station',
+        'pasta-station': 'PASTA Station',
+        'fried-station': 'FRIED Station',
+        'bar-station': 'BEVERAGES Station',
+        'cutt-station': 'CUTT Station',
+    };
+    return kdsRoleMapping[roleId];
+  };
+
+  const handleSave = (e: FormEvent) => {
+    e.preventDefault();
+    const stationName = getStationNameForRole(role as string);
+
+    if (user) {
+      onSave({
+        ...user,
+        username,
+        role: role as UserRole,
+        branchId,
+        stationName,
+        ...(password && { password }),
+      });
+    } else {
+      if (id && username && password) {
+        onSave({ username, password, role: role as UserRole, branchId, stationName }, id);
+      }
+    }
+  };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSave} className="space-y-4">
       {user ? (
         <div>
           <Label htmlFor="user-id">User Code</Label>
@@ -129,7 +161,7 @@ function UserForm({
         </Select>
       </div>
 
-      {(role === "admin" || role === "cashier") && (
+      {(role === "admin" || role === "cashier" || (role as string).includes('-station')) && (
         <div>
           <Label htmlFor="branch">Branch</Label>
           <Select value={branchId} onValueChange={setBranchId} required>
@@ -175,6 +207,7 @@ export default function UserManagementPage() {
         password: userToSave.password!,
         role: userToSave.role,
         branchId: userToSave.branchId,
+        stationName: userToSave.stationName,
       });
     }
     setDialogOpen(false);
@@ -238,6 +271,7 @@ export default function UserManagementPage() {
                 <TableHead>Username</TableHead>
                 <TableHead>Code</TableHead>
                 <TableHead>Role</TableHead>
+                <TableHead>Station</TableHead>
                 <TableHead>Branch</TableHead>
                 <TableHead className="text-right w-[120px]">Actions</TableHead>
               </TableRow>
@@ -257,6 +291,9 @@ export default function UserManagementPage() {
                       {getRoleName(u.role)}
                     </Badge>
                   </TableCell>
+                   <TableCell>
+                      {u.stationName || "N/A"}
+                   </TableCell>
                   <TableCell>
                     {settings.branches.find((b) => b.id === u.branchId)?.name ??
                       "N/A"}
