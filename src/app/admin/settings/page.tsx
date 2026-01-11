@@ -263,6 +263,7 @@ function AdvancedSettingsGate({ onUnlock }: { onUnlock: () => void }) {
 export default function AdminSettingsPage() {
     const { settings, addFloor, deleteFloor, addTable, deleteTable, addPaymentMethod, deletePaymentMethod, toggleAutoPrint, updateBranch, toggleService, updateBusinessDayHours, addBranch, deleteBranch, setDefaultBranch, updateCompanyName, updateCompanyLogo, updatePaymentMethodTaxRate, addDeliveryMode, deleteDeliveryMode } = useSettings();
     const { user } = useAuth();
+    const { toast } = useToast();
     
     const [isAdvancedSettingsUnlocked, setAdvancedSettingsUnlocked] = useState(false);
 
