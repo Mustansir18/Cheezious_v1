@@ -9,7 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import MasterOrderSlip from '@/components/cashier/MasterOrderSlip';
 
 
-const KDS_STATUSES: OrderStatus[] = ['Pending', 'Preparing', 'Partial Ready'];
+const KDS_STATUSES: OrderStatus[] = ['Preparing', 'Partial Ready'];
 
 export default function MasterCuttStationPage() {
   const { orders, isLoading, dispatchItem } = useOrders();

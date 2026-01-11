@@ -9,7 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useParams, notFound } from 'next/navigation';
 import StationOrderCard from '@/components/cashier/StationOrderCard';
 
-const KDS_STATUSES: OrderStatus[] = ['Pending', 'Preparing', 'Partial Ready'];
+const KDS_STATUSES: OrderStatus[] = ['Preparing', 'Partial Ready'];
 
 const stationInfo: Record<KitchenStation, { name: string; icon: React.ElementType }> = {
     pizza: { name: 'MAKE Station', icon: Pizza },
