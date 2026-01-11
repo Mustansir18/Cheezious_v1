@@ -27,6 +27,7 @@ interface Settings {
     paymentMethods: PaymentMethod[];
     autoPrintReceipts: boolean;
     companyName: string;
+    companyLogo?: string;
     branches: Branch[];
     defaultBranchId: string | null;
     businessDayStart: string; // "HH:MM"
@@ -53,6 +54,7 @@ interface SettingsContextType {
   toggleService: (branchId: string, service: 'dineInEnabled' | 'takeAwayEnabled' | 'deliveryEnabled', enabled: boolean) => void;
   updateBusinessDayHours: (start: string, end: string) => void;
   updateCompanyName: (name: string) => void;
+  updateCompanyLogo: (logoUrl: string) => void;
   addRole: (role: Role) => void;
   updateRole: (role: Role) => void;
   deleteRole: (id: UserRole) => void;
@@ -104,6 +106,7 @@ const initialSettings: Settings = {
     paymentMethods: defaultPaymentMethods,
     autoPrintReceipts: false,
     companyName: "Cheezious",
+    companyLogo: '',
     branches: initialBranches,
     defaultBranchId: initialBranches[0]?.id || null,
     businessDayStart: "11:00",
@@ -290,9 +293,11 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
 
   const updateCompanyName = useCallback((name: string) => {
     setSettings(s => ({...s, companyName: name}));
-    toast({ title: "Success", description: "Company name has been updated." });
-    logActivity(`Updated company name to: '${name}'.`, user?.username || 'System', 'Settings');
-  }, [toast, logActivity, user]);
+  }, []);
+  
+  const updateCompanyLogo = useCallback((logoUrl: string) => {
+    setSettings(s => ({...s, companyLogo: logoUrl}));
+  }, []);
 
   const addRole = useCallback((newRole: Role) => {
     if (!newRole.id) {
@@ -368,6 +373,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         toggleService,
         updateBusinessDayHours,
         updateCompanyName,
+        updateCompanyLogo,
         addRole,
         updateRole,
         deleteRole,

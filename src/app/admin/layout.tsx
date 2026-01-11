@@ -3,6 +3,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   Home,
   Settings,
@@ -30,10 +31,12 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import { AdminRouteGuard } from '@/components/auth/AdminRouteGuard';
 import { usePathname } from 'next/navigation';
+import { useSettings } from '@/context/SettingsContext';
 
 
 function AdminSidebar() {
   const { user, logout } = useAuth();
+  const { settings } = useSettings();
   const pathname = usePathname();
 
   const navLinks = [
@@ -59,8 +62,12 @@ function AdminSidebar() {
           href="/"
           className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
         >
-          <Pizza className="h-5 w-5 transition-all group-hover:scale-110 animate-icon-blink" />
-          <span className="sr-only">Cheezious</span>
+          {settings.companyLogo ? (
+            <Image src={settings.companyLogo} alt={settings.companyName} width={28} height={28} className="object-contain rounded-full" />
+          ) : (
+            <Pizza className="h-5 w-5 transition-all group-hover:scale-110 animate-icon-blink" />
+          )}
+          <span className="sr-only">{settings.companyName}</span>
         </Link>
         <TooltipProvider>
             {visibleLinks.map(link => (

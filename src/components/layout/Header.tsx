@@ -2,6 +2,7 @@
 'use client';
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ShoppingCart, Pizza } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,11 @@ export default function Header({ branchId }: { branchId?: string }) {
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-sm">
       <div className="w-full flex h-16 items-center justify-between px-4 lg:px-8">
         <Link href="/" className="flex items-center gap-2">
-          <Pizza className="h-8 w-8 text-primary animate-icon-blink" />
+          {settings.companyLogo ? (
+            <Image src={settings.companyLogo} alt={settings.companyName} width={40} height={40} className="object-contain" />
+          ) : (
+            <Pizza className="h-8 w-8 text-primary animate-icon-blink" />
+          )}
           <span className="hidden font-headline text-xl font-bold text-primary sm:inline-block">
             {settings.companyName}
           </span>

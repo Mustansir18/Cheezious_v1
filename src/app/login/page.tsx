@@ -4,6 +4,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -67,7 +68,11 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm">
         <form onSubmit={handleLogin}>
           <CardHeader className="text-center">
-            <Pizza className="mx-auto h-16 w-auto text-primary animate-icon-blink" />
+             {settings.companyLogo ? (
+                <Image src={settings.companyLogo} alt={settings.companyName} width={80} height={80} className="mx-auto object-contain" />
+              ) : (
+                <Pizza className="mx-auto h-16 w-auto text-primary animate-icon-blink" />
+              )}
             <CardTitle className="font-headline text-2xl">Welcome to {settings.companyName}</CardTitle>
             <CardDescription>Enter your credentials to access your dashboard.</CardDescription>
           </CardHeader>

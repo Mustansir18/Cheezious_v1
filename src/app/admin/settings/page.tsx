@@ -3,6 +3,7 @@
 'use client';
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useSettings } from "@/context/SettingsContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -29,6 +30,28 @@ import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-di
 import { ALL_PERMISSIONS } from '@/config/permissions';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
+import imageCompression from 'browser-image-compression';
+
+async function handleImageUpload(file: File) {
+  const options = {
+    maxSizeMB: 0.2, // Max size 200KB
+    maxWidthOrHeight: 400, // Max width or height 400px
+    useWebWorker: true,
+  };
+  try {
+    const compressedFile = await imageCompression(file, options);
+    return await imageCompression.getDataUrlFromFile(compressedFile);
+  } catch (error) {
+    console.error('Image compression failed:', error);
+    // Fallback for safety, though it might exceed size limits
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+}
 
 function RoleForm({
   role,
@@ -238,7 +261,7 @@ function AdvancedSettingsGate({ onUnlock }: { onUnlock: () => void }) {
 }
 
 export default function AdminSettingsPage() {
-    const { settings, addFloor, deleteFloor, addTable, deleteTable, addPaymentMethod, deletePaymentMethod, toggleAutoPrint, updateBranch, toggleService, updateBusinessDayHours, addBranch, deleteBranch, setDefaultBranch, updateCompanyName, updatePaymentMethodTaxRate, addDeliveryMode, deleteDeliveryMode } = useSettings();
+    const { settings, addFloor, deleteFloor, addTable, deleteTable, addPaymentMethod, deletePaymentMethod, toggleAutoPrint, updateBranch, toggleService, updateBusinessDayHours, addBranch, deleteBranch, setDefaultBranch, updateCompanyName, updateCompanyLogo, updatePaymentMethodTaxRate, addDeliveryMode, deleteDeliveryMode } = useSettings();
     const { user } = useAuth();
     
     const [isAdvancedSettingsUnlocked, setAdvancedSettingsUnlocked] = useState(false);
@@ -254,6 +277,7 @@ export default function AdminSettingsPage() {
     const [editingBranchName, setEditingBranchName] = useState("");
     const [editingBranchPrefix, setEditingBranchPrefix] = useState("");
     const [companyName, setCompanyName] = useState(settings.companyName);
+    const [companyLogo, setCompanyLogo] = useState(settings.companyLogo || '');
     const [newDeliveryModeId, setNewDeliveryModeId] = useState('');
     const [newDeliveryModeName, setNewDeliveryModeName] = useState('');
     
@@ -268,7 +292,8 @@ export default function AdminSettingsPage() {
         setBusinessDayStart(settings.businessDayStart);
         setBusinessDayEnd(settings.businessDayEnd);
         setCompanyName(settings.companyName);
-    }, [settings.businessDayStart, settings.businessDayEnd, settings.companyName]);
+        setCompanyLogo(settings.companyLogo || '');
+    }, [settings]);
 
 
     const handleAddFloor = () => {
@@ -316,9 +341,21 @@ export default function AdminSettingsPage() {
         updateBusinessDayHours(businessDayStart, businessDayEnd);
     };
 
-    const handleSaveCompanyName = () => {
+    const handleSaveCompanyInfo = () => {
         if (companyName.trim()) {
             updateCompanyName(companyName.trim());
+        }
+        if (companyLogo) {
+            updateCompanyLogo(companyLogo);
+        }
+        toast({ title: 'Success', description: 'Company information has been updated.' });
+    };
+
+    const handleLogoImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+          const compressedDataUrl = await handleImageUpload(file);
+          setCompanyLogo(compressedDataUrl);
         }
     };
 
@@ -469,15 +506,14 @@ export default function AdminSettingsPage() {
                         <AdvancedSettingsGate onUnlock={() => setAdvancedSettingsUnlocked(true)} />
                     ) : (
                         <div className="space-y-8 mt-6">
-                             {/* Company Name Settings */}
                             <Card>
                                 <CardHeader>
                                     <CardTitle>Company Information</CardTitle>
-                                    <CardDescription>Set the name of your company or restaurant.</CardDescription>
+                                    <CardDescription>Set the company name and logo displayed across the app.</CardDescription>
                                 </CardHeader>
-                                <CardContent>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 items-end gap-4">
-                                        <div className="space-y-2 md:col-span-2">
+                                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="space-y-4">
+                                        <div className="space-y-2">
                                             <Label htmlFor="company-name">Company Name</Label>
                                             <Input
                                                 id="company-name"
@@ -485,25 +521,48 @@ export default function AdminSettingsPage() {
                                                 onChange={(e) => setCompanyName(e.target.value)}
                                             />
                                         </div>
-                                         <AlertDialog>
-                                            <AlertDialogTrigger asChild>
-                                                <Button>Save Company Name</Button>
-                                            </AlertDialogTrigger>
-                                            <AlertDialogContent>
-                                                <AlertDialogHeader>
-                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                    This will change the company name displayed across the entire application.
-                                                </AlertDialogDescription>
-                                                </AlertDialogHeader>
-                                                <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={handleSaveCompanyName}>Save</AlertDialogAction>
-                                                </AlertDialogFooter>
-                                            </AlertDialogContent>
-                                        </AlertDialog>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="company-logo">Company Logo</Label>
+                                            <Input 
+                                                id="company-logo" 
+                                                type="file" 
+                                                accept="image/*" 
+                                                onChange={handleLogoImageChange}
+                                                className="file:text-foreground"
+                                            />
+                                            <p className="text-xs text-muted-foreground">Recommended: Square, less than 200KB.</p>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Logo Preview</Label>
+                                        <div className="flex items-center justify-center p-4 border rounded-lg h-40 bg-muted/50">
+                                            {companyLogo ? (
+                                                <Image src={companyLogo} alt="Company Logo Preview" width={128} height={128} className="object-contain rounded-md" />
+                                            ) : (
+                                                <p className="text-muted-foreground">No logo set</p>
+                                            )}
+                                        </div>
                                     </div>
                                 </CardContent>
+                                <CardFooter>
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button>Save Company Info</Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This will change the company name and logo displayed across the entire application.
+                                            </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={handleSaveCompanyInfo}>Save</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                </CardFooter>
                             </Card>
 
                             {/* Branch Management */}
