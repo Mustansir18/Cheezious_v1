@@ -375,11 +375,16 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
             return order;
         }
 
+        // Find the new payment method and its tax rate
         const paymentMethodDetails = settings.paymentMethods.find(pm => pm.name === newPaymentMethod);
         const newTaxRate = paymentMethodDetails?.taxRate ?? 0;
         
+        // Recalculate tax based on the subtotal
         const newTaxAmount = order.subtotal * newTaxRate;
-        const newTotalAmount = order.subtotal + newTaxAmount;
+
+        // Recalculate total amount from subtotal, new tax, and existing discount
+        const totalBeforeDiscount = order.subtotal + newTaxAmount;
+        const newTotalAmount = Math.max(0, totalBeforeDiscount - (order.discountAmount || 0));
         
         return {
             ...order,
@@ -387,11 +392,6 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
             taxRate: newTaxRate,
             taxAmount: newTaxAmount,
             totalAmount: newTotalAmount,
-            // Reset discounts if any, as totals change. Or handle it as per business logic.
-            // For now, we assume changing payment re-evaluates the final amount from subtotal.
-            discountAmount: 0,
-            isComplementary: false,
-            originalTotalAmount: newTotalAmount, 
         };
     }));
   }, [settings.paymentMethods]);
@@ -433,5 +433,6 @@ export const useOrders = () => {
 
 
     
+
 
 
