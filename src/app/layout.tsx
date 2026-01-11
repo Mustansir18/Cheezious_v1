@@ -4,6 +4,13 @@ import { Toaster } from "@/components/ui/toaster"
 import './globals.css';
 import AppLayout from './AppLayout';
 import { Poppins, PT_Sans } from 'next/font/google';
+import { AuthProvider } from '@/context/AuthContext';
+import { CartProvider } from '@/context/CartContext';
+import { MenuProvider } from '@/context/MenuContext';
+import { OrderProvider } from '@/context/OrderContext';
+import { SettingsProvider } from '@/context/SettingsContext';
+import { ActivityLogProvider } from '@/context/ActivityLogContext';
+import { RatingProvider } from '@/context/RatingContext';
 
 // This is a dynamic metadata export.
 // In a real app, you might fetch this from the SettingsContext,
@@ -37,10 +44,24 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${poppins.variable} ${ptSans.variable}`}>
       <body className="font-body antialiased">
-        <AppLayout>
-          {children}
-        </AppLayout>
-        <Toaster />
+        <ActivityLogProvider>
+          <AuthProvider>
+            <SettingsProvider>
+              <MenuProvider>
+                <OrderProvider>
+                  <RatingProvider>
+                    <CartProvider>
+                      <AppLayout>
+                        {children}
+                      </AppLayout>
+                      <Toaster />
+                    </CartProvider>
+                  </RatingProvider>
+                </OrderProvider>
+              </MenuProvider>
+            </SettingsProvider>
+          </AuthProvider>
+        </ActivityLogProvider>
       </body>
     </html>
   );
