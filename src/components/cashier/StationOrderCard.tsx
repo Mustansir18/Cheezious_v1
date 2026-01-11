@@ -25,6 +25,7 @@ interface AggregatedStationItem {
     name: string;
     totalQuantity: number;
     addons: { name: string; price: number; quantity: number }[];
+    instructions?: string;
     componentItemIds: string[]; // IDs of the original OrderItem objects
 }
 
@@ -37,10 +38,11 @@ export default function StationOrderCard({ order, stationItems, onItemsPrepared 
         const itemMap = new Map<string, AggregatedStationItem>();
 
         stationItems.forEach(item => {
-            // Create a unique key based on the item, its variant, and its addons
+            // Create a unique key based on the item, its variant, addons, and instructions
             const addonsKey = (item.selectedAddons || []).map(a => `${a.name}:${a.quantity}`).sort().join(',');
             const variantKey = item.selectedVariant ? item.selectedVariant.name : 'no-variant';
-            const aggregationKey = `${item.menuItemId}-${variantKey}-${addonsKey}`;
+            const instructionsKey = item.instructions || 'no-instructions';
+            const aggregationKey = `${item.menuItemId}-${variantKey}-${addonsKey}-${instructionsKey}`;
 
             if (itemMap.has(aggregationKey)) {
                 const existing = itemMap.get(aggregationKey)!;
@@ -56,6 +58,7 @@ export default function StationOrderCard({ order, stationItems, onItemsPrepared 
                     name: itemNameWithVariant,
                     totalQuantity: item.quantity,
                     addons: item.selectedAddons || [],
+                    instructions: item.instructions,
                     componentItemIds: [item.id],
                 });
             }
@@ -123,6 +126,9 @@ export default function StationOrderCard({ order, stationItems, onItemsPrepared 
                                             <p key={addon.name}>+ {addon.quantity}x {addon.name}</p>
                                         ))}
                                     </div>
+                                )}
+                                {aggItem.instructions && (
+                                    <p className="text-xs italic text-blue-600">"{aggItem.instructions}"</p>
                                 )}
                             </Label>
                         </div>
