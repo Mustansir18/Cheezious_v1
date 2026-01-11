@@ -134,6 +134,7 @@ export type Order = {
     discountAmount?: number;
     originalTotalAmount?: number;
     // Audit fields
+    placedBy?: string; // userId of user who placed the order, or 'Customer'
     completedBy?: string; // userId of user who marked as completed
 };
 

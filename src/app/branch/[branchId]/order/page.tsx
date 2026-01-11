@@ -13,6 +13,7 @@ import Link from "next/link";
 import type { PlacedOrder, Order, OrderItem, CartItem } from "@/lib/types";
 import { syncOrderToExternalSystem } from "@/ai/flows/sync-order-flow";
 import { useOrders } from "@/context/OrderContext";
+import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/context/SettingsContext";
 import { Label } from "@/components/ui/label";
@@ -27,6 +28,7 @@ const FALLBACK_IMAGE_URL = "https://picsum.photos/seed/placeholder/400/300";
 export default function OrderConfirmationPage() {
   const { items, cartTotal, branchId, orderType, floorId, tableId, deliveryMode, customerName, customerPhone, customerAddress, clearCart, closeCart, setIsCartOpen } = useCart();
   const { addOrder } = useOrders();
+  const { user } = useAuth();
   const { settings } = useSettings();
   const router = useRouter();
   const { toast } = useToast();
@@ -127,6 +129,7 @@ export default function OrderConfirmationPage() {
         items: orderItems,
         paymentMethod,
         instructions,
+        placedBy: user ? user.id : 'Customer',
         floorId: orderType === 'Dine-In' ? floorId : undefined,
         tableId: orderType === 'Dine-In' ? tableId : undefined,
         deliveryMode: orderType === 'Delivery' ? deliveryMode : undefined,

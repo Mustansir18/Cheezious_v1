@@ -16,7 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { formatDistanceToNow } from "date-fns";
 import { Skeleton } from "../ui/skeleton";
 import { ScrollArea } from "../ui/scroll-area";
-import { Utensils, ShoppingBag, Check, CheckCircle, CookingPot, Loader, CreditCard, Printer, Info, XCircle, Tag, Gift, MessageSquareText, CheckCheck, PlusCircle, Bike, Search } from "lucide-react";
+import { Utensils, ShoppingBag, Check, CheckCircle, CookingPot, Loader, CreditCard, Printer, Info, XCircle, Tag, Gift, MessageSquareText, CheckCheck, PlusCircle, Bike, Search, User } from "lucide-react";
 import { useMemo, useState, useCallback } from "react";
 import { useSettings } from "@/context/SettingsContext";
 import { OrderReceipt } from "./OrderReceipt";
@@ -384,7 +384,7 @@ interface OrderCardProps {
 
 export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, children, isMutable = true }: OrderCardProps) {
   const { settings } = useSettings();
-  const { user } = useAuth();
+  const { user, users } = useAuth();
   
   const handleUpdateStatus = (newStatus: OrderStatus) => {
     onUpdateStatus(order.id, newStatus);
@@ -467,6 +467,7 @@ const getOrderTypeIcon = () => {
 
 const OrderTypeIcon = getOrderTypeIcon();
 const StatusIcon = statusConfig[order.status]?.icon || Loader;
+const placerUser = users.find(u => u.id === order.placedBy);
 
   return (
     <Card className="flex h-full flex-col">
@@ -489,6 +490,12 @@ const StatusIcon = statusConfig[order.status]?.icon || Loader;
         </div>
         <div className="text-sm text-muted-foreground">
             <div>{formatDistanceToNow(orderDate, { addSuffix: true })}</div>
+            {order.placedBy && (
+                 <div className="flex items-center gap-1 text-xs">
+                    <User className="h-3 w-3" />
+                    <span>{placerUser ? placerUser.username : order.placedBy}</span>
+                 </div>
+            )}
         </div>
         {order.status === 'Cancelled' && order.cancellationReason && (
             <CardDescription className="text-red-500 !mt-1">Reason: {order.cancellationReason}</CardDescription>
@@ -641,4 +648,3 @@ OrderCard.Skeleton = function OrderCardSkeleton() {
 
     
     
-

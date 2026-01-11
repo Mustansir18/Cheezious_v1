@@ -1,12 +1,14 @@
 
 "use client";
 import type { Order, OrderStatus } from "@/lib/types";
+import Link from 'next/link';
 import { OrderCard } from "@/components/cashier/OrderCard";
-import { BarChart, Clock, CookingPot, CheckCircle, Loader, Info, Monitor, XCircle, CheckCheck, FileDown, FileText, Check, Bike } from "lucide-react";
+import { BarChart, Clock, CookingPot, CheckCircle, Loader, Info, Monitor, XCircle, CheckCheck, FileDown, FileText, Check, Bike, PlusCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOrders } from "@/context/OrderContext";
 import { useSettings } from "@/context/SettingsContext";
+import { useAuth } from "@/context/AuthContext";
 import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { OrderReceipt } from "@/components/cashier/OrderReceipt";
@@ -40,6 +42,7 @@ function OrderInfoModal({ order }: { order: Order }) {
 export default function CashierPage() {
   const { orders, isLoading, updateOrderStatus } = useOrders();
   const { settings, isLoading: isSettingsLoading } = useSettings();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<OrderStatus | "All">("All");
 
   const getOrdersByStatus = (status: OrderStatus) => orders.filter(o => o.status === status);
@@ -104,6 +107,12 @@ export default function CashierPage() {
                     <QueuePage isEmbedded={true} />
                 </DialogContent>
             </Dialog>
+            <Button asChild className="w-full">
+              <Link href={`/branch/${user?.branchId || defaultBranch.id}`}>
+                <PlusCircle className="mr-2 h-4 w-4"/>
+                Place New Order
+              </Link>
+            </Button>
         </div>
       </header>
 
