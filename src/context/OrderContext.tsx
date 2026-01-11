@@ -7,6 +7,7 @@ import type { Order, OrderStatus, OrderItem, CartItem } from '@/lib/types';
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
 import { useMenu } from './MenuContext';
+import { useSettings } from './SettingsContext';
 
 interface OrderContextType {
   orders: Order[];
@@ -48,6 +49,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
   const { logActivity } = useActivityLog();
   const { user } = useAuth();
   const { menu } = useMenu();
+  const { settings } = useSettings();
   const prevOrders = usePrevious(orders);
 
   const occupiedTableIds = useMemo(() => {
@@ -368,10 +370,31 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const changePaymentMethod = useCallback((orderId: string, newPaymentMethod: string) => {
-    setOrders(prevOrders => prevOrders.map(order => 
-      order.id === orderId ? { ...order, paymentMethod: newPaymentMethod } : order
-    ));
-  }, []);
+    setOrders(prevOrders => prevOrders.map(order => {
+        if (order.id !== orderId) {
+            return order;
+        }
+
+        const paymentMethodDetails = settings.paymentMethods.find(pm => pm.name === newPaymentMethod);
+        const newTaxRate = paymentMethodDetails?.taxRate ?? 0;
+        
+        const newTaxAmount = order.subtotal * newTaxRate;
+        const newTotalAmount = order.subtotal + newTaxAmount;
+        
+        return {
+            ...order,
+            paymentMethod: newPaymentMethod,
+            taxRate: newTaxRate,
+            taxAmount: newTaxAmount,
+            totalAmount: newTotalAmount,
+            // Reset discounts if any, as totals change. Or handle it as per business logic.
+            // For now, we assume changing payment re-evaluates the final amount from subtotal.
+            discountAmount: 0,
+            isComplementary: false,
+            originalTotalAmount: newTotalAmount, 
+        };
+    }));
+  }, [settings.paymentMethods]);
 
 
   const clearOrders = useCallback(() => {
@@ -410,4 +433,5 @@ export const useOrders = () => {
 
 
     
+
 
