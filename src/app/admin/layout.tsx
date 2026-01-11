@@ -31,12 +31,18 @@ import { useAuth } from '@/context/AuthContext';
 import { AdminRouteGuard } from '@/components/auth/AdminRouteGuard';
 import { usePathname } from 'next/navigation';
 import { useSettings } from '@/context/SettingsContext';
+import { useState, useEffect } from 'react';
 
 
 function AdminSidebar() {
   const { user, logout } = useAuth();
   const { settings } = useSettings();
   const pathname = usePathname();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const navLinks = [
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, role: ['root', 'admin'] },
@@ -61,7 +67,11 @@ function AdminSidebar() {
           href="/"
           className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
         >
-          <Image src={settings.companyLogo || ''} alt={settings.companyName} width={28} height={28} className="object-contain rounded-full" />
+          {isMounted && settings.companyLogo ? (
+            <Image src={settings.companyLogo} alt={settings.companyName} width={28} height={28} className="object-contain rounded-full" />
+          ) : (
+             <div style={{ width: 28, height: 28 }} />
+          )}
           <span className="sr-only">{settings.companyName}</span>
         </Link>
         <TooltipProvider>
