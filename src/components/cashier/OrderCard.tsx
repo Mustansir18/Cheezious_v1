@@ -402,27 +402,24 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
     const dealComponents = order.items.filter(item => item.isDealComponent);
 
     return mainItems.map(mainItem => {
-        const menuItem = menu.items.find(mi => mi.id === mainItem.menuItemId);
-        const isDeal = menuItem?.dealItems && menuItem.dealItems.length > 0;
+      const menuItem = menu.items.find(mi => mi.id === mainItem.menuItemId);
+      const isDeal = !!menuItem?.dealItems && menuItem.dealItems.length > 0;
 
-        if (isDeal) {
-            // Find all components in this order that belong to this specific deal instance
-            // The parentDealId on a component corresponds to the main deal's `id` field in the OrderItem array.
-            const componentsForThisDeal = dealComponents.filter(c => c.parentDealId === mainItem.id);
-            
-            // Aggregate them for display (e.g., 2x Fries)
-            const aggregatedComponents = componentsForThisDeal.reduce((acc, comp) => {
-                const existing = acc.find(a => a.name === comp.name);
-                if (existing) {
-                    existing.quantity += comp.quantity;
-                } else {
-                    acc.push({ name: comp.name, quantity: comp.quantity });
-                }
-                return acc;
-            }, [] as { name: string; quantity: number }[]);
+      if (isDeal) {
+        const componentsForThisDeal = dealComponents.filter(c => c.parentDealId === mainItem.id);
+        
+        const aggregatedComponents = componentsForThisDeal.reduce((acc, comp) => {
+          const existing = acc.find(a => a.name === comp.name);
+          if (existing) {
+            existing.quantity += comp.quantity;
+          } else {
+            acc.push({ name: comp.name, quantity: comp.quantity });
+          }
+          return acc;
+        }, [] as { name: string; quantity: number }[]);
 
-            return { ...mainItem, aggregatedDealComponents: aggregatedComponents };
-        }
+        return { ...mainItem, aggregatedDealComponents: aggregatedComponents };
+      }
       
       return { ...mainItem, aggregatedDealComponents: [] };
     });
@@ -487,10 +484,10 @@ const OrderTypeIcon = getOrderTypeIcon();
                             ))}
                         </div>
                     )}
-                    {(item as any).aggregatedDealComponents && (item as any).aggregatedDealComponents.length > 0 && (
+                    {item.aggregatedDealComponents && item.aggregatedDealComponents.length > 0 && (
                         <div className="pl-4 text-xs text-muted-foreground border-l-2 ml-1 mt-1 pt-1 space-y-0.5">
                             <p className="font-semibold text-gray-500">Includes:</p>
-                             {(item as any).aggregatedDealComponents.map((comp: any) => (
+                             {item.aggregatedDealComponents.map((comp: any) => (
                                 <div key={comp.name} className="flex justify-between items-center">
                                   <span>- {comp.quantity}x {comp.name}</span>
                                 </div>
@@ -607,6 +604,8 @@ OrderCard.Skeleton = function OrderCardSkeleton() {
       </Card>
     );
   };
+
+    
 
     
 
