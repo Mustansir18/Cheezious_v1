@@ -87,6 +87,11 @@ export const ALL_PERMISSIONS = [
         description: 'View and manage customer ratings and comments.'
     },
     {
+        id: '/admin/activity-log',
+        name: 'Activity Log',
+        description: 'View a log of all important system and user actions.'
+    },
+    {
         id: '/admin/users',
         name: 'User Management',
         description: 'Manage accounts for staff members.'
