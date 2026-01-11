@@ -101,7 +101,7 @@ function AddItemsToOrderDialog({ order }: { order: Order }) {
                     <DialogDescription>Select items to add to this existing order. The order total will be recalculated.</DialogDescription>
                 </DialogHeader>
                 <div className="flex-grow grid grid-cols-2 gap-6 overflow-hidden">
-                    <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-4 overflow-hidden">
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
@@ -383,7 +383,7 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
   };
   
   const isManager = user?.role === 'root' || user?.role === 'admin';
-  const canAddItems = isMutable && (isManager || workflow === 'cashier');
+  const canAddItems = isMutable && (workflow === 'cashier');
   const canModify = isMutable && isManager; // Only managers can apply discounts/comps
   
   const orderDate = useMemo(() => new Date(order.orderDate), [order.orderDate]);
@@ -400,12 +400,12 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
 
   const visibleItems = useMemo(() => {
     const mainItems = order.items.filter(i => !i.isDealComponent);
-  
+
     return mainItems.map(main => {
       const components = order.items.filter(
         c => c.isDealComponent && c.parentDealCartItemId === main.id
       );
-  
+
       const aggregated = components.reduce((acc, c) => {
         const key = c.menuItemId;
         if (!acc[key]) {
@@ -414,7 +414,7 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
         acc[key].quantity += c.quantity;
         return acc;
       }, {} as Record<string, { name: string; quantity: number }>);
-  
+
       return {
         ...main,
         aggregatedDealComponents: Object.values(aggregated),
@@ -548,12 +548,12 @@ const StatusIcon = statusConfig[order.status]?.icon || Loader;
                 {order.status === 'Preparing' && <Button onClick={() => handleUpdateStatus('Ready')} size="sm" className="w-full bg-yellow-500 hover:bg-yellow-600 text-black"><Check className="mr-2 h-4 w-4" /> Mark as Ready</Button>}
              </div>
          )}
-         {workflow === 'cashier' && isMutable && (
+         {workflow === 'cashier' && (
             <div className="grid grid-cols-1 gap-2 w-full">
-                {order.status === 'Pending' && <Button onClick={() => handleUpdateStatus('Preparing')} size="sm" className="w-full"><CookingPot className="mr-2 h-4 w-4" /> Accept & Prepare</Button>}
-                 {order.status === 'Preparing' && <Button onClick={() => handleUpdateStatus('Ready')} size="sm" className="w-full bg-yellow-500 hover:bg-yellow-600 text-black"><Check className="mr-2 h-4 w-4" /> Mark as Ready</Button>}
-                {order.status === 'Ready' && <Button onClick={() => handleUpdateStatus('Completed')} size="sm" className="w-full bg-green-500 hover:bg-green-600"><CheckCircle className="mr-2 h-4 w-4" /> Mark as Completed</Button>}
-                 {(order.status === 'Pending') && (
+                {order.status === 'Pending' && <Button onClick={() => handleUpdateStatus('Preparing')} size="sm" className="w-full" disabled={!isMutable}><CookingPot className="mr-2 h-4 w-4" /> Accept & Prepare</Button>}
+                 {order.status === 'Preparing' && <Button onClick={() => handleUpdateStatus('Ready')} size="sm" className="w-full bg-yellow-500 hover:bg-yellow-600 text-black" disabled={!isMutable}><Check className="mr-2 h-4 w-4" /> Mark as Ready</Button>}
+                {order.status === 'Ready' && <Button onClick={() => handleUpdateStatus('Completed')} size="sm" className="w-full bg-green-500 hover:bg-green-600" disabled={!isMutable}><CheckCircle className="mr-2 h-4 w-4" /> Mark as Completed</Button>}
+                 {(order.status === 'Pending' && isMutable) && (
                      <div className="grid grid-cols-1 gap-2">
                         {canModify && <CancellationDialog orderId={order.id} onConfirm={handleCancelOrder} />}
                      </div>
@@ -561,13 +561,10 @@ const StatusIcon = statusConfig[order.status]?.icon || Loader;
                  {(order.status === 'Preparing' || order.status === 'Ready' || order.status === 'Partial Ready') && canAddItems && (
                      <AddItemsToOrderDialog order={order} />
                  )}
-                  {(order.status === 'Pending' || order.status === 'Preparing' || order.status === 'Ready' || order.status === 'Partial Ready') && canModify && (
+                  {canModify && (order.status === 'Pending' || order.status === 'Preparing' || order.status === 'Ready' || order.status === 'Partial Ready' || order.status === 'Completed') && (
                      <OrderModificationDialog order={order} />
                  )}
             </div>
-         )}
-         {order.status === 'Completed' && canModify && isMutable && (
-             <div className="grid grid-cols-1 gap-2"><OrderModificationDialog order={order} /></div>
          )}
       </CardFooter>
       <div className="hidden"><div id={`printable-receipt-${order.id}`}><OrderReceipt order={order} /></div></div>
