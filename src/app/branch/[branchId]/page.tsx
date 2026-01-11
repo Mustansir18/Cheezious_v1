@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Utensils, ShoppingBag, Bike } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { notFound, useParams, useSearchParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/context/CartContext";
@@ -50,6 +50,11 @@ export default function ModeSelectionPage() {
   const [isDeliveryDialogOpen, setDeliveryDialogOpen] = useState(false);
   const [isCustomerInfoDialogOpen, setCustomerInfoDialogOpen] = useState(false);
   const [selectedDeliveryMode, setSelectedDeliveryMode] = useState<string | null>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const { settings } = useSettings();
   const { setOrderDetails } = useCart();
@@ -114,7 +119,7 @@ export default function ModeSelectionPage() {
       </p>
 
       <div className="mt-10 grid w-full max-w-4xl grid-cols-1 gap-8 md:grid-cols-3">
-        {isDineInAvailable && (
+        {isClient && isDineInAvailable && (
             <Card 
                 className="transform transition-transform duration-300 hover:scale-105 hover:shadow-xl cursor-pointer animate-blink"
                 onClick={() => handleModeSelect('Dine-In')}
@@ -131,7 +136,7 @@ export default function ModeSelectionPage() {
             </Card>
         )}
 
-        {isTakeAwayAvailable && (
+        {isClient && isTakeAwayAvailable && (
             <Card 
               className="transform transition-transform duration-300 hover:scale-105 hover:shadow-xl cursor-pointer animate-blink"
               onClick={() => handleModeSelect('Take-Away')}
@@ -148,7 +153,7 @@ export default function ModeSelectionPage() {
             </Card>
          )}
 
-         {isDeliveryAvailable && (
+         {isClient && isDeliveryAvailable && (
             <Card 
               className="transform transition-transform duration-300 hover:scale-105 hover:shadow-xl cursor-pointer animate-blink"
               onClick={handleDeliverySelect}
