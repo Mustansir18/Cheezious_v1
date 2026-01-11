@@ -225,6 +225,13 @@ export type Rating = {
     comment: string;
 };
 
+// --- Promotion Settings ---
+export type PromotionSettings = {
+    isEnabled: boolean;
+    dealId: string | null;
+    imageUrl: string;
+};
+
 
 // --- Reporting Types ---
 export interface ItemSale {

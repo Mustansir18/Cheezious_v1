@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2, Edit, Lock, Percent, PlusCircle } from "lucide-react";
+import { Trash2, Edit, Lock, Percent, PlusCircle, Megaphone } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -25,12 +25,14 @@ import {
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import type { Branch, Role, UserRole } from "@/lib/types";
+import type { Branch, Role, UserRole, PromotionSettings } from "@/lib/types";
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
 import { ALL_PERMISSIONS } from '@/config/permissions';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import imageCompression from 'browser-image-compression';
+import { useMenu } from "@/context/MenuContext";
+
 
 async function handleImageUpload(file: File) {
   const options = {
@@ -260,6 +262,103 @@ function AdvancedSettingsGate({ onUnlock }: { onUnlock: () => void }) {
     );
 }
 
+function PromotionSettingsManager() {
+    const { settings, updatePromotion } = useSettings();
+    const { menu } = useMenu();
+    const { toast } = useToast();
+    
+    const [promotionState, setPromotionState] = useState<PromotionSettings>(settings.promotion);
+
+    useEffect(() => {
+        setPromotionState(settings.promotion);
+    }, [settings.promotion]);
+
+    const deals = menu.items.filter(item => item.categoryId === 'C-00001');
+
+    const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const compressedDataUrl = await handleImageUpload(file);
+            setPromotionState(prev => ({...prev, imageUrl: compressedDataUrl}));
+        }
+    };
+
+    const handleSave = () => {
+        updatePromotion(promotionState);
+        toast({ title: 'Success', description: 'Promotion settings have been updated.' });
+    };
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Homepage Pop-up Promotion</CardTitle>
+                <CardDescription>Configure the promotional pop-up that appears when a user first visits the homepage.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                 <div className="flex items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                        <Label htmlFor="promo-enabled-switch" className="text-base">Enable Promotion Pop-up</Label>
+                        <p className="text-sm text-muted-foreground">
+                            If disabled, the pop-up will not appear on the homepage.
+                        </p>
+                    </div>
+                    <Switch
+                        id="promo-enabled-switch"
+                        checked={promotionState.isEnabled}
+                        onCheckedChange={(checked) => setPromotionState(prev => ({ ...prev, isEnabled: checked }))}
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="promo-deal-select">Featured Deal</Label>
+                    <Select 
+                        value={promotionState.dealId || ''}
+                        onValueChange={(value) => setPromotionState(prev => ({...prev, dealId: value}))}
+                    >
+                        <SelectTrigger id="promo-deal-select">
+                            <SelectValue placeholder="Select a deal to feature" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {deals.map(deal => (
+                                <SelectItem key={deal.id} value={deal.id}>{deal.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                     <p className="text-xs text-muted-foreground">This is the deal that will be added to the cart when a user clicks the promotion.</p>
+                </div>
+                
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                    <div className="space-y-2">
+                        <Label htmlFor="promo-image">Promotion Image</Label>
+                        <Input 
+                            id="promo-image" 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={handleImageChange}
+                            className="file:text-foreground"
+                        />
+                        <p className="text-xs text-muted-foreground">This image will be shown in the pop-up. Recommended: 800x600, less than 200KB.</p>
+                    </div>
+                     <div className="space-y-2">
+                        <Label>Image Preview</Label>
+                        <div className="flex items-center justify-center p-4 border rounded-lg h-40 bg-muted/50">
+                            {promotionState.imageUrl ? (
+                                <Image src={promotionState.imageUrl} alt="Promotion Preview" width={160} height={120} className="object-contain rounded-md" />
+                            ) : (
+                                <p className="text-muted-foreground">No image set</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+            </CardContent>
+            <CardFooter>
+                 <Button onClick={handleSave}>Save Promotion Settings</Button>
+            </CardFooter>
+        </Card>
+    );
+}
+
 export default function AdminSettingsPage() {
     const { settings, addFloor, deleteFloor, addTable, deleteTable, addPaymentMethod, deletePaymentMethod, toggleAutoPrint, updateBranch, toggleService, updateBusinessDayHours, addBranch, deleteBranch, setDefaultBranch, updateCompanyName, updateCompanyLogo, updatePaymentMethodTaxRate, addDeliveryMode, deleteDeliveryMode } = useSettings();
     const { user } = useAuth();
@@ -387,8 +486,9 @@ export default function AdminSettingsPage() {
             </header>
 
             <Tabs defaultValue="general">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="general">General</TabsTrigger>
+                    <TabsTrigger value="promotions">Promotions</TabsTrigger>
                     <TabsTrigger value="roles">Roles & Permissions</TabsTrigger>
                     <TabsTrigger value="advanced">Advanced</TabsTrigger>
                 </TabsList>
@@ -498,6 +598,9 @@ export default function AdminSettingsPage() {
                             </Table>
                         </CardContent>
                     </Card>
+                </TabsContent>
+                 <TabsContent value="promotions" className="mt-6">
+                    <PromotionSettingsManager />
                 </TabsContent>
                  <TabsContent value="roles" className="mt-6">
                     <RoleManagement />

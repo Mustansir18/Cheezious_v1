@@ -13,15 +13,15 @@ import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { RatingDialog } from '@/components/ui/rating-dialog';
 import Header from '@/components/layout/Header';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import type { MenuItem } from '@/lib/types';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import Autoplay from "embla-carousel-autoplay";
 
 
-function PromotionModal({ deal, onConfirm, isOpen, onOpenChange }: { deal: MenuItem | null; onConfirm: () => void; isOpen: boolean; onOpenChange: (open: boolean) => void; }) {
-    if (!deal) return null;
+function PromotionModal({ promoImageUrl, onConfirm, isOpen, onOpenChange }: { promoImageUrl: string; onConfirm: () => void; isOpen: boolean; onOpenChange: (open: boolean) => void; }) {
+    if (!promoImageUrl) return null;
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -35,8 +35,8 @@ function PromotionModal({ deal, onConfirm, isOpen, onOpenChange }: { deal: MenuI
                         <X className="h-5 w-5 text-gray-800" />
                     </button>
                     <Image
-                        src={deal.imageUrl}
-                        alt={deal.name}
+                        src={promoImageUrl}
+                        alt="Special Promotion"
                         width={800}
                         height={600}
                         className="object-cover w-full h-full rounded-lg cursor-pointer"
@@ -53,25 +53,28 @@ export default function Home() {
   const { menu, isLoading: isMenuLoading } = useMenu();
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
-  const [promoDeal, setPromoDeal] = useState<MenuItem | null>(null);
   const [isPromoOpen, setPromoOpen] = useState(false);
-
+  
   const deals = menu.items.filter(item => item.categoryId === 'C-00001');
+
+  // Find the specific deal to be used in the promotion from settings
+  const promoDeal = useMemo(() => {
+    if (!settings.promotion.isEnabled || !settings.promotion.dealId) return null;
+    return deals.find(d => d.id === settings.promotion.dealId);
+  }, [deals, settings.promotion]);
+
 
   useEffect(() => {
     setIsMounted(true);
-    // Find a deal to feature in the promo
-    if (deals.length > 0) {
-        setPromoDeal(deals[0]); // The first deal is the main promotion
-
-        // Check if the promo has been shown this session
+    // If a promotion is configured and enabled, show the modal
+    if (promoDeal) {
         const promoShown = sessionStorage.getItem('promoShown');
         if (!promoShown) {
             setPromoOpen(true);
             sessionStorage.setItem('promoShown', 'true');
         }
     }
-  }, [menu.items]);
+  }, [promoDeal]);
 
 
   const handleStartOrder = (dealId?: string) => {
@@ -178,12 +181,14 @@ export default function Home() {
       <div className="fixed bottom-8 right-8">
           <RatingDialog />
       </div>
-       <PromotionModal
-        deal={promoDeal}
-        isOpen={isPromoOpen}
-        onOpenChange={setPromoOpen}
-        onConfirm={handleConfirmPromo}
-      />
+       {promoDeal && (
+        <PromotionModal
+            promoImageUrl={settings.promotion.imageUrl}
+            isOpen={isPromoOpen}
+            onOpenChange={setPromoOpen}
+            onConfirm={handleConfirmPromo}
+        />
+       )}
     </div>
   );
 }

@@ -2,7 +2,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
-import type { Floor, Table, PaymentMethod, Branch, Role, UserRole, DeliveryMode } from '@/lib/types';
+import type { Floor, Table, PaymentMethod, Branch, Role, UserRole, DeliveryMode, PromotionSettings } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
@@ -34,6 +34,7 @@ interface Settings {
     businessDayEnd: string; // "HH:MM"
     roles: Role[];
     deliveryModes: DeliveryMode[];
+    promotion: PromotionSettings;
 }
 
 interface SettingsContextType {
@@ -60,6 +61,7 @@ interface SettingsContextType {
   deleteRole: (id: UserRole) => void;
   addDeliveryMode: (id: string, name: string) => void;
   deleteDeliveryMode: (id: string, name: string) => void;
+  updatePromotion: (promotion: PromotionSettings) => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -112,6 +114,11 @@ const initialSettings: Settings = {
     businessDayEnd: "04:00",
     roles: defaultRoles,
     deliveryModes: initialDeliveryModes,
+    promotion: {
+        isEnabled: true,
+        dealId: 'D-00001',
+        imageUrl: PlaceHolderImages.find(i => i.id === 'deal-1')?.imageUrl || ''
+    }
 };
 
 const SETTINGS_STORAGE_KEY = 'cheeziousSettingsV2';
@@ -129,7 +136,11 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
       if (storedSettings) {
         const parsed = JSON.parse(storedSettings);
         // Merge stored settings with initial settings to ensure all keys are present
-        setSettings(s => ({ ...s, ...parsed }));
+        // This is important for when new settings are added to the initialSettings object
+        const mergedSettings = { ...initialSettings, ...parsed };
+        setSettings(mergedSettings);
+      } else {
+        setSettings(initialSettings);
       }
     } catch (error) {
       console.error("Could not load settings from local storage", error);
@@ -349,6 +360,11 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     setSettings(s => ({ ...s, deliveryModes: s.deliveryModes.filter(dm => dm.id !== id) }));
     logActivity(`Deleted delivery mode: '${name}'.`, user?.username || 'System', 'Settings');
   }, [logActivity, user]);
+  
+  const updatePromotion = useCallback((promotion: PromotionSettings) => {
+    setSettings(s => ({ ...s, promotion }));
+    logActivity(`Updated homepage promotion settings.`, user?.username || 'System', 'Settings');
+  }, [logActivity, user]);
 
 
   return (
@@ -377,6 +393,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         deleteRole,
         addDeliveryMode,
         deleteDeliveryMode,
+        updatePromotion,
       }}
     >
       {children}
