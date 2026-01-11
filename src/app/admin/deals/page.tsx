@@ -1,8 +1,7 @@
 
-
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useMenu } from '@/context/MenuContext';
 import { Button } from '@/components/ui/button';
@@ -19,10 +18,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Trash2, Edit, PlusCircle, Loader, FileText, FileDown, Minus, Plus, ChefHat } from 'lucide-react';
-import type { DealItem, MenuItem } from '@/lib/types';
+import type { DealItem, MenuItem, PromotionSettings } from '@/lib/types';
 import imageCompression from 'browser-image-compression';
 import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 import { useToast } from '@/hooks/use-toast';
@@ -32,6 +31,8 @@ import { useSettings } from '@/context/SettingsContext';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 async function handleImageUpload(file: File) {
@@ -52,6 +53,103 @@ async function handleImageUpload(file: File) {
       reader.readAsDataURL(file);
     });
   }
+}
+
+function PromotionSettingsManager() {
+    const { settings, updatePromotion } = useSettings();
+    const { menu } = useMenu();
+    const { toast } = useToast();
+    
+    const [promotionState, setPromotionState] = useState<PromotionSettings>(settings.promotion);
+
+    useEffect(() => {
+        setPromotionState(settings.promotion);
+    }, [settings.promotion]);
+
+    const promotableItems = menu.items;
+
+    const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const compressedDataUrl = await handleImageUpload(file);
+            setPromotionState(prev => ({...prev, imageUrl: compressedDataUrl}));
+        }
+    };
+
+    const handleSave = () => {
+        updatePromotion(promotionState);
+        toast({ title: 'Success', description: 'Promotion settings have been updated.' });
+    };
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Homepage Pop-up Promotion</CardTitle>
+                <CardDescription>Configure the promotional pop-up that appears when a user first visits the homepage.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                 <div className="flex items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                        <Label htmlFor="promo-enabled-switch" className="text-base">Enable Promotion Pop-up</Label>
+                        <p className="text-sm text-muted-foreground">
+                            If disabled, the pop-up will not appear on the homepage.
+                        </p>
+                    </div>
+                    <Switch
+                        id="promo-enabled-switch"
+                        checked={promotionState.isEnabled}
+                        onCheckedChange={(checked) => setPromotionState(prev => ({ ...prev, isEnabled: checked }))}
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="promo-item-select">Featured Item or Deal</Label>
+                    <Select 
+                        value={promotionState.itemId || ''}
+                        onValueChange={(value) => setPromotionState(prev => ({...prev, itemId: value}))}
+                    >
+                        <SelectTrigger id="promo-item-select">
+                            <SelectValue placeholder="Select an item or deal to feature" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {promotableItems.map(item => (
+                                <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                     <p className="text-xs text-muted-foreground">This is the item that will be added to the cart when a user clicks the promotion.</p>
+                </div>
+                
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                    <div className="space-y-2">
+                        <Label htmlFor="promo-image">Promotion Image</Label>
+                        <Input 
+                            id="promo-image" 
+                            type="file" 
+                            accept="image/*" 
+                            onChange={handleImageChange}
+                            className="file:text-foreground"
+                        />
+                        <p className="text-xs text-muted-foreground">This image will be shown in the pop-up. Recommended: 800x600, less than 200KB.</p>
+                    </div>
+                     <div className="space-y-2">
+                        <Label>Image Preview</Label>
+                        <div className="flex items-center justify-center p-4 border rounded-lg h-40 bg-muted/50">
+                            {promotionState.imageUrl ? (
+                                <Image src={promotionState.imageUrl} alt="Promotion Preview" width={160} height={120} className="object-contain rounded-md" />
+                            ) : (
+                                <p className="text-muted-foreground">No image set</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+            </CardContent>
+            <CardFooter>
+                 <Button onClick={handleSave}>Save Promotion Settings</Button>
+            </CardFooter>
+        </Card>
+    );
 }
 
 function DealForm({
@@ -298,11 +396,13 @@ export default function DealsManagementPage() {
 
   return (
     <div className="w-full space-y-8">
+      <PromotionSettingsManager />
+
       <Card>
         <CardHeader className="flex flex-row justify-between items-center">
           <div>
             <CardTitle className="font-headline text-4xl font-bold">Deals & Bundles</CardTitle>
-            <CardDescription>Create and manage promotional bundles for your menu.</CardDescription>
+            <CardDescription>Create and manage promotional bundles for your menu. These will appear on the homepage carousel.</CardDescription>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => handleExport('csv')}><FileDown className="mr-2 h-4 w-4" /> CSV</Button>
