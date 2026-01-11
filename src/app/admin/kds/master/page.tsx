@@ -4,7 +4,7 @@
 import { useMemo } from 'react';
 import type { Order, OrderStatus } from '@/lib/types';
 import { useOrders } from '@/context/OrderContext';
-import { Loader } from 'lucide-react';
+import { Loader, ChefHat } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import MasterOrderSlip from '@/components/cashier/MasterOrderSlip';
 
@@ -31,6 +31,13 @@ export default function MasterCuttStationPage() {
 
   return (
     <div className="h-full w-full flex flex-col p-4 sm:p-6 md:p-8 bg-muted/40">
+        <header className="mb-6 flex items-center gap-4">
+            <ChefHat className="h-10 w-10 text-primary" />
+            <div>
+                <h1 className="font-headline text-3xl font-bold">CUTT Station (Assembly)</h1>
+                <p className="text-muted-foreground">Live view of orders ready for assembly and dispatch.</p>
+            </div>
+        </header>
        <ScrollArea className="flex-grow">
             <div className="p-4 pt-0">
                 {ordersForKDS.length > 0 ? (

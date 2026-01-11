@@ -60,9 +60,18 @@ export default function IndividualStationPage() {
             </div>
         );
     }
+
+    const StationIcon = stationDetails.icon;
     
     return (
         <div className="h-full w-full flex flex-col p-4 sm:p-6 md:p-8 bg-muted/40">
+            <header className="mb-6 flex items-center gap-4">
+                <StationIcon className="h-10 w-10 text-primary" />
+                <div>
+                    <h1 className="font-headline text-3xl font-bold">{stationDetails.name}</h1>
+                    <p className="text-muted-foreground">Live view of items to be prepared at this station.</p>
+                </div>
+            </header>
             <ScrollArea className="flex-grow">
                 <div className="p-4 pt-0">
                     {stationOrders.length > 0 ? (
