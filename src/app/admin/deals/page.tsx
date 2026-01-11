@@ -68,7 +68,11 @@ function PromotionSettingsManager() {
         setPromotionState(settings.promotion);
     }, [settings.promotion]);
 
-    const promotableItems = useMemo(() => [...menu.items, ...deals], [menu.items, deals]);
+    const promotableItems = useMemo(() => {
+        const allItems = [...menu.items, ...deals];
+        const uniqueItems = Array.from(new Map(allItems.map(item => [item.id, item])).values());
+        return uniqueItems;
+    }, [menu.items, deals]);
 
     const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
