@@ -69,15 +69,9 @@ export default function Home() {
 
   useEffect(() => {
     setIsMounted(true);
-    // Check if the promotion is enabled in settings
+    // Show the pop-up on every page load if it's enabled in settings.
     if (settings.promotion.isEnabled && promoItem) {
-        // Check if it has been shown in this session
-        const promoShown = sessionStorage.getItem('promoShown');
-        if (!promoShown) {
-            // If not shown, show it and mark it as shown for the session
-            setPromoOpen(true);
-            sessionStorage.setItem('promoShown', 'true');
-        }
+        setPromoOpen(true);
     }
   }, [promoItem, settings.promotion.isEnabled]);
 
