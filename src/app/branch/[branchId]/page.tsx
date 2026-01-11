@@ -114,88 +114,52 @@ export default function ModeSelectionPage() {
       </p>
 
       <div className="mt-10 grid w-full max-w-4xl grid-cols-1 gap-8 md:grid-cols-3">
-        {isDineInAvailable ? (
+        {isDineInAvailable && (
             <Card 
-                className={cn("transform transition-transform duration-300 hover:scale-105 hover:shadow-xl cursor-pointer", "animate-blink")}
+                className="transform transition-transform duration-300 hover:scale-105 hover:shadow-xl cursor-pointer animate-blink"
                 onClick={() => handleModeSelect('Dine-In')}
             >
                 <CardHeader>
-                <Utensils className="mx-auto h-16 w-16 text-primary" />
+                    <Utensils className="mx-auto h-16 w-16 text-primary" />
                 </CardHeader>
                 <CardContent>
-                <CardTitle className="font-headline text-2xl">Dine-In</CardTitle>
-                <p className="mt-2 text-muted-foreground">
-                    Enjoy your meal in our cozy restaurant.
-                </p>
-                </CardContent>
-            </Card>
-        ) : (
-             <Card className="opacity-50">
-                <CardHeader>
-                    <Utensils className="mx-auto h-16 w-16 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <CardTitle className="font-headline text-2xl text-muted-foreground">Dine-In</CardTitle>
+                    <CardTitle className="font-headline text-2xl">Dine-In</CardTitle>
                     <p className="mt-2 text-muted-foreground">
-                        Currently unavailable at this branch.
+                        Enjoy your meal in our cozy restaurant.
                     </p>
                 </CardContent>
             </Card>
         )}
 
-        {isTakeAwayAvailable ? (
+        {isTakeAwayAvailable && (
             <Card 
-              className={cn("transform transition-transform duration-300 hover:scale-105 hover:shadow-xl cursor-pointer", "animate-blink")}
+              className="transform transition-transform duration-300 hover:scale-105 hover:shadow-xl cursor-pointer animate-blink"
               onClick={() => handleModeSelect('Take-Away')}
             >
                 <CardHeader>
-                <ShoppingBag className="mx-auto h-16 w-16 text-primary" />
+                    <ShoppingBag className="mx-auto h-16 w-16 text-primary" />
                 </CardHeader>
                 <CardContent>
-                <CardTitle className="font-headline text-2xl">Take Away</CardTitle>
-                <p className="mt-2 text-muted-foreground">
-                    Grab your favorites to enjoy on the go.
-                </p>
-                </CardContent>
-            </Card>
-         ) : (
-             <Card className="opacity-50">
-                <CardHeader>
-                    <ShoppingBag className="mx-auto h-16 w-16 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <CardTitle className="font-headline text-2xl text-muted-foreground">Take Away</CardTitle>
+                    <CardTitle className="font-headline text-2xl">Take Away</CardTitle>
                     <p className="mt-2 text-muted-foreground">
-                        Currently unavailable at this branch.
+                        Grab your favorites to enjoy on the go.
                     </p>
                 </CardContent>
             </Card>
          )}
 
-         {isDeliveryAvailable ? (
+         {isDeliveryAvailable && (
             <Card 
-              className={cn("transform transition-transform duration-300 hover:scale-105 hover:shadow-xl cursor-pointer", "animate-blink")}
+              className="transform transition-transform duration-300 hover:scale-105 hover:shadow-xl cursor-pointer animate-blink"
               onClick={handleDeliverySelect}
             >
                 <CardHeader>
-                <Bike className="mx-auto h-16 w-16 text-primary" />
+                    <Bike className="mx-auto h-16 w-16 text-primary" />
                 </CardHeader>
                 <CardContent>
-                <CardTitle className="font-headline text-2xl">Delivery</CardTitle>
-                <p className="mt-2 text-muted-foreground">
-                    Get your order delivered to your door.
-                </p>
-                </CardContent>
-            </Card>
-         ) : (
-             <Card className="opacity-50">
-                <CardHeader>
-                    <Bike className="mx-auto h-16 w-16 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <CardTitle className="font-headline text-2xl text-muted-foreground">Delivery</CardTitle>
+                    <CardTitle className="font-headline text-2xl">Delivery</CardTitle>
                     <p className="mt-2 text-muted-foreground">
-                        Currently unavailable at this branch.
+                        Get your order delivered to your door.
                     </p>
                 </CardContent>
             </Card>
