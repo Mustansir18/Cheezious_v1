@@ -15,7 +15,7 @@ import { RatingDialog } from '@/components/ui/rating-dialog';
 import Header from '@/components/layout/Header';
 import { useState, useEffect, useMemo } from 'react';
 import type { MenuItem } from '@/lib/types';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import Autoplay from "embla-carousel-autoplay";
 
@@ -26,6 +26,7 @@ function PromotionModal({ promoImageUrl, onConfirm, isOpen, onOpenChange }: { pr
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="p-0 border-0 max-w-2xl bg-transparent shadow-none" hideCloseButton={true}>
+                 <DialogTitle className="sr-only">Special Promotion</DialogTitle>
                 <div className="relative">
                      <button
                         onClick={() => onOpenChange(false)}
