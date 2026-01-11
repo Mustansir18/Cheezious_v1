@@ -128,7 +128,16 @@ const getInitialState = () => {
         const storedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
         if (storedSettings) {
             const parsed = JSON.parse(storedSettings);
-            return { ...initialSettings, ...parsed };
+            // Deep merge to ensure new default fields are added if not in storage
+            return {
+                ...initialSettings,
+                ...parsed,
+                roles: parsed.roles && parsed.roles.length > 0 ? parsed.roles : initialSettings.roles,
+                branches: parsed.branches && parsed.branches.length > 0 ? parsed.branches : initialSettings.branches,
+                floors: parsed.floors && parsed.floors.length > 0 ? parsed.floors : initialSettings.floors,
+                tables: parsed.tables && parsed.tables.length > 0 ? parsed.tables : initialSettings.tables,
+                paymentMethods: parsed.paymentMethods && parsed.paymentMethods.length > 0 ? parsed.paymentMethods : initialSettings.paymentMethods,
+            };
         }
     } catch (error) {
         console.error("Could not load settings from local storage", error);

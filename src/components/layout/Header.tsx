@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Link from "next/link";
@@ -11,14 +12,12 @@ import { CartSheet } from "@/components/cart/CartSheet";
 import { Badge } from "@/components/ui/badge";
 import { useSettings } from "@/context/SettingsContext";
 import { cn } from "@/lib/utils";
-import { useIsClient } from "@/components/ui/use-is-client";
 
 export default function Header({ branchId }: { branchId?: string }) {
   const { cartCount } = useCart();
   const { settings } = useSettings();
   const router = useRouter();
   const branch = settings.branches.find((b) => b.id === branchId);
-  const isClient = useIsClient();
 
   const handleCheckStatus = () => {
     router.push('/queue');
@@ -28,7 +27,7 @@ export default function Header({ branchId }: { branchId?: string }) {
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-sm">
       <div className="w-full flex h-16 items-center justify-between px-4 lg:px-8">
         <Link href="/" className="flex items-center gap-2">
-          {isClient && settings.companyLogo ? (
+          {settings.companyLogo ? (
             <Image src={settings.companyLogo} alt={settings.companyName} width={40} height={40} className="object-contain" />
           ) : (
             <Pizza className="h-8 w-8 text-primary animate-icon-blink" />
