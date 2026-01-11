@@ -118,10 +118,10 @@ export default function ModeSelectionPage() {
         How would you like to enjoy your meal today?
       </p>
 
-      <div className="mt-10 grid w-full max-w-4xl grid-cols-1 gap-8 md:grid-cols-3">
+      <div className="mt-10 flex w-full max-w-4xl flex-wrap justify-center gap-8">
         {isClient && isDineInAvailable && (
             <Card 
-                className="transform transition-transform duration-300 hover:scale-105 hover:shadow-xl cursor-pointer animate-blink"
+                className="w-full md:w-80 transform transition-transform duration-300 hover:scale-105 hover:shadow-xl cursor-pointer animate-blink"
                 onClick={() => handleModeSelect('Dine-In')}
             >
                 <CardHeader>
@@ -138,7 +138,7 @@ export default function ModeSelectionPage() {
 
         {isClient && isTakeAwayAvailable && (
             <Card 
-              className="transform transition-transform duration-300 hover:scale-105 hover:shadow-xl cursor-pointer animate-blink"
+              className="w-full md:w-80 transform transition-transform duration-300 hover:scale-105 hover:shadow-xl cursor-pointer animate-blink"
               onClick={() => handleModeSelect('Take-Away')}
             >
                 <CardHeader>
@@ -155,7 +155,7 @@ export default function ModeSelectionPage() {
 
          {isClient && isDeliveryAvailable && (
             <Card 
-              className="transform transition-transform duration-300 hover:scale-105 hover:shadow-xl cursor-pointer animate-blink"
+              className="w-full md:w-80 transform transition-transform duration-300 hover:scale-105 hover:shadow-xl cursor-pointer animate-blink"
               onClick={handleDeliverySelect}
             >
                 <CardHeader>
