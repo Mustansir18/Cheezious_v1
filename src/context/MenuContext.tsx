@@ -81,6 +81,26 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [menu, isLoading]);
 
+  // Listen for storage changes from other tabs
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === MENU_STORAGE_KEY && event.newValue) {
+        try {
+          const parsed = JSON.parse(event.newValue);
+          if (parsed.items && parsed.categories && parsed.addons) {
+            setMenu(parsed);
+          }
+        } catch (error) {
+          console.error("Failed to parse menu from storage event", error);
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
   const addCategory = (newCategory: MenuCategory) => {
     if (!newCategory.id) {
       toast({ variant: 'destructive', title: 'Error', description: 'Category Code is required.' });

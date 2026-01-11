@@ -159,6 +159,28 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [settings, isLoading]);
 
+  // Listen for storage changes from other tabs
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === SETTINGS_STORAGE_KEY && event.newValue) {
+        try {
+          const parsed = JSON.parse(event.newValue);
+          const mergedSettings: Settings = {
+            ...initialSettings,
+            ...parsed,
+          };
+          setSettings(mergedSettings);
+        } catch (error) {
+          console.error("Failed to parse settings from storage event", error);
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
   const addFloor = useCallback((id: string, name: string) => {
     if (!id || !name) {
       toast({ variant: 'destructive', title: 'Error', description: 'Floor Code and Name are required.' });

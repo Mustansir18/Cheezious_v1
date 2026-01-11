@@ -44,6 +44,23 @@ export const ActivityLogProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [logs, isLoading]);
 
+  // Listen for storage changes from other tabs
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === LOG_STORAGE_KEY && event.newValue) {
+        try {
+          setLogs(JSON.parse(event.newValue));
+        } catch (error) {
+          console.error("Failed to parse activity logs from storage event", error);
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
   const logActivity = useCallback((message: string, user: string, category: ActivityLogCategory) => {
     const newLog: ActivityLog = {
       id: crypto.randomUUID(),

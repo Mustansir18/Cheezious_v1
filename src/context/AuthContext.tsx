@@ -150,6 +150,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
   }, [user, isLoading]);
 
+  // Listen for storage changes from other tabs
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === USERS_STORAGE_KEY && event.newValue) {
+        try {
+          const storedUsers: Omit<User, 'password'>[] = JSON.parse(event.newValue);
+          const userMap = new Map<string, User>();
+          initialUsers.forEach(u => userMap.set(u.id, { ...u }));
+          storedUsers.forEach(storedUser => {
+              const existingUser = userMap.get(storedUser.id);
+              if (existingUser) {
+                  userMap.set(storedUser.id, { ...existingUser, ...storedUser });
+              } else {
+                  userMap.set(storedUser.id, storedUser as User);
+              }
+          });
+          const combinedUsers = Array.from(userMap.values());
+          setUsers(combinedUsers);
+        } catch (error) {
+          console.error("Failed to parse users from storage event", error);
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
   const login = useCallback(async (username: string, password: string): Promise<User | null> => {
     // The `users` state is now authoritative and correctly constructed.
     const foundUser = users.find(u => u.username === username && u.password === password);
