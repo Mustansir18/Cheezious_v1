@@ -33,6 +33,7 @@ import { cn } from '@/lib/utils';
 import { exportListDataAs } from '@/lib/exporter';
 import { useSettings } from '@/context/SettingsContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 
 async function handleImageUpload(file: File) {
@@ -412,7 +413,15 @@ function AddonForm({ addon, onSave }: { addon?: Addon; onSave: (addon: Omit<Addo
     const { toast } = useToast();
     const [id, setId] = useState(addon?.id || '');
     const [name, setName] = useState(addon?.name || '');
+    const [type, setType] = useState<'standard' | 'topping'>(addon?.type || 'standard');
     const [price, setPrice] = useState(addon?.price || 0);
+    const [prices, setPrices] = useState(addon?.prices || {});
+
+    const pizzaVariants = ['Small', 'Regular', 'Large', 'Party'];
+
+    const handlePriceChange = (size: string, value: number) => {
+        setPrices(prev => ({...prev, [size]: value}));
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -420,11 +429,18 @@ function AddonForm({ addon, onSave }: { addon?: Addon; onSave: (addon: Omit<Addo
             toast({ variant: 'destructive', title: 'Error', description: `An add-on with the code '${id}' already exists.` });
             return;
         }
-        const data = { name, price };
-        if (addon) {
-          onSave({ ...addon, ...data });
+        
+        let data: Partial<Addon> = { name, type };
+        if (type === 'standard') {
+            data = { ...data, price, prices: undefined };
         } else {
-          onSave(data, id);
+            data = { ...data, prices, price: undefined };
+        }
+        
+        if (addon) {
+          onSave({ ...addon, ...data } as Addon);
+        } else {
+          onSave(data as Omit<Addon, 'id'>, id);
         }
     };
 
@@ -442,7 +458,41 @@ function AddonForm({ addon, onSave }: { addon?: Addon; onSave: (addon: Omit<Addo
               </div>
             )}
             <div><Label htmlFor="addon-name">Add-on Name</Label><Input id="addon-name" value={name} onChange={e => setName(e.target.value)} required /></div>
-            <div><Label htmlFor="addon-price">Price</Label><Input id="addon-price" type="number" value={price} onChange={e => setPrice(Number(e.target.value))} required /></div>
+            
+            <div className="space-y-2">
+                <Label>Type</Label>
+                <RadioGroup value={type} onValueChange={(v) => setType(v as any)} className="flex gap-4">
+                    <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="standard" id="standard" />
+                        <Label htmlFor="standard">Standard</Label>
+                    </div>
+                     <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="topping" id="topping" />
+                        <Label htmlFor="topping">Topping (Size-based price)</Label>
+                    </div>
+                </RadioGroup>
+            </div>
+            
+            {type === 'standard' ? (
+                <div><Label htmlFor="addon-price">Price</Label><Input id="addon-price" type="number" value={price} onChange={e => setPrice(Number(e.target.value))} required /></div>
+            ) : (
+                <div className="p-4 border rounded-lg space-y-3">
+                    <h4 className="font-semibold">Topping Prices</h4>
+                    {pizzaVariants.map(variant => (
+                        <div key={variant} className="grid grid-cols-2 items-center gap-4">
+                            <Label htmlFor={`price-${variant}`}>{variant} Size</Label>
+                            <Input
+                                id={`price-${variant}`}
+                                type="number"
+                                placeholder="Price"
+                                value={prices[variant as keyof typeof prices] || ''}
+                                onChange={(e) => handlePriceChange(variant, Number(e.target.value))}
+                            />
+                        </div>
+                    ))}
+                </div>
+            )}
+
             <DialogFooter><DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose><Button type="submit">Save</Button></DialogFooter>
         </form>
     );
@@ -594,8 +644,8 @@ export default function MenuManagementPage() {
                             </Dialog>
                         </div>
                     </CardHeader>
-                    <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Code</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
-                        <TableBody>{menu.addons.map(addon => (<TableRow key={addon.id}><TableCell>{addon.name}</TableCell><TableCell className="font-mono text-xs">{addon.id}</TableCell><TableCell className="text-right">RS {Math.round(addon.price || 0)}</TableCell>
+                    <CardContent><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Code</TableHead><TableHead>Type</TableHead><TableHead className="text-right">Price</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
+                        <TableBody>{menu.addons.map(addon => (<TableRow key={addon.id}><TableCell>{addon.name}</TableCell><TableCell className="font-mono text-xs">{addon.id}</TableCell><TableCell className="capitalize">{addon.type || 'standard'}</TableCell><TableCell className="text-right">RS {Math.round(addon.price || 0)}</TableCell>
                             <TableCell className="text-right">
                                 <Button variant="ghost" size="icon" onClick={() => { setEditingAddon(addon); setAddonOpen(true); }}><Edit className="h-4 w-4" /></Button>
                                 <DeleteConfirmationDialog
