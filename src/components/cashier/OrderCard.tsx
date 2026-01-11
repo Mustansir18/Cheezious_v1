@@ -31,6 +31,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "../ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useMenu } from "@/context/MenuContext";
 import { AddToCartDialog } from "../menu/MenuItemCard";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { cn } from "@/lib/utils";
+
 
 const statusConfig = {
     Pending: { icon: Loader, color: "text-gray-500", label: "Pending" },
@@ -247,7 +250,8 @@ function CancellationDialog({ orderId, onConfirm }: { orderId: string, onConfirm
 }
 
 function OrderModificationDialog({ order }: { order: Order }) {
-    const { applyDiscountOrComplementary } = useOrders();
+    const { applyDiscountOrComplementary, changePaymentMethod } = useOrders();
+    const { settings } = useSettings();
     const { toast } = useToast();
     const [isOpen, setIsOpen] = useState(false);
 
@@ -257,6 +261,9 @@ function OrderModificationDialog({ order }: { order: Order }) {
 
     // Complementary state
     const [complementaryReason, setComplementaryReason] = useState('');
+
+    // Payment method state
+    const [newPaymentMethod, setNewPaymentMethod] = useState<string>(order.paymentMethod);
 
     const handleApplyDiscount = () => {
         const value = Number(discountValue);
@@ -279,6 +286,15 @@ function OrderModificationDialog({ order }: { order: Order }) {
         setIsOpen(false);
     };
 
+    const handleUpdatePayment = () => {
+        if (newPaymentMethod && newPaymentMethod !== order.paymentMethod) {
+            changePaymentMethod(order.id, newPaymentMethod);
+            toast({ title: 'Payment Method Updated', description: `Order payment method changed to ${newPaymentMethod}.` });
+            setIsOpen(false);
+        }
+    };
+
+
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
@@ -289,12 +305,13 @@ function OrderModificationDialog({ order }: { order: Order }) {
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Modify Order #{order.orderNumber}</DialogTitle>
-                    <DialogDescription>Apply a discount or mark the order as complementary.</DialogDescription>
+                    <DialogDescription>Apply discounts, mark as complementary, or change payment method.</DialogDescription>
                 </DialogHeader>
-                <Tabs defaultValue="discount">
-                    <TabsList className="grid w-full grid-cols-2">
+                <Tabs defaultValue="discount" className="pt-2">
+                    <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="discount">Discount</TabsTrigger>
                         <TabsTrigger value="complementary">Complementary</TabsTrigger>
+                        <TabsTrigger value="payment">Payment</TabsTrigger>
                     </TabsList>
                     <TabsContent value="discount" className="pt-4 space-y-4">
                         <RadioGroup value={discountType} onValueChange={(v) => setDiscountType(v as any)} className="flex gap-4">
@@ -331,6 +348,24 @@ function OrderModificationDialog({ order }: { order: Order }) {
                             </div>
                         </RadioGroup>
                         <Button onClick={handleApplyComplementary} className="w-full">Mark as Complementary</Button>
+                    </TabsContent>
+                     <TabsContent value="payment" className="pt-4 space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="payment-method-select">Change Payment Method</Label>
+                            <Select value={newPaymentMethod} onValueChange={setNewPaymentMethod}>
+                                <SelectTrigger id="payment-method-select">
+                                    <SelectValue placeholder="Select a method" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {settings.paymentMethods.map(method => (
+                                        <SelectItem key={method.id} value={method.name}>
+                                            {method.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <Button onClick={handleUpdatePayment} className="w-full" disabled={newPaymentMethod === order.paymentMethod}>Update Payment Method</Button>
                     </TabsContent>
                 </Tabs>
             </DialogContent>
@@ -395,28 +430,29 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
   }, [settings.floors, table]);
 
   const visibleItems = useMemo(() => {
-        const mainItems = order.items.filter(i => !i.isDealComponent);
-
-        return mainItems.map(main => {
-            const components = order.items.filter(
-                c => c.isDealComponent && c.parentDealCartItemId === main.id
-            );
-
-            const aggregated = components.reduce((acc, c) => {
-                const key = c.menuItemId;
-                if (!acc[key]) {
-                    acc[key] = { name: c.name, quantity: 0 };
-                }
-                acc[key].quantity += c.quantity;
-                return acc;
-            }, {} as Record<string, { name: string; quantity: number }>);
-
-            return {
-                ...main,
-                aggregatedDealComponents: Object.values(aggregated),
-            };
-        });
-    }, [order.items]);
+    const mainItems = order.items.filter(i => !i.isDealComponent);
+    const dealComponents = order.items.filter(i => i.isDealComponent);
+  
+    return mainItems.map(main => {
+      const components = dealComponents.filter(
+        c => c.parentDealCartItemId === main.id
+      );
+  
+      const aggregated = components.reduce((acc, c) => {
+        const key = c.menuItemId;
+        if (!acc[key]) {
+          acc[key] = { name: c.name, quantity: 0 };
+        }
+        acc[key].quantity += c.quantity;
+        return acc;
+      }, {} as Record<string, { name: string; quantity: number }>);
+  
+      return {
+        ...main,
+        aggregatedDealComponents: Object.values(aggregated),
+      };
+    });
+  }, [order.items]);
 
 
 const getOrderTypeIcon = () => {
@@ -549,7 +585,7 @@ const StatusIcon = statusConfig[order.status]?.icon || Loader;
                 {order.status === 'Pending' && (
                     <div className="grid grid-cols-2 gap-2">
                         <Button onClick={() => handleUpdateStatus('Preparing')} size="sm" className="w-full" disabled={!isMutable}><CookingPot className="mr-2 h-4 w-4" /> Accept</Button>
-                        {canModify && <CancellationDialog orderId={order.id} onConfirm={handleCancelOrder} />}
+                        {isManager && <CancellationDialog orderId={order.id} onConfirm={handleCancelOrder} />}
                     </div>
                 )}
                  {(order.status === 'Preparing' || order.status === 'Partial Ready') && (
@@ -560,8 +596,8 @@ const StatusIcon = statusConfig[order.status]?.icon || Loader;
                 )}
                 {order.status === 'Ready' && (
                     <div className="grid grid-cols-2 gap-2">
-                         <Button onClick={() => handleUpdateStatus('Completed')} size="sm" className="w-full bg-green-500 hover:bg-green-600" disabled={!isMutable}><CheckCircle className="mr-2 h-4 w-4" /> Mark as Completed</Button>
-                         {canAddItems && <AddItemsToOrderDialog order={order} />}
+                        <Button onClick={() => handleUpdateStatus('Completed')} size="sm" className="w-full bg-green-500 hover:bg-green-600" disabled={!isMutable}><CheckCircle className="mr-2 h-4 w-4" /> Mark as Completed</Button>
+                        {canAddItems && <AddItemsToOrderDialog order={order} />}
                     </div>
                 )}
                 {order.status === 'Completed' && canModify && <OrderModificationDialog order={order} />}

@@ -24,6 +24,7 @@ interface OrderContextType {
         isComplementary?: boolean,
         complementaryReason?: string 
     }) => void;
+  changePaymentMethod: (orderId: string, newPaymentMethod: string) => void;
   clearOrders: () => void;
   occupiedTableIds: Set<string>;
 }
@@ -138,6 +139,10 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
 
         if (!oldOrder.isComplementary && currentOrder.isComplementary) {
             logActivity(`Marked Order #${currentOrder.orderNumber} as complementary. Reason: ${currentOrder.complementaryReason}.`, username, 'Order');
+        }
+
+        if (oldOrder.paymentMethod !== currentOrder.paymentMethod) {
+            logActivity(`Changed payment method for Order #${currentOrder.orderNumber} to '${currentOrder.paymentMethod}'.`, username, 'Order');
         }
 
         currentOrder.items.forEach(currentItem => {
@@ -362,6 +367,13 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
     });
   }, []);
 
+  const changePaymentMethod = useCallback((orderId: string, newPaymentMethod: string) => {
+    setOrders(prevOrders => prevOrders.map(order => 
+      order.id === orderId ? { ...order, paymentMethod: newPaymentMethod } : order
+    ));
+  }, []);
+
+
   const clearOrders = useCallback(() => {
     setOrders([]);
     logActivity('Cleared all orders for the current session.', user?.username || 'System', 'System');
@@ -378,6 +390,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
         toggleItemPrepared,
         dispatchItem,
         applyDiscountOrComplementary,
+        changePaymentMethod,
         clearOrders,
         occupiedTableIds,
       }}
