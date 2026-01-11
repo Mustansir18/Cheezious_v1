@@ -291,10 +291,19 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
           item.id === itemId ? { ...item, isDispatched: true } : item
         );
         
+        // This is the item whose dispatch status just changed to true
+        const justDispatchedItem = newItems.find(i => i.id === itemId);
+
+        // Get all items that are part of the order and need to be assembled.
+        // This includes all regular items and all deal components.
+        // It excludes the "parent" deal item which is just a container.
         const allPhysicalItems = newItems.filter(item => {
-            const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
-            if (!menuItem) return false;
-            return !(!item.isDealComponent && menuItem.dealItems && menuItem.dealItems.length > 0);
+             const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
+             // It's a physical item if it's NOT a deal container.
+             // A deal container is an item that is not a deal component itself
+             // but has dealItems defined in its menu configuration.
+             const isDealContainer = !item.isDealComponent && !!menuItem?.dealItems?.length;
+             return !isDealContainer;
         });
         
         const allDispatched = allPhysicalItems.every(item => item.isDispatched);
@@ -385,3 +394,6 @@ export const useOrders = () => {
   }
   return context;
 };
+
+
+    
