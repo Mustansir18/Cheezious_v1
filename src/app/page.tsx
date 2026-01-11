@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useRouter } from 'next/navigation';
@@ -139,18 +140,19 @@ export default function Home() {
   };
 
   return (
-    <>
+    <div className="flex flex-col h-screen">
     <Header />
-    <main className="w-full px-4 py-8 lg:px-8">
-      <div className="flex flex-col items-center justify-center space-y-6 text-center">
+    <main className="flex-grow flex flex-col items-center justify-between p-8">
+      <div /> 
+      <div className="flex flex-col items-center text-center">
         
         {isMounted && settings.companyLogo ? (
           <Image src={settings.companyLogo} alt={settings.companyName} width={120} height={120} className="object-contain" />
         ) : (
-          <div style={{ width: 120, height: 120 }} /> // Placeholder to prevent layout shift
+          <div style={{ width: 120, height: 120 }} /> 
         )}
 
-        <div className="space-y-2">
+        <div className="space-y-2 mt-6">
             <h1 className="font-headline text-5xl font-bold tracking-tight">Welcome to {settings.companyName}</h1>
             <p className="text-lg text-muted-foreground">The best place for pizza and fast food lovers.</p>
         </div>
@@ -177,15 +179,14 @@ export default function Home() {
         )}
       </div>
 
-      <div className="mt-12 mb-20 px-10">
+      <div className="w-full max-w-5xl">
         <h2 className="text-2xl font-bold font-headline mb-4 text-center">Today's Hot Deals</h2>
         <DealsCarousel />
       </div>
-
-       <div className="fixed bottom-8 right-8">
-            <RatingDialog />
-        </div>
     </main>
-    </>
+     <div className="fixed bottom-8 right-8">
+        <RatingDialog />
+    </div>
+    </div>
   );
 }
