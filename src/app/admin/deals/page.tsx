@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { useMenu } from '@/context/MenuContext';
 import { useDeals } from '@/context/DealsContext';
