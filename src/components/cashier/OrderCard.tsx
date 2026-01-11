@@ -254,6 +254,7 @@ function OrderModificationDialog({ order }: { order: Order }) {
     const { settings } = useSettings();
     const { toast } = useToast();
     const [isOpen, setIsOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState("discount");
 
     // Discount state
     const [discountType, setDiscountType] = useState<'percentage' | 'amount'>('amount');
@@ -307,7 +308,7 @@ function OrderModificationDialog({ order }: { order: Order }) {
                     <DialogTitle>Modify Order #{order.orderNumber}</DialogTitle>
                     <DialogDescription>Apply discounts, mark as complementary, or change payment method.</DialogDescription>
                 </DialogHeader>
-                <Tabs defaultValue="discount" className="pt-2">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="pt-2">
                     <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="discount">Discount</TabsTrigger>
                         <TabsTrigger value="complementary">Complementary</TabsTrigger>
@@ -640,3 +641,4 @@ OrderCard.Skeleton = function OrderCardSkeleton() {
 
     
     
+
