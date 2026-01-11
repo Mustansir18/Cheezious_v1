@@ -50,7 +50,7 @@ function PromotionModal({ promoImageUrl, onConfirm, isOpen, onOpenChange }: { pr
 }
 
 export default function Home() {
-  const { settings, isLoading } = useSettings();
+  const { settings, isLoading: isSettingsLoading } = useSettings();
   const { menu, isLoading: isMenuLoading } = useMenu();
   const router = useRouter();
   const [isPromoOpen, setPromoOpen] = useState(false);
@@ -66,16 +66,17 @@ export default function Home() {
   }, [allPromotableItems, settings.promotion.itemId]);
 
 
+  // This effect now correctly triggers on every component mount (page load/refresh).
+  // It waits for both settings and menu to be loaded before checking.
   useEffect(() => {
-    // This effect now correctly triggers on every component mount (page load/refresh).
-    if (!isLoading && settings.promotion.isEnabled && promoItem) {
+    const isReady = !isSettingsLoading && !isMenuLoading;
+    if (isReady && settings.promotion.isEnabled && promoItem) {
       setPromoOpen(true);
     }
-  }, [isLoading, settings.promotion.isEnabled, promoItem]);
+  }, [isSettingsLoading, isMenuLoading, settings.promotion.isEnabled, promoItem]);
 
 
   const handleStartOrder = (itemId?: string) => {
-    if (isLoading) return;
     const targetBranchId = settings.defaultBranchId || (settings.branches.length > 0 ? settings.branches[0].id : null);
     
     if (targetBranchId) {
@@ -94,6 +95,8 @@ export default function Home() {
     setPromoOpen(false);
     handleStartOrder(promoItem.id);
   };
+  
+  const isLoading = isSettingsLoading || isMenuLoading;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -169,7 +172,7 @@ export default function Home() {
                         ))}
                     </CarouselContent>
                     <CarouselPrevious className="hidden sm:flex" />
-                    <CarouselNext className="hidden sm-flex" />
+                    <CarouselNext className="hidden sm:flex" />
                 </Carousel>
             </div>
         )}
