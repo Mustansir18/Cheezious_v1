@@ -32,9 +32,12 @@ export default function MasterOrderSlip({ order, onDispatchItem }: MasterOrderSl
         }
     };
     
-    // Correctly filter to show only physical items to be assembled, excluding parent deals.
+    // Correctly filter to show only physical items that have NOT yet been dispatched.
     const dispatchableItems = useMemo(() => {
         const physicalItems = order.items.filter(item => {
+            // Exclude items that are already dispatched
+            if (item.isDispatched) return false;
+
             const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
             // It's a physical item if it's NOT a deal container.
             // A deal container is an item that is not a deal component itself
