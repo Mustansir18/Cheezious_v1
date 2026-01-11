@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { Order, OrderItem } from '@/lib/types';
@@ -36,18 +37,23 @@ export default function StationOrderCard({ order, stationItems, onItemsPrepared 
         const itemMap = new Map<string, AggregatedStationItem>();
 
         stationItems.forEach(item => {
-            // Create a unique key based on the item and its addons
+            // Create a unique key based on the item, its variant, and its addons
             const addonsKey = (item.selectedAddons || []).map(a => `${a.name}:${a.quantity}`).sort().join(',');
-            const aggregationKey = `${item.menuItemId}-${addonsKey}`;
+            const variantKey = item.selectedVariant ? item.selectedVariant.name : 'no-variant';
+            const aggregationKey = `${item.menuItemId}-${variantKey}-${addonsKey}`;
 
             if (itemMap.has(aggregationKey)) {
                 const existing = itemMap.get(aggregationKey)!;
                 existing.totalQuantity += item.quantity;
                 existing.componentItemIds.push(item.id);
             } else {
+                const itemNameWithVariant = item.selectedVariant
+                    ? `${item.name} (${item.selectedVariant.name})`
+                    : item.name;
+
                 itemMap.set(aggregationKey, {
                     id: aggregationKey,
-                    name: item.name,
+                    name: itemNameWithVariant,
                     totalQuantity: item.quantity,
                     addons: item.selectedAddons || [],
                     componentItemIds: [item.id],

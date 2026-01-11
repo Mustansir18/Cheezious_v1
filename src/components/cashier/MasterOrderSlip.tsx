@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { Order } from '@/lib/types';
@@ -88,7 +89,7 @@ export default function MasterOrderSlip({ order, onDispatchItem }: MasterOrderSl
                                                 className="mt-1"
                                             />
                                             <Label htmlFor={`dispatch-${item.id}`} className={cn("font-semibold", isSelectable && !isDispatched && "cursor-pointer")}>
-                                                <p>{item.quantity}x {item.name}</p>
+                                                <p>{item.quantity}x {item.name} {item.selectedVariant ? `(${item.selectedVariant.name})` : ''}</p>
                                                 {item.selectedAddons && item.selectedAddons.length > 0 && (
                                                     <div className="pl-4 text-xs font-normal text-muted-foreground">
                                                         {item.selectedAddons.map(addon => (
