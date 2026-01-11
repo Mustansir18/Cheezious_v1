@@ -398,48 +398,34 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
   }, [settings.floors, table]);
 
   const visibleItems = useMemo(() => {
-    // This will hold the items to be displayed: regular items and parent deal items.
-    const displayItems: OrderItem[] = [];
+    // Separate main items (including parent deals) from deal components
+    const mainItems = order.items.filter(item => !item.isDealComponent);
+    const dealComponents = order.items.filter(item => item.isDealComponent);
 
-    // This map will track the components of each deal instance.
-    const dealComponentsMap = new Map<string, OrderItem[]>();
+    return mainItems.map(mainItem => {
+        const menuItem = menu.items.find(mi => mi.id === mainItem.menuItemId);
+        const isDeal = menuItem?.categoryId === 'C-00001';
 
-    order.items.forEach(item => {
-      if (item.isDealComponent && item.parentDealId) {
-        if (!dealComponentsMap.has(item.parentDealId)) {
-          dealComponentsMap.set(item.parentDealId, []);
+        if (isDeal) {
+            // Find all components in this order that belong to this specific deal instance
+            const componentsForThisDeal = dealComponents.filter(c => c.parentDealId === mainItem.id);
+            
+            // Aggregate them for display (e.g., 2x Fries)
+            const aggregatedComponents = componentsForThisDeal.reduce((acc, comp) => {
+                const existing = acc.find(a => a.name === comp.name);
+                if (existing) {
+                    existing.quantity += comp.quantity;
+                } else {
+                    acc.push({ name: comp.name, quantity: comp.quantity });
+                }
+                return acc;
+            }, [] as { name: string; quantity: number }[];
+
+            return { ...mainItem, aggregatedDealComponents: aggregatedComponents };
         }
-        dealComponentsMap.get(item.parentDealId)!.push(item);
-      } else {
-        // This is a regular item or a parent deal item.
-        displayItems.push(item);
-      }
+        
+        return { ...mainItem, aggregatedDealComponents: [] };
     });
-
-    // Now, enrich the parent deal items with their components.
-    return displayItems.map(item => {
-      const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
-      const isDeal = menuItem?.categoryId === 'C-00001';
-      
-      if (isDeal) {
-        // Aggregate components for display.
-        const components = dealComponentsMap.get(item.id) || [];
-        const aggregatedComponents = components.reduce((acc, comp) => {
-            const existing = acc.find(a => a.name === comp.name);
-            if (existing) {
-                existing.quantity += comp.quantity;
-            } else {
-                acc.push({ name: comp.name, quantity: comp.quantity });
-            }
-            return acc;
-        }, [] as { name: string; quantity: number }[]);
-
-        return { ...item, aggregatedDealComponents: aggregatedComponents };
-      }
-      
-      return { ...item, aggregatedDealComponents: [] };
-    });
-
   }, [order.items, menu.items]);
 
 
@@ -621,3 +607,5 @@ OrderCard.Skeleton = function OrderCardSkeleton() {
       </Card>
     );
   };
+
+    
