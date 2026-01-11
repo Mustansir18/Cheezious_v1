@@ -134,18 +134,6 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         const mergedSettings: Settings = {
           ...initialSettings,
           ...parsed,
-          // Deep merge for nested arrays to prevent wiping them out if they are empty in one source
-          branches: parsed.branches && parsed.branches.length > 0 ? parsed.branches.map((b: Branch) => {
-              const initialBranch = initialSettings.branches.find(ib => ib.id === b.id);
-              return initialBranch ? { ...initialBranch, ...b } : b;
-          }) : initialSettings.branches,
-          roles: parsed.roles && parsed.roles.length > 0 ? parsed.roles : initialSettings.roles,
-          paymentMethods: parsed.paymentMethods && parsed.paymentMethods.length > 0 ? parsed.paymentMethods : initialSettings.paymentMethods,
-          floors: parsed.floors && parsed.floors.length > 0 ? parsed.floors : initialSettings.floors,
-          tables: parsed.tables && parsed.tables.length > 0 ? parsed.tables : initialSettings.tables,
-          deliveryModes: parsed.deliveryModes && parsed.deliveryModes.length > 0 ? parsed.deliveryModes : initialSettings.deliveryModes,
-          // Ensure default branch ID is valid
-          defaultBranchId: parsed.defaultBranchId || (parsed.branches?.[0]?.id) || initialSettings.defaultBranchId,
         };
 
         setSettings(mergedSettings);
