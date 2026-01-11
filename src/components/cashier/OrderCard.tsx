@@ -80,10 +80,10 @@ function AddItemsToOrderDialog({ order }: { order: Order }) {
     
     const filteredMenuItems = useMemo(() => {
         if (!searchTerm) {
-            return menu.items.filter(item => item.categoryId !== 'C-00001'); // Exclude deals from being added
+            return menu.items;
         }
         return menu.items.filter(item => 
-            item.categoryId !== 'C-00001' && item.name.toLowerCase().includes(searchTerm.toLowerCase())
+            item.name.toLowerCase().includes(searchTerm.toLowerCase())
         );
     }, [menu.items, searchTerm]);
 
@@ -402,23 +402,23 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
     const mainItems = order.items.filter(i => !i.isDealComponent);
 
     return mainItems.map(main => {
-      const components = order.items.filter(
-        c => c.isDealComponent && c.parentDealCartItemId === main.id
-      );
+        const components = order.items.filter(
+            c => c.isDealComponent && c.parentDealCartItemId === main.id
+        );
 
-      const aggregated = components.reduce((acc, c) => {
-        const key = c.menuItemId;
-        if (!acc[key]) {
-          acc[key] = { name: c.name, quantity: 0 };
-        }
-        acc[key].quantity += c.quantity;
-        return acc;
-      }, {} as Record<string, { name: string; quantity: number }>);
+        const aggregated = components.reduce((acc, c) => {
+            const key = c.menuItemId;
+            if (!acc[key]) {
+                acc[key] = { name: c.name, quantity: 0 };
+            }
+            acc[key].quantity += c.quantity;
+            return acc;
+        }, {} as Record<string, { name: string; quantity: number }>);
 
-      return {
-        ...main,
-        aggregatedDealComponents: Object.values(aggregated),
-      };
+        return {
+            ...main,
+            aggregatedDealComponents: Object.values(aggregated),
+        };
     });
   }, [order.items]);
 
@@ -549,7 +549,7 @@ const StatusIcon = statusConfig[order.status]?.icon || Loader;
              </div>
          )}
          {workflow === 'cashier' && (
-            <div className="grid grid-cols-1 gap-2 w-full">
+            <div className="grid grid-cols-1 gap-2">
                 {order.status === 'Pending' && <Button onClick={() => handleUpdateStatus('Preparing')} size="sm" className="w-full" disabled={!isMutable}><CookingPot className="mr-2 h-4 w-4" /> Accept & Prepare</Button>}
                  {order.status === 'Preparing' && <Button onClick={() => handleUpdateStatus('Ready')} size="sm" className="w-full bg-yellow-500 hover:bg-yellow-600 text-black" disabled={!isMutable}><Check className="mr-2 h-4 w-4" /> Mark as Ready</Button>}
                 {order.status === 'Ready' && <Button onClick={() => handleUpdateStatus('Completed')} size="sm" className="w-full bg-green-500 hover:bg-green-600" disabled={!isMutable}><CheckCircle className="mr-2 h-4 w-4" /> Mark as Completed</Button>}
