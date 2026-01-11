@@ -421,7 +421,7 @@ export function OrderCard({ order, workflow = 'cashier', onUpdateStatus, childre
                 return acc;
             }, [] as { name: string; quantity: number }[]);
 
-            return { ...mainItem, aggregatedDealComponents };
+            return { ...mainItem, aggregatedDealComponents: aggregatedComponents };
         }
       
       return { ...mainItem, aggregatedDealComponents: [] };
@@ -607,5 +607,7 @@ OrderCard.Skeleton = function OrderCardSkeleton() {
       </Card>
     );
   };
+
+    
 
     
