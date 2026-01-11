@@ -68,9 +68,9 @@ function AdminSidebar() {
           className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
         >
           {isMounted && settings.companyLogo ? (
-            <Image src={settings.companyLogo} alt={settings.companyName} width={28} height={28} className="object-contain rounded-full" />
+            <Image src={settings.companyLogo} alt={settings.companyName} width={32} height={32} className="object-contain rounded-full" />
           ) : (
-             <div style={{ width: 28, height: 28 }} />
+             <div style={{ width: 32, height: 32 }} />
           )}
           <span className="sr-only">{settings.companyName}</span>
         </Link>

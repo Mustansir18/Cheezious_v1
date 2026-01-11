@@ -4,7 +4,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ShoppingCart, Pizza } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/context/CartContext";
 import { CartSheet } from "@/components/cart/CartSheet";
@@ -19,10 +19,10 @@ export default function Header({ branchId }: { branchId?: string }) {
   const router = useRouter();
   const branch = settings.branches.find((b) => b.id === branchId);
 
-  const [isClient, setIsClient] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsClient(true);
+    setIsMounted(true);
   }, []);
 
   const handleCheckStatus = () => {
@@ -33,10 +33,10 @@ export default function Header({ branchId }: { branchId?: string }) {
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-sm">
       <div className="w-full flex h-16 items-center justify-between px-4 lg:px-8">
         <Link href="/" className="flex items-center gap-2">
-          {isClient && settings.companyLogo ? (
-            <Image src={settings.companyLogo} alt={settings.companyName} width={40} height={40} className="object-contain" />
+           {isMounted && settings.companyLogo ? (
+            <Image src={settings.companyLogo} alt={settings.companyName} width={48} height={48} className="object-contain" />
           ) : (
-            <div style={{ width: 40, height: 40 }} /> // Placeholder to prevent layout shift
+            <div style={{ width: 48, height: 48 }} />
           )}
           <span className="hidden font-headline text-xl font-bold text-primary sm:inline-block">
             {settings.companyName}

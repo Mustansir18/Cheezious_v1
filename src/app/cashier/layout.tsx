@@ -9,15 +9,26 @@ import { useAuth } from '@/context/AuthContext';
 import { CashierRouteGuard } from '@/components/auth/CashierRouteGuard';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useSettings } from '@/context/SettingsContext';
+import { useState, useEffect } from 'react';
 
 function CashierHeader() {
     const { logout } = useAuth();
     const { settings } = useSettings();
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
     return (
         <header className="sticky top-0 z-40 w-full border-b bg-background">
             <div className="w-full flex h-16 items-center justify-between px-4 lg:px-8">
                 <Link href="/" className="flex items-center gap-2">
-                <Image src={settings.companyLogo || ''} alt={settings.companyName} width={36} height={36} className="object-contain" />
+                 {isMounted && settings.companyLogo ? (
+                    <Image src={settings.companyLogo} alt={settings.companyName} width={40} height={40} className="object-contain" />
+                  ) : (
+                    <div style={{ width: 40, height: 40 }} />
+                  )}
                 <span className="hidden font-headline text-xl font-bold text-primary sm:inline-block">
                     {settings.companyName}
                 </span>
