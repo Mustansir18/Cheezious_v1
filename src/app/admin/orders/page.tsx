@@ -9,7 +9,7 @@ import { useSettings } from "@/context/SettingsContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { OrderReceipt } from "@/components/cashier/OrderReceipt";
 import { Button } from "@/components/ui/button";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { DateRange } from "react-day-picker";
 import { format, subDays } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -72,6 +72,13 @@ export default function AdminOrdersPage() {
 
   const today = new Date();
   const isToday = date ? format(date, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd') : true;
+
+  // Reset floor filter if order type is not 'Dine-In' or 'all'
+  useEffect(() => {
+    if (selectedOrderType !== 'Dine-In' && selectedOrderType !== 'all') {
+      setSelectedFloor('all');
+    }
+  }, [selectedOrderType]);
 
   const filteredOrders = useMemo(() => {
     if (!date) return [];
@@ -206,20 +213,6 @@ export default function AdminOrdersPage() {
                     />
                 </div>
             </div>
-            <div className="space-y-2">
-                <Label htmlFor="floor-filter">Filter by Floor</Label>
-                 <Select value={selectedFloor} onValueChange={setSelectedFloor}>
-                    <SelectTrigger id="floor-filter">
-                        <SelectValue placeholder="All Floors" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Floors</SelectItem>
-                        {settings.floors.map(floor => (
-                            <SelectItem key={floor.id} value={floor.id}>{floor.name}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
              <div className="space-y-2">
                 <Label htmlFor="type-filter">Filter by Order Type</Label>
                 <Select value={selectedOrderType} onValueChange={setSelectedOrderType}>
@@ -234,6 +227,22 @@ export default function AdminOrdersPage() {
                     </SelectContent>
                 </Select>
             </div>
+            {(selectedOrderType === 'Dine-In' || selectedOrderType === 'all') && (
+                <div className="space-y-2">
+                    <Label htmlFor="floor-filter">Filter by Floor</Label>
+                    <Select value={selectedFloor} onValueChange={setSelectedFloor}>
+                        <SelectTrigger id="floor-filter">
+                            <SelectValue placeholder="All Floors" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Floors</SelectItem>
+                            {settings.floors.map(floor => (
+                                <SelectItem key={floor.id} value={floor.id}>{floor.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            )}
       </div>
       
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
