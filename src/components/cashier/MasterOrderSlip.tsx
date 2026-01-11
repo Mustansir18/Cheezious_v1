@@ -33,11 +33,16 @@ export default function MasterOrderSlip({ order, onDispatchItem }: MasterOrderSl
     
     // Correctly filter to show only physical items to be assembled, excluding parent deals.
     const dispatchableItems = useMemo(() => {
-        return order.items.filter(item => !(!item.isDealComponent && order.items.some(c => c.parentDealCartItemId === item.id)));
-    }, [order.items]);
+        const physicalItems = order.items.filter(item => {
+            const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
+            const isDealContainer = !item.isDealComponent && !!menuItem?.dealItems?.length;
+            return !isDealContainer;
+        });
+        return physicalItems;
+    }, [order.items, menu.items]);
 
     return (
-        <Card className="break-inside-avoid shadow-lg border-2 border-primary/20">
+        <Card className="break-inside-avoid shadow-lg border-2 border-primary/20 flex flex-col">
             <CardHeader className="p-4">
                 <div className="flex justify-between items-start">
                     <div>
@@ -58,8 +63,8 @@ export default function MasterOrderSlip({ order, onDispatchItem }: MasterOrderSl
                     </Badge>
                 </div>
             </CardHeader>
-            <CardContent className="p-4 pt-0">
-                <ScrollArea className="h-full max-h-96">
+            <CardContent className="p-4 pt-0 flex-grow overflow-hidden">
+                <ScrollArea className="h-full max-h-[450px]">
                     <div className="space-y-3 pr-2">
                         {dispatchableItems.map((item, index) => {
                             const isPrepared = !!item.isPrepared;
@@ -88,6 +93,9 @@ export default function MasterOrderSlip({ order, onDispatchItem }: MasterOrderSl
                                                         ))}
                                                     </div>
                                                 )}
+                                                 {item.instructions && (
+                                                    <p className="text-xs italic text-blue-600">"{item.instructions}"</p>
+                                                 )}
                                             </Label>
                                         </div>
                                         <div className="flex-shrink-0">
