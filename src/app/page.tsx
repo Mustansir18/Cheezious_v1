@@ -56,20 +56,19 @@ export default function Home() {
   const [isMounted, setIsMounted] = useState(false);
   const [isPromoOpen, setPromoOpen] = useState(false);
   
-  // The first deal is the main promotion, the rest are for the carousel
-  const mainPromotion = menu.items.find(item => item.categoryId === 'C-00001');
-  const deals = menu.items.filter(item => item.id !== mainPromotion?.id && item.categoryId === 'C-00001');
-  
+  const allPromotableItems = menu.items;
+
+  const deals = menu.items.filter(item => item.categoryId === 'C-00001');
+
   // Find the specific item to be used in the promotion from settings
   const promoItem = useMemo(() => {
     if (!settings.promotion.isEnabled || !settings.promotion.itemId) return null;
-    return menu.items.find(d => d.id === settings.promotion.itemId);
-  }, [menu.items, settings.promotion]);
+    return allPromotableItems.find(d => d.id === settings.promotion.itemId);
+  }, [allPromotableItems, settings.promotion]);
 
 
   useEffect(() => {
     setIsMounted(true);
-    // If a promotion is configured and enabled, show the modal
     if (promoItem) {
         const promoShown = sessionStorage.getItem('promoShown');
         if (!promoShown) {
@@ -86,7 +85,6 @@ export default function Home() {
     
     if (targetBranchId) {
         let path = `/branch/${targetBranchId}`;
-        // The item ID is treated as a deal ID for the next step, which is fine as the logic handles it generically
         if (itemId) {
             path += `?dealId=${itemId}`;
         }
@@ -148,12 +146,12 @@ export default function Home() {
                     <CarouselContent>
                         {deals.map((deal) => (
                         <CarouselItem key={deal.id} className="md:basis-1/2 lg:basis-1/3">
-                            <div className="p-1">
+                            <div className="p-1 h-full">
                             <Card 
-                                className="overflow-hidden cursor-pointer group"
+                                className="overflow-hidden cursor-pointer group h-full flex flex-col"
                                 onClick={() => handleStartOrder(deal.id)}
                             >
-                                <CardContent className="p-0 flex flex-col h-full">
+                                <CardContent className="p-0 flex flex-col flex-grow">
                                     <div className="relative w-full h-48">
                                         <Image
                                             src={deal.imageUrl}
@@ -166,7 +164,7 @@ export default function Home() {
                                         <h3 className="font-bold font-headline">{deal.name}</h3>
                                         <p className="text-sm text-muted-foreground">{deal.description}</p>
                                     </div>
-                                    <div className="p-4 pt-0 font-bold text-lg text-primary">
+                                    <div className="p-4 pt-0 mt-auto font-bold text-lg text-primary">
                                         RS {Math.round(deal.price)}
                                     </div>
                                 </CardContent>
@@ -196,3 +194,4 @@ export default function Home() {
     </div>
   );
 }
+
