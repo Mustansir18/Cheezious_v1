@@ -1,9 +1,7 @@
 
-
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
-import { menuItems as initialMenuItems, menuCategories as initialMenuCategories, addons as initialAddons } from '@/lib/data';
 import type { MenuItem, MenuCategory, Addon, SubCategory } from '@/lib/types';
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
@@ -40,9 +38,9 @@ const MenuContext = createContext<MenuContextType | undefined>(undefined);
 const MENU_STORAGE_KEY = 'cheeziousMenuV3';
 
 const initialData: MenuData = {
-    items: initialMenuItems,
-    categories: initialMenuCategories,
-    addons: initialAddons,
+    items: [],
+    categories: [],
+    addons: [],
 };
 
 export const MenuProvider = ({ children }: { children: ReactNode }) => {
@@ -53,24 +51,39 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
   
   useEffect(() => {
-    try {
-      const storedMenu = localStorage.getItem(MENU_STORAGE_KEY);
-      if (storedMenu) {
-        const parsed = JSON.parse(storedMenu);
-        if (parsed.items && parsed.categories && parsed.addons) {
-            setMenu(parsed);
-        } else {
-             setMenu(initialData);
+    async function loadMenuData() {
+        setIsLoading(true);
+        try {
+            const response = await fetch('/api/menu');
+            if (!response.ok) {
+                throw new Error('Failed to fetch menu data');
+            }
+            const data = await response.json();
+            setMenu({
+                items: data.items || [],
+                categories: data.categories || [],
+                addons: data.addons || [],
+            });
+        } catch (error) {
+            console.error("Could not load menu from API", error);
+            toast({
+                variant: 'destructive',
+                title: 'Failed to Load Menu',
+                description: 'Could not connect to the server to get menu data. Please try again later.'
+            });
+            // Fallback to empty data if API fails
+            setMenu(initialData);
+        } finally {
+            setIsLoading(false);
         }
-      }
-    } catch (error) {
-      console.error("Could not load menu from local storage", error);
-      setMenu(initialData);
-    } finally {
-      setIsLoading(false);
     }
-  }, []);
+    loadMenuData();
+  }, [toast]);
 
+
+  // The useEffect for localStorage is no longer the primary source of truth.
+  // In a full migration, this would be removed. For now, we'll keep it to persist
+  // any changes made during the session, but the initial load is from the API.
   useEffect(() => {
     try {
         if (!isLoading) {
@@ -81,7 +94,7 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [menu, isLoading]);
 
-  // Listen for storage changes from other tabs
+  // Listen for storage changes from other tabs to keep them in sync
   useEffect(() => {
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === MENU_STORAGE_KEY && event.newValue) {
@@ -110,16 +123,19 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
       toast({ variant: 'destructive', title: 'Error', description: `A category with the code '${newCategory.id}' already exists.` });
       return;
     }
+    // In a real app, this would be a POST request to /api/categories
     setMenu(m => ({ ...m, categories: [...m.categories, newCategory] }));
     logActivity(`Added menu category: '${newCategory.name}'.`, user?.username || 'System', 'Menu');
   };
 
   const updateCategory = (category: MenuCategory) => {
+    // In a real app, this would be a PUT request to /api/categories/:id
     setMenu(m => ({ ...m, categories: m.categories.map(c => c.id === category.id ? category : c) }));
     logActivity(`Updated menu category: '${category.name}'.`, user?.username || 'System', 'Menu');
   };
 
   const deleteCategory = (id: string, name: string) => {
+    // In a real app, this would be a DELETE request to /api/categories/:id
     setMenu(m => {
       const newItems = m.items.filter(i => i.categoryId !== id);
       const newCategories = m.categories.filter(c => c.id !== id);
@@ -133,6 +149,7 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
       id: `SC-${crypto.randomUUID().slice(0, 5)}`,
       name: subCategoryName,
     };
+    // In a real app, this would be a POST request to /api/categories/:id/subcategories
     setMenu(m => ({
       ...m,
       categories: m.categories.map(c => {
@@ -148,6 +165,7 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const deleteSubCategory = (categoryId: string, subCategoryId: string) => {
+    // In a real app, this would be a DELETE request to /api/categories/:id/subcategories/:subId
     setMenu(m => ({
       ...m,
       categories: m.categories.map(c => {
@@ -174,12 +192,14 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
       toast({ variant: 'destructive', title: 'Error', description: `An item with the code '${newItem.id}' already exists.` });
       return;
     }
+    // In a real app, this would be a POST request to /api/items
     setMenu(m => ({ ...m, items: [...m.items, newItem] }));
     const logMessage = newItem.categoryId === 'C-00001' ? `Added new deal: '${newItem.name}'.` : `Added menu item: '${newItem.name}'.`;
     logActivity(logMessage, user?.username || 'System', 'Menu');
   };
 
   const updateItem = (item: MenuItem) => {
+    // In a real app, this would be a PUT request to /api/items/:id
     setMenu(m => ({ ...m, items: m.items.map(i => i.id === item.id ? item : i) }));
      const logMessage = item.categoryId === 'C-00001' ? `Updated deal: '${item.name}'.` : `Updated menu item: '${item.name}'.`;
     logActivity(logMessage, user?.username || 'System', 'Menu');
@@ -187,6 +207,7 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
 
   const deleteItem = (id: string, name: string) => {
     const item = menu.items.find(i => i.id === id);
+    // In a real app, this would be a DELETE request to /api/items/:id
     setMenu(m => ({ ...m, items: m.items.filter(i => i.id !== id) }));
     const logMessage = item?.categoryId === 'C-00001' ? `Deleted deal: '${name}'.` : `Deleted menu item: '${name}'.`;
     logActivity(logMessage, user?.username || 'System', 'Menu');
@@ -201,16 +222,19 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
       toast({ variant: 'destructive', title: 'Error', description: `An add-on with the code '${newAddon.id}' already exists.` });
       return;
     }
+    // In a real app, this would be a POST request to /api/addons
     setMenu(m => ({ ...m, addons: [...m.addons, newAddon] }));
     logActivity(`Added add-on: '${newAddon.name}'.`, user?.username || 'System', 'Menu');
   };
   
   const updateAddon = (addon: Addon) => {
+    // In a real app, this would be a PUT request to /api/addons/:id
     setMenu(m => ({ ...m, addons: m.addons.map(a => a.id === addon.id ? addon : a) }));
     logActivity(`Updated add-on: '${addon.name}'.`, user?.username || 'System', 'Menu');
   };
 
   const deleteAddon = (id: string, name: string) => {
+    // In a real app, this would be a DELETE request to /api/addons/:id
     setMenu(m => {
       const newItems = m.items.map(item => ({
           ...item,
