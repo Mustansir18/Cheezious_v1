@@ -41,6 +41,7 @@ This document breaks down the organization of the Cheezious Connect project dire
 ├── public                # Static assets (images, etc. - not used in this project)
 │
 ├── .env                    # Environment variables
+├── DEPLOYMENT_MANUAL.md    # Guide for deploying on Windows Server
 ├── components.json         # ShadCN UI configuration
 ├── package.json            # Project dependencies and scripts
 └── tailwind.config.ts    # Tailwind CSS configuration
@@ -67,7 +68,7 @@ This directory contains all the reusable React components. It's subdivided by fe
 
 ### `src/context`
 
-This is where the application's global state is managed using React's Context API. Each file defines a "provider" that makes its state and associated functions available to any child component that uses its corresponding hook (e.g., `useAuth()`).
+This is where the application's global state is managed using React's Context API. **For development, these files also handle data persistence to the browser's `localStorage`. For production, this logic would be replaced with API calls to a database.**
 
 ### `src/lib`
 
@@ -75,7 +76,6 @@ A general-purpose directory for shared code that doesn't fit elsewhere.
 
 -   `types.ts`: Contains all TypeScript type definitions and Zod schemas used across the application. This is a critical file for understanding the data structures.
 -   `utils.ts`: General utility functions. `cn` is a helper for combining and managing Tailwind CSS classes.
--   `data.ts`: Contains initial hardcoded data for the menu, categories, etc.
 -   `exporter.ts`: Logic for exporting report data to PDF and CSV formats.
 
 ### `src/config`
@@ -90,3 +90,11 @@ This directory holds all the Genkit-related code for AI functionalities.
 
 -   `flows/`: Contains the business logic for AI agents. In this project, it's used to define the process for syncing an order to an external system.
 -   `genkit.ts`: Initializes and configures the Genkit `ai` instance.
+
+### `documentation/`
+
+Contains all project documentation, including this guide, an architectural overview, and deployment instructions.
+
+### `DEPLOYMENT_MANUAL.md`
+
+This root-level file provides a step-by-step guide for deploying the application on a **Windows Server** environment, including configuring IIS and PM2.
