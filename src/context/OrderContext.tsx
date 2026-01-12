@@ -60,21 +60,28 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
 
 
   useEffect(() => {
-    try {
-      const storedOrders = sessionStorage.getItem(ORDERS_STORAGE_KEY);
-      if (storedOrders) {
-        setOrders(JSON.parse(storedOrders));
+    async function loadInitialOrders() {
+      setIsLoading(true);
+      try {
+        const response = await fetch('/api/orders');
+        if (!response.ok) throw new Error('Failed to fetch orders');
+        const data = await response.json();
+        setOrders(data.orders || []);
+      } catch (error) {
+        console.error("Could not load orders from API", error);
+        // Fallback to empty array if API fails
+        setOrders([]);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Could not load orders from session storage", error);
-    } finally {
-      setIsLoading(false);
     }
+    loadInitialOrders();
   }, []);
 
   useEffect(() => {
     try {
       if (!isLoading) {
+        // This now acts as a session cache, not the source of truth.
         sessionStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
       }
     } catch (error) {
