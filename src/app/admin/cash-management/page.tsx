@@ -15,11 +15,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { DollarSign, ArrowUpCircle, ArrowDownCircle, Search, Printer } from 'lucide-react';
-import { format } from 'date-fns';
+import { DollarSign, ArrowUpCircle, ArrowDownCircle, Search, Printer, Calendar as CalendarIcon, FileDown, FileText } from 'lucide-react';
+import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import type { User } from '@/lib/types';
-import { OrderReceipt } from '@/components/cashier/OrderReceipt';
+import type { User, CashierLogEntry } from '@/lib/types';
+import { useSettings } from '@/context/SettingsContext';
+import { exportListDataAs } from '@/lib/exporter';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 function TransactionDialog({
     type,
@@ -109,7 +115,7 @@ function TransactionDialog({
     );
 }
 
-const TransactionSlip = ({ log, adminName }: { log: any; adminName: string }) => {
+const TransactionSlip = ({ log, adminName }: { log: CashierLogEntry; adminName: string }) => {
     return (
         <div className="p-4 bg-white text-black font-mono text-xs w-[300px] border border-gray-200">
             <div className="text-center mb-4">
@@ -139,8 +145,10 @@ const TransactionSlip = ({ log, adminName }: { log: any; adminName: string }) =>
 
 export default function CashManagementPage() {
     const { users } = useAuth();
+    const { settings } = useSettings();
     const { logs: transactionLogs, logTransaction } = useCashierLog();
     const [searchTerm, setSearchTerm] = useState('');
+    const [date, setDate] = useState<Date | undefined>(new Date());
     const { toast } = useToast();
 
     const cashiers = users.filter(u => u.role === 'cashier' || u.role === 'admin' || u.role === 'root');
@@ -179,15 +187,52 @@ export default function CashManagementPage() {
     };
 
     const filteredLogs = useMemo(() => {
-        if (!searchTerm) return transactionLogs;
-        const lowercasedTerm = searchTerm.toLowerCase();
-        return transactionLogs.filter(log =>
-            log.cashierName.toLowerCase().includes(lowercasedTerm) ||
-            log.adminName.toLowerCase().includes(lowercasedTerm) ||
-            log.type.toLowerCase().includes(lowercasedTerm) ||
-            log.id.toLowerCase().includes(lowercasedTerm)
-        );
-    }, [transactionLogs, searchTerm]);
+        if (!date) return [];
+
+        const fromDate = startOfDay(date);
+        const toDate = endOfDay(date);
+
+        return transactionLogs.filter(log => {
+            const logDate = new Date(log.timestamp);
+            const dateMatch = logDate >= fromDate && logDate <= toDate;
+            if (!dateMatch) return false;
+
+            const searchMatch = !searchTerm || 
+                log.cashierName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                log.adminName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                log.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                log.id.toLowerCase().includes(searchTerm.toLowerCase());
+            return searchMatch;
+        });
+    }, [transactionLogs, searchTerm, date]);
+    
+    const handleDownload = (format: 'pdf' | 'csv') => {
+        const defaultBranch = settings.branches.find(b => b.id === settings.defaultBranchId) || settings.branches[0];
+        const title = `Cash Transactions Report`;
+        const headerInfo = { 
+            companyName: settings.companyName, 
+            branchName: defaultBranch?.name || "All Branches", 
+            dateDisplay: date ? format(date, "PPP") : 'All Time'
+        };
+
+        const columns = [
+            { key: 'timestamp', label: 'Timestamp' },
+            { key: 'type', label: 'Type' },
+            { key: 'cashierName', label: 'Cashier' },
+            { key: 'adminName', label: 'Admin' },
+            { key: 'amount', label: 'Amount (RS)' },
+            { key: 'notes', label: 'Notes' },
+        ];
+        
+        const data = filteredLogs.map(log => ({
+            ...log,
+            timestamp: format(new Date(log.timestamp), 'Pp'),
+            type: log.type === 'deposit' ? 'Safe Deposit' : 'Cash Bleed',
+            amount: Math.round(log.amount),
+        }));
+        
+        exportListDataAs(format, data, columns, title, headerInfo);
+    };
 
     return (
         <div className="w-full space-y-8">
@@ -244,14 +289,41 @@ export default function CashManagementPage() {
                             <CardDescription>A complete audit trail of all cash transactions.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                             <div className="relative mb-4 max-w-sm">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                    placeholder="Search logs..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-10"
-                                />
+                            <div className="mb-4 flex flex-col md:flex-row gap-4 items-center">
+                                <div className="relative w-full md:max-w-sm">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        placeholder="Search logs..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="pl-10"
+                                    />
+                                </div>
+                                 <Popover>
+                                    <PopoverTrigger asChild>
+                                    <Button
+                                        id="date"
+                                        variant={"outline"}
+                                        className={cn("w-full md:w-[200px] justify-start text-left font-normal", !date && "text-muted-foreground")}
+                                    >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {date ? format(date, "PPP") : <span>Pick a date</span>}
+                                    </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="end">
+                                    <Calendar
+                                        mode="single"
+                                        selected={date}
+                                        onSelect={setDate}
+                                        initialFocus
+                                        disabled={(d) => d > new Date() || d < subDays(new Date(), 30)}
+                                    />
+                                    </PopoverContent>
+                                </Popover>
+                                <div className="flex gap-2">
+                                    <Button variant="outline" onClick={() => handleDownload('csv')} disabled={filteredLogs.length === 0}><FileDown className="mr-2 h-4 w-4" /> CSV</Button>
+                                    <Button variant="outline" onClick={() => handleDownload('pdf')} disabled={filteredLogs.length === 0}><FileText className="mr-2 h-4 w-4" /> PDF</Button>
+                                </div>
                             </div>
                             <ScrollArea className="h-[60vh]">
                                 <Table>
@@ -287,7 +359,7 @@ export default function CashManagementPage() {
                                     </TableBody>
                                 </Table>
                             </ScrollArea>
-                            {filteredLogs.length === 0 && <p className="text-center text-muted-foreground pt-8">No transaction logs found.</p>}
+                            {filteredLogs.length === 0 && <p className="text-center text-muted-foreground pt-8">No transaction logs found for the selected date.</p>}
                         </CardContent>
                     </Card>
                 </TabsContent>

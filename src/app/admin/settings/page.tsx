@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2, Edit, Lock, Percent, PlusCircle } from "lucide-react";
+import { Trash2, Edit, Lock, Percent, PlusCircle, Building, Layout, DollarSign, Bike } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -27,6 +27,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Branch, Role, UserRole, DeliveryMode, PromotionSettings } from "@/lib/types";
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
 import imageCompression from 'browser-image-compression';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 
 async function handleImageUpload(file: File) {
@@ -216,117 +217,19 @@ export default function AdminSettingsPage() {
                 <p className="text-muted-foreground">Manage restaurant layout, payments, and other configurations.</p>
             </header>
 
-            <div className="space-y-8">
-                 {/* Floors Management */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Manage Floors</CardTitle>
-                        <CardDescription>Add or remove floors for your restaurant.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="flex flex-col md:flex-row gap-2 mb-4">
-                            <Input
-                                placeholder="New floor code (e.g., F-01)"
-                                value={newFloorId}
-                                onChange={(e) => setNewFloorId(e.target.value)}
-                            />
-                            <Input
-                                placeholder="New floor name (e.g., Ground Floor)"
-                                value={newFloorName}
-                                onChange={(e) => setNewFloorName(e.target.value)}
-                            />
-                            <Button onClick={handleAddFloor} className="w-full md:w-auto">Add Floor</Button>
-                        </div>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Floor Name</TableHead>
-                                    <TableHead>Code</TableHead>
-                                    <TableHead className="text-right w-[80px]">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {settings.floors.map(floor => (
-                                    <TableRow key={floor.id}>
-                                        <TableCell>{floor.name}</TableCell>
-                                        <TableCell className="font-mono text-xs">{floor.id}</TableCell>
-                                        <TableCell className="text-right">
-                                            <DeleteConfirmationDialog
-                                                title={`Delete Floor "${floor.name}"?`}
-                                                description={<>This action cannot be undone. This will permanently delete the floor <strong>{floor.name}</strong> and all of its tables.</>}
-                                                onConfirm={() => deleteFloor(floor.id, floor.name)}
-                                            />
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
+            {!isAdvancedSettingsUnlocked ? (
+                <AdvancedSettingsGate onUnlock={() => setAdvancedSettingsUnlocked(true)} />
+            ) : (
+                <Tabs defaultValue="general" className="w-full">
+                    <TabsList className="grid w-full grid-cols-4">
+                        <TabsTrigger value="general">General</TabsTrigger>
+                        <TabsTrigger value="branches">Branches</TabsTrigger>
+                        <TabsTrigger value="layout">Layout</TabsTrigger>
+                        <TabsTrigger value="financial">Financial</TabsTrigger>
+                    </TabsList>
 
-                {/* Tables Management */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Manage Tables</CardTitle>
-                        <CardDescription>Add tables and assign them to a floor.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid md:grid-cols-4 gap-2 mb-4">
-                            <Input
-                                placeholder="New table code (e.g., T-01)"
-                                value={newTableId}
-                                onChange={(e) => setNewTableId(e.target.value)}
-                            />
-                            <Input
-                                placeholder="New table name (e.g., Table 1)"
-                                value={newTableName}
-                                onChange={(e) => setNewTableName(e.target.value)}
-                            />
-                            <Select value={selectedFloorForNewTable} onValueChange={setSelectedFloorForNewTable}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a floor" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {settings.floors.map(floor => (
-                                        <SelectItem key={floor.id} value={floor.id}>{floor.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <Button onClick={handleAddTable}>Add Table</Button>
-                        </div>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Table Name</TableHead>
-                                    <TableHead>Code</TableHead>
-                                    <TableHead>Floor</TableHead>
-                                    <TableHead className="text-right w-[80px]">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {settings.tables.map(table => (
-                                    <TableRow key={table.id}>
-                                        <TableCell>{table.name}</TableCell>
-                                        <TableCell className="font-mono text-xs">{table.id}</TableCell>
-                                        <TableCell>{settings.floors.find(f => f.id === table.floorId)?.name || 'N/A'}</TableCell>
-                                        <TableCell className="text-right">
-                                             <DeleteConfirmationDialog
-                                                title={`Delete Table "${table.name}"?`}
-                                                description={<>This action cannot be undone. This will permanently delete table <strong>{table.name}</strong>.</>}
-                                                onConfirm={() => deleteTable(table.id, table.name)}
-                                             />
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
-
-                {!isAdvancedSettingsUnlocked ? (
-                    <AdvancedSettingsGate onUnlock={() => setAdvancedSettingsUnlocked(true)} />
-                ) : (
-                    <div className="space-y-8 mt-6">
+                    {/* General Settings */}
+                    <TabsContent value="general" className="mt-6 space-y-8">
                         <Card>
                             <CardHeader>
                                 <CardTitle>Company Information</CardTitle>
@@ -336,21 +239,11 @@ export default function AdminSettingsPage() {
                                 <div className="space-y-4">
                                     <div className="space-y-2">
                                         <Label htmlFor="company-name">Company Name</Label>
-                                        <Input
-                                            id="company-name"
-                                            value={companyName}
-                                            onChange={(e) => setCompanyName(e.target.value)}
-                                        />
+                                        <Input id="company-name" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="company-logo">Company Logo</Label>
-                                        <Input 
-                                            id="company-logo" 
-                                            type="file" 
-                                            accept="image/*" 
-                                            onChange={handleLogoImageChange}
-                                            className="file:text-foreground"
-                                        />
+                                        <Input id="company-logo" type="file" accept="image/*" onChange={handleLogoImageChange} className="file:text-foreground" />
                                         <p className="text-xs text-muted-foreground">Recommended: Square, less than 200KB.</p>
                                     </div>
                                 </div>
@@ -367,141 +260,14 @@ export default function AdminSettingsPage() {
                             </CardContent>
                             <CardFooter>
                                 <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button>Save Company Info</Button>
-                                    </AlertDialogTrigger>
+                                    <AlertDialogTrigger asChild><Button>Save Company Info</Button></AlertDialogTrigger>
                                     <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This will change the company name and logo displayed across the entire application.
-                                        </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={handleSaveCompanyInfo}>Save</AlertDialogAction>
-                                        </AlertDialogFooter>
+                                        <AlertDialogHeader><AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle><AlertDialogDescription>This will change the company name and logo displayed across the entire application.</AlertDialogDescription></AlertDialogHeader>
+                                        <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleSaveCompanyInfo}>Save</AlertDialogAction></AlertDialogFooter>
                                     </AlertDialogContent>
                                 </AlertDialog>
                             </CardFooter>
                         </Card>
-
-                        {/* Branch Management */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Branch Management</CardTitle>
-                                <CardDescription>Configure settings for each restaurant branch.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                {user?.role === 'root' && (
-                                    <div className="mb-6 p-4 border rounded-lg space-y-4">
-                                        <h4 className="font-semibold">Add New Branch</h4>
-                                        <div className="grid md:grid-cols-4 gap-2">
-                                            <Input
-                                                placeholder="Branch Code (e.g., B-01)"
-                                                value={newBranchId}
-                                                onChange={(e) => setNewBranchId(e.target.value)}
-                                            />
-                                            <Input
-                                                placeholder="New branch name"
-                                                value={newBranchName}
-                                                onChange={(e) => setNewBranchName(e.target.value)}
-                                            />
-                                             <Input
-                                                placeholder="Order Prefix (e.g., G3)"
-                                                value={newBranchPrefix}
-                                                onChange={(e) => setNewBranchPrefix(e.target.value)}
-                                            />
-                                            <Button onClick={handleAddBranch}>Add Branch</Button>
-                                        </div>
-                                    </div>
-                                )}
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Branch Name</TableHead>
-                                            <TableHead>Code</TableHead>
-                                            <TableHead>Order Prefix</TableHead>
-                                            <TableHead>Dine-In</TableHead>
-                                            <TableHead>Take Away</TableHead>
-                                            <TableHead>Delivery</TableHead>
-                                            <TableHead className="text-right w-[120px]">Actions</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {visibleBranches.map(branch => (
-                                            <TableRow key={branch.id}>
-                                                <TableCell className="font-medium">{branch.name}</TableCell>
-                                                <TableCell className="font-mono text-xs">{branch.id}</TableCell>
-                                                <TableCell className="font-mono">{branch.orderPrefix}</TableCell>
-                                                <TableCell>
-                                                    <Switch
-                                                        checked={branch.dineInEnabled}
-                                                        onCheckedChange={(checked) => toggleService(branch.id, 'dineInEnabled', checked)}
-                                                        aria-label="Toggle Dine-In"
-                                                    />
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Switch
-                                                        checked={branch.takeAwayEnabled}
-                                                        onCheckedChange={(checked) => toggleService(branch.id, 'takeAwayEnabled', checked)}
-                                                        aria-label="Toggle Take Away"
-                                                    />
-                                                </TableCell>
-                                                 <TableCell>
-                                                    <Switch
-                                                        checked={branch.deliveryEnabled}
-                                                        onCheckedChange={(checked) => toggleService(branch.id, 'deliveryEnabled', checked)}
-                                                        aria-label="Toggle Delivery"
-                                                    />
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <Button variant="ghost" size="icon" onClick={() => openEditDialog(branch)}>
-                                                        <Edit className="h-4 w-4" />
-                                                    </Button>
-                                                    <DeleteConfirmationDialog
-                                                        title={`Delete Branch "${branch.name}"?`}
-                                                        description={<>This action cannot be undone. This will permanently delete the branch <strong>{branch.name}</strong> and any associated user access.</>}
-                                                        onConfirm={() => deleteBranch(branch.id, branch.name)}
-                                                    />
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </CardContent>
-                        </Card>
-
-                        {/* Default Branch Settings */}
-                        {user?.role === 'root' && (
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Default Branch</CardTitle>
-                                    <CardDescription>Select the default branch for the main landing page.</CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="default-branch-select">Default Branch for Homepage</Label>
-                                            <Select value={settings.defaultBranchId || ''} onValueChange={setDefaultBranch}>
-                                                <SelectTrigger id="default-branch-select">
-                                                    <SelectValue placeholder="Select a default branch" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {settings.branches.map(branch => (
-                                                        <SelectItem key={branch.id} value={branch.id}>
-                                                            {branch.name}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        )}
-
-                        {/* Business Day Settings */}
                         <Card>
                             <CardHeader>
                                 <CardTitle>Business Day Configuration</CardTitle>
@@ -509,171 +275,60 @@ export default function AdminSettingsPage() {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="grid grid-cols-1 md:grid-cols-3 items-end gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="business-day-start">Business Day Start Time</Label>
-                                        <Input
-                                            id="business-day-start"
-                                            type="time"
-                                            value={businessDayStart}
-                                            onChange={(e) => setBusinessDayStart(e.target.value)}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="business-day-end">Business Day End Time</Label>
-                                        <Input
-                                            id="business-day-end"
-                                            type="time"
-                                            value={businessDayEnd}
-                                            onChange={(e) => setBusinessDayEnd(e.target.value)}
-                                        />
-                                    </div>
+                                    <div className="space-y-2"><Label htmlFor="business-day-start">Start Time</Label><Input id="business-day-start" type="time" value={businessDayStart} onChange={(e) => setBusinessDayStart(e.target.value)} /></div>
+                                    <div className="space-y-2"><Label htmlFor="business-day-end">End Time</Label><Input id="business-day-end" type="time" value={businessDayEnd} onChange={(e) => setBusinessDayEnd(e.target.value)} /></div>
                                     <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                            <Button>Save Business Hours</Button>
-                                        </AlertDialogTrigger>
+                                        <AlertDialogTrigger asChild><Button>Save Business Hours</Button></AlertDialogTrigger>
                                         <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                                This will change the business hours used for all reports.
-                                            </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction onClick={handleSaveBusinessHours}>Save</AlertDialogAction>
-                                            </AlertDialogFooter>
+                                            <AlertDialogHeader><AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle><AlertDialogDescription>This will change the business hours used for all reports.</AlertDialogDescription></AlertDialogHeader>
+                                            <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleSaveBusinessHours}>Save</AlertDialogAction></AlertDialogFooter>
                                         </AlertDialogContent>
                                     </AlertDialog>
-
                                 </div>
-                                <p className="text-sm text-muted-foreground">
-                                    For a business day that spans across midnight (e.g., 11:00 AM to 4:00 AM), reports will include sales from the start time on the selected date to the end time on the following day.
-                                </p>
+                                <p className="text-sm text-muted-foreground">For a business day that spans across midnight (e.g., 11:00 AM to 4:00 AM), reports will include sales from the start time on the selected date to the end time on the following day.</p>
                             </CardContent>
                         </Card>
-
-                        {/* Printer Settings */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Printer Settings</CardTitle>
-                                <CardDescription>Configure automatic printing options.</CardDescription>
-                            </CardHeader>
+                         <Card>
+                            <CardHeader><CardTitle>Printer Settings</CardTitle><CardDescription>Configure automatic printing options.</CardDescription></CardHeader>
                             <CardContent>
                                 <div className="flex items-center justify-between rounded-lg border p-4">
-                                    <div className="space-y-0.5">
-                                        <Label htmlFor="auto-print-switch" className="text-base">Auto-Print Receipts</Label>
-                                        <p className="text-sm text-muted-foreground">
-                                            Automatically open the print dialog when an order is placed.
-                                            Set your desired receipt printer (e.g., EPSON) as the system default for seamless printing.
-                                        </p>
-                                    </div>
-                                    <Switch
-                                        id="auto-print-switch"
-                                        checked={settings.autoPrintReceipts}
-                                        onCheckedChange={toggleAutoPrint}
-                                    />
+                                    <div className="space-y-0.5"><Label htmlFor="auto-print-switch" className="text-base">Auto-Print Receipts</Label><p className="text-sm text-muted-foreground">Automatically open the print dialog when an order is placed. Set your receipt printer as the system default.</p></div>
+                                    <Switch id="auto-print-switch" checked={settings.autoPrintReceipts} onCheckedChange={toggleAutoPrint} />
                                 </div>
                             </CardContent>
                         </Card>
-                        
-                         {/* Payment Methods Management */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Manage Payment Methods & Taxes</CardTitle>
-                                <CardDescription>Add, remove, and set tax rates for payment methods.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="flex flex-col md:flex-row gap-2 mb-4">
-                                    <Input
-                                        placeholder="New method code (e.g., PM-01)"
-                                        value={newPaymentMethodId}
-                                        onChange={(e) => setNewPaymentMethodId(e.target.value)}
-                                    />
-                                    <Input
-                                        placeholder="New payment method name (e.g., QR Pay)"
-                                        value={newPaymentMethodName}
-                                        onChange={(e) => setNewPaymentMethodName(e.target.value)}
-                                    />
-                                    <Button onClick={handleAddPaymentMethod} className="w-full md:w-auto">Add Method</Button>
-                                </div>
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Method Name</TableHead>
-                                            <TableHead>Code</TableHead>
-                                            <TableHead className="w-[150px]">Tax Rate (%)</TableHead>
-                                            <TableHead className="text-right w-[80px]">Actions</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {settings.paymentMethods.map(method => (
-                                            <TableRow key={method.id}>
-                                                <TableCell>{method.name}</TableCell>
-                                                <TableCell className="font-mono text-xs">{method.id}</TableCell>
-                                                <TableCell>
-                                                    <div className="relative">
-                                                        <Input
-                                                            type="number"
-                                                            value={method.taxRate ? method.taxRate * 100 : 0}
-                                                            onChange={(e) => updatePaymentMethodTaxRate(method.id, parseFloat(e.target.value) / 100)}
-                                                            className="pl-2 pr-7"
-                                                        />
-                                                        <Percent className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                     <DeleteConfirmationDialog
-                                                        title={`Delete Method "${method.name}"?`}
-                                                        description={<>This action will permanently delete the payment method <strong>{method.name}</strong>.</>}
-                                                        onConfirm={() => deletePaymentMethod(method.id, method.name)}
-                                                    />
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </CardContent>
-                        </Card>
+                    </TabsContent>
 
-                         {/* Delivery Modes Management */}
+                    {/* Branches Settings */}
+                    <TabsContent value="branches" className="mt-6 space-y-8">
                         <Card>
-                            <CardHeader>
-                                <CardTitle>Manage Delivery Modes</CardTitle>
-                                <CardDescription>Add or remove delivery sources like Website, App, or Call Centre.</CardDescription>
-                            </CardHeader>
+                            <CardHeader><CardTitle className="flex items-center"><Building className="mr-2"/>Branch Management</CardTitle><CardDescription>Configure settings for each restaurant branch.</CardDescription></CardHeader>
                             <CardContent>
-                                <div className="flex flex-col md:flex-row gap-2 mb-4">
-                                    <Input
-                                        placeholder="New mode code (e.g., DM-01)"
-                                        value={newDeliveryModeId}
-                                        onChange={(e) => setNewDeliveryModeId(e.target.value)}
-                                    />
-                                    <Input
-                                        placeholder="New mode name (e.g., Website)"
-                                        value={newDeliveryModeName}
-                                        onChange={(e) => setNewDeliveryModeName(e.target.value)}
-                                    />
-                                    <Button onClick={handleAddDeliveryMode} className="w-full md:w-auto">Add Mode</Button>
-                                </div>
+                                {user?.role === 'root' && (
+                                    <div className="mb-6 p-4 border rounded-lg space-y-4">
+                                        <h4 className="font-semibold">Add New Branch</h4>
+                                        <div className="grid md:grid-cols-4 gap-2">
+                                            <Input placeholder="Branch Code (e.g., B-01)" value={newBranchId} onChange={(e) => setNewBranchId(e.target.value)} />
+                                            <Input placeholder="New branch name" value={newBranchName} onChange={(e) => setNewBranchName(e.target.value)} />
+                                            <Input placeholder="Order Prefix (e.g., G3)" value={newBranchPrefix} onChange={(e) => setNewBranchPrefix(e.target.value)} />
+                                            <Button onClick={handleAddBranch}>Add Branch</Button>
+                                        </div>
+                                    </div>
+                                )}
                                 <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Mode Name</TableHead>
-                                            <TableHead>Code</TableHead>
-                                            <TableHead className="text-right w-[80px]">Actions</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
+                                    <TableHeader><TableRow><TableHead>Branch Name</TableHead><TableHead>Code</TableHead><TableHead>Order Prefix</TableHead><TableHead>Dine-In</TableHead><TableHead>Take Away</TableHead><TableHead>Delivery</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
                                     <TableBody>
-                                        {settings.deliveryModes.map(mode => (
-                                            <TableRow key={mode.id}>
-                                                <TableCell>{mode.name}</TableCell>
-                                                <TableCell className="font-mono text-xs">{mode.id}</TableCell>
+                                        {visibleBranches.map(branch => (
+                                            <TableRow key={branch.id}>
+                                                <TableCell className="font-medium">{branch.name}</TableCell>
+                                                <TableCell className="font-mono text-xs">{branch.id}</TableCell>
+                                                <TableCell className="font-mono">{branch.orderPrefix}</TableCell>
+                                                <TableCell><Switch checked={branch.dineInEnabled} onCheckedChange={(checked) => toggleService(branch.id, 'dineInEnabled', checked)} aria-label="Toggle Dine-In" /></TableCell>
+                                                <TableCell><Switch checked={branch.takeAwayEnabled} onCheckedChange={(checked) => toggleService(branch.id, 'takeAwayEnabled', checked)} aria-label="Toggle Take Away" /></TableCell>
+                                                <TableCell><Switch checked={branch.deliveryEnabled} onCheckedChange={(checked) => toggleService(branch.id, 'deliveryEnabled', checked)} aria-label="Toggle Delivery" /></TableCell>
                                                 <TableCell className="text-right">
-                                                    <DeleteConfirmationDialog
-                                                        title={`Delete Delivery Mode "${mode.name}"?`}
-                                                        description={<>This will permanently delete the delivery mode <strong>{mode.name}</strong>.</>}
-                                                        onConfirm={() => deleteDeliveryMode(mode.id, mode.name)}
-                                                    />
+                                                    <Button variant="ghost" size="icon" onClick={() => openEditDialog(branch)}><Edit className="h-4 w-4" /></Button>
+                                                    <DeleteConfirmationDialog title={`Delete Branch "${branch.name}"?`} description={<>This will permanently delete the branch <strong>{branch.name}</strong> and associated user access.</>} onConfirm={() => deleteBranch(branch.id, branch.name)} />
                                                 </TableCell>
                                             </TableRow>
                                         ))}
@@ -681,49 +336,75 @@ export default function AdminSettingsPage() {
                                 </Table>
                             </CardContent>
                         </Card>
-                    </div>
-                )}
-            </div>
-           
+                        {user?.role === 'root' && (
+                            <Card>
+                                <CardHeader><CardTitle>Default Branch</CardTitle><CardDescription>Select the default branch for the main landing page.</CardDescription></CardHeader>
+                                <CardContent>
+                                    <div className="space-y-2 max-w-sm"><Label htmlFor="default-branch-select">Default Branch for Homepage</Label>
+                                    <Select value={settings.defaultBranchId || ''} onValueChange={setDefaultBranch}><SelectTrigger id="default-branch-select"><SelectValue placeholder="Select a default branch" /></SelectTrigger>
+                                        <SelectContent>{settings.branches.map(branch => (<SelectItem key={branch.id} value={branch.id}>{branch.name}</SelectItem>))}</SelectContent>
+                                    </Select></div>
+                                </CardContent>
+                            </Card>
+                        )}
+                    </TabsContent>
+                    
+                    {/* Layout Settings */}
+                    <TabsContent value="layout" className="mt-6 space-y-8">
+                        <Card>
+                            <CardHeader><CardTitle className="flex items-center"><Layout className="mr-2"/>Manage Floors</CardTitle><CardDescription>Add or remove floors for your restaurant.</CardDescription></CardHeader>
+                            <CardContent>
+                                <div className="flex flex-col md:flex-row gap-2 mb-4"><Input placeholder="New floor code (e.g., F-01)" value={newFloorId} onChange={(e) => setNewFloorId(e.target.value)} /><Input placeholder="New floor name (e.g., Ground Floor)" value={newFloorName} onChange={(e) => setNewFloorName(e.target.value)} /><Button onClick={handleAddFloor} className="w-full md:w-auto">Add Floor</Button></div>
+                                <Table><TableHeader><TableRow><TableHead>Floor Name</TableHead><TableHead>Code</TableHead><TableHead className="text-right w-[80px]">Actions</TableHead></TableRow></TableHeader>
+                                    <TableBody>{settings.floors.map(floor => (<TableRow key={floor.id}><TableCell>{floor.name}</TableCell><TableCell className="font-mono text-xs">{floor.id}</TableCell><TableCell className="text-right"><DeleteConfirmationDialog title={`Delete Floor "${floor.name}"?`} description={<>This will permanently delete the floor <strong>{floor.name}</strong> and all of its tables.</>} onConfirm={() => deleteFloor(floor.id, floor.name)} /></TableCell></TableRow>))}</TableBody>
+                                </Table>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader><CardTitle className="flex items-center"><Layout className="mr-2"/>Manage Tables</CardTitle><CardDescription>Add tables and assign them to a floor.</CardDescription></CardHeader>
+                            <CardContent>
+                                <div className="grid md:grid-cols-4 gap-2 mb-4"><Input placeholder="New table code (e.g., T-01)" value={newTableId} onChange={(e) => setNewTableId(e.target.value)} /><Input placeholder="New table name (e.g., Table 1)" value={newTableName} onChange={(e) => setNewTableName(e.target.value)} /><Select value={selectedFloorForNewTable} onValueChange={setSelectedFloorForNewTable}><SelectTrigger><SelectValue placeholder="Select a floor" /></SelectTrigger><SelectContent>{settings.floors.map(floor => (<SelectItem key={floor.id} value={floor.id}>{floor.name}</SelectItem>))}</SelectContent></Select><Button onClick={handleAddTable}>Add Table</Button></div>
+                                <Table><TableHeader><TableRow><TableHead>Table Name</TableHead><TableHead>Code</TableHead><TableHead>Floor</TableHead><TableHead className="text-right w-[80px]">Actions</TableHead></TableRow></TableHeader>
+                                    <TableBody>{settings.tables.map(table => (<TableRow key={table.id}><TableCell>{table.name}</TableCell><TableCell className="font-mono text-xs">{table.id}</TableCell><TableCell>{settings.floors.find(f => f.id === table.floorId)?.name || 'N/A'}</TableCell><TableCell className="text-right"><DeleteConfirmationDialog title={`Delete Table "${table.name}"?`} description={<>This will permanently delete table <strong>{table.name}</strong>.</>} onConfirm={() => deleteTable(table.id, table.name)} /></TableCell></TableRow>))}</TableBody>
+                                </Table>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                    
+                    {/* Financial Settings */}
+                    <TabsContent value="financial" className="mt-6 space-y-8">
+                         <Card>
+                            <CardHeader><CardTitle className="flex items-center"><DollarSign className="mr-2"/>Manage Payment Methods & Taxes</CardTitle><CardDescription>Add, remove, and set tax rates for payment methods.</CardDescription></CardHeader>
+                            <CardContent>
+                                <div className="flex flex-col md:flex-row gap-2 mb-4"><Input placeholder="New method code (e.g., PM-01)" value={newPaymentMethodId} onChange={(e) => setNewPaymentMethodId(e.target.value)} /><Input placeholder="New payment method name (e.g., QR Pay)" value={newPaymentMethodName} onChange={(e) => setNewPaymentMethodName(e.target.value)} /><Button onClick={handleAddPaymentMethod} className="w-full md:w-auto">Add Method</Button></div>
+                                <Table><TableHeader><TableRow><TableHead>Method Name</TableHead><TableHead>Code</TableHead><TableHead className="w-[150px]">Tax Rate (%)</TableHead><TableHead className="text-right w-[80px]">Actions</TableHead></TableRow></TableHeader>
+                                    <TableBody>{settings.paymentMethods.map(method => (<TableRow key={method.id}><TableCell>{method.name}</TableCell><TableCell className="font-mono text-xs">{method.id}</TableCell><TableCell><div className="relative"><Input type="number" value={method.taxRate ? method.taxRate * 100 : 0} onChange={(e) => updatePaymentMethodTaxRate(method.id, parseFloat(e.target.value) / 100)} className="pl-2 pr-7" /><Percent className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /></div></TableCell><TableCell className="text-right"><DeleteConfirmationDialog title={`Delete Method "${method.name}"?`} description={<>This will permanently delete the payment method <strong>{method.name}</strong>.</>} onConfirm={() => deletePaymentMethod(method.id, method.name)} /></TableCell></TableRow>))}</TableBody>
+                                </Table>
+                            </CardContent>
+                        </Card>
+                         <Card>
+                            <CardHeader><CardTitle className="flex items-center"><Bike className="mr-2"/>Manage Delivery Modes</CardTitle><CardDescription>Add or remove delivery sources like Website, App, or Call Centre.</CardDescription></CardHeader>
+                            <CardContent>
+                                <div className="flex flex-col md:flex-row gap-2 mb-4"><Input placeholder="New mode code (e.g., DM-01)" value={newDeliveryModeId} onChange={(e) => setNewDeliveryModeId(e.target.value)} /><Input placeholder="New mode name (e.g., Website)" value={newDeliveryModeName} onChange={(e) => setNewDeliveryModeName(e.target.value)} /><Button onClick={handleAddDeliveryMode} className="w-full md:w-auto">Add Mode</Button></div>
+                                <Table><TableHeader><TableRow><TableHead>Mode Name</TableHead><TableHead>Code</TableHead><TableHead className="text-right w-[80px]">Actions</TableHead></TableRow></TableHeader>
+                                    <TableBody>{settings.deliveryModes.map(mode => (<TableRow key={mode.id}><TableCell>{mode.name}</TableCell><TableCell className="font-mono text-xs">{mode.id}</TableCell><TableCell className="text-right"><DeleteConfirmationDialog title={`Delete Delivery Mode "${mode.name}"?`} description={<>This will permanently delete the delivery mode <strong>{mode.name}</strong>.</>} onConfirm={() => deleteDeliveryMode(mode.id, mode.name)} /></TableCell></TableRow>))}</TableBody>
+                                </Table>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                </Tabs>
+            )}
 
             {/* Edit Branch Dialog */}
             <Dialog open={!!editingBranch} onOpenChange={(isOpen) => !isOpen && setEditingBranch(null)}>
                 <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Edit Branch</DialogTitle>
-                    </DialogHeader>
+                    <DialogHeader><DialogTitle>Edit Branch</DialogTitle></DialogHeader>
                     <div className="py-4 space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="branch-id">Branch Code</Label>
-                            <Input
-                                id="branch-id"
-                                value={editingBranch?.id || ''}
-                                disabled
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="branch-name">Branch Name</Label>
-                            <Input
-                                id="branch-name"
-                                value={editingBranchName}
-                                onChange={(e) => setEditingBranchName(e.target.value)}
-                            />
-                        </div>
-                        <div className="space-y-2">
-                             <Label htmlFor="branch-prefix">Order Prefix</Label>
-                            <Input
-                                id="branch-prefix"
-                                value={editingBranchPrefix}
-                                onChange={(e) => setEditingBranchPrefix(e.target.value)}
-                            />
-                        </div>
+                        <div className="space-y-2"><Label htmlFor="branch-id">Branch Code</Label><Input id="branch-id" value={editingBranch?.id || ''} disabled /></div>
+                        <div className="space-y-2"><Label htmlFor="branch-name">Branch Name</Label><Input id="branch-name" value={editingBranchName} onChange={(e) => setEditingBranchName(e.target.value)} /></div>
+                        <div className="space-y-2"><Label htmlFor="branch-prefix">Order Prefix</Label><Input id="branch-prefix" value={editingBranchPrefix} onChange={(e) => setEditingBranchPrefix(e.target.value)} /></div>
                     </div>
-                    <DialogFooter>
-                        <DialogClose asChild>
-                            <Button type="button" variant="secondary">Cancel</Button>
-                        </DialogClose>
-                        <Button onClick={handleUpdateBranch}>Save Changes</Button>
-                    </DialogFooter>
+                    <DialogFooter><DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose><Button onClick={handleUpdateBranch}>Save Changes</Button></DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>
