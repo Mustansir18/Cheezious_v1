@@ -14,64 +14,43 @@ interface RatingContextType {
 
 const RatingContext = createContext<RatingContextType | undefined>(undefined);
 
-const RATING_STORAGE_KEY = 'cheeziousRatings';
-
 export const RatingProvider = ({ children }: { children: ReactNode }) => {
   const [ratings, setRatings] = useState<Rating[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { logActivity } = useActivityLog();
 
   useEffect(() => {
-    try {
-      const storedRatings = localStorage.getItem(RATING_STORAGE_KEY);
-      if (storedRatings) {
-        setRatings(JSON.parse(storedRatings));
+    async function loadRatings() {
+      setIsLoading(true);
+      try {
+        const response = await fetch('/api/ratings');
+        if (!response.ok) throw new Error('Failed to fetch ratings');
+        const data = await response.json();
+        setRatings(data.ratings || []);
+      } catch (error) {
+        console.error("Could not load ratings from API", error);
+        setRatings([]);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Could not load ratings from local storage", error);
-    } finally {
-      setIsLoading(false);
     }
+    loadRatings();
   }, []);
 
-  useEffect(() => {
-    try {
-      if (!isLoading) {
-        localStorage.setItem(RATING_STORAGE_KEY, JSON.stringify(ratings));
-      }
-    } catch (error) {
-      console.error("Could not save ratings to local storage", error);
-    }
-  }, [ratings, isLoading]);
-
-  // Listen for storage changes from other tabs
-  useEffect(() => {
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === RATING_STORAGE_KEY && event.newValue) {
-        try {
-          setRatings(JSON.parse(event.newValue));
-        } catch (error) {
-          console.error("Failed to parse ratings from storage event", error);
-        }
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
-
-  const addRating = useCallback((newRatingData: Omit<Rating, 'id' | 'timestamp'>) => {
-    const newRating: Rating = {
+  const addRating = useCallback(async (newRatingData: Omit<Rating, 'id' | 'timestamp'>) => {
+    const tempRating = {
       id: crypto.randomUUID(),
       timestamp: new Date().toISOString(),
       ...newRatingData,
     };
-    setRatings((prevRatings) => [newRating, ...prevRatings]);
-    logActivity(`New ${newRating.rating}-star rating received.`, 'Customer', 'System');
+    
+    // In a real app, this would be a POST request to /api/ratings
+    setRatings((prevRatings) => [tempRating, ...prevRatings]);
+    logActivity(`New ${tempRating.rating}-star rating received.`, 'Customer', 'System');
   }, [logActivity]);
 
-  const clearRatings = useCallback(() => {
+  const clearRatings = useCallback(async () => {
+    // In a real app, this would be a DELETE request to /api/ratings
     setRatings([]);
     logActivity('Cleared all customer ratings.', 'System', 'System');
   }, [logActivity]);

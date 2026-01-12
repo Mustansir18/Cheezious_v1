@@ -13,69 +13,65 @@ interface ActivityLogContextType {
 
 const ActivityLogContext = createContext<ActivityLogContextType | undefined>(undefined);
 
-const LOG_STORAGE_KEY = 'cheeziousActivityLog';
-
 export const ActivityLogProvider = ({ children }: { children: ReactNode }) => {
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load logs from localStorage on initial render
+  // Load logs from API on initial render
   useEffect(() => {
-    try {
-      const storedLogs = localStorage.getItem(LOG_STORAGE_KEY);
-      if (storedLogs) {
-        setLogs(JSON.parse(storedLogs));
+    async function loadLogs() {
+      setIsLoading(true);
+      try {
+        const response = await fetch('/api/activity-log');
+        if (!response.ok) throw new Error('Failed to fetch activity logs');
+        const data = await response.json();
+        setLogs(data.logs || []);
+      } catch (error) {
+        console.error("Could not load activity logs from API", error);
+        setLogs([]);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Could not load activity logs from local storage", error);
-    } finally {
-      setIsLoading(false);
     }
+    loadLogs();
   }, []);
 
-  // Persist logs to localStorage whenever they change
-  useEffect(() => {
-    try {
-      if (!isLoading) {
-        localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(logs));
-      }
-    } catch (error) {
-      console.error("Could not save activity logs to local storage", error);
-    }
-  }, [logs, isLoading]);
-
-  // Listen for storage changes from other tabs
-  useEffect(() => {
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === LOG_STORAGE_KEY && event.newValue) {
-        try {
-          setLogs(JSON.parse(event.newValue));
-        } catch (error) {
-          console.error("Failed to parse activity logs from storage event", error);
-        }
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
-
-  const logActivity = useCallback((message: string, user: string, category: ActivityLogCategory) => {
-    const newLog: ActivityLog = {
-      id: crypto.randomUUID(),
+  const logActivity = useCallback(async (message: string, user: string, category: ActivityLogCategory) => {
+    const newLog: Omit<ActivityLog, 'id'> = {
       timestamp: new Date().toISOString(),
       user: user || 'System',
       message: message,
       category: category,
     };
     
-    setLogs(prevLogs => [newLog, ...prevLogs]);
+    // In a real app, this would be a POST request.
+    // For now, we simulate it by adding to local state.
+    const tempId = crypto.randomUUID();
+    setLogs(prevLogs => [{ id: tempId, ...newLog }, ...prevLogs]);
+
+    /*
+    // Example of real API call:
+    const response = await fetch('/api/activity-log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newLog),
+    });
+    if (response.ok) {
+      const savedLog = await response.json();
+      setLogs(prev => [savedLog, ...prev.filter(l => l.id !== tempId)]);
+    }
+    */
   }, []);
 
-  const clearLogs = useCallback(() => {
+  const clearLogs = useCallback(async () => {
+    // In a real app, this would be a DELETE request.
     setLogs([]);
     logActivity('Cleared all activity logs.', 'System', 'System');
+    
+    /*
+    // Example of real API call:
+    await fetch('/api/activity-log', { method: 'DELETE' });
+    */
   }, [logActivity]);
 
   return (
