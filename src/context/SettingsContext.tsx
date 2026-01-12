@@ -6,7 +6,6 @@ import type { Floor, Table, PaymentMethod, Branch, Role, UserRole, DeliveryMode,
 import { useToast } from '@/hooks/use-toast';
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 const defaultRoles: Role[] = [
     { id: "root", name: "Root", permissions: ["admin:*"] },
@@ -66,58 +65,23 @@ interface SettingsContextType {
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
-const defaultPaymentMethods: PaymentMethod[] = [
-    { id: 'PM-00001', name: 'Cash', taxRate: 0.16 },
-    { id: 'PM-00002', name: 'Credit/Debit Card', taxRate: 0.05 }
-];
-
-const initialBranches: Branch[] = [
-    { id: 'B-00001', name: 'CHZ J3, JOHAR TOWN LAHORE', dineInEnabled: true, takeAwayEnabled: true, deliveryEnabled: true, orderPrefix: 'G3' }
-];
-
-const floorsData: { id: string, name: string, prefix: string }[] = [
-    { id: 'F-00001', name: 'Basement', prefix: 'B' },
-    { id: 'F-00002', name: 'Ground', prefix: 'G' },
-    { id: 'F-00003', name: 'First', prefix: 'F' },
-    { id: 'F-00004', name: 'Second', prefix: 'S' },
-    { id: 'F-00005', name: 'Roof Top', prefix: 'R' }
-];
-
-const initialFloors: Floor[] = floorsData.map(({ id, name }) => ({ id, name }));
-
-const initialTables: Table[] = floorsData.flatMap(floor => 
-    Array.from({ length: 10 }, (_, i) => ({
-        id: `T-${floor.prefix.toLowerCase()}-${i + 1}`,
-        name: `${floor.prefix}-${i + 1}`,
-        floorId: floor.id,
-    }))
-);
-
-const initialDeliveryModes: DeliveryMode[] = [
-    { id: 'DM-001', name: 'Website' },
-    { id: 'DM-002', name: 'App' },
-    { id: 'DM-003', name: 'Call Centre' },
-];
-
-const defaultLogo = PlaceHolderImages.find(img => img.id === 'cheezious-special')?.imageUrl || '';
-
 const initialSettings: Settings = {
-    floors: initialFloors,
-    tables: initialTables,
-    paymentMethods: defaultPaymentMethods,
+    floors: [],
+    tables: [],
+    paymentMethods: [],
     autoPrintReceipts: false,
     companyName: "Cheezious",
-    companyLogo: defaultLogo,
-    branches: initialBranches,
-    defaultBranchId: initialBranches[0]?.id || null,
+    companyLogo: '',
+    branches: [],
+    defaultBranchId: null,
     businessDayStart: "11:00",
     businessDayEnd: "04:00",
     roles: defaultRoles,
-    deliveryModes: initialDeliveryModes,
+    deliveryModes: [],
     promotion: {
         isEnabled: true,
-        itemId: 'D-00001',
-        imageUrl: PlaceHolderImages.find(i => i.id === 'deal-1')?.imageUrl || ''
+        itemId: null,
+        imageUrl: ''
     }
 };
 
@@ -131,28 +95,36 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   
   useEffect(() => {
-    try {
-      const storedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
-      if (storedSettings) {
-        const parsed = JSON.parse(storedSettings);
-        // Merge stored settings with initial settings to ensure all keys are present
-        // This is important for when new settings are added to the initialSettings object
-        const mergedSettings = { ...initialSettings, ...parsed };
-        setSettings(mergedSettings);
-      } else {
-        setSettings(initialSettings);
-      }
-    } catch (error) {
-      console.error("Could not load settings from local storage", error);
-      setSettings(initialSettings);
-    } finally {
-      setIsLoading(false);
+    async function loadSettingsData() {
+        setIsLoading(true);
+        try {
+            const response = await fetch('/api/settings');
+            if (!response.ok) {
+                throw new Error('Failed to fetch settings data');
+            }
+            const data = await response.json();
+            setSettings(data);
+        } catch (error) {
+            console.error("Could not load settings from API", error);
+            toast({
+                variant: 'destructive',
+                title: 'Failed to Load Settings',
+                description: 'Could not connect to the server to get restaurant settings. Please try again later.'
+            });
+            // Fallback to empty data if API fails
+            setSettings(initialSettings);
+        } finally {
+            setIsLoading(false);
+        }
     }
-  }, []);
+    loadSettingsData();
+  }, [toast]);
+
 
   useEffect(() => {
     try {
         if (!isLoading) {
+            // This now acts as a session cache. The single source of truth is the API.
             localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
         }
     } catch (error) {
