@@ -12,7 +12,8 @@ const dbConfig = {
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   server: process.env.DB_SERVER || 'localhost',
-  database: process.env.DB_DATABASE,
+  database: process.env.DB_NAME,
+  port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 1433,
   options: {
     encrypt: process.env.NODE_ENV === 'production', // Use encryption for production connections
     trustServerCertificate: true, // Change to true for local dev / self-signed certs
