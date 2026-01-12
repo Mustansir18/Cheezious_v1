@@ -56,29 +56,21 @@ Deploying on a Linux server (like Ubuntu or CentOS) follows a similar pattern, t
     ```
     -   Enable the site: `sudo ln -s /etc/nginx/sites-available/cheezious-connect /etc/nginx/sites-enabled/` and restart Nginx.
 
-## 2. Transitioning to a SQL Database
+## 2. Connecting to a SQL Database
 
-The application has been architecturally prepared to use a real SQL database, but the final implementation step requires your specific database details.
+The application is architecturally prepared to use a real SQL database. This section outlines the final implementation steps.
 
-### 2.1. The Strategy: API-Driven Data
+### 2.1. Configure Your Database Connection
 
-The application now uses an API-driven architecture. The frontend (React components) fetches all data from API Routes located in `src/app/api/`. These API routes are the only part of the system that should communicate directly with your SQL database.
-
-**Data Flow:**
-`React Component` -> `Context Hook (e.g., useOrders)` -> `API Route (e.g., /api/orders)` -> `Database (e.g., SQL Server)`
-
-### 2.2. Step-by-Step Code Adaptation Plan
-
-#### Step 1: Configure Your Database Connection
 -   **Update Environment Variables:** Open the `.env` file in the project root. Fill in the `DB_USER`, `DB_PASSWORD`, `DB_SERVER`, and `DB_DATABASE` placeholders with your actual SQL Server credentials.
 -   **Review Connection Logic:** A database connection file has been created at `src/lib/db.ts`. It uses the `mssql` package and is configured to read the variables from your `.env` file. If you are using a different database (like PostgreSQL or MySQL), you will need to install its driver (`npm install pg` or `npm install mysql2`) and update this file accordingly.
+-   **Test Connection**: Run the application and navigate to the `/api/db-test` route in your browser to verify that the connection credentials are correct.
 
-#### Step 2: Implement Database Queries in API Routes
+### 2.2. Implement Database Queries in API Routes
+
 For each API route in `src/app/api/`, you must replace the placeholder data with a real database query.
 
 **Example: Replacing Placeholder Data in `src/app/api/users/route.ts`**
-
-This example shows how to use the connection pool from `src/lib/db.ts` to fetch users from your SQL Server database.
 
 ```typescript
 // src/app/api/users/route.ts
@@ -101,7 +93,7 @@ export async function GET(request: Request) {
 }
 ```
 
-#### Step 3: Apply This Pattern to All API Routes
+### 2.3. Apply This Pattern to All API Routes
 
 You must apply this same pattern to all files in the `src/app/api/` directory, replacing the placeholder arrays with the appropriate `SELECT`, `INSERT`, `UPDATE`, or `DELETE` queries for your database.
 
@@ -112,4 +104,111 @@ You must apply this same pattern to all files in the `src/app/api/` directory, r
     -   `PUT`: `UPDATE Orders SET Status = @Status WHERE id = @id`
 -   `/api/settings/route.ts`: Fetch data from your `Branches`, `Floors`, `Tables`, `PaymentMethods` tables.
 
-By completing this final step, your application will be a true full-stack, production-ready system running on your own server infrastructure.
+## 3. Database Schema (SQL)
+
+Below is an idempotent migration script for setting up your database in SQL Server. This script can be run safely multiple times; it will only create tables and columns that are missing.
+
+```sql
+-- idempotent migration for deployment: creates missing tables and columns used by the app
+-- Run this file on the target DB to ensure required tables/columns exist
+
+-- Query_0: Ensure we're on the target DB
+USE [CheeziousKiosk];
+GO
+
+-- Query_1: Sessions table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Sessions]') AND type in (N'U'))
+BEGIN
+  CREATE TABLE dbo.Sessions (
+    Id NVARCHAR(50) PRIMARY KEY,
+    UserId NVARCHAR(50) NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    ExpiresAt DATETIME2 NULL
+  );
+END
+GO
+
+-- Query_2: Carts table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Carts]') AND type in (N'U'))
+BEGIN
+  CREATE TABLE dbo.Carts (
+    Id UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+    SessionId NVARCHAR(50) NOT NULL,
+    BranchId NVARCHAR(50) NULL,
+    OrderType NVARCHAR(50) NULL,
+    FloorId NVARCHAR(50) NULL,
+    TableId NVARCHAR(50) NULL,
+    DeliveryMode NVARCHAR(50) NULL,
+    CustomerName NVARCHAR(200) NULL,
+    CustomerPhone NVARCHAR(50) NULL,
+    CustomerAddress NVARCHAR(500) NULL,
+    UpdatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+  );
+  CREATE INDEX IX_Carts_SessionId ON dbo.Carts(SessionId);
+END
+GO
+
+-- Query_3: CartItems table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[CartItems]') AND type in (N'U'))
+BEGIN
+  CREATE TABLE dbo.CartItems (
+    Id UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+    CartId UNIQUEIDENTIFIER NOT NULL,
+    MenuItemId NVARCHAR(50),
+    Quantity INT NOT NULL DEFAULT 1,
+    Price DECIMAL(10,2) NULL,
+    BasePrice DECIMAL(10,2) NULL,
+    Name NVARCHAR(500) NULL,
+    SelectedAddons NVARCHAR(MAX) NULL,
+    SelectedVariant NVARCHAR(MAX) NULL,
+    StationId NVARCHAR(50) NULL,
+    IsPrepared BIT DEFAULT 0,
+    IsDealComponent BIT DEFAULT 0,
+    ParentDealCartItemId UNIQUEIDENTIFIER NULL,
+    Instructions NVARCHAR(1000) NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+  );
+  CREATE INDEX IX_CartItems_CartId ON dbo.CartItems(CartId);
+END
+GO
+
+-- Query_4: ActivityLog table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[ActivityLog]') AND type in (N'U'))
+BEGIN
+  CREATE TABLE dbo.ActivityLog (
+    id NVARCHAR(50) PRIMARY KEY,
+    timestamp DATETIME NOT NULL,
+    [user] NVARCHAR(100) NOT NULL,
+    message NVARCHAR(MAX) NOT NULL,
+    category NVARCHAR(50) NOT NULL
+  );
+END
+GO
+
+-- Query_5: CashierLog table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[CashierLog]') AND type in (N'U'))
+BEGIN
+  CREATE TABLE dbo.CashierLog (
+    id NVARCHAR(50) PRIMARY KEY,
+    timestamp DATETIME NOT NULL,
+    type NVARCHAR(50) NOT NULL,
+    amount DECIMAL(18,2) NOT NULL,
+    cashierId NVARCHAR(50) NOT NULL,
+    cashierName NVARCHAR(100) NOT NULL,
+    adminId NVARCHAR(50) NOT NULL,
+    adminName NVARCHAR(100) NOT NULL,
+    notes NVARCHAR(500)
+  );
+END
+GO
+
+-- Query_6: Ensure Orders has required columns (non-destructive)
+IF COL_LENGTH('dbo.Orders', 'customerAddress') IS NULL
+BEGIN
+  ALTER TABLE dbo.Orders ADD customerAddress NVARCHAR(500) NULL;
+END
+GO
+
+PRINT 'Initial deployment migrations complete.';
+GO
+```
