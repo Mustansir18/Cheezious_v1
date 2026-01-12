@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef, useMemo } from 'react';
@@ -8,6 +7,7 @@ import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
 import { useMenu } from './MenuContext';
 import { useSettings } from './SettingsContext';
+import { useToast } from '@/hooks/use-toast';
 
 interface OrderContextType {
   orders: Order[];
@@ -32,8 +32,6 @@ interface OrderContextType {
 
 const OrderContext = createContext<OrderContextType | undefined>(undefined);
 
-const ORDERS_STORAGE_KEY = 'cheeziousOrders';
-
 function usePrevious<T>(value: T): T | undefined {
   const ref = useRef<T>();
   useEffect(() => {
@@ -49,6 +47,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
   const { user, updateUserBalance } = useAuth();
   const { menu } = useMenu();
   const { settings } = useSettings();
+  const { toast } = useToast();
   const prevOrders = usePrevious(orders);
 
   const occupiedTableIds = useMemo(() => {
@@ -69,43 +68,19 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
         setOrders(data.orders || []);
       } catch (error) {
         console.error("Could not load orders from API", error);
-        // Fallback to empty array if API fails
+        toast({
+          variant: 'destructive',
+          title: 'Failed to Load Orders',
+          description: 'Could not connect to the server. Some data may be missing.',
+        });
         setOrders([]);
       } finally {
         setIsLoading(false);
       }
     }
     loadInitialOrders();
-  }, []);
-
-  useEffect(() => {
-    try {
-      if (!isLoading) {
-        // This now acts as a session cache, not the source of truth.
-        sessionStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
-      }
-    } catch (error) {
-      console.error("Could not save orders to session storage", error);
-    }
-  }, [orders, isLoading]);
+  }, [toast]);
   
-  useEffect(() => {
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === ORDERS_STORAGE_KEY && event.newValue) {
-        try {
-          setOrders(JSON.parse(event.newValue));
-        } catch (error) {
-            console.error("Failed to parse orders from storage event", error);
-        }
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
-
   useEffect(() => {
     if (!prevOrders || isLoading || !user) return;
     const username = user?.username || 'System';
@@ -161,11 +136,35 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
   }, [orders, prevOrders, logActivity, user, isLoading, updateUserBalance]);
 
 
-  const addOrder = useCallback((order: Order) => {
-    setOrders((prevOrders) => [...prevOrders, order]);
-  }, []);
+  const addOrder = useCallback(async (order: Order) => {
+    try {
+        const response = await fetch('/api/orders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(order),
+        });
 
-  const addItemsToOrder = useCallback((orderId: string, itemsToAdd: CartItem[]) => {
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to save order to the database.');
+        }
+
+        const savedOrder = await response.json();
+        setOrders((prevOrders) => [...prevOrders, savedOrder]);
+    } catch (error: any) {
+        console.error("Failed to add order:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Order Failed',
+            description: `Could not save the order to the database. Please try again. Error: ${error.message}`,
+        });
+    }
+  }, [toast]);
+
+  const addItemsToOrder = useCallback(async (orderId: string, itemsToAdd: CartItem[]) => {
+    // This function will need a PUT /api/orders/:id/items endpoint
+    console.log("Simulating adding items to order. API call not yet implemented.");
+
     setOrders(prevOrders => {
         return prevOrders.map(order => {
             if (order.id !== orderId) return order;
@@ -176,26 +175,14 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
                 if (!menuItem) return;
 
                 const category = menu.categories.find(c => c.id === menuItem.categoryId);
-                
                 const isDeal = menuItem.dealItems && menuItem.dealItems.length > 0;
-
                 const parentOrderItemId = crypto.randomUUID();
 
                 newOrderItems.push({
-                    id: parentOrderItemId,
-                    orderId: orderId,
-                    menuItemId: item.id,
-                    name: item.name,
-                    quantity: item.quantity,
-                    itemPrice: item.price,
-                    baseItemPrice: item.basePrice,
+                    id: parentOrderItemId, orderId: orderId, menuItemId: item.id, name: item.name, quantity: item.quantity, itemPrice: item.price, baseItemPrice: item.basePrice,
                     selectedAddons: item.selectedAddons.map(a => ({ name: a.name, price: a.price, quantity: a.quantity })),
-                    selectedVariant: item.selectedVariant,
-                    stationId: category?.stationId,
-                    isPrepared: !category?.stationId,
-                    instructions: item.instructions,
-                    isDealComponent: false,
-                    parentDealCartItemId: parentOrderItemId,
+                    selectedVariant: item.selectedVariant, stationId: category?.stationId, isPrepared: !category?.stationId, instructions: item.instructions,
+                    isDealComponent: false, parentDealCartItemId: parentOrderItemId,
                 });
 
                 if (isDeal) {
@@ -205,18 +192,9 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
                             const componentCategory = menu.categories.find(c => c.id === componentMenuItem.categoryId);
                             for (let i = 0; i < dealItemDef.quantity * item.quantity; i++) {
                                 newOrderItems.push({
-                                    id: crypto.randomUUID(),
-                                    orderId: orderId,
-                                    menuItemId: componentMenuItem.id,
-                                    name: componentMenuItem.name,
-                                    quantity: 1,
-                                    itemPrice: 0,
-                                    baseItemPrice: 0,
-                                    selectedAddons: [],
-                                    isDealComponent: true,
-                                    parentDealCartItemId: parentOrderItemId,
-                                    stationId: componentCategory?.stationId,
-                                    isPrepared: !componentCategory?.stationId
+                                    id: crypto.randomUUID(), orderId: orderId, menuItemId: componentMenuItem.id, name: componentMenuItem.name, quantity: 1,
+                                    itemPrice: 0, baseItemPrice: 0, selectedAddons: [], isDealComponent: true, parentDealCartItemId: parentOrderItemId,
+                                    stationId: componentCategory?.stationId, isPrepared: !componentCategory?.stationId
                                 });
                             }
                         }
@@ -225,32 +203,27 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
             });
 
             const newItemsTotal = newOrderItems.filter(i => !i.isDealComponent).reduce((sum, item) => sum + (item.itemPrice * item.quantity), 0);
-            
             const updatedItems = [...order.items, ...newOrderItems];
             const updatedSubtotal = order.subtotal + newItemsTotal;
             const updatedTaxAmount = updatedSubtotal * order.taxRate;
             const updatedTotalAmount = updatedSubtotal + updatedTaxAmount;
             
-            const newStatus = (order.status === 'Ready' || order.status === 'Completed') 
-                ? 'Partial Ready' 
-                : order.status;
+            const newStatus = (order.status === 'Ready' || order.status === 'Completed') ? 'Partial Ready' : order.status;
 
             return {
-                ...order,
-                items: updatedItems,
-                subtotal: updatedSubtotal,
-                taxAmount: updatedTaxAmount,
-                totalAmount: updatedTotalAmount,
+                ...order, items: updatedItems, subtotal: updatedSubtotal, taxAmount: updatedTaxAmount, totalAmount: updatedTotalAmount,
                 originalTotalAmount: order.originalTotalAmount ? order.originalTotalAmount + newItemsTotal : updatedTotalAmount,
-                status: newStatus,
-                completionDate: newStatus === 'Partial Ready' ? undefined : order.completionDate,
+                status: newStatus, completionDate: newStatus === 'Partial Ready' ? undefined : order.completionDate,
             };
         });
     });
-}, [menu.items, menu.categories]);
+  }, [menu.items, menu.categories]);
 
 
-  const updateOrderStatus = useCallback((orderId: string, status: OrderStatus, reason?: string) => {
+  const updateOrderStatus = useCallback(async (orderId: string, status: OrderStatus, reason?: string) => {
+    // This function will need a PUT /api/orders/:id endpoint
+    console.log("Simulating order status update. API call not yet implemented.");
+
     setOrders(prevOrders => {
         const orderToUpdate = prevOrders.find(o => o.id === orderId);
         if (!orderToUpdate || orderToUpdate.status === status) return prevOrders;
@@ -262,9 +235,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
             const newCompletionDate = isFinalStatus ? (order.completionDate || new Date().toISOString()) : undefined;
 
             return { 
-                ...order, 
-                status, 
-                completionDate: newCompletionDate,
+                ...order, status, completionDate: newCompletionDate,
                 ...(status === 'Completed' && { completedBy: user?.id }),
                 ...(status === 'Cancelled' && { cancellationReason: reason }) 
             };
@@ -273,6 +244,9 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
   }, [user]);
   
  const toggleItemPrepared = useCallback((orderId: string, itemIds: string[]) => {
+    // This function will need a PUT /api/orders/:id/items endpoint
+    console.log("Simulating item prepared toggle. API call not yet implemented.");
+
     setOrders(prevOrders => {
       return prevOrders.map(order => {
         if (order.id === orderId) {
@@ -292,14 +266,15 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
   }, []);
   
   const dispatchItem = useCallback((orderId: string, itemId: string) => {
+    // This function will need a PUT /api/orders/:id/items endpoint
+    console.log("Simulating item dispatch. API call not yet implemented.");
+
     setOrders(prevOrders => prevOrders.map(order => {
       if (order.id === orderId) {
         const newItems = order.items.map(item => 
           item.id === itemId ? { ...item, isDispatched: true } : item
         );
         
-        const justDispatchedItem = newItems.find(i => i.id === itemId);
-
         const allPhysicalItems = newItems.filter(item => {
              const menuItem = menu.items.find(mi => mi.id === item.menuItemId);
              const isDealContainer = !item.isDealComponent && !!menuItem?.dealItems?.length;
@@ -307,7 +282,6 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
         });
         
         const allDispatched = allPhysicalItems.every(item => item.isDispatched);
-
         const newStatus = allDispatched ? 'Ready' : 'Partial Ready';
         
         return { ...order, items: newItems, status: newStatus };
@@ -318,6 +292,9 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
 
 
    const applyDiscountOrComplementary = useCallback((orderId: string, details: { discountType?: 'percentage' | 'amount', discountValue?: number, isComplementary?: boolean, complementaryReason?: string }) => {
+    // This function will need a PUT /api/orders/:id/adjust endpoint
+    console.log("Simulating order modification. API call not yet implemented.");
+
     setOrders(prevOrders => {
       const orderToUpdate = prevOrders.find(o => o.id === orderId);
       if (!orderToUpdate) return prevOrders;
@@ -327,14 +304,8 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
 
       if (details.isComplementary) {
         updatedOrder = {
-          ...updatedOrder,
-          isComplementary: true,
-          complementaryReason: details.complementaryReason,
-          totalAmount: 0,
-          discountAmount: originalTotal,
-          originalTotalAmount: originalTotal,
-          discountType: undefined,
-          discountValue: undefined,
+          ...updatedOrder, isComplementary: true, complementaryReason: details.complementaryReason, totalAmount: 0,
+          discountAmount: originalTotal, originalTotalAmount: originalTotal, discountType: undefined, discountValue: undefined,
         };
       } else if (details.discountType && details.discountValue) {
         let discountAmount = 0;
@@ -347,41 +318,30 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
         const newTotalAmount = Math.max(0, originalTotal - discountAmount);
 
         updatedOrder = {
-          ...updatedOrder,
-          discountType: details.discountType,
-          discountValue: details.discountValue,
-          discountAmount: discountAmount,
-          totalAmount: newTotalAmount,
-          originalTotalAmount: originalTotal,
-          isComplementary: false,
-          complementaryReason: undefined,
+          ...updatedOrder, discountType: details.discountType, discountValue: details.discountValue, discountAmount: discountAmount,
+          totalAmount: newTotalAmount, originalTotalAmount: originalTotal, isComplementary: false, complementaryReason: undefined,
         };
       }
-
       return prevOrders.map(o => o.id === orderId ? updatedOrder : o);
     });
   }, []);
 
   const changePaymentMethod = useCallback((orderId: string, newPaymentMethod: string) => {
+    // This function will need a PUT /api/orders/:id/payment endpoint
+    console.log("Simulating payment method change. API call not yet implemented.");
+
     setOrders(prevOrders => prevOrders.map(order => {
-        if (order.id !== orderId) {
-            return order;
-        }
+        if (order.id !== orderId) return order;
 
         const paymentMethodDetails = settings.paymentMethods.find(pm => pm.name === newPaymentMethod);
         const newTaxRate = paymentMethodDetails?.taxRate ?? 0;
         
         const newTaxAmount = order.subtotal * newTaxRate;
-
         const totalBeforeDiscount = order.subtotal + newTaxAmount;
         const newTotalAmount = Math.max(0, totalBeforeDiscount - (order.discountAmount || 0));
         
         return {
-            ...order,
-            paymentMethod: newPaymentMethod,
-            taxRate: newTaxRate,
-            taxAmount: newTaxAmount,
-            totalAmount: newTotalAmount,
+            ...order, paymentMethod: newPaymentMethod, taxRate: newTaxRate, taxAmount: newTaxAmount, totalAmount: newTotalAmount,
         };
     }));
   }, [settings.paymentMethods]);
