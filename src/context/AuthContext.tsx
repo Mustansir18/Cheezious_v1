@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
@@ -7,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import type { User, UserRole } from '@/lib/types';
 import { useActivityLog } from './ActivityLogContext';
 import { useToast } from '@/hooks/use-toast';
+import { v4 as uuidv4 } from 'uuid';
 
 // Define the shape of the context
 interface AuthContextType {
@@ -15,33 +15,16 @@ interface AuthContextType {
   isLoading: boolean;
   login: (username: string, password: string) => Promise<User | null>;
   logout: () => void;
-  addUser: (user: Omit<User, 'username' | 'role' | 'balance'> & { username: string; role: UserRole | string; }) => void;
-  updateUser: (user: User) => void;
-  deleteUser: (id: string, username: string) => void;
+  addUser: (user: Omit<User, 'id' | 'balance'>) => Promise<void>;
+  updateUser: (user: User) => Promise<void>;
+  deleteUser: (id: string) => Promise<void>;
   updateUserBalance: (userId: string, amount: number, operation: 'add' | 'subtract') => void;
 }
 
 // Create the context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const defaultBranchId = 'B-00001';
-
-// --- Hardcoded Default Users ---
-const initialUsers: User[] = [
-    { id: 'CH-00001', username: 'root', password: 'Faith123$$', role: 'root', balance: 0 },
-    { id: 'CH-00002', username: 'admin', password: 'admin', role: 'admin', branchId: defaultBranchId, balance: 0 },
-    { id: 'CH-00003', username: 'cashier', password: 'cashier', role: 'cashier', branchId: defaultBranchId, balance: 0 },
-    { id: 'CH-00004', username: 'markeeting', password: 'markeeting', role: 'marketing', balance: 0 },
-    { id: 'CH-KDS-01', username: 'kds', password: 'KDS', role: 'kds', stationName: 'All Stations', branchId: defaultBranchId, balance: 0 },
-    { id: 'CH-KDS-02', username: 'fried', password: 'FRIED', role: 'fried-station', stationName: 'FRIED Station', branchId: defaultBranchId, balance: 0 },
-    { id: 'CH-KDS-03', username: 'make', password: 'MAKE', role: 'make-station', stationName: 'MAKE Station', branchId: defaultBranchId, balance: 0 },
-    { id: 'CH-KDS-04', username: 'cutt', password: 'CUTT', role: 'cutt-station', stationName: 'CUTT Station', branchId: defaultBranchId, balance: 0 },
-    { id: 'CH-KDS-05', username: 'bar', password: 'BAR', role: 'bar-station', stationName: 'BEVERAGES Station', branchId: defaultBranchId, balance: 0 },
-    { id: 'CH-KDS-06', username: 'pasta', password: 'PASTA', role: 'pasta-station', stationName: 'PASTA Station', branchId: defaultBranchId, balance: 0 },
-];
-
-const USERS_STORAGE_KEY = 'cheeziousUsersV2';
-const SESSION_STORAGE_KEY = 'cheeziousSession';
+const SESSION_ID_KEY = 'cheezious_session_id';
 
 // Create the provider component
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -56,127 +39,156 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     async function loadInitialData() {
       setIsLoading(true);
-      try {
-        // Fetch users from the API endpoint
-        const response = await fetch('/api/users');
-        if (!response.ok) {
-          throw new Error('Failed to fetch users');
+      
+      const loadUsers = async () => {
+        try {
+          const response = await fetch('/api/users');
+          if (!response.ok) throw new Error('Failed to fetch users');
+          const data = await response.json();
+          setUsers(data.users || []);
+          return data.users || [];
+        } catch (error) {
+          console.error("Failed to fetch users:", error);
+          toast({ variant: 'destructive', title: 'User Sync Error', description: 'Could not load user accounts.' });
+          return [];
         }
-        const data = await response.json();
-        const fetchedUsers: User[] = data.users;
-
-        // In a real scenario, the API would provide the full user object.
-        // For this migration step, we'll merge with initialUsers to keep passwords.
-        const userMap = new Map<string, User>();
-        initialUsers.forEach(u => userMap.set(u.id, { ...u }));
-        fetchedUsers.forEach(fetchedUser => {
-            const existingUser = userMap.get(fetchedUser.id);
-            if (existingUser) {
-                userMap.set(fetchedUser.id, { ...existingUser, ...fetchedUser });
-            } else {
-                // This case is unlikely if initialUsers is the base
-                userMap.set(fetchedUser.id, fetchedUser as User);
-            }
-        });
-        
-        const combinedUsers = Array.from(userMap.values());
-        setUsers(combinedUsers);
-        
-        // Restore session from sessionStorage
-        const sessionUserJSON = sessionStorage.getItem(SESSION_STORAGE_KEY);
-        if (sessionUserJSON) {
-          const sessionUser = JSON.parse(sessionUserJSON);
-          const validUser = combinedUsers.find(u => u.id === sessionUser.id);
-          if (validUser) {
-              setUser(validUser);
-          } else {
-              sessionStorage.removeItem(SESSION_STORAGE_KEY);
+      };
+      
+      const loadSession = async (allUsers: User[]) => {
+          const sessionId = localStorage.getItem(SESSION_ID_KEY);
+          if (sessionId) {
+              try {
+                  const response = await fetch('/api/auth/session', {
+                      headers: { 'x-session-id': sessionId }
+                  });
+                  if(response.ok) {
+                      const { user: sessionUser } = await response.json();
+                      if (sessionUser) {
+                          setUser(sessionUser);
+                      }
+                  } else {
+                      localStorage.removeItem(SESSION_ID_KEY);
+                  }
+              } catch (error) {
+                  console.error('Session validation failed', error);
+                  localStorage.removeItem(SESSION_ID_KEY);
+              }
           }
-        }
-
-      } catch (error) {
-        console.error("Failed to initialize auth state:", error);
-        // Fallback to initial hardcoded users if API fails
-        setUsers(initialUsers);
-      } finally {
-        setIsLoading(false);
-      }
+      };
+      
+      const allUsers = await loadUsers();
+      await loadSession(allUsers);
+      setIsLoading(false);
     }
     loadInitialData();
-  }, []);
+  }, [toast]);
 
-
-  // This useEffect will now only handle saving the session, not the full user list.
-  useEffect(() => {
-      if (isLoading) return;
-      try {
-          if (user) {
-              sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(user));
-          } else {
-              sessionStorage.removeItem(SESSION_STORAGE_KEY);
-          }
-      } catch (error) {
-          console.error("Could not save session to session storage", error);
-      }
-  }, [user, isLoading]);
-
-  // The storage event listener for USERS_STORAGE_KEY is no longer needed
-  // as the API is the source of truth. It can be removed in a later step.
 
   const login = useCallback(async (username: string, password: string): Promise<User | null> => {
-    // This logic will be replaced with a call to a /api/login endpoint
-    const foundUser = users.find(u => u.username === username && u.password === password);
-    if (foundUser) {
-      setUser(foundUser);
-      logActivity(`User '${username}' logged in.`, username, 'System');
-      return foundUser;
-    }
-    throw new Error('Invalid username or password');
-  }, [users, logActivity]);
+    try {
+        const response = await fetch('/api/auth/session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
 
-  const logout = useCallback(() => {
-    if (user) {
+        if (!response.ok) {
+            const { message } = await response.json();
+            throw new Error(message || 'Login failed');
+        }
+
+        const { user: loggedInUser, sessionId } = await response.json();
+        setUser(loggedInUser);
+        localStorage.setItem(SESSION_ID_KEY, sessionId);
+        logActivity(`User '${username}' logged in.`, username, 'System');
+        return loggedInUser;
+    } catch (error: any) {
+        throw new Error(error.message);
+    }
+  }, [logActivity]);
+
+  const logout = useCallback(async () => {
+    const sessionId = localStorage.getItem(SESSION_ID_KEY);
+    if (user && sessionId) {
         logActivity(`User '${user.username}' logged out.`, user.username, 'System');
+        try {
+            await fetch('/api/auth/session', {
+                method: 'DELETE',
+                headers: { 'x-session-id': sessionId }
+            });
+        } catch (error) {
+            console.error('Failed to clear session on server', error);
+        }
     }
     setUser(null);
+    localStorage.removeItem(SESSION_ID_KEY);
     router.push('/login');
   }, [router, user, logActivity]);
 
-  // These functions will be updated to use API calls next.
-  const addUser = useCallback((newUser: Omit<User, 'username' | 'role' | 'balance'> & { username: string; role: UserRole | string; }) => {
-    if (!newUser.id) {
-        toast({ variant: 'destructive', title: 'Error', description: 'User Code is required.' });
-        return;
-    }
-    if (users.some(u => u.id === newUser.id || u.username === newUser.username)) {
-      toast({ variant: 'destructive', title: 'Error', description: 'A user with this ID or username already exists.' });
-      return;
-    }
-    const userToAdd: User = { ...newUser, role: newUser.role as UserRole, balance: 0 };
-    setUsers(prev => [...prev, userToAdd]);
-    logActivity(`Added new user '${newUser.username}'.`, user?.username || "System", 'User');
-  }, [users, logActivity, user, toast]);
+  const addUser = async (newUser: Omit<User, 'id' | 'balance'>) => {
+    try {
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newUser),
+      });
 
-  const updateUser = useCallback((updatedUser: User) => {
-    setUsers(prev => prev.map(u => {
-        if (u.id === updatedUser.id) {
-            const newPassword = updatedUser.password ? updatedUser.password : u.password;
-            const finalUser = { ...u, ...updatedUser, password: newPassword };
-            logActivity(`Updated user '${finalUser.username}'.`, user?.username || "System", 'User');
-            return finalUser;
-        }
-        return u;
-    }));
-  }, [logActivity, user]);
+      if (!response.ok) {
+        const { message } = await response.json();
+        throw new Error(message || 'Failed to add user');
+      }
 
-  const deleteUser = useCallback((id: string, username: string) => {
-    if (initialUsers.some(initialUser => initialUser.id === id)) {
-        toast({ variant: 'destructive', title: 'Error', description: "Cannot delete a default system user." });
-        return;
+      const savedUser = await response.json();
+      setUsers(prev => [...prev, savedUser]);
+      logActivity(`Added new user '${newUser.username}'.`, user?.username || 'System', 'User');
+      toast({ title: 'Success', description: 'User has been created.' });
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
     }
-    setUsers(prev => prev.filter(u => u.id !== id));
-    logActivity(`Deleted user '${username}'.`, user?.username || "System", 'User');
-  }, [logActivity, user, toast]);
+  };
+
+  const updateUser = async (updatedUser: User) => {
+     try {
+      const response = await fetch(`/api/users`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedUser),
+      });
+
+      if (!response.ok) {
+        const { message } = await response.json();
+        throw new Error(message || 'Failed to update user');
+      }
+
+      const returnedUser = await response.json();
+      setUsers(prev => prev.map(u => u.id === returnedUser.id ? returnedUser : u));
+      logActivity(`Updated user '${returnedUser.username}'.`, user?.username || "System", 'User');
+      toast({ title: 'Success', description: 'User has been updated.' });
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    }
+  };
+
+  const deleteUser = async (id: string) => {
+     try {
+      const response = await fetch(`/api/users`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+
+      if (!response.ok) {
+        const { message } = await response.json();
+        throw new Error(message || 'Failed to delete user');
+      }
+      const { username } = await response.json();
+      setUsers(prev => prev.filter(u => u.id !== id));
+      logActivity(`Deleted user '${username}'.`, user?.username || "System", 'User');
+      toast({ title: 'Success', description: 'User has been deleted.' });
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    }
+  };
 
   const updateUserBalance = useCallback((userId: string, amount: number, operation: 'add' | 'subtract') => {
       setUsers(prevUsers => prevUsers.map(u => {

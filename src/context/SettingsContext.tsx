@@ -2,39 +2,11 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
-import type { Floor, Table, PaymentMethod, Branch, Role, UserRole, DeliveryMode, PromotionSettings } from '@/lib/types';
+import type { Settings, Floor, Table, PaymentMethod, Branch, Role, UserRole, DeliveryMode, PromotionSettings } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
-
-const defaultRoles: Role[] = [
-    { id: "root", name: "Root", permissions: ["admin:*"] },
-    { id: "admin", name: "Branch Admin", permissions: ["/admin", "/admin/orders", "/admin/kds", "/admin/queue"] },
-    { id: "cashier", name: "Cashier", permissions: ["/cashier"] },
-    { id: "marketing", name: "Marketing", permissions: ["/marketing/reporting", "/marketing/feedback", "/marketing/target"] },
-    { id: "kds", name: "KDS (Full Access)", permissions: ["/admin/kds"] },
-    { id: "make-station", name: "MAKE Station", permissions: ["/admin/kds/pizza"] },
-    { id: "pasta-station", name: "PASTA Station", permissions: ["/admin/kds/pasta"] },
-    { id: "fried-station", name: "FRIED Station", permissions: ["/admin/kds/fried"] },
-    { id: "bar-station", name: "BEVERAGES Station", permissions: ["/admin/kds/bar"] },
-    { id: "cutt-station", name: "CUTT Station", permissions: ["/admin/kds/master"] },
-];
-
-interface Settings {
-    floors: Floor[];
-    tables: Table[];
-    paymentMethods: PaymentMethod[];
-    autoPrintReceipts: boolean;
-    companyName: string;
-    companyLogo?: string;
-    branches: Branch[];
-    defaultBranchId: string | null;
-    businessDayStart: string; // "HH:MM"
-    businessDayEnd: string; // "HH:MM"
-    roles: Role[];
-    deliveryModes: DeliveryMode[];
-    promotion: PromotionSettings;
-}
+import { useSyncLocalStorage } from '@/hooks/use-sync-local-storage';
 
 interface SettingsContextType {
   settings: Settings;
@@ -76,7 +48,7 @@ const initialSettings: Settings = {
     defaultBranchId: null,
     businessDayStart: "11:00",
     businessDayEnd: "04:00",
-    roles: defaultRoles,
+    roles: [],
     deliveryModes: [],
     promotion: {
         isEnabled: true,
@@ -88,255 +60,153 @@ const initialSettings: Settings = {
 const SETTINGS_STORAGE_KEY = 'cheeziousSettingsV2';
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
-  const [settings, setSettings] = useState<Settings>(initialSettings);
-  const [isLoading, setIsLoading] = useState(true);
+  const [settings, setSettings, isLoading] = useSyncLocalStorage<Settings>(SETTINGS_STORAGE_KEY, initialSettings, '/api/settings');
   const { toast } = useToast();
   const { logActivity } = useActivityLog();
   const { user } = useAuth();
   
-  useEffect(() => {
-    async function loadSettingsData() {
-        setIsLoading(true);
-        try {
-            const response = await fetch('/api/settings');
-            if (!response.ok) {
-                throw new Error('Failed to fetch settings data');
-            }
-            const data = await response.json();
-            setSettings(data);
-        } catch (error) {
-            console.error("Could not load settings from API", error);
-            toast({
-                variant: 'destructive',
-                title: 'Failed to Load Settings',
-                description: 'Could not connect to the server to get restaurant settings. Please try again later.'
-            });
-            // Fallback to empty data if API fails
-            setSettings(initialSettings);
-        } finally {
-            setIsLoading(false);
-        }
-    }
-    loadSettingsData();
-  }, [toast]);
-
-
-  useEffect(() => {
-    try {
-        if (!isLoading) {
-            // This now acts as a session cache. The single source of truth is the API.
-            localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-        }
-    } catch (error) {
-      console.error("Could not save settings to local storage", error);
-    }
-  }, [settings, isLoading]);
-
-  // Listen for storage changes from other tabs
-  useEffect(() => {
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === SETTINGS_STORAGE_KEY && event.newValue) {
-        try {
-          const parsed = JSON.parse(event.newValue);
-          setSettings(s => ({ ...s, ...parsed }));
-        } catch (error) {
-          console.error("Failed to parse settings from storage event", error);
-        }
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
+  const postSettings = useCallback((newSettings: Settings) => {
+      setSettings(newSettings);
+  }, [setSettings]);
   
   const addFloor = useCallback((id: string, name: string) => {
-    if (!id || !name) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Floor Code and Name are required.' });
-      return;
-    }
-    if (settings.floors.some(f => f.id === id)) {
-      toast({ variant: 'destructive', title: 'Error', description: `A floor with the code '${id}' already exists.` });
-      return;
-    }
+    if (!id || !name) { return; }
     const newFloor: Floor = { id, name };
-    setSettings(s => ({ ...s, floors: [...s.floors, newFloor] }));
+    postSettings({ ...settings, floors: [...settings.floors, newFloor] });
     logActivity(`Added floor: '${name}'.`, user?.username || 'System', 'Settings');
-  }, [logActivity, user, settings.floors, toast]);
+  }, [settings, postSettings, logActivity, user]);
 
   const deleteFloor = useCallback((id: string, name: string) => {
-    setSettings(s => ({ 
-        ...s, 
-        floors: s.floors.filter(f => f.id !== id),
-        tables: s.tables.filter(t => t.floorId !== id),
-    }));
+    postSettings({ 
+        ...settings, 
+        floors: settings.floors.filter(f => f.id !== id),
+        tables: settings.tables.filter(t => t.floorId !== id),
+    });
     logActivity(`Deleted floor: '${name}' and its tables.`, user?.username || 'System', 'Settings');
-  }, [logActivity, user]);
+  }, [settings, postSettings, logActivity, user]);
 
   const addTable = useCallback((id: string, name: string, floorId: string) => {
-    if (!id || !name || !floorId) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Table Code, Name, and Floor are required.' });
-      return;
-    }
-    if (settings.tables.some(t => t.id === id)) {
-      toast({ variant: 'destructive', title: 'Error', description: `A table with the code '${id}' already exists.` });
-      return;
-    }
+    if (!id || !name || !floorId) { return; }
     const newTable: Table = { id, name, floorId };
-    setSettings(s => ({ ...s, tables: [...s.tables, newTable] }));
+    postSettings({ ...settings, tables: [...settings.tables, newTable] });
     const floorName = settings.floors.find(f => f.id === floorId)?.name || 'N/A';
     logActivity(`Added table: '${name}' to floor '${floorName}'.`, user?.username || 'System', 'Settings');
-  }, [logActivity, settings.floors, user, settings.tables, toast]);
+  }, [settings, postSettings, logActivity, user]);
 
   const deleteTable = useCallback((id: string, name: string) => {
-    setSettings(s => ({ ...s, tables: s.tables.filter(t => t.id !== id) }));
+    postSettings({ ...settings, tables: settings.tables.filter(t => t.id !== id) });
     logActivity(`Deleted table: '${name}'.`, user?.username || 'System', 'Settings');
-  }, [logActivity, user]);
+  }, [settings, postSettings, logActivity, user]);
 
   const addPaymentMethod = useCallback((id: string, name: string) => {
-     if (!id || !name) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Method Code and Name are required.' });
-      return;
-    }
-    if (settings.paymentMethods.some(pm => pm.id === id)) {
-      toast({ variant: 'destructive', title: 'Error', description: `A payment method with the code '${id}' already exists.` });
-      return;
-    }
+    if (!id || !name) { return; }
     const newMethod: PaymentMethod = { id, name, taxRate: 0 };
-    setSettings(s => ({ ...s, paymentMethods: [...s.paymentMethods, newMethod] }));
+    postSettings({ ...settings, paymentMethods: [...settings.paymentMethods, newMethod] });
     logActivity(`Added payment method: '${name}'.`, user?.username || 'System', 'Settings');
-  }, [logActivity, user, settings.paymentMethods, toast]);
+  }, [settings, postSettings, logActivity, user]);
 
   const deletePaymentMethod = useCallback((id: string, name: string) => {
-    setSettings(s => ({ ...s, paymentMethods: s.paymentMethods.filter(pm => pm.id !== id) }));
+    postSettings({ ...settings, paymentMethods: settings.paymentMethods.filter(pm => pm.id !== id) });
     logActivity(`Deleted payment method: '${name}'.`, user?.username || 'System', 'Settings');
-  }, [logActivity, user]);
+  }, [settings, postSettings, logActivity, user]);
 
   const updatePaymentMethodTaxRate = useCallback((id: string, taxRate: number) => {
     if (isNaN(taxRate) || taxRate < 0) return;
-    setSettings(s => ({
-        ...s,
-        paymentMethods: s.paymentMethods.map(pm => pm.id === id ? {...pm, taxRate} : pm)
-    }))
-  }, []);
+    const newSettings = {
+        ...settings,
+        paymentMethods: settings.paymentMethods.map(pm => pm.id === id ? {...pm, taxRate} : pm)
+    };
+    postSettings(newSettings);
+  }, [settings, postSettings]);
 
   const toggleAutoPrint = useCallback((enabled: boolean) => {
-    setSettings(s => ({...s, autoPrintReceipts: enabled }));
+    postSettings({...settings, autoPrintReceipts: enabled });
     logActivity(`Toggled auto-print receipts to: ${enabled ? 'ON' : 'OFF'}.`, user?.username || 'System', 'Settings');
-  }, [logActivity, user]);
+  }, [settings, postSettings, logActivity, user]);
 
   const addBranch = useCallback((id: string, name: string, orderPrefix: string) => {
-    if (!id || !name || !orderPrefix) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Branch Code, Name, and Order Prefix are required.' });
-      return;
-    }
-    if (settings.branches.some(b => b.id === id)) {
-      toast({ variant: 'destructive', title: 'Error', description: `A branch with the code '${id}' already exists.` });
-      return;
-    }
+    if (!id || !name || !orderPrefix) { return; }
     const newBranch: Branch = { id, name, orderPrefix, dineInEnabled: true, takeAwayEnabled: true, deliveryEnabled: true };
-    setSettings(s => ({...s, branches: [...s.branches, newBranch]}));
+    postSettings({...settings, branches: [...settings.branches, newBranch]});
     logActivity(`Added branch: '${name}'.`, user?.username || 'System', 'Settings');
-  }, [logActivity, user, settings.branches, toast]);
+  }, [settings, postSettings, logActivity, user]);
 
   const updateBranch = useCallback((id: string, name: string, orderPrefix: string) => {
-    setSettings(s => ({...s, branches: s.branches.map(b => b.id === id ? {...b, name, orderPrefix} : b)}));
+    postSettings({...settings, branches: settings.branches.map(b => b.id === id ? {...b, name, orderPrefix} : b)});
     logActivity(`Updated branch: '${name}'.`, user?.username || 'System', 'Settings');
-  }, [logActivity, user]);
+  }, [settings, postSettings, logActivity, user]);
 
   const deleteBranch = useCallback((id: string, name: string) => {
-    setSettings(s => {
-        const newBranches = s.branches.filter(b => b.id !== id);
-        const newDefaultId = id === s.defaultBranchId ? (newBranches[0]?.id || null) : s.defaultBranchId;
-        return {...s, branches: newBranches, defaultBranchId: newDefaultId };
-    });
+    const newBranches = settings.branches.filter(b => b.id !== id);
+    const newDefaultId = id === settings.defaultBranchId ? (newBranches[0]?.id || null) : settings.defaultBranchId;
+    postSettings({...settings, branches: newBranches, defaultBranchId: newDefaultId });
     logActivity(`Deleted branch: '${name}'.`, user?.username || 'System', 'Settings');
-  }, [logActivity, user]);
+  }, [settings, postSettings, logActivity, user]);
   
   const setDefaultBranch = useCallback((id: string) => {
-      setSettings(s => ({...s, defaultBranchId: id}));
+      postSettings({...settings, defaultBranchId: id});
       const branchName = settings.branches.find(b => b.id === id)?.name;
       logActivity(`Set default branch to: '${branchName}'.`, user?.username || 'System', 'Settings');
-  }, [logActivity, settings.branches, user]);
+  }, [settings, postSettings, logActivity, user]);
   
   const toggleService = useCallback((branchId: string, service: 'dineInEnabled' | 'takeAwayEnabled' | 'deliveryEnabled', enabled: boolean) => {
-    setSettings(s => ({...s, branches: s.branches.map(b => b.id === branchId ? {...b, [service]: enabled} : b)}));
+    postSettings({...settings, branches: settings.branches.map(b => b.id === branchId ? {...b, [service]: enabled} : b)});
     const branchName = settings.branches.find(b => b.id === branchId)?.name;
     const serviceName = service === 'dineInEnabled' ? 'Dine-In' : service === 'takeAwayEnabled' ? 'Take Away' : 'Delivery';
     logActivity(`Set ${serviceName} service to ${enabled ? 'ON' : 'OFF'} for branch '${branchName}'.`, user?.username || 'System', 'Settings');
-  }, [logActivity, settings.branches, user]);
+  }, [settings, postSettings, logActivity, user]);
 
   const updateBusinessDayHours = useCallback((start: string, end: string) => {
-      setSettings(s => ({...s, businessDayStart: start, businessDayEnd: end}));
-      toast({ title: "Success", description: "Business hours have been updated." });
+      postSettings({...settings, businessDayStart: start, businessDayEnd: end});
       logActivity(`Updated business hours. Start: ${start}, End: ${end}.`, user?.username || 'System', 'Settings');
-  }, [toast, logActivity, user]);
+  }, [settings, postSettings, logActivity, user]);
 
   const updateCompanyName = useCallback((name: string) => {
-    setSettings(s => ({...s, companyName: name}));
-  }, []);
+    postSettings({...settings, companyName: name});
+  }, [settings, postSettings]);
   
   const updateCompanyLogo = useCallback((logoUrl: string) => {
-    setSettings(s => ({...s, companyLogo: logoUrl}));
-  }, []);
+    postSettings({...settings, companyLogo: logoUrl});
+  }, [settings, postSettings]);
 
   const addRole = useCallback((newRole: Role) => {
-    if (!newRole.id) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Role Code is required.' });
-        return;
-    }
-    if (settings.roles.some(r => r.id === newRole.id)) {
-        toast({ variant: 'destructive', title: 'Error', description: `A role with the code '${newRole.id}' already exists.` });
-        return;
-    }
-    setSettings(s => ({ ...s, roles: [...s.roles, newRole] }));
+    postSettings({ ...settings, roles: [...settings.roles, newRole] });
     logActivity(`Added new role: '${newRole.name}'.`, user?.username || 'System', 'Settings');
-  }, [settings.roles, toast, logActivity, user]);
+  }, [settings, postSettings, logActivity, user]);
 
   const updateRole = useCallback((updatedRole: Role) => {
-    setSettings(s => ({
-      ...s,
-      roles: s.roles.map(r => r.id === updatedRole.id ? updatedRole : r),
-    }));
+    postSettings({
+      ...settings,
+      roles: settings.roles.map(r => r.id === updatedRole.id ? updatedRole : r),
+    });
     logActivity(`Updated role: '${updatedRole.name}'.`, user?.username || 'System', 'Settings');
-  }, [logActivity, user]);
+  }, [settings, postSettings, logActivity, user]);
 
   const deleteRole = useCallback((roleId: UserRole) => {
-    if (['root', 'admin', 'cashier', 'marketing'].includes(roleId)) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Cannot delete a default system role.' });
-        return;
-    }
     const roleName = settings.roles.find(r => r.id === roleId)?.name || 'N/A';
-    setSettings(s => ({
-      ...s,
-      roles: s.roles.filter(r => r.id !== roleId),
-    }));
+    postSettings({
+      ...settings,
+      roles: settings.roles.filter(r => r.id !== roleId),
+    });
     logActivity(`Deleted role: '${roleName}'.`, user?.username || 'System', 'Settings');
-  }, [settings.roles, toast, logActivity, user]);
+  }, [settings, postSettings, logActivity, user]);
   
   const addDeliveryMode = useCallback((id: string, name: string) => {
-    if (!id || !name) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Mode Code and Name are required.' });
-      return;
-    }
-    if (settings.deliveryModes.some(dm => dm.id === id)) {
-      toast({ variant: 'destructive', title: 'Error', description: `A delivery mode with the code '${id}' already exists.` });
-      return;
-    }
+    if (!id || !name) { return; }
     const newMode: DeliveryMode = { id, name };
-    setSettings(s => ({ ...s, deliveryModes: [...s.deliveryModes, newMode] }));
+    postSettings({ ...settings, deliveryModes: [...settings.deliveryModes, newMode] });
     logActivity(`Added delivery mode: '${name}'.`, user?.username || 'System', 'Settings');
-  }, [logActivity, user, settings.deliveryModes, toast]);
+  }, [settings, postSettings, logActivity, user]);
 
   const deleteDeliveryMode = useCallback((id: string, name: string) => {
-    setSettings(s => ({ ...s, deliveryModes: s.deliveryModes.filter(dm => dm.id !== id) }));
+    postSettings({ ...settings, deliveryModes: settings.deliveryModes.filter(dm => dm.id !== id) });
     logActivity(`Deleted delivery mode: '${name}'.`, user?.username || 'System', 'Settings');
-  }, [logActivity, user]);
+  }, [settings, postSettings, logActivity, user]);
   
   const updatePromotion = useCallback((promotion: PromotionSettings) => {
-    setSettings(s => ({ ...s, promotion }));
+    postSettings({ ...settings, promotion });
     logActivity(`Updated homepage promotion settings.`, user?.username || 'System', 'Settings');
-  }, [logActivity, user]);
+  }, [settings, postSettings, logActivity, user]);
 
 
   return (

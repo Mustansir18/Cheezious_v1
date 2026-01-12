@@ -3,6 +3,7 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import type { ActivityLog, ActivityLogCategory } from '@/lib/types';
+import { useSyncLocalStorage } from '@/hooks/use-sync-local-storage';
 
 interface ActivityLogContextType {
   logs: ActivityLog[];
@@ -13,31 +14,13 @@ interface ActivityLogContextType {
 
 const ActivityLogContext = createContext<ActivityLogContextType | undefined>(undefined);
 
-export const ActivityLogProvider = ({ children }: { children: ReactNode }) => {
-  const [logs, setLogs] = useState<ActivityLog[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+const ACTIVITY_LOG_STORAGE_KEY = 'cheeziousActivityLogV2';
 
-  // Load logs from API on initial render
-  useEffect(() => {
-    async function loadLogs() {
-      setIsLoading(true);
-      try {
-        const response = await fetch('/api/activity-log');
-        if (!response.ok) throw new Error('Failed to fetch activity logs');
-        const data = await response.json();
-        setLogs(data.logs || []);
-      } catch (error) {
-        console.error("Could not load activity logs from API", error);
-        setLogs([]);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    loadLogs();
-  }, []);
+export const ActivityLogProvider = ({ children }: { children: ReactNode }) => {
+  const [logs, setLogs, isLoading] = useSyncLocalStorage<ActivityLog[]>(ACTIVITY_LOG_STORAGE_KEY, [], '/api/activity-log');
 
   const logActivity = useCallback(async (message: string, user: string, category: ActivityLogCategory) => {
-    const newLog: Omit<ActivityLog, 'id'> = {
+    const newLogEntry: Omit<ActivityLog, 'id'> = {
       timestamp: new Date().toISOString(),
       user: user || 'System',
       message: message,
@@ -48,7 +31,7 @@ export const ActivityLogProvider = ({ children }: { children: ReactNode }) => {
         const response = await fetch('/api/activity-log', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newLog),
+          body: JSON.stringify(newLogEntry),
         });
 
         if (response.ok) {
@@ -59,9 +42,8 @@ export const ActivityLogProvider = ({ children }: { children: ReactNode }) => {
         }
     } catch (error) {
         console.error("Failed to log activity to API:", error);
-        // Optionally add to state anyway for UI feedback, but mark as unsaved
     }
-  }, []);
+  }, [setLogs]);
 
   const clearLogs = useCallback(async () => {
     try {
@@ -75,7 +57,7 @@ export const ActivityLogProvider = ({ children }: { children: ReactNode }) => {
     } catch(error) {
         console.error("Failed to clear logs:", error);
     }
-  }, [logActivity]);
+  }, [setLogs, logActivity]);
 
   return (
     <ActivityLogContext.Provider

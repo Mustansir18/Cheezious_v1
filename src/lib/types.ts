@@ -1,7 +1,6 @@
 
 
 import { z } from 'zod';
-import { v4 as uuidv4 } from 'uuid';
 
 export type DeliveryMode = {
   id: string;
@@ -351,3 +350,26 @@ export type DbCartItem = {
     ParentDealCartItemId?: string; // GUID
     Instructions?: string;
 };
+
+// Added for context migration
+export interface Settings {
+    floors: Floor[];
+    tables: Table[];
+    paymentMethods: PaymentMethod[];
+    autoPrintReceipts: boolean;
+    companyName: string;
+    companyLogo?: string;
+    branches: Branch[];
+    defaultBranchId: string | null;
+    businessDayStart: string;
+    businessDayEnd: string;
+    roles: Role[];
+    deliveryModes: DeliveryMode[];
+    promotion: PromotionSettings;
+}
+
+export interface MenuData {
+    items: MenuItem[];
+    categories: MenuCategory[];
+    addons: Addon[];
+}

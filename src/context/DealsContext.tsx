@@ -6,6 +6,7 @@ import type { MenuItem } from '@/lib/types';
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useSyncLocalStorage } from '@/hooks/use-sync-local-storage';
 
 interface DealsContextType {
   deals: MenuItem[];
@@ -17,75 +18,25 @@ interface DealsContextType {
 
 const DealsContext = createContext<DealsContextType | undefined>(undefined);
 
-const DEALS_STORAGE_KEY = 'cheeziousDeals';
+const DEALS_STORAGE_KEY = 'cheeziousDealsV2';
 
 export const DealsProvider = ({ children }: { children: ReactNode }) => {
-  const [deals, setDeals] = useState<MenuItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [deals, setDeals, isLoading] = useSyncLocalStorage<MenuItem[]>(DEALS_STORAGE_KEY, [], '/api/deals');
   const { logActivity } = useActivityLog();
   const { user } = useAuth();
-  const { toast } = useToast();
-
-  useEffect(() => {
-    async function loadDealsData() {
-        setIsLoading(true);
-        try {
-            const response = await fetch('/api/deals');
-            if (!response.ok) {
-                throw new Error('Failed to fetch deals data');
-            }
-            const data = await response.json();
-            setDeals(data.deals || []);
-        } catch (error) {
-            console.error("Could not load deals from API", error);
-            toast({
-                variant: 'destructive',
-                title: 'Failed to Load Deals',
-                description: 'Could not connect to the server to get promotional deals.'
-            });
-            setDeals([]);
-        } finally {
-            setIsLoading(false);
-        }
-    }
-    loadDealsData();
-  }, [toast]);
-
-  useEffect(() => {
-    if (!isLoading) {
-      localStorage.setItem(DEALS_STORAGE_KEY, JSON.stringify(deals));
-    }
-  }, [deals, isLoading]);
-  
-  // Listen for storage changes from other tabs
-  useEffect(() => {
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === DEALS_STORAGE_KEY && event.newValue) {
-        try {
-          setDeals(JSON.parse(event.newValue));
-        } catch (error) {
-          console.error("Failed to parse deals from storage event", error);
-        }
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
 
   const addDeal = useCallback((newDeal: MenuItem) => {
-    setDeals(prev => [...prev, newDeal]);
+    // This will now be handled by the menu context/api as deals are just items
     logActivity(`Added new deal: '${newDeal.name}'.`, user?.username || 'System', 'Deal');
   }, [logActivity, user]);
 
   const updateDeal = useCallback((updatedDeal: MenuItem) => {
-    setDeals(prev => prev.map(d => d.id === updatedDeal.id ? updatedDeal : d));
+    // This will now be handled by the menu context/api
     logActivity(`Updated deal: '${updatedDeal.name}'.`, user?.username || 'System', 'Deal');
   }, [logActivity, user]);
 
   const deleteDeal = useCallback((id: string, name: string) => {
-    setDeals(prev => prev.filter(d => d.id !== id));
+    // This will now be handled by the menu context/api
     logActivity(`Deleted deal: '${name}'.`, user?.username || 'System', 'Deal');
   }, [logActivity, user]);
 
