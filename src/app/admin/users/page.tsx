@@ -230,24 +230,6 @@ function UserForm({
   const [branchId, setBranchId] = useState<string | undefined>(user?.branchId);
   const { settings } = useSettings();
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-
-    if (user) {
-      onSave({
-        ...user,
-        username,
-        role: role as UserRole,
-        branchId,
-        ...(password && { password }),
-      });
-    } else {
-      if (id && username && password) {
-        onSave({ username, password, role: role as UserRole, branchId }, id);
-      }
-    }
-  };
-  
   const getStationNameForRole = (roleId: string): string | undefined => {
     const kdsRoleMapping: Record<string, string> = {
         'kds': 'All Stations',

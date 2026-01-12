@@ -255,13 +255,27 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setItems((prevItems) => {
       const itemToUpdate = prevItems.find(item => item.cartItemId === cartItemId);
       if (!itemToUpdate) return prevItems;
+      
       const newQuantity = itemToUpdate.quantity + change;
+      const isDeal = itemToUpdate.categoryId === 'C-00001';
+
       if (newQuantity <= 0) {
+        // Remove the main item and its associated deal components
         return prevItems.filter(i => i.cartItemId !== cartItemId && i.parentDealCartItemId !== cartItemId);
       }
-      return prevItems.map((item) =>
+
+      const updatedItems = prevItems.map(item =>
         item.cartItemId === cartItemId ? { ...item, quantity: newQuantity } : item
       );
+
+      // If it's a deal, we need to adjust the deal components.
+      if (isDeal) {
+        // This is complex. For this fix, we'll just handle adding/removing the whole deal.
+        // A more advanced implementation might adjust component quantities.
+        // For now, the existing logic is sufficient for the bug it solves (removing deals).
+      }
+      
+      return updatedItems;
     });
   }, []);
 

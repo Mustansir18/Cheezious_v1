@@ -39,12 +39,12 @@ export function useSyncLocalStorage<T>(
         }
         const data = await response.json();
         // The API should return an object where the data is under a key, e.g., { settings: {...} }
-        const dataKey = key.replace(/cheezious|V\d/g, '').toLowerCase(); // 'cheeziousSettingsV2' -> 'settings'
-        if (data[dataKey]) {
-            setStoredValue(data[dataKey]);
-            window.localStorage.setItem(key, JSON.stringify(data[dataKey]));
+        const dataKey = Object.keys(data)[0]; // e.g. 'settings', 'menu' etc.
+        if (data[dataKey] && Array.isArray(data[dataKey]) ? data[dataKey].length > 0 : data[dataKey]) {
+             setStoredValue(data[dataKey]);
+             window.localStorage.setItem(key, JSON.stringify(data[dataKey]));
         } else {
-             console.warn(`API response for ${apiPath} did not contain expected key '${dataKey}'.`);
+             console.warn(`API response for ${apiPath} did not contain expected key '${dataKey}' or data was empty.`);
         }
       } catch (error) {
         console.error(`Could not load from API (${apiPath}), falling back to local storage.`, error);
@@ -64,6 +64,7 @@ export function useSyncLocalStorage<T>(
 
   const setValue: SetValue<T> = useCallback(
     (value) => {
+      // Don't run this if data hasn't been fetched from API yet
       if (!isInitialized.current) return;
 
       const valueToStore = value instanceof Function ? value(storedValue) : value;
@@ -78,10 +79,11 @@ export function useSyncLocalStorage<T>(
       
       // Post to API - this is fire-and-forget for now
       // A more robust solution would handle queuing and retries
+      const dataToPost = { [key.replace(/cheezious|V\d/g, '').toLowerCase()]: valueToStore };
       fetch(apiPath, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(valueToStore)
+          body: JSON.stringify(dataToPost)
       }).catch(err => {
           console.error(`Failed to sync data to ${apiPath}`, err);
           toast({

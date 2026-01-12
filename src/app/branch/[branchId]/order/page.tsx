@@ -56,7 +56,7 @@ export default function OrderConfirmationPage() {
             const aggregatedComponents = components.reduce((acc, comp) => {
                 const existing = acc.find(a => a.name === comp.name);
                 if (existing) {
-                    existing.quantity += 1;
+                    existing.quantity += comp.quantity;
                 } else {
                     acc.push({ name: comp.name, quantity: 1 });
                 }

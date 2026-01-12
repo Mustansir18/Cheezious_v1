@@ -122,7 +122,7 @@ export default function MenuPage() {
   
   const currentMenuItems = menuItems.filter(item => 
       item.categoryId === activeCategory.id &&
-      (!activeCategory.subCategories || activeCategory.subCategories.length === 0 || item.subCategoryId === activeSubCategoryId)
+      (!activeCategory.subCategories || activeCategory.subCategories.length === 0 || !item.subCategoryId || item.subCategoryId === activeSubCategoryId)
   );
 
   return (

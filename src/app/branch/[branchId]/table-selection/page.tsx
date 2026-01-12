@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { useSettings } from "@/context/SettingsContext";
 import { useCart } from "@/context/CartContext";
@@ -21,23 +21,27 @@ export default function TableSelectionPage() {
     const dealId = searchParams.get('dealId');
 
     const { settings, isLoading } = useSettings();
-    const { setOrderDetails } = useCart();
+    const { setOrderDetails, setTable } = useCart();
     const { occupiedTableIds } = useOrders();
     const router = useRouter();
 
     const [selectedFloorId, setSelectedFloorId] = useState<string>("");
     const [selectedTableId, setSelectedTableId] = useState<string>("");
     
+    useEffect(() => {
+        // Pre-set the order type when the page loads
+        setOrderDetails({
+            branchId: branchId,
+            orderType: 'Dine-In',
+        });
+    }, [branchId, setOrderDetails]);
+    
     const availableTables = settings.tables.filter(table => table.floorId === selectedFloorId);
     
 
     const handleProceedToMenu = () => {
         if (selectedFloorId && selectedTableId) {
-            // This is the critical fix: update the context *before* navigating.
-            setOrderDetails({
-                branchId: branchId,
-                orderType: 'Dine-In',
-            });
+            setTable(selectedTableId, selectedFloorId);
             const menuUrl = `/branch/${branchId}/menu?mode=Dine-In&floorId=${selectedFloorId}&tableId=${selectedTableId}${dealId ? `&dealId=${dealId}` : ''}`;
             router.push(menuUrl);
         }
