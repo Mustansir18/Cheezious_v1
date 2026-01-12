@@ -56,89 +56,222 @@ Deploying on a Linux server (like Ubuntu or CentOS) follows a similar pattern, t
     ```
     -   Enable the site: `sudo ln -s /etc/nginx/sites-available/cheezious-connect /etc/nginx/sites-enabled/` and restart Nginx.
 
-## 2. Transitioning to a SQL Database
+## 2. Connecting to a SQL Database
 
-The current application uses the browser's `localStorage` and `sessionStorage` for data persistence. This is for demonstration purposes only. For a real production environment where data must be centralized and shared, you must connect the application to a database.
+The application is architecturally prepared to use a real SQL database. This section outlines the final implementation steps.
 
-### 2.1. The Strategy: API-Driven Data
+### 2.1. Configure Your Database Connection
 
-The fundamental change is to **stop reading from and writing to `localStorage`** within the React Context providers (`src/context/*.tsx`). Instead, these providers must be modified to fetch data from and send data to a backend API that you will build. This API will be the only part of your system that communicates directly with your SQL database.
+-   **Update Environment Variables:** Open the `.env` file in the project root. Fill in the `DB_USER`, `DB_PASSWORD`, `DB_SERVER`, and `DB_DATABASE` placeholders with your actual SQL Server credentials.
+-   **Review Connection Logic:** A database connection file has been created at `src/lib/db.ts`. It uses the `mssql` package and is configured to read the variables from your `.env` file. If you are using a different database (like PostgreSQL or MySQL), you will need to install its driver (`npm install pg` or `npm install mysql2`) and update this file accordingly.
+-   **Test Connection**: Run the application and navigate to the `/api/db-test` route in your browser to verify that the connection credentials are correct.
 
-**Data Flow:**
-`React Component` -> `Context Hook (e.g., useOrders)` -> `API Route (e.g., /api/orders)` -> `Database (e.g., SQL Server)`
+### 2.2. Implement Database Queries in API Routes
 
-### 2.2. Step-by-Step Code Adaptation Plan
+For each API route in `src/app/api/`, you must replace the placeholder data with a real database query.
 
-#### Step 1: Set Up Your Database and API
--   Create a SQL database (e.g., SQL Server, PostgreSQL, MySQL) with tables that match the schemas defined in `src/db/schema.ts`.
--   Build a backend API (this can be done within Next.js using API Routes in `src/app/api/`) that exposes endpoints for all necessary CRUD (Create, Read, Update, Delete) operations. For example:
-    -   `GET /api/orders`: Fetch all orders.
-    -   `POST /api/orders`: Create a new order.
-    -   `PUT /api/orders/:id`: Update an order's status.
-    -   `GET /api/menu`: Fetch all menu items and categories.
-    -   `GET /api/settings`: Fetch all restaurant settings.
+**Example: Replacing Placeholder Data in `src/app/api/users/route.ts`**
 
-#### Step 2: Modify the React Contexts
-You will need to go through each file in `src/context/` and replace the `localStorage` logic with API calls.
+This example shows how to use the connection pool from `src/lib/db.ts` to fetch users from your SQL Server database.
 
-**Example: Modifying `OrderContext.tsx`**
-
-**BEFORE (Current State):**
 ```typescript
-// src/context/OrderContext.tsx
+// src/app/api/users/route.ts
+import { NextResponse } from 'next/server';
+import { getConnectionPool, sql } from '@/lib/db';
 
-// Reads from sessionStorage on mount
-useEffect(() => {
-    const storedOrders = sessionStorage.getItem('cheeziousOrders');
-    if (storedOrders) setOrders(JSON.parse(storedOrders));
-    setIsLoading(false);
-}, []);
+export async function GET(request: Request) {
+  try {
+    const pool = await getConnectionPool();
+    const result = await pool.request().query('SELECT * FROM Users');
+    
+    // The API should return an object with a key, e.g., { users: ... }
+    return NextResponse.json({ users: result.recordset });
 
-// Writes to sessionStorage on every change
-useEffect(() => {
-    sessionStorage.setItem('cheeziousOrders', JSON.stringify(orders));
-}, [orders]);
-
-const addOrder = (order) => {
-    setOrders(prev => [...prev, order]); // Just adds to local state
-};
+  } catch (error: any) {
+    console.error('Failed to fetch users:', error);
+    // Return a 500 Internal Server Error response
+    return NextResponse.json({ message: 'Failed to fetch users', error: error.message }, { status: 500 });
+  }
+}
 ```
 
-**AFTER (With API Integration):**
-```typescript
-// src/context/OrderContext.tsx
+### 2.3. Apply This Pattern to All API Routes
 
-// Fetches from the database via your API on mount
-useEffect(() => {
-    fetch('/api/orders')
-        .then(res => res.json())
-        .then(data => setOrders(data.orders))
-        .catch(err => console.error("Failed to fetch orders", err))
-        .finally(() => setIsLoading(false));
-}, []);
+You must apply this same pattern to all files in the `src/app/api/` directory, replacing the placeholder arrays with the appropriate `SELECT`, `INSERT`, `UPDATE`, or `DELETE` queries for your database.
 
-// No longer needs to write to sessionStorage.
+-   `/api/menu/route.ts`: `SELECT * FROM MenuItems`, `SELECT * FROM MenuCategories`, etc.
+-   `/api/orders/route.ts`:
+    -   `GET`: `SELECT * FROM Orders WHERE OrderDate > ...`
+    -   `POST`: `INSERT INTO Orders (...) VALUES (...)`
+    -   `PUT`: `UPDATE Orders SET Status = @Status WHERE id = @id`
+-   `/api/settings/route.ts`: Fetch data from your `Branches`, `Floors`, `Tables`, `PaymentMethods` tables.
 
-const addOrder = async (order) => {
-    // 1. Send the new order to the API
-    const response = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(order),
-    });
-    const newOrder = await response.json();
+## 3. Database Schema (SQL)
 
-    // 2. Add the confirmed order from the API to the local state
-    setOrders(prev => [...prev, newOrder]);
-};
+Below are the complete `CREATE TABLE` queries for setting up your database in SQL Server. The tables are ordered to ensure that foreign key constraints are met.
+
+```sql
+-- Create Branches table first as Users depends on it
+CREATE TABLE Branches (
+    id NVARCHAR(255) PRIMARY KEY,
+    name NVARCHAR(255) NOT NULL,
+    orderPrefix NVARCHAR(10) NOT NULL,
+    dineInEnabled BIT NOT NULL DEFAULT 1,
+    takeAwayEnabled BIT NOT NULL DEFAULT 1,
+    deliveryEnabled BIT NOT NULL DEFAULT 1,
+    createdAt DATETIME DEFAULT GETDATE(),
+    updatedAt DATETIME DEFAULT GETDATE()
+);
+
+-- Users table with a foreign key to Branches
+CREATE TABLE Users (
+    id NVARCHAR(255) PRIMARY KEY,
+    username NVARCHAR(255) UNIQUE NOT NULL,
+    password NVARCHAR(255) NOT NULL,
+    role NVARCHAR(50) NOT NULL,
+    branchId NVARCHAR(255),
+    balance DECIMAL(18, 2) DEFAULT 0,
+    stationName NVARCHAR(100),
+    createdAt DATETIME DEFAULT GETDATE(),
+    updatedAt DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (branchId) REFERENCES Branches(id)
+);
+
+-- Create simple lookup tables
+CREATE TABLE Floors (
+    id NVARCHAR(255) PRIMARY KEY,
+    name NVARCHAR(255) NOT NULL
+);
+
+CREATE TABLE Tables (
+    id NVARCHAR(255) PRIMARY KEY,
+    name NVARCHAR(255) NOT NULL,
+    floorId NVARCHAR(255),
+    FOREIGN KEY (floorId) REFERENCES Floors(id) ON DELETE SET NULL
+);
+
+CREATE TABLE PaymentMethods (
+    id NVARCHAR(255) PRIMARY KEY,
+    name NVARCHAR(255) NOT NULL,
+    taxRate DECIMAL(5, 2) NOT NULL DEFAULT 0.00
+);
+
+CREATE TABLE DeliveryModes (
+    id NVARCHAR(255) PRIMARY KEY,
+    name NVARCHAR(255) NOT NULL
+);
+
+-- Menu-related tables
+CREATE TABLE MenuCategories (
+    id NVARCHAR(255) PRIMARY KEY,
+    name NVARCHAR(255) NOT NULL,
+    icon NVARCHAR(255),
+    stationId NVARCHAR(50)
+);
+
+CREATE TABLE SubCategories (
+    id NVARCHAR(255) PRIMARY KEY,
+    categoryId NVARCHAR(255) NOT NULL,
+    name NVARCHAR(255) NOT NULL,
+    FOREIGN KEY (categoryId) REFERENCES MenuCategories(id) ON DELETE CASCADE
+);
+
+CREATE TABLE Addons (
+    id NVARCHAR(255) PRIMARY KEY,
+    name NVARCHAR(255) NOT NULL,
+    price DECIMAL(10, 2),
+    prices NVARCHAR(MAX), -- For JSON object
+    type NVARCHAR(50) DEFAULT 'standard'
+);
+
+CREATE TABLE MenuItems (
+    id NVARCHAR(255) PRIMARY KEY,
+    name NVARCHAR(MAX) NOT NULL,
+    description NVARCHAR(MAX),
+    price DECIMAL(10, 2) NOT NULL,
+    categoryId NVARCHAR(255),
+    subCategoryId NVARCHAR(255),
+    imageUrl NVARCHAR(MAX),
+    availableAddonIds NVARCHAR(MAX), -- For JSON array of strings
+    variants NVARCHAR(MAX), -- For JSON array of objects
+    dealItems NVARCHAR(MAX), -- For JSON array of objects
+    FOREIGN KEY (categoryId) REFERENCES MenuCategories(id) ON DELETE SET NULL
+);
+
+-- Orders and OrderItems tables
+CREATE TABLE Orders (
+    id NVARCHAR(255) PRIMARY KEY,
+    orderNumber NVARCHAR(255) UNIQUE NOT NULL,
+    branchId NVARCHAR(255),
+    orderDate DATETIME NOT NULL,
+    completionDate DATETIME,
+    orderType NVARCHAR(50),
+    status NVARCHAR(50),
+    totalAmount DECIMAL(18, 2),
+    subtotal DECIMAL(18, 2),
+    taxRate DECIMAL(18, 2),
+    taxAmount DECIMAL(18, 2),
+    paymentMethod NVARCHAR(255),
+    instructions NVARCHAR(MAX),
+    placedBy NVARCHAR(255),
+    completedBy NVARCHAR(255),
+    floorId NVARCHAR(255),
+    tableId NVARCHAR(255),
+    deliveryMode NVARCHAR(255),
+    customerName NVARCHAR(255),
+    customerPhone NVARCHAR(50),
+    customerAddress NVARCHAR(MAX),
+    isComplementary BIT DEFAULT 0,
+    complementaryReason NVARCHAR(255),
+    discountType NVARCHAR(50),
+    discountValue DECIMAL(18, 2),
+    discountAmount DECIMAL(18, 2),
+    originalTotalAmount DECIMAL(18, 2),
+    cancellationReason NVARCHAR(MAX),
+    FOREIGN KEY (branchId) REFERENCES Branches(id) ON DELETE SET NULL
+);
+
+CREATE TABLE OrderItems (
+    id NVARCHAR(255) PRIMARY KEY,
+    orderId NVARCHAR(255) NOT NULL,
+    menuItemId NVARCHAR(255),
+    name NVARCHAR(MAX),
+    quantity INT,
+    itemPrice DECIMAL(18, 2),
+    baseItemPrice DECIMAL(18, 2),
+    selectedAddons NVARCHAR(MAX), -- Stored as JSON string
+    selectedVariantName NVARCHAR(255),
+    stationId NVARCHAR(50),
+    isPrepared BIT DEFAULT 0,
+    preparedAt DATETIME,
+    isDispatched BIT DEFAULT 0,
+    isDealComponent BIT DEFAULT 0,
+    parentDealCartItemId NVARCHAR(255),
+    instructions NVARCHAR(MAX),
+    FOREIGN KEY (orderId) REFERENCES Orders(id) ON DELETE CASCADE
+);
+
+-- Log tables
+CREATE TABLE ActivityLog (
+    id NVARCHAR(255) PRIMARY KEY,
+    timestamp DATETIME NOT NULL,
+    [user] NVARCHAR(255),
+    message NVARCHAR(MAX),
+    category NVARCHAR(50)
+);
+
+CREATE TABLE CashierLog (
+    id NVARCHAR(255) PRIMARY KEY,
+    timestamp DATETIME NOT NULL,
+    type NVARCHAR(50) NOT NULL,
+    amount DECIMAL(18, 2) NOT NULL,
+    cashierId NVARCHAR(255) NOT NULL,
+    cashierName NVARCHAR(255),
+    adminId NVARCHAR(255) NOT NULL,
+    adminName NVARCHAR(255),
+    notes NVARCHAR(MAX)
+);
+
 ```
 
-#### Step 3: Apply This Pattern to All Contexts
-
-This same pattern must be applied to all contexts that manage data:
--   `AuthContext.tsx`: Fetch users from the `/api/users` endpoint. The `login` function should send credentials to an `/api/login` endpoint for verification against the database.
--   `MenuContext.tsx`: Fetch items, categories, and addons from `/api/menu`.
--   `SettingsContext.tsx`: Fetch branches, floors, tables, etc., from `/api/settings`.
--   ...and so on for `DealsContext`, `RatingContext`, etc.
-
-By completing this transition, your application will be a true full-stack, production-ready system running on your own server infrastructure.
+By completing this final step, your application will be a true full-stack, production-ready system running on your own server infrastructure.
