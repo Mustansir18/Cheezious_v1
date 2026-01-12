@@ -1,5 +1,11 @@
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // This line tells Next.js to look for the 'app' directory inside 'src'.
+  experimental: {
+    appDir: true,
+  },
+  pageExtensions: ['tsx', 'ts', 'jsx', 'js'],
   images: {
     remotePatterns: [
       {
@@ -14,11 +20,9 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
-      {
+       {
         protocol: 'https',
         hostname: 'images.unsplash.com',
-        port: '',
-        pathname: '/**',
       },
     ],
   },
