@@ -4,11 +4,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "node check-env.mjs && next dev",
+    "dev": "node ./check-env.mjs && next dev",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
     "genkit:watch": "genkit start -- tsx src/ai/dev.ts",
-    "build": "node check-env.mjs && NODE_ENV=production next build",
-    "start": "node check-env.mjs && next start",
+    "build": "node ./check-env.mjs && NODE_ENV=production next build",
+    "start": "node ./check-env.mjs && next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit"
   },
