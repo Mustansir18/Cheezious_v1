@@ -1,6 +1,6 @@
 
 
-"use client";
+'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -46,69 +46,71 @@ const SESSION_STORAGE_KEY = 'cheeziousSession';
 // Create the provider component
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [users, setUsers] = useState<User[]>(initialUsers);
+  const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { logActivity } = useActivityLog();
   const { toast } = useToast();
   const router = useRouter();
 
-  // Load users and session on initial render
+  // Load users from API and session on initial render
   useEffect(() => {
-    setIsLoading(true);
-    try {
-      const storedUsersJSON = localStorage.getItem(USERS_STORAGE_KEY);
-      const storedUsers: User[] = storedUsersJSON ? JSON.parse(storedUsersJSON) : [];
-      
-      const userMap = new Map<string, User>();
-      initialUsers.forEach(u => userMap.set(u.id, { ...u }));
-      
-      storedUsers.forEach(storedUser => {
-          const existingUser = userMap.get(storedUser.id);
-          if (existingUser) {
-              // Merge stored data (like balance) but keep hardcoded password/role.
-              userMap.set(storedUser.id, { ...existingUser, ...storedUser });
-          } else {
-              userMap.set(storedUser.id, storedUser);
-          }
-      });
-      
-      const combinedUsers = Array.from(userMap.values());
-      setUsers(combinedUsers);
-      
-      const sessionUserJSON = sessionStorage.getItem(SESSION_STORAGE_KEY);
-      if (sessionUserJSON) {
-        const sessionUser = JSON.parse(sessionUserJSON);
-        const validUser = combinedUsers.find(u => u.id === sessionUser.id);
-        if (validUser) {
-            setUser(validUser);
-        } else {
-            sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    async function loadInitialData() {
+      setIsLoading(true);
+      try {
+        // Fetch users from the API endpoint
+        const response = await fetch('/api/users');
+        if (!response.ok) {
+          throw new Error('Failed to fetch users');
         }
-      }
+        const data = await response.json();
+        const fetchedUsers: User[] = data.users;
 
-    } catch (error) {
-      console.error("Failed to initialize auth state:", error);
-      setUsers(initialUsers);
-    } finally {
-      setIsLoading(false);
+        // In a real scenario, the API would provide the full user object.
+        // For this migration step, we'll merge with initialUsers to keep passwords.
+        const userMap = new Map<string, User>();
+        initialUsers.forEach(u => userMap.set(u.id, { ...u }));
+        fetchedUsers.forEach(fetchedUser => {
+            const existingUser = userMap.get(fetchedUser.id);
+            if (existingUser) {
+                userMap.set(fetchedUser.id, { ...existingUser, ...fetchedUser });
+            } else {
+                // This case is unlikely if initialUsers is the base
+                userMap.set(fetchedUser.id, fetchedUser as User);
+            }
+        });
+        
+        const combinedUsers = Array.from(userMap.values());
+        setUsers(combinedUsers);
+        
+        // Restore session from sessionStorage
+        const sessionUserJSON = sessionStorage.getItem(SESSION_STORAGE_KEY);
+        if (sessionUserJSON) {
+          const sessionUser = JSON.parse(sessionUserJSON);
+          const validUser = combinedUsers.find(u => u.id === sessionUser.id);
+          if (validUser) {
+              setUser(validUser);
+          } else {
+              sessionStorage.removeItem(SESSION_STORAGE_KEY);
+          }
+        }
+
+      } catch (error) {
+        console.error("Failed to initialize auth state:", error);
+        // Fallback to initial hardcoded users if API fails
+        setUsers(initialUsers);
+      } finally {
+        setIsLoading(false);
+      }
     }
+    loadInitialData();
   }, []);
 
-  // Persist users to localStorage whenever they change
-  useEffect(() => {
-    if (isLoading) return;
-    try {
-        const usersToStore = users.map(({ password, ...userToStore }) => userToStore);
-        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(usersToStore));
-    } catch (error) {
-      console.error("Could not save users to local storage", error);
-    }
-  }, [users, isLoading]);
-  
+
+  // This useEffect will now only handle saving the session, not the full user list.
   useEffect(() => {
       if (isLoading) return;
       try {
-          if (user && user.role !== 'root') {
+          if (user) {
               sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(user));
           } else {
               sessionStorage.removeItem(SESSION_STORAGE_KEY);
@@ -118,35 +120,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
   }, [user, isLoading]);
 
-  useEffect(() => {
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === USERS_STORAGE_KEY && event.newValue) {
-        try {
-          const storedUsers: User[] = JSON.parse(event.newValue);
-          const userMap = new Map<string, User>();
-          initialUsers.forEach(u => userMap.set(u.id, { ...u }));
-          storedUsers.forEach(storedUser => {
-              const existingUser = userMap.get(storedUser.id);
-              if (existingUser) {
-                  userMap.set(storedUser.id, { ...existingUser, ...storedUser });
-              } else {
-                  userMap.set(storedUser.id, storedUser as User);
-              }
-          });
-          const combinedUsers = Array.from(userMap.values());
-          setUsers(combinedUsers);
-        } catch (error) {
-          console.error("Failed to parse users from storage event", error);
-        }
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
+  // The storage event listener for USERS_STORAGE_KEY is no longer needed
+  // as the API is the source of truth. It can be removed in a later step.
 
   const login = useCallback(async (username: string, password: string): Promise<User | null> => {
+    // This logic will be replaced with a call to a /api/login endpoint
     const foundUser = users.find(u => u.username === username && u.password === password);
     if (foundUser) {
       setUser(foundUser);
@@ -164,6 +142,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     router.push('/login');
   }, [router, user, logActivity]);
 
+  // These functions will be updated to use API calls next.
   const addUser = useCallback((newUser: Omit<User, 'username' | 'role' | 'balance'> & { username: string; role: UserRole | string; }) => {
     if (!newUser.id) {
         toast({ variant: 'destructive', title: 'Error', description: 'User Code is required.' });
