@@ -1,11 +1,10 @@
 
+
 # Deployment and Database Integration Guide
 
 This document provides instructions for deploying the Cheezious Connect application to a production server (Windows or Linux) and outlines the necessary steps to transition from browser-based storage to a real SQL database backend.
 
 ## 1. Deployment to a Server
-
-The application is a standard Next.js project and can be deployed to any environment that supports Node.js.
 
 ### 1.1. Windows Server Deployment
 
@@ -272,6 +271,15 @@ CREATE TABLE CashierLog (
     notes NVARCHAR(MAX)
 );
 
+-- === INDEXES (for performance) ===
+
+-- Add an index to ActivityLog to speed up fetching logs sorted by date.
+IF NOT EXISTS (SELECT name FROM sys.indexes WHERE name = 'IDX_ActivityLog_Timestamp')
+BEGIN
+    CREATE INDEX IDX_ActivityLog_Timestamp ON ActivityLog([timestamp] DESC);
+END
+
 ```
 
 By completing this final step, your application will be a true full-stack, production-ready system running on your own server infrastructure.
+
