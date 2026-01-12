@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, ReactNode, useEffect, useCa
 import type { MenuItem } from '@/lib/types';
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
-import { initialDeals } from '@/lib/data';
+import { useToast } from '@/hooks/use-toast';
 
 interface DealsContextType {
   deals: MenuItem[];
@@ -20,23 +20,36 @@ const DealsContext = createContext<DealsContextType | undefined>(undefined);
 const DEALS_STORAGE_KEY = 'cheeziousDeals';
 
 export const DealsProvider = ({ children }: { children: ReactNode }) => {
-  const [deals, setDeals] = useState<MenuItem[]>(initialDeals);
+  const [deals, setDeals] = useState<MenuItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { logActivity } = useActivityLog();
   const { user } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
-    try {
-      const storedDeals = localStorage.getItem(DEALS_STORAGE_KEY);
-      if (storedDeals) {
-        setDeals(JSON.parse(storedDeals));
-      }
-    } catch (error) {
-      console.error("Could not load deals from local storage", error);
-    } finally {
-      setIsLoading(false);
+    async function loadDealsData() {
+        setIsLoading(true);
+        try {
+            const response = await fetch('/api/deals');
+            if (!response.ok) {
+                throw new Error('Failed to fetch deals data');
+            }
+            const data = await response.json();
+            setDeals(data.deals || []);
+        } catch (error) {
+            console.error("Could not load deals from API", error);
+            toast({
+                variant: 'destructive',
+                title: 'Failed to Load Deals',
+                description: 'Could not connect to the server to get promotional deals.'
+            });
+            setDeals([]);
+        } finally {
+            setIsLoading(false);
+        }
     }
-  }, []);
+    loadDealsData();
+  }, [toast]);
 
   useEffect(() => {
     if (!isLoading) {
