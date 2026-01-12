@@ -35,8 +35,9 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ orders });
   } catch (error: any) {
-    console.error('Failed to fetch orders:', error);
-    return NextResponse.json({ message: 'Failed to fetch orders', error: error.message }, { status: 500 });
+    // If the query fails (e.g., table doesn't exist), log the error and return an empty array.
+    console.warn('Could not fetch orders from database, returning empty array. Error:', error.message);
+    return NextResponse.json({ orders: [] });
   }
 }
 
