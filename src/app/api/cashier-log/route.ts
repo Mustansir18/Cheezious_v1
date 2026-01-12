@@ -18,7 +18,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const logEntry: Omit<CashierLogEntry, 'id' | 'timestamp'> = await request.json();
   const id = crypto.randomUUID();
-  const timestamp = new Date().toISOString();
+  const timestamp = new Date();
 
   try {
     const pool = await getConnectionPool();
@@ -49,11 +49,11 @@ export async function POST(request: Request) {
         await transaction.request()
             .input('userId', sql.NVarChar, logEntry.cashierId)
             .input('amount', sql.Decimal(18, 2), logEntry.amount)
-            .query(`UPDATE Users SET balance = balance ${operation} @amount WHERE id = @userId`);
+            .query(`UPDATE Users SET balance = ISNULL(balance, 0) ${operation} @amount WHERE id = @userId`);
         
         await transaction.commit();
 
-        const savedLog = { id, timestamp, ...logEntry };
+        const savedLog = { id, timestamp: timestamp.toISOString(), ...logEntry };
         return NextResponse.json(savedLog, { status: 201 });
 
     } catch(err) {

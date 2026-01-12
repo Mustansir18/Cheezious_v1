@@ -30,7 +30,7 @@ export async function POST(request: Request) {
       .input('category', sql.NVarChar, logEntry.category)
       .query('INSERT INTO ActivityLog (id, timestamp, [user], message, category) VALUES (@id, @timestamp, @user, @message, @category)');
 
-    const savedLog = { id, ...logEntry };
+    const savedLog = { id, ...logEntry, timestamp: new Date(logEntry.timestamp).toISOString() };
     return NextResponse.json(savedLog, { status: 201 });
   } catch (error: any) {
     console.error('Failed to create activity log:', error);
