@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2, Edit, Lock, Percent, PlusCircle, Building, Layout, DollarSign, Bike } from "lucide-react";
+import { Lock, Percent, PlusCircle, Building, Layout, DollarSign, Bike, Edit } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -28,6 +28,7 @@ import type { Branch, Role, UserRole, DeliveryMode, PromotionSettings } from "@/
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
 import imageCompression from 'browser-image-compression';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 
 
 async function handleImageUpload(file: File) {
@@ -307,7 +308,7 @@ export default function AdminSettingsPage() {
                                 {user?.role === 'root' && (
                                     <div className="mb-6 p-4 border rounded-lg space-y-4">
                                         <h4 className="font-semibold">Add New Branch</h4>
-                                        <div className="grid md:grid-cols-4 gap-2">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
                                             <Input placeholder="Branch Code (e.g., B-01)" value={newBranchId} onChange={(e) => setNewBranchId(e.target.value)} />
                                             <Input placeholder="New branch name" value={newBranchName} onChange={(e) => setNewBranchName(e.target.value)} />
                                             <Input placeholder="Order Prefix (e.g., G3)" value={newBranchPrefix} onChange={(e) => setNewBranchPrefix(e.target.value)} />
@@ -315,25 +316,27 @@ export default function AdminSettingsPage() {
                                         </div>
                                     </div>
                                 )}
-                                <Table>
-                                    <TableHeader><TableRow><TableHead>Branch Name</TableHead><TableHead>Code</TableHead><TableHead>Order Prefix</TableHead><TableHead>Dine-In</TableHead><TableHead>Take Away</TableHead><TableHead>Delivery</TableHead><TableHead className="text-right w-[120px]">Actions</TableHead></TableRow></TableHeader>
-                                    <TableBody>
-                                        {visibleBranches.map(branch => (
-                                            <TableRow key={branch.id}>
-                                                <TableCell className="font-medium">{branch.name}</TableCell>
-                                                <TableCell className="font-mono text-xs">{branch.id}</TableCell>
-                                                <TableCell className="font-mono">{branch.orderPrefix}</TableCell>
-                                                <TableCell><Switch checked={branch.dineInEnabled} onCheckedChange={(checked) => toggleService(branch.id, 'dineInEnabled', checked)} aria-label="Toggle Dine-In" /></TableCell>
-                                                <TableCell><Switch checked={branch.takeAwayEnabled} onCheckedChange={(checked) => toggleService(branch.id, 'takeAwayEnabled', checked)} aria-label="Toggle Take Away" /></TableCell>
-                                                <TableCell><Switch checked={branch.deliveryEnabled} onCheckedChange={(checked) => toggleService(branch.id, 'deliveryEnabled', checked)} aria-label="Toggle Delivery" /></TableCell>
-                                                <TableCell className="text-right">
-                                                    <Button variant="ghost" size="icon" onClick={() => openEditDialog(branch)}><Edit className="h-4 w-4" /></Button>
-                                                    <DeleteConfirmationDialog title={`Delete Branch "${branch.name}"?`} description={<>This will permanently delete the branch <strong>{branch.name}</strong> and associated user access.</>} onConfirm={() => deleteBranch(branch.id, branch.name)} />
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
+                                <div className="w-full overflow-x-auto">
+                                    <Table>
+                                        <TableHeader><TableRow><TableHead>Branch Name</TableHead><TableHead>Code</TableHead><TableHead>Prefix</TableHead><TableHead className="text-center">Dine-In</TableHead><TableHead className="text-center">Take Away</TableHead><TableHead className="text-center">Delivery</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                                        <TableBody>
+                                            {visibleBranches.map(branch => (
+                                                <TableRow key={branch.id}>
+                                                    <TableCell className="font-medium">{branch.name}</TableCell>
+                                                    <TableCell className="font-mono text-xs">{branch.id}</TableCell>
+                                                    <TableCell className="font-mono">{branch.orderPrefix}</TableCell>
+                                                    <TableCell className="text-center"><Badge variant={branch.dineInEnabled ? 'default' : 'secondary'}>{branch.dineInEnabled ? 'Yes' : 'No'}</Badge></TableCell>
+                                                    <TableCell className="text-center"><Badge variant={branch.takeAwayEnabled ? 'default' : 'secondary'}>{branch.takeAwayEnabled ? 'Yes' : 'No'}</Badge></TableCell>
+                                                    <TableCell className="text-center"><Badge variant={branch.deliveryEnabled ? 'default' : 'secondary'}>{branch.deliveryEnabled ? 'Yes' : 'No'}</Badge></TableCell>
+                                                    <TableCell className="text-right">
+                                                        <Button variant="ghost" size="icon" onClick={() => openEditDialog(branch)}><Edit className="h-4 w-4" /></Button>
+                                                        <DeleteConfirmationDialog title={`Delete Branch "${branch.name}"?`} description={<>This will permanently delete the branch <strong>{branch.name}</strong> and associated user access.</>} onConfirm={() => deleteBranch(branch.id, branch.name)} />
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
                             </CardContent>
                         </Card>
                         {user?.role === 'root' && (
@@ -363,7 +366,7 @@ export default function AdminSettingsPage() {
                         <Card>
                             <CardHeader><CardTitle className="flex items-center"><Layout className="mr-2"/>Manage Tables</CardTitle><CardDescription>Add tables and assign them to a floor.</CardDescription></CardHeader>
                             <CardContent>
-                                <div className="grid md:grid-cols-4 gap-2 mb-4"><Input placeholder="New table code (e.g., T-01)" value={newTableId} onChange={(e) => setNewTableId(e.target.value)} /><Input placeholder="New table name (e.g., Table 1)" value={newTableName} onChange={(e) => setNewTableName(e.target.value)} /><Select value={selectedFloorForNewTable} onValueChange={setSelectedFloorForNewTable}><SelectTrigger><SelectValue placeholder="Select a floor" /></SelectTrigger><SelectContent>{settings.floors.map(floor => (<SelectItem key={floor.id} value={floor.id}>{floor.name}</SelectItem>))}</SelectContent></Select><Button onClick={handleAddTable}>Add Table</Button></div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4 items-end"><Input placeholder="New table code (e.g., T-01)" value={newTableId} onChange={(e) => setNewTableId(e.target.value)} /><Input placeholder="New table name (e.g., Table 1)" value={newTableName} onChange={(e) => setNewTableName(e.target.value)} /><Select value={selectedFloorForNewTable} onValueChange={setSelectedFloorForNewTable}><SelectTrigger><SelectValue placeholder="Select a floor" /></SelectTrigger><SelectContent>{settings.floors.map(floor => (<SelectItem key={floor.id} value={floor.id}>{floor.name}</SelectItem>))}</SelectContent></Select><Button onClick={handleAddTable}>Add Table</Button></div>
                                 <Table><TableHeader><TableRow><TableHead>Table Name</TableHead><TableHead>Code</TableHead><TableHead>Floor</TableHead><TableHead className="text-right w-[80px]">Actions</TableHead></TableRow></TableHeader>
                                     <TableBody>{settings.tables.map(table => (<TableRow key={table.id}><TableCell>{table.name}</TableCell><TableCell className="font-mono text-xs">{table.id}</TableCell><TableCell>{settings.floors.find(f => f.id === table.floorId)?.name || 'N/A'}</TableCell><TableCell className="text-right"><DeleteConfirmationDialog title={`Delete Table "${table.name}"?`} description={<>This will permanently delete table <strong>{table.name}</strong>.</>} onConfirm={() => deleteTable(table.id, table.name)} /></TableCell></TableRow>))}</TableBody>
                                 </Table>

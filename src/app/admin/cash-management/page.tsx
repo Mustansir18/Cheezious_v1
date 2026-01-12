@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { DollarSign, ArrowUpCircle, ArrowDownCircle, Search, Printer, Calendar as CalendarIcon, FileDown, FileText } from 'lucide-react';
+import { ArrowUpCircle, ArrowDownCircle, Search, Printer, Calendar as CalendarIcon, FileDown, FileText } from 'lucide-react';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import type { User, CashierLogEntry } from '@/lib/types';
@@ -78,7 +78,7 @@ function TransactionDialog({
                     <Icon className="mr-2 h-4 w-4" /> {title}
                 </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle>{title}</DialogTitle>
                     <DialogDescription>{description}</DialogDescription>
@@ -289,37 +289,42 @@ export default function CashManagementPage() {
                             <CardDescription>A complete audit trail of all cash transactions.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div className="mb-4 flex flex-col md:flex-row gap-4 items-center">
-                                <div className="relative w-full md:max-w-sm">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <div className="mb-4 flex flex-col md:flex-row gap-4 items-end">
+                                <div className="relative flex-grow md:max-w-sm">
+                                    <Label htmlFor="log-search">Search Logs</Label>
+                                    <Search className="absolute left-3 top-2/3 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
+                                        id="log-search"
                                         placeholder="Search logs..."
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                         className="pl-10"
                                     />
                                 </div>
-                                 <Popover>
-                                    <PopoverTrigger asChild>
-                                    <Button
-                                        id="date"
-                                        variant={"outline"}
-                                        className={cn("w-full md:w-[200px] justify-start text-left font-normal", !date && "text-muted-foreground")}
-                                    >
-                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                        {date ? format(date, "PPP") : <span>Pick a date</span>}
-                                    </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="end">
-                                    <Calendar
-                                        mode="single"
-                                        selected={date}
-                                        onSelect={setDate}
-                                        initialFocus
-                                        disabled={(d) => d > new Date() || d < subDays(new Date(), 30)}
-                                    />
-                                    </PopoverContent>
-                                </Popover>
+                                <div className="space-y-2">
+                                     <Label>Date</Label>
+                                     <Popover>
+                                        <PopoverTrigger asChild>
+                                        <Button
+                                            id="date"
+                                            variant={"outline"}
+                                            className={cn("w-full md:w-[240px] justify-start text-left font-normal", !date && "text-muted-foreground")}
+                                        >
+                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                            {date ? format(date, "PPP") : <span>Pick a date</span>}
+                                        </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0" align="end">
+                                        <Calendar
+                                            mode="single"
+                                            selected={date}
+                                            onSelect={setDate}
+                                            initialFocus
+                                            disabled={(d) => d > new Date() || d < subDays(new Date(), 30)}
+                                        />
+                                        </PopoverContent>
+                                    </Popover>
+                                </div>
                                 <div className="flex gap-2">
                                     <Button variant="outline" onClick={() => handleDownload('csv')} disabled={filteredLogs.length === 0}><FileDown className="mr-2 h-4 w-4" /> CSV</Button>
                                     <Button variant="outline" onClick={() => handleDownload('pdf')} disabled={filteredLogs.length === 0}><FileText className="mr-2 h-4 w-4" /> PDF</Button>
