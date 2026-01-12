@@ -322,7 +322,60 @@ BEGIN
     CREATE INDEX IDX_Carts_SessionId ON Carts(sessionId);
 END
 GO
+
+-- === SEED DATA (for initial setup) ===
+
+-- Seed Branch
+IF NOT EXISTS (SELECT 1 FROM Branches WHERE id = 'B-00001')
+BEGIN
+  INSERT INTO Branches (id, name, dineInEnabled, takeAwayEnabled, deliveryEnabled, orderPrefix)
+  VALUES ('B-00001', 'CHZ J3, JOHAR TOWN LAHORE', 1, 1, 1, 'G3');
+END
+GO
+
+-- Seed Users
+-- Note: Passwords should be replaced with secure hashes in a real application.
+IF NOT EXISTS (SELECT 1 FROM Users WHERE username = 'root')
+BEGIN
+  INSERT INTO Users (id, username, password, role, balance)
+  VALUES ('CH-00001', 'root', 'Faith123$$', 'root', 0);
+END
+GO
+IF NOT EXISTS (SELECT 1 FROM Users WHERE username = 'admin')
+BEGIN
+  INSERT INTO Users (id, username, password, role, branchId, balance)
+  VALUES ('CH-00002', 'admin', 'admin', 'admin', 'B-00001', 0);
+END
+GO
+IF NOT EXISTS (SELECT 1 FROM Users WHERE username = 'cashier')
+BEGIN
+  INSERT INTO Users (id, username, password, role, branchId, balance)
+  VALUES ('CH-00003', 'cashier', 'cashier', 'cashier', 'B-00001', 0);
+END
+GO
+
+-- Seed Floors & Tables
+IF NOT EXISTS (SELECT 1 FROM Floors WHERE id = 'F-00001') INSERT INTO Floors (id, name) VALUES ('F-00001', 'Ground Floor');
+IF NOT EXISTS (SELECT 1 FROM Tables WHERE id = 'T-00001') INSERT INTO Tables (id, name, floorId) VALUES ('T-00001', 'Table 1', 'F-00001');
+IF NOT EXISTS (SELECT 1 FROM Tables WHERE id = 'T-00002') INSERT INTO Tables (id, name, floorId) VALUES ('T-00002', 'Table 2', 'F-00001');
+GO
+
+-- Seed Payment Methods
+IF NOT EXISTS (SELECT 1 FROM PaymentMethods WHERE id = 'PM-00001') INSERT INTO PaymentMethods (id, name, taxRate) VALUES ('PM-00001', 'Cash', 0.16);
+IF NOT EXISTS (SELECT 1 FROM PaymentMethods WHERE id = 'PM-00002') INSERT INTO PaymentMethods (id, name, taxRate) VALUES ('PM-00002', 'Credit/Debit Card', 0.05);
+GO
+
+-- Seed Delivery Modes
+IF NOT EXISTS (SELECT 1 FROM DeliveryModes WHERE id = 'DM-001') INSERT INTO DeliveryModes (id, name) VALUES ('DM-001', 'Website');
+IF NOT EXISTS (SELECT 1 FROM DeliveryModes WHERE id = 'DM-002') INSERT INTO DeliveryModes (id, name) VALUES ('DM-002', 'App');
+IF NOT EXISTS (SELECT 1 FROM DeliveryModes WHERE id = 'DM-003') INSERT INTO DeliveryModes (id, name) VALUES ('DM-003', 'Call Centre');
+GO
+
+PRINT 'Seed data for Branches, Users, Floors, Tables, PaymentMethods, and DeliveryModes inserted (if not present).';
+GO
+
 ```
-
-By completing this final step, your application will be a true full-stack, production-ready system running on your own server infrastructure.
-
+  </change>
+  <change>
+    <file>src/db/schema.ts</file>
+    <content><![CDATA[
