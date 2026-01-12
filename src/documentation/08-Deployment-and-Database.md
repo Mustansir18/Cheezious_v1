@@ -58,89 +58,58 @@ Deploying on a Linux server (like Ubuntu or CentOS) follows a similar pattern, t
 
 ## 2. Transitioning to a SQL Database
 
-The current application uses the browser's `localStorage` and `sessionStorage` for data persistence. This is for demonstration purposes only. For a real production environment where data must be centralized and shared, you must connect the application to a database.
+The application has been architecturally prepared to use a real SQL database, but the final implementation step requires your specific database details.
 
 ### 2.1. The Strategy: API-Driven Data
 
-The fundamental change is to **stop reading from and writing to `localStorage`** within the React Context providers (`src/context/*.tsx`). Instead, these providers must be modified to fetch data from and send data to a backend API that you will build. This API will be the only part of your system that communicates directly with your SQL database.
+The application now uses an API-driven architecture. The frontend (React components) fetches all data from API Routes located in `src/app/api/`. These API routes are the only part of the system that should communicate directly with your SQL database.
 
 **Data Flow:**
 `React Component` -> `Context Hook (e.g., useOrders)` -> `API Route (e.g., /api/orders)` -> `Database (e.g., SQL Server)`
 
 ### 2.2. Step-by-Step Code Adaptation Plan
 
-#### Step 1: Set Up Your Database and API
--   **Create Database Tables:** Set up a SQL database (e.g., SQL Server, PostgreSQL, MySQL) with tables that match the schemas defined in `src/db/schema.ts`.
--   **Build Backend API Endpoints:** Create API Routes within Next.js in the `src/app/api/` directory. These will contain your database queries.
-    -   `GET /api/orders`: Fetch all orders.
-    -   `POST /api/orders`: Create a new order.
-    -   `PUT /api/orders/:id`: Update an order's status.
-    -   `GET /api/menu`: Fetch all menu items and categories.
-    -   `GET /api/settings`: Fetch all restaurant settings.
-    -   ...and so on for all data types.
--   **Status:** The first placeholder API endpoint has been created at `src/app/api/users/route.ts`. Your next task is to replace the placeholder data in that file with a real database query to your SQL server.
+#### Step 1: Configure Your Database Connection
+-   **Update Environment Variables:** Open the `.env` file in the project root. Fill in the `DB_USER`, `DB_PASSWORD`, `DB_SERVER`, and `DB_DATABASE` placeholders with your actual SQL Server credentials.
+-   **Review Connection Logic:** A database connection file has been created at `src/lib/db.ts`. It uses the `mssql` package and is configured to read the variables from your `.env` file. If you are using a different database (like PostgreSQL or MySQL), you will need to install its driver (`npm install pg` or `npm install mysql2`) and update this file accordingly.
 
-#### Step 2: Modify the React Contexts
-You will need to go through each file in `src/context/` and replace the `localStorage` logic with API calls using `fetch`.
+#### Step 2: Implement Database Queries in API Routes
+For each API route in `src/app/api/`, you must replace the placeholder data with a real database query.
 
-**Example: Modifying `OrderContext.tsx`**
+**Example: Replacing Placeholder Data in `src/app/api/users/route.ts`**
 
-**BEFORE (Current State):**
+This example shows how to use the connection pool from `src/lib/db.ts` to fetch users from your SQL Server database.
+
 ```typescript
-// src/context/OrderContext.tsx
+// src/app/api/users/route.ts
+import { NextResponse } from 'next/server';
+import { getConnectionPool, sql } from '@/lib/db';
 
-// Reads from sessionStorage on mount
-useEffect(() => {
-    const storedOrders = sessionStorage.getItem('cheeziousOrders');
-    if (storedOrders) setOrders(JSON.parse(storedOrders));
-    setIsLoading(false);
-}, []);
+export async function GET(request: Request) {
+  try {
+    const pool = await getConnectionPool();
+    const result = await pool.request().query('SELECT * FROM Users');
+    
+    // The API should return an object with a key, e.g., { users: ... }
+    return NextResponse.json({ users: result.recordset });
 
-// Writes to sessionStorage on every change
-useEffect(() => {
-    sessionStorage.setItem('cheeziousOrders', JSON.stringify(orders));
-}, [orders]);
-
-const addOrder = (order) => {
-    setOrders(prev => [...prev, order]); // Just adds to local state
-};
+  } catch (error: any) {
+    console.error('Failed to fetch users:', error);
+    // Return a 500 Internal Server Error response
+    return NextResponse.json({ message: 'Failed to fetch users', error: error.message }, { status: 500 });
+  }
+}
 ```
 
-**AFTER (With API Integration):**
-```typescript
-// src/context/OrderContext.tsx
+#### Step 3: Apply This Pattern to All API Routes
 
-// Fetches from the database via your API on mount
-useEffect(() => {
-    fetch('/api/orders')
-        .then(res => res.json())
-        .then(data => setOrders(data.orders))
-        .catch(err => console.error("Failed to fetch orders", err))
-        .finally(() => setIsLoading(false));
-}, []);
+You must apply this same pattern to all files in the `src/app/api/` directory, replacing the placeholder arrays with the appropriate `SELECT`, `INSERT`, `UPDATE`, or `DELETE` queries for your database.
 
-// No longer needs to write to sessionStorage.
+-   `/api/menu/route.ts`: `SELECT * FROM MenuItems`, `SELECT * FROM MenuCategories`, etc.
+-   `/api/orders/route.ts`:
+    -   `GET`: `SELECT * FROM Orders WHERE OrderDate > ...`
+    -   `POST`: `INSERT INTO Orders (...) VALUES (...)`
+    -   `PUT`: `UPDATE Orders SET Status = @Status WHERE id = @id`
+-   `/api/settings/route.ts`: Fetch data from your `Branches`, `Floors`, `Tables`, `PaymentMethods` tables.
 
-const addOrder = async (order) => {
-    // 1. Send the new order to the API
-    const response = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(order),
-    });
-    const newOrder = await response.json();
-
-    // 2. Add the confirmed order from the API to the local state
-    setOrders(prev => [...prev, newOrder]);
-};
-```
-
-#### Step 3: Apply This Pattern to All Contexts
-
-This same pattern must be applied to all contexts that manage data:
--   `AuthContext.tsx`: Fetch users from the `/api/users` endpoint. The `login` function should send credentials to an `/api/login` endpoint for verification against the database.
--   `MenuContext.tsx`: Fetch items, categories, and addons from `/api/menu`.
--   `SettingsContext.tsx`: Fetch branches, floors, tables, etc., from `/api/settings`.
--   ...and so on for `DealsContext`, `RatingContext`, etc.
-
-By completing this transition, your application will be a true full-stack, production-ready system running on your own server infrastructure.
+By completing this final step, your application will be a true full-stack, production-ready system running on your own server infrastructure.
