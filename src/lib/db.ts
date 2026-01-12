@@ -1,3 +1,4 @@
+
 /**
  * @fileoverview This file establishes and exports a reusable connection pool to a SQL Server database.
  * It reads configuration from environment variables for security.
@@ -28,12 +29,13 @@ const dbConfig = {
 let pool: sql.ConnectionPool;
 
 export async function getConnectionPool() {
-  if (pool) {
+  if (pool && pool.connected) {
     return pool;
   }
   try {
-    pool = await sql.connect(dbConfig);
-    console.log('Database connection pool established.');
+    pool = new sql.ConnectionPool(dbConfig);
+    await pool.connect();
+    console.log('[db] Database connection pool established.');
     return pool;
   } catch (err) {
     console.error('Database connection failed:', err);

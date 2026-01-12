@@ -1,6 +1,7 @@
 
 
 import { z } from 'zod';
+import { v4 as uuidv4 } from 'uuid';
 
 export type DeliveryMode = {
   id: string;
@@ -83,17 +84,18 @@ export type SelectedAddon = Addon & { quantity: number; selectedPrice: number };
 
 
 export type CartItem = Omit<MenuItem, 'price' | 'availableAddonIds'> & {
-  cartItemId: string; // Unique ID for the cart instance of an item
-  uniqueVariationId?: string; // ID to represent a unique combination of item + addons + variant
+  cartItemId: string;
+  uniqueVariationId?: string;
   quantity: number;
   price: number; // Final price including addons and variant (for one unit)
-  basePrice: number; // Original item price, before addons/variant
+  basePrice: number;
   selectedAddons: SelectedAddon[];
-  selectedVariant?: MenuItemVariant; // The chosen size/variant for this cart item
-  isDealComponent?: boolean; // Flag to identify items added as part of a deal
-  parentDealCartItemId?: string; // Correct: ID of the parent deal's cart item instance
+  selectedVariant?: MenuItemVariant;
+  isDealComponent?: boolean;
+  parentDealCartItemId?: string;
   dealName?: string;
-  instructions?: string; // Special instructions for this specific cart item
+  instructions?: string;
+  stationId?: KitchenStation;
 };
 
 
@@ -315,3 +317,37 @@ export const SyncOrderOutputSchema = z.object({
   message: z.string().describe('A message detailing the result of the operation.'),
 });
 export type SyncOrderOutput = z.infer<typeof SyncOrderOutputSchema>;
+
+// Cart Types for Database
+export type Cart = {
+    Id: string; // GUID
+    SessionId: string;
+    BranchId?: string;
+    OrderType?: OrderType;
+    FloorId?: string;
+    TableId?: string;
+    DeliveryMode?: string;
+    CustomerName?: string;
+    CustomerPhone?: string;
+    CustomerAddress?: string;
+    UpdatedAt: string; // ISO Date
+};
+
+// The client-side CartItem is mostly compatible, but we need to map names
+// e.g. cartItemId -> Id (or generate new one on save)
+// This type is for what's stored in the DB
+export type DbCartItem = {
+    Id: string; // GUID
+    CartId: string; // GUID
+    MenuItemId: string;
+    Quantity: number;
+    Price: number;
+    BasePrice: number;
+    Name: string;
+    SelectedAddons: string; // JSON string
+    SelectedVariant: string; // JSON string
+    StationId?: KitchenStation;
+    IsDealComponent?: boolean;
+    ParentDealCartItemId?: string; // GUID
+    Instructions?: string;
+};

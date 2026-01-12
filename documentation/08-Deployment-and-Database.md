@@ -1,10 +1,11 @@
 
-
 # Deployment and Database Integration Guide
 
 This document provides instructions for deploying the Cheezious Connect application to a production server (Windows or Linux) and outlines the necessary steps to transition from browser-based storage to a real SQL database backend.
 
 ## 1. Deployment to a Server
+
+The application is a standard Next.js project and can be deployed to any environment that supports Node.js.
 
 ### 1.1. Windows Server Deployment
 
@@ -107,275 +108,109 @@ You must apply this same pattern to all files in the `src/app/api/` directory, r
 
 ## 3. Database Schema (SQL)
 
-Below are the complete `CREATE TABLE` queries for setting up your database in SQL Server. The tables are ordered to ensure that foreign key constraints are met.
+Below is an idempotent migration script for setting up your database in SQL Server. This script can be run safely multiple times; it will only create tables and columns that are missing.
 
 ```sql
--- Create Branches table first as Users depends on it
-CREATE TABLE Branches (
-    id NVARCHAR(255) PRIMARY KEY,
-    name NVARCHAR(255) NOT NULL,
-    orderPrefix NVARCHAR(10) NOT NULL,
-    dineInEnabled BIT NOT NULL DEFAULT 1,
-    takeAwayEnabled BIT NOT NULL DEFAULT 1,
-    deliveryEnabled BIT NOT NULL DEFAULT 1,
-    createdAt DATETIME DEFAULT GETDATE(),
-    updatedAt DATETIME DEFAULT GETDATE()
-);
+-- idempotent migration for deployment: creates missing tables and columns used by the app
+-- Run this file on the target DB to ensure required tables/columns exist
 
--- Users table with a foreign key to Branches
-CREATE TABLE Users (
-    id NVARCHAR(255) PRIMARY KEY,
-    username NVARCHAR(255) UNIQUE NOT NULL,
-    password NVARCHAR(255) NOT NULL,
-    role NVARCHAR(50) NOT NULL,
-    branchId NVARCHAR(255),
-    balance DECIMAL(18, 2) DEFAULT 0,
-    stationName NVARCHAR(100),
-    createdAt DATETIME DEFAULT GETDATE(),
-    updatedAt DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (branchId) REFERENCES Branches(id)
-);
+-- Ensure we're on the target DB
+USE [CheeziousKiosk];
+GO
 
--- Create simple lookup tables
-CREATE TABLE Floors (
-    id NVARCHAR(255) PRIMARY KEY,
-    name NVARCHAR(255) NOT NULL
-);
+-- Sessions table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Sessions]') AND type in (N'U'))
+BEGIN
+  CREATE TABLE dbo.Sessions (
+    Id NVARCHAR(50) PRIMARY KEY,
+    UserId NVARCHAR(50) NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    ExpiresAt DATETIME2 NULL
+  );
+END
+GO
 
-CREATE TABLE Tables (
-    id NVARCHAR(255) PRIMARY KEY,
-    name NVARCHAR(255) NOT NULL,
-    floorId NVARCHAR(255),
-    FOREIGN KEY (floorId) REFERENCES Floors(id) ON DELETE SET NULL
-);
+-- Carts table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Carts]') AND type in (N'U'))
+BEGIN
+  CREATE TABLE dbo.Carts (
+    Id UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+    SessionId NVARCHAR(50) NOT NULL,
+    BranchId NVARCHAR(50) NULL,
+    OrderType NVARCHAR(50) NULL,
+    FloorId NVARCHAR(50) NULL,
+    TableId NVARCHAR(50) NULL,
+    DeliveryMode NVARCHAR(50) NULL,
+    CustomerName NVARCHAR(200) NULL,
+    CustomerPhone NVARCHAR(50) NULL,
+    CustomerAddress NVARCHAR(500) NULL,
+    UpdatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+  );
+  CREATE INDEX IX_Carts_SessionId ON dbo.Carts(SessionId);
+END
+GO
 
-CREATE TABLE PaymentMethods (
-    id NVARCHAR(255) PRIMARY KEY,
-    name NVARCHAR(255) NOT NULL,
-    taxRate DECIMAL(5, 2) NOT NULL DEFAULT 0.00
-);
+-- CartItems table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[CartItems]') AND type in (N'U'))
+BEGIN
+  CREATE TABLE dbo.CartItems (
+    Id UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+    CartId UNIQUEIDENTIFIER NOT NULL,
+    MenuItemId NVARCHAR(50),
+    Quantity INT NOT NULL DEFAULT 1,
+    Price DECIMAL(10,2) NULL,
+    BasePrice DECIMAL(10,2) NULL,
+    Name NVARCHAR(500) NULL,
+    SelectedAddons NVARCHAR(MAX) NULL,
+    SelectedVariant NVARCHAR(MAX) NULL,
+    StationId NVARCHAR(50) NULL,
+    IsPrepared BIT DEFAULT 0,
+    IsDealComponent BIT DEFAULT 0,
+    ParentDealCartItemId UNIQUEIDENTIFIER NULL,
+    Instructions NVARCHAR(1000) NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+  );
+  CREATE INDEX IX_CartItems_CartId ON dbo.CartItems(CartId);
+END
+GO
 
-CREATE TABLE DeliveryModes (
-    id NVARCHAR(255) PRIMARY KEY,
-    name NVARCHAR(255) NOT NULL
-);
-
--- Menu-related tables
-CREATE TABLE MenuCategories (
-    id NVARCHAR(255) PRIMARY KEY,
-    name NVARCHAR(255) NOT NULL,
-    icon NVARCHAR(255),
-    stationId NVARCHAR(50)
-);
-
-CREATE TABLE SubCategories (
-    id NVARCHAR(255) PRIMARY KEY,
-    categoryId NVARCHAR(255) NOT NULL,
-    name NVARCHAR(255) NOT NULL,
-    FOREIGN KEY (categoryId) REFERENCES MenuCategories(id) ON DELETE CASCADE
-);
-
-CREATE TABLE Addons (
-    id NVARCHAR(255) PRIMARY KEY,
-    name NVARCHAR(255) NOT NULL,
-    price DECIMAL(10, 2),
-    prices NVARCHAR(MAX), -- For JSON object
-    type NVARCHAR(50) DEFAULT 'standard'
-);
-
-CREATE TABLE MenuItems (
-    id NVARCHAR(255) PRIMARY KEY,
-    name NVARCHAR(MAX) NOT NULL,
-    description NVARCHAR(MAX),
-    price DECIMAL(10, 2) NOT NULL,
-    categoryId NVARCHAR(255),
-    subCategoryId NVARCHAR(255),
-    imageUrl NVARCHAR(MAX),
-    availableAddonIds NVARCHAR(MAX), -- For JSON array of strings
-    variants NVARCHAR(MAX), -- For JSON array of objects
-    dealItems NVARCHAR(MAX), -- For JSON array of objects
-    FOREIGN KEY (categoryId) REFERENCES MenuCategories(id) ON DELETE SET NULL
-);
-
--- Carts and CartItems tables for persistent shopping carts
-CREATE TABLE Carts (
-    id NVARCHAR(255) PRIMARY KEY,
-    sessionId NVARCHAR(255) UNIQUE NOT NULL, -- Corresponds to browser session
-    userId NVARCHAR(255), -- Nullable, for guest carts
-    branchId NVARCHAR(255),
-    orderType NVARCHAR(50),
-    tableId NVARCHAR(255),
-    createdAt DATETIME DEFAULT GETDATE(),
-    updatedAt DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (userId) REFERENCES Users(id),
-    FOREIGN KEY (branchId) REFERENCES Branches(id)
-);
-
-CREATE TABLE CartItems (
-    id NVARCHAR(255) PRIMARY KEY,
-    cartId NVARCHAR(255) NOT NULL,
-    menuItemId NVARCHAR(255) NOT NULL,
-    quantity INT NOT NULL,
-    price DECIMAL(18, 2) NOT NULL,
-    selectedAddons NVARCHAR(MAX), -- Stored as JSON string
-    selectedVariantName NVARCHAR(255),
-    instructions NVARCHAR(MAX),
-    isDealComponent BIT DEFAULT 0,
-    parentDealCartItemId NVARCHAR(255),
-    FOREIGN KEY (cartId) REFERENCES Carts(id) ON DELETE CASCADE
-);
-
-
--- Orders and OrderItems tables
-CREATE TABLE Orders (
-    id NVARCHAR(255) PRIMARY KEY,
-    orderNumber NVARCHAR(255) UNIQUE NOT NULL,
-    branchId NVARCHAR(255),
-    orderDate DATETIME NOT NULL,
-    completionDate DATETIME,
-    orderType NVARCHAR(50),
-    status NVARCHAR(50),
-    totalAmount DECIMAL(18, 2),
-    subtotal DECIMAL(18, 2),
-    taxRate DECIMAL(18, 2),
-    taxAmount DECIMAL(18, 2),
-    paymentMethod NVARCHAR(255),
-    instructions NVARCHAR(MAX),
-    placedBy NVARCHAR(255),
-    completedBy NVARCHAR(255),
-    floorId NVARCHAR(255),
-    tableId NVARCHAR(255),
-    deliveryMode NVARCHAR(255),
-    customerName NVARCHAR(255),
-    customerPhone NVARCHAR(50),
-    customerAddress NVARCHAR(MAX),
-    isComplementary BIT DEFAULT 0,
-    complementaryReason NVARCHAR(255),
-    discountType NVARCHAR(50),
-    discountValue DECIMAL(18, 2),
-    discountAmount DECIMAL(18, 2),
-    originalTotalAmount DECIMAL(18, 2),
-    cancellationReason NVARCHAR(MAX),
-    FOREIGN KEY (branchId) REFERENCES Branches(id) ON DELETE SET NULL
-);
-
-CREATE TABLE OrderItems (
-    id NVARCHAR(255) PRIMARY KEY,
-    orderId NVARCHAR(255) NOT NULL,
-    menuItemId NVARCHAR(255),
-    name NVARCHAR(MAX),
-    quantity INT,
-    itemPrice DECIMAL(18, 2),
-    baseItemPrice DECIMAL(18, 2),
-    selectedAddons NVARCHAR(MAX), -- Stored as JSON string
-    selectedVariantName NVARCHAR(255),
-    stationId NVARCHAR(50),
-    isPrepared BIT DEFAULT 0,
-    preparedAt DATETIME,
-    isDispatched BIT DEFAULT 0,
-    isDealComponent BIT DEFAULT 0,
-    parentDealCartItemId NVARCHAR(255),
-    instructions NVARCHAR(MAX),
-    FOREIGN KEY (orderId) REFERENCES Orders(id) ON DELETE CASCADE
-);
-
--- Log tables
-CREATE TABLE ActivityLog (
-    id NVARCHAR(255) PRIMARY KEY,
+-- ActivityLog table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[ActivityLog]') AND type in (N'U'))
+BEGIN
+  CREATE TABLE dbo.ActivityLog (
+    id NVARCHAR(50) PRIMARY KEY,
     timestamp DATETIME NOT NULL,
-    [user] NVARCHAR(255),
-    message NVARCHAR(MAX),
-    category NVARCHAR(50)
-);
+    [user] NVARCHAR(100) NOT NULL,
+    message NVARCHAR(MAX) NOT NULL,
+    category NVARCHAR(50) NOT NULL
+  );
+END
+GO
 
-CREATE TABLE CashierLog (
-    id NVARCHAR(255) PRIMARY KEY,
+-- CashierLog table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[CashierLog]') AND type in (N'U'))
+BEGIN
+  CREATE TABLE dbo.CashierLog (
+    id NVARCHAR(50) PRIMARY KEY,
     timestamp DATETIME NOT NULL,
     type NVARCHAR(50) NOT NULL,
-    amount DECIMAL(18, 2) NOT NULL,
-    cashierId NVARCHAR(255) NOT NULL,
-    cashierName NVARCHAR(255),
-    adminId NVARCHAR(255) NOT NULL,
-    adminName NVARCHAR(255),
-    notes NVARCHAR(MAX)
-);
-
--- === INDEXES (for performance) ===
-
--- Add an index to ActivityLog to speed up fetching logs sorted by date.
-IF NOT EXISTS (SELECT name FROM sys.indexes WHERE name = 'IDX_ActivityLog_Timestamp')
-BEGIN
-    CREATE INDEX IDX_ActivityLog_Timestamp ON ActivityLog([timestamp] DESC);
+    amount DECIMAL(18,2) NOT NULL,
+    cashierId NVARCHAR(50) NOT NULL,
+    cashierName NVARCHAR(100) NOT NULL,
+    adminId NVARCHAR(50) NOT NULL,
+    adminName NVARCHAR(100) NOT NULL,
+    notes NVARCHAR(500)
+  );
 END
 GO
 
--- Add an index to CartItems to speed up fetching items for a specific cart.
-IF NOT EXISTS (SELECT name FROM sys.indexes WHERE name = 'IDX_CartItems_CartId')
+-- Ensure Orders has required columns (non-destructive)
+IF COL_LENGTH('dbo.Orders', 'customerAddress') IS NULL
 BEGIN
-    CREATE INDEX IDX_CartItems_CartId ON CartItems(CartId);
+  ALTER TABLE dbo.Orders ADD customerAddress NVARCHAR(500) NULL;
 END
 GO
 
--- Add an index to Carts to speed up fetching a cart by its session ID.
-IF NOT EXISTS (SELECT name FROM sys.indexes WHERE name = 'IDX_Carts_SessionId')
-BEGIN
-    CREATE INDEX IDX_Carts_SessionId ON Carts(sessionId);
-END
+PRINT 'Initial deployment migrations complete.';
 GO
-
--- === SEED DATA (for initial setup) ===
-
--- Seed Branch
-IF NOT EXISTS (SELECT 1 FROM Branches WHERE id = 'B-00001')
-BEGIN
-  INSERT INTO Branches (id, name, dineInEnabled, takeAwayEnabled, deliveryEnabled, orderPrefix)
-  VALUES ('B-00001', 'CHZ J3, JOHAR TOWN LAHORE', 1, 1, 1, 'G3');
-END
-GO
-
--- Seed Users
--- Note: Passwords should be replaced with secure hashes in a real application.
-IF NOT EXISTS (SELECT 1 FROM Users WHERE username = 'root')
-BEGIN
-  INSERT INTO Users (id, username, password, role, balance)
-  VALUES ('CH-00001', 'root', 'Faith123$$', 'root', 0);
-END
-GO
-IF NOT EXISTS (SELECT 1 FROM Users WHERE username = 'admin')
-BEGIN
-  INSERT INTO Users (id, username, password, role, branchId, balance)
-  VALUES ('CH-00002', 'admin', 'admin', 'admin', 'B-00001', 0);
-END
-GO
-IF NOT EXISTS (SELECT 1 FROM Users WHERE username = 'cashier')
-BEGIN
-  INSERT INTO Users (id, username, password, role, branchId, balance)
-  VALUES ('CH-00003', 'cashier', 'cashier', 'cashier', 'B-00001', 0);
-END
-GO
-
--- Seed Floors & Tables
-IF NOT EXISTS (SELECT 1 FROM Floors WHERE id = 'F-00001') INSERT INTO Floors (id, name) VALUES ('F-00001', 'Ground Floor');
-IF NOT EXISTS (SELECT 1 FROM Tables WHERE id = 'T-00001') INSERT INTO Tables (id, name, floorId) VALUES ('T-00001', 'Table 1', 'F-00001');
-IF NOT EXISTS (SELECT 1 FROM Tables WHERE id = 'T-00002') INSERT INTO Tables (id, name, floorId) VALUES ('T-00002', 'Table 2', 'F-00001');
-GO
-
--- Seed Payment Methods
-IF NOT EXISTS (SELECT 1 FROM PaymentMethods WHERE id = 'PM-00001') INSERT INTO PaymentMethods (id, name, taxRate) VALUES ('PM-00001', 'Cash', 0.16);
-IF NOT EXISTS (SELECT 1 FROM PaymentMethods WHERE id = 'PM-00002') INSERT INTO PaymentMethods (id, name, taxRate) VALUES ('PM-00002', 'Credit/Debit Card', 0.05);
-GO
-
--- Seed Delivery Modes
-IF NOT EXISTS (SELECT 1 FROM DeliveryModes WHERE id = 'DM-001') INSERT INTO DeliveryModes (id, name) VALUES ('DM-001', 'Website');
-IF NOT EXISTS (SELECT 1 FROM DeliveryModes WHERE id = 'DM-002') INSERT INTO DeliveryModes (id, name) VALUES ('DM-002', 'App');
-IF NOT EXISTS (SELECT 1 FROM DeliveryModes WHERE id = 'DM-003') INSERT INTO DeliveryModes (id, name) VALUES ('DM-003', 'Call Centre');
-GO
-
-PRINT 'Seed data for Branches, Users, Floors, Tables, PaymentMethods, and DeliveryModes inserted (if not present).';
-GO
-
 ```
-  </change>
-  <change>
-    <file>src/db/schema.ts</file>
-    <content><![CDATA[

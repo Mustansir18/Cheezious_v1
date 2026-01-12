@@ -1,12 +1,11 @@
 
-
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
-import type { CartItem, MenuItem, OrderType, Addon, Deal, MenuItemVariant, SelectedAddon } from '@/lib/types';
+import type { CartItem, MenuItem, OrderType, SelectedAddon, MenuItemVariant } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { useMenu } from './MenuContext';
-
+import { v4 as uuidv4 } from 'uuid';
 
 interface AddToCartOptions {
     item: MenuItem;
@@ -31,6 +30,7 @@ interface CartContextType {
   customerPhone: string | null;
   customerAddress: string | null;
   isCartOpen: boolean;
+  cartIsLoading: boolean;
   setIsCartOpen: React.Dispatch<React.SetStateAction<boolean>>;
   addItem: (options: AddToCartOptions) => void;
   updateQuantity: (cartItemId: string, change: number) => void;
@@ -45,6 +45,8 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+const SESSION_ID_KEY = 'cheezious_session_id';
+
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [items, setItems] = useState<CartItem[]>([]);
   const [branchId, setBranchId] = useState<string | null>(null);
@@ -56,41 +58,87 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [customerPhone, setCustomerPhone] = useState<string | null>(null);
   const [customerAddress, setCustomerAddress] = useState<string | null>(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [cartIsLoading, setCartIsLoading] = useState(true);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const { toast } = useToast();
   const { menu } = useMenu();
 
+  // 1. Get or create session ID on mount
   useEffect(() => {
-    try {
-      const storedCart = sessionStorage.getItem('cheeziousCart');
-      if (storedCart) {
-        const { items, branchId, orderType, floorId, tableId, deliveryMode, customerName, customerPhone, customerAddress } = JSON.parse(storedCart);
-        setItems(items || []);
-        setBranchId(branchId || null);
-        setOrderType(orderType || null);
-        setFloorId(floorId || null);
-        setTableId(tableId || null);
-        setDeliveryMode(deliveryMode || null);
-        setCustomerName(customerName || null);
-        setCustomerPhone(customerPhone || null);
-        setCustomerAddress(customerAddress || null);
-      }
-    } catch (error) {
-      console.error("Could not load cart from session storage", error);
+    let storedSessionId = localStorage.getItem(SESSION_ID_KEY);
+    if (!storedSessionId) {
+        storedSessionId = uuidv4();
+        localStorage.setItem(SESSION_ID_KEY, storedSessionId);
     }
+    setSessionId(storedSessionId);
   }, []);
-
+  
+  // 2. Fetch cart from API when session ID is available
   useEffect(() => {
-    try {
-      const cartState = JSON.stringify({ items, branchId, orderType, floorId, tableId, deliveryMode, customerName, customerPhone, customerAddress });
-      sessionStorage.setItem('cheeziousCart', cartState);
-    } catch (error) {
-      console.error("Could not save cart to session storage", error);
-    }
-  }, [items, branchId, orderType, floorId, tableId, deliveryMode, customerName, customerPhone, customerAddress]);
+    if (!sessionId) return;
+
+    const fetchCart = async () => {
+        setCartIsLoading(true);
+        try {
+            const response = await fetch('/api/cart', {
+                headers: { 'x-session-id': sessionId }
+            });
+
+            if (!response.ok) throw new Error('Failed to fetch cart');
+
+            const { cart, items } = await response.json();
+            
+            if (cart) {
+                setItems(items || []);
+                setBranchId(cart.BranchId);
+                setOrderType(cart.OrderType);
+                setTableId(cart.TableId);
+                setFloorId(cart.FloorId);
+                setDeliveryMode(cart.DeliveryMode);
+                setCustomerName(cart.CustomerName);
+                setCustomerPhone(cart.CustomerPhone);
+                setCustomerAddress(cart.CustomerAddress);
+            }
+        } catch (error) {
+            console.error("Could not load cart from API:", error);
+            toast({ variant: 'destructive', title: 'Cart Error', description: 'Could not sync your cart.' });
+        } finally {
+            setCartIsLoading(false);
+        }
+    };
+    fetchCart();
+  }, [sessionId, toast]);
+
+  // 3. Debounced save to API
+  useEffect(() => {
+    if (cartIsLoading || !sessionId) return;
+
+    const handler = setTimeout(async () => {
+        try {
+            await fetch('/api/cart', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'x-session-id': sessionId
+                },
+                body: JSON.stringify({ 
+                    cartDetails: { branchId, orderType, tableId, floorId, deliveryMode, customerName, customerPhone, customerAddress },
+                    items: items
+                })
+            });
+        } catch (error) {
+             console.error("Could not save cart to API:", error);
+             toast({ variant: 'destructive', title: 'Cart Sync Error', description: 'Your cart could not be saved.' });
+        }
+    }, 1000); // Debounce for 1 second
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [items, branchId, orderType, tableId, floorId, deliveryMode, customerName, customerPhone, customerAddress, sessionId, cartIsLoading, toast]);
+
 
   const setOrderDetails = useCallback((details: { branchId: string; orderType: OrderType; deliveryMode?: string; }) => {
-    // Only clear the cart if the user is actively changing an *existing* order type or branch.
-    // Do not clear it if the order details are being set for the first time (i.e., from null).
     const isChangingContext = 
       (branchId !== null && details.branchId !== branchId) ||
       (orderType !== null && details.orderType !== orderType);
@@ -104,7 +152,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         setTableId(null);
     } else if (details.orderType === 'Dine-In') {
         setDeliveryMode(null);
-    } else { // Take-Away
+    } else {
         setFloorId(null);
         setTableId(null);
         setDeliveryMode(null);
@@ -124,19 +172,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setCustomerAddress(details.address);
   }, []);
 
-
   const setTable = useCallback((newTableId: string, newFloorId: string) => {
     setTableId(newTableId);
     setFloorId(newFloorId);
   }, []);
-
+  
   const addItem = useCallback(({ item: itemToAdd, selectedAddons = [], itemQuantity, instructions, selectedVariant }: AddToCartOptions) => {
     const isDeal = itemToAdd.categoryId === 'C-00001';
 
     const getVariationId = (addons: SelectedAddon[], instr: string, variant?: MenuItemVariant) => {
-      const addonString = addons.length > 0 
-        ? addons.map(a => `${a.id}x${a.quantity}`).sort().join(',')
-        : 'no-addons';
+      const addonString = addons.map(a => `${a.id}x${a.quantity}`).sort().join(',');
       const instructionString = instr.trim().toLowerCase();
       const variantString = variant ? variant.name : 'no-variant';
       return `${variantString}|${addonString}|${instructionString}`;
@@ -158,7 +203,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         }
 
         const newItems: CartItem[] = [];
-        const parentDealCartItemId = crypto.randomUUID();
+        const parentDealCartItemId = uuidv4();
 
         const addonPrice = selectedAddons.reduce((sum, addon) => sum + (addon.selectedPrice * addon.quantity), 0);
         const basePrice = isDeal ? itemToAdd.price : (selectedVariant ? selectedVariant.price : itemToAdd.price);
@@ -184,13 +229,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
                     for (let i = 0; i < dealItem.quantity * itemQuantity; i++) {
                         newItems.push({
                             ...componentItem,
-                            cartItemId: crypto.randomUUID(),
-                            quantity: 1, // Each component is added individually
-                            price: 0, // Deal components have no individual price
+                            cartItemId: uuidv4(),
+                            quantity: 1,
+                            price: 0,
                             basePrice: 0,
                             selectedAddons: [],
                             isDealComponent: true,
-                            parentDealCartItemId: parentDealCartItemId, // Corrected link
+                            parentDealCartItemId: parentDealCartItemId,
                         });
                     }
                 }
@@ -209,16 +254,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const updateQuantity = useCallback((cartItemId: string, change: number) => {
     setItems((prevItems) => {
       const itemToUpdate = prevItems.find(item => item.cartItemId === cartItemId);
-      
       if (!itemToUpdate) return prevItems;
-
       const newQuantity = itemToUpdate.quantity + change;
-
       if (newQuantity <= 0) {
-        // Filter out the item itself and any components that belong to it if it's a deal
         return prevItems.filter(i => i.cartItemId !== cartItemId && i.parentDealCartItemId !== cartItemId);
       }
-
       return prevItems.map((item) =>
         item.cartItemId === cartItemId ? { ...item, quantity: newQuantity } : item
       );
@@ -235,48 +275,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setCustomerAddress(null);
   }, []);
   
-  const closeCart = useCallback(() => {
-    setIsCartOpen(false);
-  }, []);
+  const closeCart = useCallback(() => setIsCartOpen(false), []);
 
-  const cartTotal = useMemo(() => {
-    return items.reduce((total, item) => {
-        if (!item.isDealComponent) {
-            return total + item.price * item.quantity;
-        }
-        return total;
-    }, 0);
-  }, [items]);
-
-  const cartCount = useMemo(() => {
-    return items.filter(item => !item.isDealComponent).reduce((count, item) => count + item.quantity, 0);
-  }, [items]);
+  const cartTotal = useMemo(() => items.reduce((total, item) => total + (item.isDealComponent ? 0 : item.price * item.quantity), 0), [items]);
+  const cartCount = useMemo(() => items.reduce((count, item) => count + (item.isDealComponent ? 0 : item.quantity), 0), [items]);
 
   return (
-    <CartContext.Provider
-      value={{
-        items,
-        branchId,
-        orderType,
-        tableId,
-        floorId,
-        deliveryMode,
-        customerName,
-        customerPhone,
-        customerAddress,
-        isCartOpen,
-        setIsCartOpen,
-        addItem,
-        updateQuantity,
-        clearCart,
-        closeCart,
-        setOrderDetails,
-        setCustomerDetails,
-        setTable,
-        cartCount,
-        cartTotal,
-      }}
-    >
+    <CartContext.Provider value={{ items, branchId, orderType, tableId, floorId, deliveryMode, customerName, customerPhone, customerAddress, isCartOpen, cartIsLoading, setIsCartOpen, addItem, updateQuantity, clearCart, closeCart, setOrderDetails, setCustomerDetails, setTable, cartCount, cartTotal }}>
       {children}
     </CartContext.Provider>
   );
@@ -284,8 +289,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
 export const useCart = () => {
   const context = useContext(CartContext);
-  if (context === undefined) {
-    throw new Error('useCart must be used within a CartProvider');
-  }
+  if (context === undefined) throw new Error('useCart must be used within a CartProvider');
   return context;
 };
