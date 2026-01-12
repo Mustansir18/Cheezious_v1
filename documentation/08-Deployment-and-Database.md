@@ -197,6 +197,35 @@ CREATE TABLE MenuItems (
     FOREIGN KEY (categoryId) REFERENCES MenuCategories(id) ON DELETE SET NULL
 );
 
+-- Carts and CartItems tables for persistent shopping carts
+CREATE TABLE Carts (
+    id NVARCHAR(255) PRIMARY KEY,
+    sessionId NVARCHAR(255) UNIQUE NOT NULL, -- Corresponds to browser session
+    userId NVARCHAR(255), -- Nullable, for guest carts
+    branchId NVARCHAR(255),
+    orderType NVARCHAR(50),
+    tableId NVARCHAR(255),
+    createdAt DATETIME DEFAULT GETDATE(),
+    updatedAt DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (userId) REFERENCES Users(id),
+    FOREIGN KEY (branchId) REFERENCES Branches(id)
+);
+
+CREATE TABLE CartItems (
+    id NVARCHAR(255) PRIMARY KEY,
+    cartId NVARCHAR(255) NOT NULL,
+    menuItemId NVARCHAR(255) NOT NULL,
+    quantity INT NOT NULL,
+    price DECIMAL(18, 2) NOT NULL,
+    selectedAddons NVARCHAR(MAX), -- Stored as JSON string
+    selectedVariantName NVARCHAR(255),
+    instructions NVARCHAR(MAX),
+    isDealComponent BIT DEFAULT 0,
+    parentDealCartItemId NVARCHAR(255),
+    FOREIGN KEY (cartId) REFERENCES Carts(id) ON DELETE CASCADE
+);
+
+
 -- Orders and OrderItems tables
 CREATE TABLE Orders (
     id NVARCHAR(255) PRIMARY KEY,
@@ -278,7 +307,14 @@ IF NOT EXISTS (SELECT name FROM sys.indexes WHERE name = 'IDX_ActivityLog_Timest
 BEGIN
     CREATE INDEX IDX_ActivityLog_Timestamp ON ActivityLog([timestamp] DESC);
 END
+GO
 
+-- Add an index to CartItems to speed up fetching items for a specific cart.
+IF NOT EXISTS (SELECT name FROM sys.indexes WHERE name = 'IDX_CartItems_CartId')
+BEGIN
+    CREATE INDEX IDX_CartItems_CartId ON CartItems(CartId);
+END
+GO
 ```
 
 By completing this final step, your application will be a true full-stack, production-ready system running on your own server infrastructure.
