@@ -1,5 +1,4 @@
-
-import Header from "@/components/layout/Header";
+import BranchLayoutClient from './BranchLayoutClient';
 
 export default function BranchLayout({
   children,
@@ -8,10 +7,6 @@ export default function BranchLayout({
   children: React.ReactNode;
   params: { branchId: string };
 }) {
-  return (
-    <div className="min-h-screen bg-background">
-      <Header branchId={params.branchId} />
-      <main className="w-full">{children}</main>
-    </div>
-  );
+  // The client boundary is moved to the new component
+  return <BranchLayoutClient branchId={params.branchId}>{children}</BranchLayoutClient>;
 }

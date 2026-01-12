@@ -4,25 +4,19 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'placehold.co',
+        hostname: 'cheezious.com',
+        port: '',
+        pathname: '/_next/image/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cheezious.fra1.cdn.digitaloceanspaces.com',
         port: '',
         pathname: '/**',
       },
       {
         protocol: 'https',
         hostname: 'images.unsplash.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'picsum.photos',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'cheezious.com',
         port: '',
         pathname: '/**',
       },
