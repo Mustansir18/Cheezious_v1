@@ -315,6 +315,13 @@ BEGIN
     CREATE INDEX IDX_CartItems_CartId ON CartItems(CartId);
 END
 GO
+
+-- Add an index to Carts to speed up fetching a cart by its session ID.
+IF NOT EXISTS (SELECT name FROM sys.indexes WHERE name = 'IDX_Carts_SessionId')
+BEGIN
+    CREATE INDEX IDX_Carts_SessionId ON Carts(sessionId);
+END
+GO
 ```
 
 By completing this final step, your application will be a true full-stack, production-ready system running on your own server infrastructure.
