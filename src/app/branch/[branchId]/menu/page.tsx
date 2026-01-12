@@ -52,29 +52,24 @@ export default function MenuPage() {
     }
   }, [categories, activeCategoryId]);
 
+  // Combined effect for setting context and adding deal
   useEffect(() => {
     const mode = searchParams.get("mode") as OrderType;
+    if (!mode || !branchId) return;
 
-    if (mode && branchId) {
-      setOrderDetails({ branchId: branchId, orderType: mode });
-    }
-
+    // 1. Set Order Context
+    setOrderDetails({ branchId: branchId, orderType: mode });
     if (mode === 'Dine-In' && tableIdFromUrl && floorIdFromUrl) {
       setTable(tableIdFromUrl, floorIdFromUrl);
     }
-
-  }, [searchParams, branchId, tableIdFromUrl, floorIdFromUrl, setOrderDetails, setTable]);
-  
-  // Effect to add deal to cart
-  useEffect(() => {
-    // Only run if a dealId exists, menu is loaded, cart context is ready, and the deal hasn't been processed yet
-    if (dealId && !isMenuLoading && orderType === modeFromUrl && !dealProcessedRef.current) {
+    
+    // 2. Add Deal Item (if applicable)
+    // This part now runs after context is set, and only if conditions are met.
+    if (dealId && !isMenuLoading && orderType === mode && !dealProcessedRef.current) {
       const dealItem = menuItems.find(item => item.id === dealId);
       
       if (dealItem) {
-        // Mark as processed immediately to prevent re-runs from Strict Mode
         dealProcessedRef.current = true;
-
         addItem({
           item: dealItem,
           itemQuantity: 1,
@@ -82,14 +77,26 @@ export default function MenuPage() {
           instructions: '',
         });
 
-        // Clean up URL
+        // Clean up URL by removing the dealId param
         const newParams = new URLSearchParams(searchParams.toString());
         newParams.delete('dealId');
         router.replace(`${window.location.pathname}?${newParams.toString()}`, { scroll: false });
       }
     }
-  }, [dealId, isMenuLoading, menuItems, addItem, router, searchParams, orderType, modeFromUrl]);
-
+  }, [
+    searchParams, 
+    branchId, 
+    tableIdFromUrl, 
+    floorIdFromUrl, 
+    setOrderDetails, 
+    setTable,
+    dealId,
+    isMenuLoading,
+    menuItems,
+    addItem,
+    router,
+    orderType // This dependency ensures the effect re-runs when orderType is correctly set.
+  ]);
 
   const handleCategoryChange = (categoryId: string) => {
     const newCategory = categories.find(c => c.id === categoryId);
