@@ -4,6 +4,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import type { CashierLogEntry } from '@/lib/types';
 import { useAuth } from './AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 interface CashierLogContextType {
   logs: CashierLogEntry[];
@@ -17,7 +18,8 @@ const CashierLogContext = createContext<CashierLogContextType | undefined>(undef
 export const CashierLogProvider = ({ children }: { children: ReactNode }) => {
   const [logs, setLogs] = useState<CashierLogEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { user, updateUserBalance } = useAuth();
+  const { user, updateUserBalance } = useAuth(); // We'll now rely on the API to update the balance
+  const { toast } = useToast();
 
   useEffect(() => {
     async function loadLogs() {
@@ -47,19 +49,35 @@ export const CashierLogProvider = ({ children }: { children: ReactNode }) => {
       ...details,
     };
     
-    // In a real app, this POST request would add the log to the DB and return the new entry.
-    const tempId = crypto.randomUUID();
-    const tempLogEntry = {
-        id: tempId,
-        timestamp: new Date().toISOString(),
-        ...newLogData
+    try {
+        const response = await fetch('/api/cashier-log', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newLogData),
+        });
+
+        if (response.ok) {
+            const savedLog = await response.json();
+            setLogs(prevLogs => [savedLog, ...prevLogs].sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
+            
+            // Trigger a balance update in the AuthContext to reflect the change in the UI
+            const operation = details.type === 'deposit' ? 'add' : 'subtract';
+            updateUserBalance(details.cashierId, details.amount, operation);
+
+        } else {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to log transaction.');
+        }
+    } catch(error: any) {
+        toast({
+            variant: 'destructive',
+            title: 'Transaction Failed',
+            description: error.message
+        });
+        console.error("Failed to log transaction to API:", error);
     }
-    setLogs(prevLogs => [tempLogEntry, ...prevLogs].sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
 
-    const operation = details.type === 'deposit' ? 'add' : 'subtract';
-    updateUserBalance(details.cashierId, details.amount, operation);
-
-  }, [user, updateUserBalance]);
+  }, [user, updateUserBalance, toast]);
 
   const clearLogs = useCallback(async () => {
     // In a real app, this would be a DELETE request.

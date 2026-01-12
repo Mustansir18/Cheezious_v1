@@ -1,23 +1,35 @@
-
--- Drop existing tables in reverse order of creation to avoid foreign key conflicts
-IF OBJECT_ID('dbo.OrderItems', 'U') IS NOT NULL DROP TABLE dbo.OrderItems;
-IF OBJECT_ID('dbo.Orders', 'U') IS NOT NULL DROP TABLE dbo.Orders;
-IF OBJECT_ID('dbo.Users', 'U') IS NOT NULL DROP TABLE dbo.Users;
-IF OBJECT_ID('dbo.Tables', 'U') IS NOT NULL DROP TABLE dbo.Tables;
-IF OBJECT_ID('dbo.Floors', 'U') IS NOT NULL DROP TABLE dbo.Floors;
-IF OBJECT_ID('dbo.MenuItems', 'U') IS NOT NULL DROP TABLE dbo.MenuItems;
-IF OBJECT_ID('dbo.MenuCategories', 'U') IS NOT NULL DROP TABLE dbo.MenuCategories;
-IF OBJECT_ID('dbo.Branches', 'U') IS NOT NULL DROP TABLE dbo.Branches;
-IF OBJECT_ID('dbo.PaymentMethods', 'U') IS NOT NULL DROP TABLE dbo.PaymentMethods;
-IF OBJECT_ID('dbo.Roles', 'U') IS NOT NULL DROP TABLE dbo.Roles;
-IF OBJECT_ID('dbo.ActivityLogs', 'U') IS NOT NULL DROP TABLE dbo.ActivityLogs;
-IF OBJECT_ID('dbo.Ratings', 'U') IS NOT NULL DROP TABLE dbo.Ratings;
-
+-- Create the database if it doesn't exist
+IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = 'CheeziousKiosk')
+BEGIN
+  CREATE DATABASE CheeziousKiosk;
+END
 GO
 
--- Create tables in the correct order of dependency
+USE CheeziousKiosk;
+GO
 
--- Branches (no dependencies)
+-- Drop existing tables if they exist to ensure a clean slate
+DROP TABLE IF EXISTS OrderItems;
+DROP TABLE IF EXISTS Orders;
+DROP TABLE IF EXISTS Users;
+DROP TABLE IF EXISTS Deals;
+DROP TABLE IF EXISTS Deal_Items;
+DROP TABLE IF EXISTS MenuItems;
+DROP TABLE IF EXISTS MenuCategories;
+DROP TABLE IF EXISTS Addons;
+DROP TABLE IF EXISTS Tables;
+DROP TABLE IF EXISTS Floors;
+DROP TABLE IF EXISTS Branches;
+DROP TABLE IF EXISTS PaymentMethods;
+DROP TABLE IF EXISTS Roles;
+DROP TABLE IF EXISTS Permissions;
+DROP TABLE IF EXISTS DeliveryModes;
+DROP TABLE IF EXISTS ActivityLog;
+DROP TABLE IF EXISTS CashierLog;
+GO
+
+
+-- Create Branches Table
 CREATE TABLE Branches (
     id NVARCHAR(50) PRIMARY KEY,
     name NVARCHAR(100) NOT NULL,
@@ -27,111 +39,167 @@ CREATE TABLE Branches (
     orderPrefix NVARCHAR(10) NOT NULL
 );
 
--- Floors (no dependencies)
+-- Create Roles Table
+CREATE TABLE Roles (
+    id NVARCHAR(50) PRIMARY KEY,
+    name NVARCHAR(100) NOT NULL,
+    permissions NVARCHAR(MAX) -- Storing as JSON array string
+);
+
+-- Create Users Table
+CREATE TABLE Users (
+    id NVARCHAR(50) PRIMARY KEY,
+    username NVARCHAR(100) UNIQUE NOT NULL,
+    password NVARCHAR(255) NOT NULL,
+    role NVARCHAR(50) NOT NULL,
+    branchId NVARCHAR(50),
+    stationName NVARCHAR(100),
+    balance DECIMAL(18, 2) DEFAULT 0,
+    FOREIGN KEY (branchId) REFERENCES Branches(id) ON DELETE SET NULL,
+    FOREIGN KEY (role) REFERENCES Roles(id) ON DELETE CASCADE
+);
+
+-- Create Floors Table
 CREATE TABLE Floors (
     id NVARCHAR(50) PRIMARY KEY,
     name NVARCHAR(100) NOT NULL
 );
 
--- Tables (depends on Floors)
+-- Create Tables Table
 CREATE TABLE Tables (
     id NVARCHAR(50) PRIMARY KEY,
     name NVARCHAR(100) NOT NULL,
-    floorId NVARCHAR(50) FOREIGN KEY REFERENCES Floors(id)
+    floorId NVARCHAR(50),
+    FOREIGN KEY (floorId) REFERENCES Floors(id) ON DELETE CASCADE
 );
 
--- Users (depends on Branches)
-CREATE TABLE Users (
-    id NVARCHAR(50) PRIMARY KEY,
-    username NVARCHAR(100) UNIQUE NOT NULL,
-    password NVARCHAR(255) NOT NULL, -- Store hashed passwords!
-    role NVARCHAR(50) NOT NULL,
-    branchId NVARCHAR(50) FOREIGN KEY REFERENCES Branches(id),
-    balance DECIMAL(10, 2) DEFAULT 0
-);
-
--- MenuCategories (no dependencies)
+-- Create MenuCategories Table
 CREATE TABLE MenuCategories (
     id NVARCHAR(50) PRIMARY KEY,
     name NVARCHAR(100) NOT NULL,
     icon NVARCHAR(50),
     stationId NVARCHAR(50),
-    subCategories NVARCHAR(MAX) -- Storing as JSON string
+    subCategories NVARCHAR(MAX) -- Storing as JSON array: [{id: string, name: string}]
 );
 
--- MenuItems (depends on MenuCategories)
+-- Create Addons Table
+CREATE TABLE Addons (
+    id NVARCHAR(50) PRIMARY KEY,
+    name NVARCHAR(100) NOT NULL,
+    price DECIMAL(10, 2),
+    prices NVARCHAR(MAX), -- For size-based pricing, stored as JSON
+    type NVARCHAR(50) DEFAULT 'standard'
+);
+
+-- Create MenuItems Table
 CREATE TABLE MenuItems (
     id NVARCHAR(50) PRIMARY KEY,
     name NVARCHAR(100) NOT NULL,
-    description NVARCHAR(MAX),
+    description NVARCHAR(500),
     price DECIMAL(10, 2) NOT NULL,
-    categoryId NVARCHAR(50) FOREIGN KEY REFERENCES MenuCategories(id),
+    categoryId NVARCHAR(50),
     subCategoryId NVARCHAR(50),
-    imageUrl NVARCHAR(MAX),
-    availableAddonIds NVARCHAR(MAX), -- Storing as JSON string
-    variants NVARCHAR(MAX), -- Storing as JSON string
-    dealItems NVARCHAR(MAX) -- Storing as JSON string
+    imageUrl NVARCHAR(500),
+    availableAddonIds NVARCHAR(MAX), -- Storing as JSON array of strings
+    variants NVARCHAR(MAX), -- Storing as JSON array of objects
+    dealItems NVARCHAR(MAX), -- Storing as JSON array of objects
+    FOREIGN KEY (categoryId) REFERENCES MenuCategories(id) ON DELETE SET NULL
 );
 
--- PaymentMethods (no dependencies)
+-- Create PaymentMethods Table
 CREATE TABLE PaymentMethods (
     id NVARCHAR(50) PRIMARY KEY,
     name NVARCHAR(100) NOT NULL,
     taxRate DECIMAL(4, 2) DEFAULT 0
 );
 
--- Orders (depends on several tables)
+-- Create DeliveryModes Table
+CREATE TABLE DeliveryModes (
+    id NVARCHAR(50) PRIMARY KEY,
+    name NVARCHAR(100) NOT NULL
+);
+
+-- Create Orders Table
 CREATE TABLE Orders (
     id NVARCHAR(50) PRIMARY KEY,
-    orderNumber NVARCHAR(50) UNIQUE NOT NULL,
-    branchId NVARCHAR(50) FOREIGN KEY REFERENCES Branches(id),
+    orderNumber NVARCHAR(100) UNIQUE NOT NULL,
+    branchId NVARCHAR(50),
     orderDate DATETIME NOT NULL,
     completionDate DATETIME,
-    orderType NVARCHAR(50) NOT NULL,
-    status NVARCHAR(50) NOT NULL,
-    totalAmount DECIMAL(10, 2) NOT NULL,
-    subtotal DECIMAL(10, 2) NOT NULL,
-    taxRate DECIMAL(4, 2) NOT NULL,
-    taxAmount DECIMAL(10, 2) NOT NULL,
+    orderType NVARCHAR(50),
+    status NVARCHAR(50),
+    totalAmount DECIMAL(18, 2),
+    subtotal DECIMAL(18, 2),
+    taxRate DECIMAL(4, 2),
+    taxAmount DECIMAL(18, 2),
     paymentMethod NVARCHAR(100),
-    instructions NVARCHAR(MAX),
-    floorId NVARCHAR(50) FOREIGN KEY REFERENCES Floors(id),
-    tableId NVARCHAR(50) FOREIGN KEY REFERENCES Tables(id),
+    instructions NVARCHAR(500),
+    placedBy NVARCHAR(50),
+    floorId NVARCHAR(50),
+    tableId NVARCHAR(50),
     deliveryMode NVARCHAR(50),
     customerName NVARCHAR(100),
     customerPhone NVARCHAR(50),
-    customerAddress NVARCHAR(255),
-    cancellationReason NVARCHAR(MAX),
+    customerAddress NVARCHAR(500),
+    cancellationReason NVARCHAR(500),
     isComplementary BIT DEFAULT 0,
-    complementaryReason NVARCHAR(MAX),
+    complementaryReason NVARCHAR(500),
     discountType NVARCHAR(50),
-    discountValue DECIMAL(10, 2),
-    discountAmount DECIMAL(10, 2),
-    originalTotalAmount DECIMAL(10, 2),
-    placedBy NVARCHAR(50),
-    completedBy NVARCHAR(50)
+    discountValue DECIMAL(18, 2),
+    discountAmount DECIMAL(18, 2),
+    originalTotalAmount DECIMAL(18, 2),
+    completedBy NVARCHAR(50),
+    FOREIGN KEY (branchId) REFERENCES Branches(id),
+    FOREIGN KEY (floorId) REFERENCES Floors(id),
+    FOREIGN KEY (tableId) REFERENCES Tables(id)
 );
 
--- OrderItems (depends on Orders and MenuItems)
+-- Create OrderItems Table
 CREATE TABLE OrderItems (
     id NVARCHAR(50) PRIMARY KEY,
-    orderId NVARCHAR(50) FOREIGN KEY REFERENCES Orders(id) ON DELETE CASCADE,
-    menuItemId NVARCHAR(50) NOT NULL,
-    quantity INT NOT NULL,
-    itemPrice DECIMAL(10, 2) NOT NULL,
-    baseItemPrice DECIMAL(10, 2) NOT NULL,
-    name NVARCHAR(100) NOT NULL,
-    selectedAddons NVARCHAR(MAX), -- Storing as JSON string
+    orderId NVARCHAR(50) NOT NULL,
+    menuItemId NVARCHAR(50),
+    name NVARCHAR(200),
+    quantity INT,
+    itemPrice DECIMAL(18, 2),
+    baseItemPrice DECIMAL(18, 2),
+    selectedAddons NVARCHAR(MAX), -- JSON string
     selectedVariantName NVARCHAR(100),
     stationId NVARCHAR(50),
     isPrepared BIT DEFAULT 0,
     preparedAt DATETIME,
     isDispatched BIT DEFAULT 0,
-    instructions NVARCHAR(MAX),
     isDealComponent BIT DEFAULT 0,
-    parentDealCartItemId NVARCHAR(50)
+    parentDealCartItemId NVARCHAR(50),
+    instructions NVARCHAR(500),
+    FOREIGN KEY (orderId) REFERENCES Orders(id) ON DELETE CASCADE
+);
+
+-- Create ActivityLog Table
+CREATE TABLE ActivityLog (
+    id NVARCHAR(50) PRIMARY KEY,
+    timestamp DATETIME NOT NULL,
+    [user] NVARCHAR(100) NOT NULL,
+    message NVARCHAR(MAX) NOT NULL,
+    category NVARCHAR(50) NOT NULL
+);
+
+-- Create CashierLog Table
+CREATE TABLE CashierLog (
+    id NVARCHAR(50) PRIMARY KEY,
+    timestamp DATETIME NOT NULL,
+    type NVARCHAR(50) NOT NULL, -- 'bleed' or 'deposit'
+    amount DECIMAL(18, 2) NOT NULL,
+    cashierId NVARCHAR(50) NOT NULL,
+    cashierName NVARCHAR(100) NOT NULL,
+    adminId NVARCHAR(50) NOT NULL,
+    adminName NVARCHAR(100) NOT NULL,
+    notes NVARCHAR(500),
+    FOREIGN KEY (cashierId) REFERENCES Users(id) ON DELETE NO ACTION,
+    FOREIGN KEY (adminId) REFERENCES Users(id) ON DELETE NO ACTION
 );
 
 
+GO
 PRINT 'Database schema created successfully.';
 GO

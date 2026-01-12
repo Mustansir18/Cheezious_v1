@@ -44,34 +44,37 @@ export const ActivityLogProvider = ({ children }: { children: ReactNode }) => {
       category: category,
     };
     
-    // In a real app, this would be a POST request.
-    // For now, we simulate it by adding to local state.
-    const tempId = crypto.randomUUID();
-    setLogs(prevLogs => [{ id: tempId, ...newLog }, ...prevLogs]);
+    try {
+        const response = await fetch('/api/activity-log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newLog),
+        });
 
-    /*
-    // Example of real API call:
-    const response = await fetch('/api/activity-log', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newLog),
-    });
-    if (response.ok) {
-      const savedLog = await response.json();
-      setLogs(prev => [savedLog, ...prev.filter(l => l.id !== tempId)]);
+        if (response.ok) {
+          const savedLog = await response.json();
+          setLogs(prev => [savedLog, ...prev]);
+        } else {
+            throw new Error('Failed to save activity log');
+        }
+    } catch (error) {
+        console.error("Failed to log activity to API:", error);
+        // Optionally add to state anyway for UI feedback, but mark as unsaved
     }
-    */
   }, []);
 
   const clearLogs = useCallback(async () => {
-    // In a real app, this would be a DELETE request.
-    setLogs([]);
-    logActivity('Cleared all activity logs.', 'System', 'System');
-    
-    /*
-    // Example of real API call:
-    await fetch('/api/activity-log', { method: 'DELETE' });
-    */
+    try {
+        const response = await fetch('/api/activity-log', { method: 'DELETE' });
+        if(response.ok) {
+            setLogs([]);
+            logActivity('Cleared all activity logs.', 'System', 'System');
+        } else {
+            throw new Error('Failed to clear activity logs on server.');
+        }
+    } catch(error) {
+        console.error("Failed to clear logs:", error);
+    }
   }, [logActivity]);
 
   return (
