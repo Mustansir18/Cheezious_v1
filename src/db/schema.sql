@@ -1,200 +1,216 @@
 
--- Cheezious Connect Database Schema
--- This script contains the CREATE TABLE statements for setting up the application's database.
--- It is designed for SQL Server but can be adapted for other SQL databases.
+-- This script is for setting up the CheeziousKiosk database schema in SQL Server.
+-- Execute this script in your database management tool (e.g., SSMS, Azure Data Studio)
+-- against your 'CheeziousKiosk' database to create all necessary tables.
 
--- Users Table
--- Stores user accounts for cashiers, branch admins, and root admins.
-CREATE TABLE Users (
-    id NVARCHAR(255) PRIMARY KEY,
-    username NVARCHAR(255) UNIQUE NOT NULL,
-    passwordHash NVARCHAR(MAX) NOT NULL,
-    role NVARCHAR(50) NOT NULL,
-    branchId NVARCHAR(255) NULL,
-    createdAt DATETIME2 DEFAULT GETDATE(),
-    updatedAt DATETIME2 DEFAULT GETDATE(),
-    FOREIGN KEY (branchId) REFERENCES Branches(id) ON DELETE SET NULL
-);
+-- Drop existing tables in reverse order of creation to avoid foreign key conflicts
+IF OBJECT_ID('OrderItems', 'U') IS NOT NULL DROP TABLE OrderItems;
+IF OBJECT_ID('Orders', 'U') IS NOT NULL DROP TABLE Orders;
+IF OBJECT_ID('Ratings', 'U') IS NOT NULL DROP TABLE Ratings;
+IF OBJECT_ID('ActivityLogs', 'U') IS NOT NULL DROP TABLE ActivityLogs;
+IF OBJECT_ID('CashierLogs', 'U') IS NOT NULL DROP TABLE CashierLogs;
+IF OBJECT_ID('Users', 'U') IS NOT NULL DROP TABLE Users;
+IF OBJECT_ID('MenuItemAddons', 'U') IS NOT NULL DROP TABLE MenuItemAddons;
+IF OBJECT_ID('MenuItemVariants', 'U') IS NOT NULL DROP TABLE MenuItemVariants;
+IF OBJECT_ID('MenuItems', 'U') IS NOT NULL DROP TABLE MenuItems;
+IF OBJECT_ID('DealItems', 'U') IS NOT NULL DROP TABLE DealItems;
+IF OBJECT_ID('MenuSubCategories', 'U') IS NOT NULL DROP TABLE MenuSubCategories;
+IF OBJECT_ID('MenuCategories', 'U') IS NOT NULL DROP TABLE MenuCategories;
+IF OBJECT_ID('Addons', 'U') IS NOT NULL DROP TABLE Addons;
+IF OBJECT_ID('AddonPrices', 'U') IS NOT NULL DROP TABLE AddonPrices;
+IF OBJECT_ID('Tables', 'U') IS NOT NULL DROP TABLE Tables;
+IF OBJECT_ID('Floors', 'U') IS NOT NULL DROP TABLE Floors;
+IF OBJECT_ID('Branches', 'U') IS NOT NULL DROP TABLE Branches;
+IF OBJECT_ID('PaymentMethods', 'U') IS NOT NULL DROP TABLE PaymentMethods;
+IF OBJECT_ID('DeliveryModes', 'U') IS NOT NULL DROP TABLE DeliveryModes;
+IF OBJECT_ID('Roles', 'U') IS NOT NULL DROP TABLE Roles;
 GO
 
--- Branches Table
--- Stores information about each restaurant branch.
+-- Create tables without foreign keys first
+
 CREATE TABLE Branches (
-    id NVARCHAR(255) PRIMARY KEY,
+    id VARCHAR(100) PRIMARY KEY,
     name NVARCHAR(255) NOT NULL,
-    location NVARCHAR(MAX)
+    dineInEnabled BIT NOT NULL DEFAULT 1,
+    takeAwayEnabled BIT NOT NULL DEFAULT 1,
+    deliveryEnabled BIT NOT NULL DEFAULT 1,
+    orderPrefix VARCHAR(10) NOT NULL UNIQUE
 );
-GO
 
--- MenuCategories Table
--- Defines the categories for menu items.
+CREATE TABLE Floors (
+    id VARCHAR(100) PRIMARY KEY,
+    name NVARCHAR(255) NOT NULL
+);
+
+CREATE TABLE Tables (
+    id VARCHAR(100) PRIMARY KEY,
+    name NVARCHAR(255) NOT NULL,
+    floorId VARCHAR(100) NOT NULL FOREIGN KEY REFERENCES Floors(id) ON DELETE CASCADE
+);
+
+CREATE TABLE Roles (
+    id VARCHAR(100) PRIMARY KEY,
+    name NVARCHAR(100) NOT NULL UNIQUE,
+    permissions NVARCHAR(MAX) -- Storing as JSON string
+);
+
 CREATE TABLE MenuCategories (
-    id NVARCHAR(255) PRIMARY KEY,
-    name NVARCHAR(255) UNIQUE NOT NULL,
-    icon NVARCHAR(100)
+    id VARCHAR(100) PRIMARY KEY,
+    name NVARCHAR(255) NOT NULL UNIQUE,
+    icon NVARCHAR(100),
+    stationId VARCHAR(50) NULL
 );
-GO
 
--- MenuItems Table
--- Stores all individual menu items. Price is stored here for non-variant items.
-CREATE TABLE MenuItems (
-    id NVARCHAR(255) PRIMARY KEY,
+CREATE TABLE MenuSubCategories (
+    id VARCHAR(100) PRIMARY KEY,
     name NVARCHAR(255) NOT NULL,
-    description NVARCHAR(MAX),
-    price DECIMAL(10, 2) NOT NULL,
-    imageUrl NVARCHAR(MAX),
-    categoryId NVARCHAR(255) NOT NULL,
-    FOREIGN KEY (categoryId) REFERENCES MenuCategories(id) ON DELETE CASCADE
+    categoryId VARCHAR(100) NOT NULL FOREIGN KEY REFERENCES MenuCategories(id) ON DELETE CASCADE
 );
-GO
 
--- MenuItemVariants Table
--- Stores different sizes/variants for a menu item (e.g., Small, Regular, Large Pizza).
-CREATE TABLE MenuItemVariants (
-    id NVARCHAR(255) PRIMARY KEY,
-    menuItemId NVARCHAR(255) NOT NULL,
-    name NVARCHAR(100) NOT NULL,
-    price DECIMAL(10, 2) NOT NULL,
-    FOREIGN KEY (menuItemId) REFERENCES MenuItems(id) ON DELETE CASCADE
-);
-GO
-
--- Addons Table
--- Stores available add-ons for menu items.
 CREATE TABLE Addons (
-    id NVARCHAR(255) PRIMARY KEY,
+    id VARCHAR(100) PRIMARY KEY,
     name NVARCHAR(255) NOT NULL,
-    price DECIMAL(10, 2) NOT NULL
+    price DECIMAL(10, 2),
+    type VARCHAR(50) DEFAULT 'standard'
 );
-GO
 
--- MenuItem_Addons Join Table
--- Maps which addons are available for which menu items.
-CREATE TABLE MenuItem_Addons (
-    menuItemId NVARCHAR(255) NOT NULL,
-    addonId NVARCHAR(255) NOT NULL,
-    PRIMARY KEY (menuItemId, addonId),
-    FOREIGN KEY (menuItemId) REFERENCES MenuItems(id) ON DELETE CASCADE,
-    FOREIGN KEY (addonId) REFERENCES Addons(id) ON DELETE CASCADE
+CREATE TABLE AddonPrices (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    addonId VARCHAR(100) NOT NULL FOREIGN KEY REFERENCES Addons(id) ON DELETE CASCADE,
+    sizeName NVARCHAR(100) NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
+    UNIQUE(addonId, sizeName)
 );
-GO
 
--- Deals Table
--- Stores promotional deals. Deals are a special type of MenuItem.
-CREATE TABLE Deals (
-    id NVARCHAR(255) PRIMARY KEY,
+CREATE TABLE PaymentMethods (
+    id VARCHAR(100) PRIMARY KEY,
+    name NVARCHAR(255) NOT NULL UNIQUE,
+    taxRate DECIMAL(5, 4) DEFAULT 0
+);
+
+CREATE TABLE DeliveryModes (
+    id VARCHAR(100) PRIMARY KEY,
+    name NVARCHAR(255) NOT NULL UNIQUE
+);
+
+CREATE TABLE Ratings (
+    id VARCHAR(100) PRIMARY KEY,
+    timestamp DATETIME2 NOT NULL DEFAULT GETDATE(),
+    rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    comment NVARCHAR(1000)
+);
+
+CREATE TABLE ActivityLogs (
+    id VARCHAR(100) PRIMARY KEY,
+    timestamp DATETIME2 NOT NULL DEFAULT GETDATE(),
+    username NVARCHAR(255) NOT NULL,
+    message NVARCHAR(MAX) NOT NULL,
+    category NVARCHAR(50) NOT NULL
+);
+
+-- Create tables with foreign key dependencies
+
+CREATE TABLE Users (
+    id VARCHAR(100) PRIMARY KEY,
+    username NVARCHAR(255) NOT NULL UNIQUE,
+    password NVARCHAR(255) NOT NULL, -- In a real app, this should be a hash
+    roleId VARCHAR(100) NOT NULL FOREIGN KEY REFERENCES Roles(id),
+    branchId VARCHAR(100) NULL FOREIGN KEY REFERENCES Branches(id),
+    stationName NVARCHAR(100) NULL,
+    balance DECIMAL(10, 2) DEFAULT 0
+);
+
+CREATE TABLE MenuItems (
+    id VARCHAR(100) PRIMARY KEY,
     name NVARCHAR(255) NOT NULL,
     description NVARCHAR(MAX),
-    price DECIMAL(10, 2) NOT NULL,
+    price DECIMAL(10, 2) NOT NULL DEFAULT 0,
+    categoryId VARCHAR(100) NOT NULL FOREIGN KEY REFERENCES MenuCategories(id),
+    subCategoryId VARCHAR(100) NULL FOREIGN KEY REFERENCES MenuSubCategories(id),
     imageUrl NVARCHAR(MAX)
 );
-GO
 
--- Deal_Items Join Table
--- Maps which MenuItems are included in which Deal.
-CREATE TABLE Deal_Items (
-    dealId NVARCHAR(255) NOT NULL,
-    menuItemId NVARCHAR(255) NOT NULL,
+CREATE TABLE MenuItemVariants (
+    id VARCHAR(100) PRIMARY KEY,
+    menuItemId VARCHAR(100) NOT NULL FOREIGN KEY REFERENCES MenuItems(id) ON DELETE CASCADE,
+    name NVARCHAR(100) NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
+    UNIQUE(menuItemId, name)
+);
+
+CREATE TABLE MenuItemAddons (
+    menuItemId VARCHAR(100) NOT NULL FOREIGN KEY REFERENCES MenuItems(id) ON DELETE CASCADE,
+    addonId VARCHAR(100) NOT NULL FOREIGN KEY REFERENCES Addons(id) ON DELETE CASCADE,
+    PRIMARY KEY (menuItemId, addonId)
+);
+
+CREATE TABLE DealItems (
+    dealId VARCHAR(100) NOT NULL FOREIGN KEY REFERENCES MenuItems(id) ON DELETE CASCADE,
+    menuItemId VARCHAR(100) NOT NULL FOREIGN KEY REFERENCES MenuItems(id), -- No cascade here to prevent cycles
     quantity INT NOT NULL,
-    PRIMARY KEY (dealId, menuItemId),
-    FOREIGN KEY (dealId) REFERENCES Deals(id) ON DELETE CASCADE,
-    FOREIGN KEY (menuItemId) REFERENCES MenuItems(id) -- Do not cascade delete, as items can exist outside of deals
+    PRIMARY KEY (dealId, menuItemId)
 );
-GO
 
 
--- Floors Table
--- Stores the different floors in a restaurant branch.
-CREATE TABLE Floors (
-    id NVARCHAR(255) PRIMARY KEY,
-    name NVARCHAR(255) NOT NULL,
-    branchId NVARCHAR(255) NOT NULL,
-    FOREIGN KEY (branchId) REFERENCES Branches(id) ON DELETE CASCADE
-);
-GO
-
--- Tables Table
--- Stores the individual tables and links them to a floor.
-CREATE TABLE Tables (
-    id NVARCHAR(255) PRIMARY KEY,
-    name NVARCHAR(255) NOT NULL,
-    floorId NVARCHAR(255) NOT NULL,
-    FOREIGN KEY (floorId) REFERENCES Floors(id) ON DELETE CASCADE
-);
-GO
-
--- PaymentMethods Table
--- Stores the accepted payment methods and their associated tax rates.
-CREATE TABLE PaymentMethods (
-    id NVARCHAR(255) PRIMARY KEY,
-    name NVARCHAR(255) UNIQUE NOT NULL,
-    taxRate DECIMAL(5, 4) DEFAULT 0.00
-);
-GO
-
--- Orders Table
--- Stores the main record for each order placed.
 CREATE TABLE Orders (
-    id NVARCHAR(255) PRIMARY KEY,
-    orderNumber NVARCHAR(255) UNIQUE NOT NULL,
-    branchId NVARCHAR(255) NOT NULL,
-    orderDate DATETIME2 NOT NULL,
+    id VARCHAR(100) PRIMARY KEY,
+    orderNumber VARCHAR(50) NOT NULL UNIQUE,
+    branchId VARCHAR(100) NOT NULL FOREIGN KEY REFERENCES Branches(id),
+    orderDate DATETIME2 NOT NULL DEFAULT GETDATE(),
     completionDate DATETIME2 NULL,
-    orderType NVARCHAR(50) NOT NULL,
-    status NVARCHAR(50) NOT NULL,
+    orderType VARCHAR(50) NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    totalAmount DECIMAL(10, 2) NOT NULL,
     subtotal DECIMAL(10, 2) NOT NULL,
     taxRate DECIMAL(5, 4) NOT NULL,
     taxAmount DECIMAL(10, 2) NOT NULL,
-    totalAmount DECIMAL(10, 2) NOT NULL,
-    paymentMethodId NVARCHAR(255) NOT NULL,
-    floorId NVARCHAR(255) NULL,
-    tableId NVARCHAR(255) NULL,
-    instructions NVARCHAR(MAX) NULL,
+    paymentMethod VARCHAR(100),
+    instructions NVARCHAR(MAX),
+    floorId VARCHAR(100) NULL FOREIGN KEY REFERENCES Floors(id),
+    tableId VARCHAR(100) NULL FOREIGN KEY REFERENCES Tables(id),
+    deliveryModeId VARCHAR(100) NULL FOREIGN KEY REFERENCES DeliveryModes(id),
+    customerName NVARCHAR(255) NULL,
+    customerPhone VARCHAR(50) NULL,
+    customerAddress NVARCHAR(MAX) NULL,
     cancellationReason NVARCHAR(MAX) NULL,
     isComplementary BIT DEFAULT 0,
-    complementaryReason NVARCHAR(MAX) NULL,
-    discountType NVARCHAR(50) NULL,
+    complementaryReason NVARCHAR(255) NULL,
+    discountType VARCHAR(50) NULL,
     discountValue DECIMAL(10, 2) NULL,
     discountAmount DECIMAL(10, 2) NULL,
-    placedBy NVARCHAR(255) NULL,
-    completedBy NVARCHAR(255) NULL,
-    FOREIGN KEY (branchId) REFERENCES Branches(id),
-    FOREIGN KEY (paymentMethodId) REFERENCES PaymentMethods(id),
-    FOREIGN KEY (floorId) REFERENCES Floors(id),
-    FOREIGN KEY (tableId) REFERENCES Tables(id)
+    originalTotalAmount DECIMAL(10, 2) NULL,
+    placedBy VARCHAR(100) NULL,
+    completedBy VARCHAR(100) NULL
 );
-GO
 
--- OrderItems Table
--- A join table that stores the individual items within each order, including customizations.
 CREATE TABLE OrderItems (
-    id NVARCHAR(255) PRIMARY KEY,
-    orderId NVARCHAR(255) NOT NULL,
-    menuItemId NVARCHAR(255) NOT NULL,
-    name NVARCHAR(255) NOT NULL,
+    id VARCHAR(100) PRIMARY KEY,
+    orderId VARCHAR(100) NOT NULL FOREIGN KEY REFERENCES Orders(id) ON DELETE CASCADE,
+    menuItemId VARCHAR(100) NOT NULL,
     quantity INT NOT NULL,
     itemPrice DECIMAL(10, 2) NOT NULL,
     baseItemPrice DECIMAL(10, 2) NOT NULL,
-    variantName NVARCHAR(100) NULL,
-    stationId NVARCHAR(50) NULL,
-    isPrepared BIT DEFAULT 0,
-    isDispatched BIT DEFAULT 0,
-    instructions NVARCHAR(MAX) NULL,
-    FOREIGN KEY (orderId) REFERENCES Orders(id) ON DELETE CASCADE
-);
-GO
-
--- OrderItem_Addons Table
--- Stores the add-ons selected for a specific order item.
-CREATE TABLE OrderItem_Addons (
-    id INT IDENTITY(1,1) PRIMARY KEY,
-    orderItemId NVARCHAR(255) NOT NULL,
     name NVARCHAR(255) NOT NULL,
-    price DECIMAL(10, 2) NOT NULL,
-    quantity INT NOT NULL,
-    FOREIGN KEY (orderItemId) REFERENCES OrderItems(id) ON DELETE CASCADE
+    selectedAddons NVARCHAR(MAX) NULL, -- JSON string of selected addons
+    selectedVariant NVARCHAR(MAX) NULL, -- JSON string of selected variant
+    stationId VARCHAR(50) NULL,
+    isPrepared BIT NOT NULL DEFAULT 0,
+    preparedAt DATETIME2 NULL,
+    isDispatched BIT NOT NULL DEFAULT 0,
+    instructions NVARCHAR(MAX) NULL,
+    isDealComponent BIT NOT NULL DEFAULT 0,
+    parentDealCartItemId VARCHAR(100) NULL
 );
-GO
+
+CREATE TABLE CashierLogs (
+    id VARCHAR(100) PRIMARY KEY,
+    timestamp DATETIME2 NOT NULL DEFAULT GETDATE(),
+    type VARCHAR(50) NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    cashierId VARCHAR(100) NOT NULL FOREIGN KEY REFERENCES Users(id),
+    adminId VARCHAR(100) NOT NULL FOREIGN KEY REFERENCES Users(id),
+    notes NVARCHAR(MAX)
+);
 
 PRINT 'Database schema created successfully.';
 GO
