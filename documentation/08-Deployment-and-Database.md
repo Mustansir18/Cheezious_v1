@@ -72,8 +72,6 @@ For each API route in `src/app/api/`, you must replace the placeholder data with
 
 **Example: Replacing Placeholder Data in `src/app/api/users/route.ts`**
 
-This example shows how to use the connection pool from `src/lib/db.ts` to fetch users from your SQL Server database.
-
 ```typescript
 // src/app/api/users/route.ts
 import { NextResponse } from 'next/server';
