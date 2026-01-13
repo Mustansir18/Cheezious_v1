@@ -1,10 +1,10 @@
 
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, ReactNode, useCallback } from 'react';
 import type { Rating } from '@/lib/types';
 import { useActivityLog } from './ActivityLogContext';
-import { useSyncLocalStorage } from '@/hooks/use-sync-local-storage';
+import { useDataFetcher } from '@/hooks/use-data-fetcher';
 
 interface RatingContextType {
   ratings: Rating[];
@@ -16,7 +16,7 @@ interface RatingContextType {
 const RatingContext = createContext<RatingContextType | undefined>(undefined);
 
 export const RatingProvider = ({ children }: { children: ReactNode }) => {
-  const [ratings, setRatings, isLoading] = useSyncLocalStorage<Rating[]>('ratings', [], '/api/ratings');
+  const { data: ratings, isLoading, mutate } = useDataFetcher<Rating[]>('/api/ratings', []);
   const { logActivity } = useActivityLog();
 
   const addRating = useCallback(async (newRatingData: Omit<Rating, 'id' | 'timestamp'>) => {
@@ -27,33 +27,26 @@ export const RatingProvider = ({ children }: { children: ReactNode }) => {
         body: JSON.stringify(newRatingData),
       });
       if (!response.ok) throw new Error('Failed to submit rating');
-      const savedRating = await response.json();
-      setRatings((prev) => [savedRating, ...prev]);
-      logActivity(`New ${savedRating.rating}-star rating received.`, 'Customer', 'System');
+      
+      mutate(); // Re-fetch ratings
+      logActivity(`New ${newRatingData.rating}-star rating received.`, 'Customer', 'System');
     } catch (error) {
       console.error('Failed to add rating:', error);
     }
-  }, [setRatings, logActivity]);
+  }, [mutate, logActivity]);
 
   const clearRatings = useCallback(async () => {
     try {
       await fetch('/api/ratings', { method: 'DELETE' });
-      setRatings([]);
+      mutate(); // Re-fetch to get the empty list
       logActivity('Cleared all customer ratings.', 'System', 'System');
     } catch (error) {
        console.error('Failed to clear ratings:', error);
     }
-  }, [setRatings, logActivity]);
+  }, [mutate, logActivity]);
 
   return (
-    <RatingContext.Provider
-      value={{
-        ratings,
-        isLoading,
-        addRating,
-        clearRatings,
-      }}
-    >
+    <RatingContext.Provider value={{ ratings, isLoading, addRating, clearRatings }}>
       {children}
     </RatingContext.Provider>
   );

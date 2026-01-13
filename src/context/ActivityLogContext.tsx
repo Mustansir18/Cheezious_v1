@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import type { ActivityLog, ActivityLogCategory } from '@/lib/types';
-import { useSyncLocalStorage } from '@/hooks/use-sync-local-storage';
+import { useDataFetcher } from '@/hooks/use-data-fetcher';
 
 interface ActivityLogContextType {
   logs: ActivityLog[];
@@ -15,10 +15,9 @@ interface ActivityLogContextType {
 const ActivityLogContext = createContext<ActivityLogContextType | undefined>(undefined);
 
 export const ActivityLogProvider = ({ children }: { children: ReactNode }) => {
-  const [logs, setLogs, isLoading] = useSyncLocalStorage<ActivityLog[]>('activityLog', [], '/api/activity-log');
+  const { data: logs, isLoading, mutate } = useDataFetcher<ActivityLog[]>('/api/activity-log', []);
 
   const logActivity = useCallback(async (message: string, user: string, category: ActivityLogCategory) => {
-    // FIX: Add validation to prevent requests with invalid bodies
     if (!message || !user || !category) {
       console.error('logActivity called with invalid arguments:', { message, user, category });
       return;
@@ -39,21 +38,20 @@ export const ActivityLogProvider = ({ children }: { children: ReactNode }) => {
         });
 
         if (response.ok) {
-          const savedLog = await response.json();
-          setLogs(prev => [savedLog, ...prev]);
+          mutate(); // Re-fetch the logs to include the new one
         } else {
             throw new Error('Failed to save activity log');
         }
     } catch (error) {
         console.error("Failed to log activity to API:", error);
     }
-  }, [setLogs]);
+  }, [mutate]);
 
   const clearLogs = useCallback(async () => {
     try {
         const response = await fetch('/api/activity-log', { method: 'DELETE' });
         if(response.ok) {
-            setLogs([]);
+            mutate(); // Re-fetch to get the empty list
             logActivity('Cleared all activity logs.', 'System', 'System');
         } else {
             throw new Error('Failed to clear activity logs on server.');
@@ -61,7 +59,7 @@ export const ActivityLogProvider = ({ children }: { children: ReactNode }) => {
     } catch(error) {
         console.error("Failed to clear logs:", error);
     }
-  }, [setLogs, logActivity]);
+  }, [mutate, logActivity]);
 
   return (
     <ActivityLogContext.Provider

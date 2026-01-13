@@ -4,45 +4,55 @@ import { getConnectionPool, sql } from '@/lib/db';
 import type { Settings } from '@/lib/types';
 import { initialDeals } from '@/lib/data';
 
+const getGlobalSettings = async (pool: any) => {
+    // In a real app, this would be a table `GlobalSettings` with key-value pairs
+    // For now, we are hardcoding these but a real implementation would fetch them.
+    return {
+        companyName: "Cheezious",
+        companyLogo: '/images/logo.png',
+        defaultBranchId: "B-00001",
+        autoPrintReceipts: false,
+        businessDayStart: "11:00",
+        businessDayEnd: "04:00",
+        promotion: {
+            isEnabled: true,
+            itemId: initialDeals[0].id,
+            imageUrl: initialDeals[0].imageUrl
+        }
+    };
+};
 
-async function getSettingsFromDb(): Promise<Settings | null> {
+const getSettingsFromDb = async (): Promise<Settings | null> => {
     try {
         const pool = await getConnectionPool();
-        const [branches, floors, tables, paymentMethods, deliveryModes] = await Promise.all([
+        const [branches, floors, tables, paymentMethods, deliveryModes, roles] = await Promise.all([
             pool.request().query('SELECT * FROM Branches'),
             pool.request().query('SELECT * FROM Floors'),
             pool.request().query('SELECT * FROM Tables'),
             pool.request().query('SELECT * FROM PaymentMethods'),
-            pool.request().query('SELECT * FROM DeliveryModes')
-            // Roles, company info, etc., could be fetched from another table or config file
+            pool.request().query('SELECT * FROM DeliveryModes'),
+            pool.request().query('SELECT * FROM Roles'),
         ]);
 
-        // This is a simplified fetch. A real app would get companyName etc. from a config table.
+        const globalSettings = await getGlobalSettings(pool);
+
         return {
+            ...globalSettings,
             branches: branches.recordset,
             floors: floors.recordset,
             tables: tables.recordset,
             paymentMethods: paymentMethods.recordset,
             deliveryModes: deliveryModes.recordset,
-            // Hardcoded values that would normally come from a 'Globals' or 'CompanyInfo' table
-            companyName: "Cheezious",
-            companyLogo: "/images/logo.png",
-            defaultBranchId: "B-00001",
-            autoPrintReceipts: false,
-            businessDayStart: "11:00",
-            businessDayEnd: "04:00",
-            roles: [], // Roles are static for now
-            promotion: { isEnabled: false, itemId: null, imageUrl: '' }, // Promotions from DB
+            roles: roles.recordset.map(r => ({ ...r, permissions: JSON.parse(r.permissions) })),
         };
     } catch (error: any) {
-        if (error.number === 208) { // Table not found
+        if (error.code === 'EREQUEST' && error.message.includes('Invalid object name')) {
             console.warn("One or more settings tables not found. Returning null.");
             return null;
         }
         throw error;
     }
-}
-
+};
 
 export async function GET(request: Request) {
     try {
@@ -50,78 +60,94 @@ export async function GET(request: Request) {
         if (settings) {
             return NextResponse.json({ settings });
         }
-        // Fallback to initial data if DB is not set up
-
-        const fallbackSettings = {
-            floors: [{ id: 'F-00001', name: 'Ground' }],
-            tables: [{ id: 'T-G-1', name: 'Table 1', floorId: 'F-00001' }],
-            paymentMethods: [{ id: 'PM-1', name: 'Cash', taxRate: 0.16 }],
-            autoPrintReceipts: false,
-            companyName: "Cheezious",
-            companyLogo: '/images/logo.png',
-            branches: [{ id: 'B-00001', name: 'CHZ J3, JOHAR TOWN LAHORE', dineInEnabled: true, takeAwayEnabled: true, deliveryEnabled: true, orderPrefix: 'G3' }],
-            defaultBranchId: 'B-00001',
-            businessDayStart: "11:00",
-            businessDayEnd: "04:00",
-            roles: [],
-            deliveryModes: [{ id: 'DM-1', name: 'Website' }],
-            promotion: {
-                isEnabled: true,
-                itemId: initialDeals[0].id,
-                imageUrl: initialDeals[0].imageUrl
-            }
-        };
-        return NextResponse.json({ settings: fallbackSettings });
+        // Fallback for initial setup before migration
+        return NextResponse.json({ settings: null });
     } catch (error: any) {
         console.error('Failed to fetch settings:', error);
         return NextResponse.json({ message: 'Failed to fetch settings', error: error.message }, { status: 500 });
     }
 }
 
-// POST endpoint to update the whole settings object
 export async function POST(request: Request) {
-    const { settings } = await request.json();
-    if (!settings) {
-        return NextResponse.json({ message: 'Settings object is required' }, { status: 400 });
-    }
-
-    const pool = await getConnectionPool();
-    const transaction = new sql.Transaction(pool);
+    const { action, payload } = await request.json();
 
     try {
-        await transaction.begin();
+        const pool = await getConnectionPool();
+        const req = pool.request();
 
-        // Clear existing settings tables
-        await transaction.request().query('DELETE FROM DeliveryModes');
-        await transaction.request().query('DELETE FROM PaymentMethods');
-        await transaction.request().query('DELETE FROM Tables');
-        await transaction.request().query('DELETE FROM Floors');
-        await transaction.request().query('DELETE FROM Branches');
+        switch (action) {
+            // BRANCHES
+            case 'addBranch':
+                await req.input('id', sql.NVarChar, payload.id).input('name', sql.NVarChar, payload.name).input('orderPrefix', sql.NVarChar, payload.orderPrefix).query('INSERT INTO Branches (id, name, orderPrefix) VALUES (@id, @name, @orderPrefix)');
+                break;
+            case 'updateBranch':
+                await req.input('id', sql.NVarChar, payload.id).input('name', sql.NVarChar, payload.name).input('orderPrefix', sql.NVarChar, payload.orderPrefix).query('UPDATE Branches SET name = @name, orderPrefix = @orderPrefix WHERE id = @id');
+                break;
+            case 'deleteBranch':
+                await req.input('id', sql.NVarChar, payload.id).query('DELETE FROM Branches WHERE id = @id');
+                break;
+            case 'toggleService':
+                await req.input('id', sql.NVarChar, payload.branchId).input('enabled', sql.Bit, payload.enabled).query(`UPDATE Branches SET ${payload.service} = @enabled WHERE id = @id`);
+                break;
+            
+            // FLOORS
+            case 'addFloor':
+                await req.input('id', sql.NVarChar, payload.id).input('name', sql.NVarChar, payload.name).query('INSERT INTO Floors (id, name) VALUES (@id, @name)');
+                break;
+            case 'deleteFloor':
+                await req.input('id', sql.NVarChar, payload.id).query('DELETE FROM Tables WHERE floorId = @id; DELETE FROM Floors WHERE id = @id;');
+                break;
 
-        // Insert new settings
-        for (const branch of settings.branches) {
-             await transaction.request().input('id', sql.NVarChar, branch.id).input('name', sql.NVarChar, branch.name).input('orderPrefix', sql.NVarChar, branch.orderPrefix).input('dineInEnabled', sql.Bit, branch.dineInEnabled).input('takeAwayEnabled', sql.Bit, branch.takeAwayEnabled).input('deliveryEnabled', sql.Bit, branch.deliveryEnabled).query('INSERT INTO Branches (id, name, orderPrefix, dineInEnabled, takeAwayEnabled, deliveryEnabled) VALUES (@id, @name, @orderPrefix, @dineInEnabled, @takeAwayEnabled, @deliveryEnabled)');
-        }
-        for (const floor of settings.floors) {
-             await transaction.request().input('id', sql.NVarChar, floor.id).input('name', sql.NVarChar, floor.name).query('INSERT INTO Floors (id, name) VALUES (@id, @name)');
-        }
-        for (const table of settings.tables) {
-             await transaction.request().input('id', sql.NVarChar, table.id).input('name', sql.NVarChar, table.name).input('floorId', sql.NVarChar, table.floorId).query('INSERT INTO Tables (id, name, floorId) VALUES (@id, @name, @floorId)');
-        }
-        for (const pm of settings.paymentMethods) {
-             await transaction.request().input('id', sql.NVarChar, pm.id).input('name', sql.NVarChar, pm.name).input('taxRate', sql.Decimal(5, 2), pm.taxRate).query('INSERT INTO PaymentMethods (id, name, taxRate) VALUES (@id, @name, @taxRate)');
-        }
-        for (const dm of settings.deliveryModes) {
-             await transaction.request().input('id', sql.NVarChar, dm.id).input('name', sql.NVarChar, dm.name).query('INSERT INTO DeliveryModes (id, name) VALUES (@id, @name)');
+            // TABLES
+            case 'addTable':
+                await req.input('id', sql.NVarChar, payload.id).input('name', sql.NVarChar, payload.name).input('floorId', sql.NVarChar, payload.floorId).query('INSERT INTO Tables (id, name, floorId) VALUES (@id, @name, @floorId)');
+                break;
+            case 'deleteTable':
+                await req.input('id', sql.NVarChar, payload.id).query('DELETE FROM Tables WHERE id = @id');
+                break;
+
+            // PAYMENT
+            case 'addPaymentMethod':
+                await req.input('id', sql.NVarChar, payload.id).input('name', sql.NVarChar, payload.name).input('taxRate', sql.Decimal(5, 2), payload.taxRate || 0).query('INSERT INTO PaymentMethods (id, name, taxRate) VALUES (@id, @name, @taxRate)');
+                break;
+            case 'deletePaymentMethod':
+                await req.input('id', sql.NVarChar, payload.id).query('DELETE FROM PaymentMethods WHERE id = @id');
+                break;
+            case 'updatePaymentMethodTaxRate':
+                await req.input('id', sql.NVarChar, payload.id).input('taxRate', sql.Decimal(5, 2), payload.taxRate).query('UPDATE PaymentMethods SET taxRate = @taxRate WHERE id = @id');
+                break;
+
+            // DELIVERY
+            case 'addDeliveryMode':
+                 await req.input('id', sql.NVarChar, payload.id).input('name', sql.NVarChar, payload.name).query('INSERT INTO DeliveryModes (id, name) VALUES (@id, @name)');
+                break;
+            case 'deleteDeliveryMode':
+                await req.input('id', sql.NVarChar, payload.id).query('DELETE FROM DeliveryModes WHERE id = @id');
+                break;
+
+            // ROLES
+            case 'addRole':
+                await req.input('id', sql.NVarChar, payload.id).input('name', sql.NVarChar, payload.name).input('permissions', sql.NVarChar, JSON.stringify(payload.permissions)).query('INSERT INTO Roles (id, name, permissions) VALUES (@id, @name, @permissions)');
+                break;
+            case 'updateRole':
+                 await req.input('id', sql.NVarChar, payload.id).input('name', sql.NVarChar, payload.name).input('permissions', sql.NVarChar, JSON.stringify(payload.permissions)).query('UPDATE Roles SET name = @name, permissions = @permissions WHERE id = @id');
+                break;
+            case 'deleteRole':
+                await req.input('id', sql.NVarChar, payload.id).query('DELETE FROM Roles WHERE id = @id');
+                break;
+
+            // GLOBAL SETTINGS (would be a separate table in a real app)
+            case 'updateGlobal':
+                console.log("Global settings updates are not persisted to the DB in this version.");
+                break;
+
+            default:
+                return NextResponse.json({ message: 'Invalid action' }, { status: 400 });
         }
         
-        // In a real app, other settings like companyName would also be saved to a table.
-        
-        await transaction.commit();
-        return NextResponse.json({ message: 'Settings updated successfully' });
+        return NextResponse.json({ success: true });
     } catch (error: any) {
-        await transaction.rollback();
-        console.error('Failed to update settings:', error);
-        return NextResponse.json({ message: 'Failed to update settings', error: error.message }, { status: 500 });
+        console.error(`Failed to execute settings action '${action}':`, error);
+        return NextResponse.json({ message: `Failed to update settings for action: ${action}`, error: error.message }, { status: 500 });
     }
 }

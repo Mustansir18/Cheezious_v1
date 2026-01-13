@@ -1,8 +1,14 @@
 
 'use client';
 
+// This file is deprecated and will be removed in a future update.
+// All data fetching is now handled by the `useDataFetcher` hook powered by SWR.
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from './use-toast';
+import useSWR from 'swr';
+
+const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 type SetValue<T> = (value: T | ((val: T) => T)) => void;
 
@@ -11,56 +17,32 @@ export function useSyncLocalStorage<T>(
   initialValue: T,
   apiPath?: string
 ): [T, SetValue<T>, boolean] {
-  const { toast } = useToast();
-  // Start with loading true
-  const [isLoading, setIsLoading] = useState(true);
-  const isInitialized = useRef(false);
+  const { data, error, isLoading, mutate } = useSWR(apiPath, fetcher, {
+      fallbackData: { [key]: initialValue },
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+  });
 
-  // Initialize state with the provided initial value, not from localStorage
   const [storedValue, setStoredValue] = useState<T>(initialValue);
 
-  // Fetch from API on initial mount
   useEffect(() => {
-    // This check prevents re-fetching on component re-mounts in development
-    if (isInitialized.current || !apiPath) {
-      if (!apiPath) setIsLoading(false);
-      return;
-    }
-    isInitialized.current = true;
-
-    async function fetchInitialData() {
-      try {
-        const response = await fetch(apiPath);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch from ${apiPath}. Status: ${response.status}`);
-        }
-        const data = await response.json();
-        const dataKey = Object.keys(data)[0];
-
-        if (data[dataKey]) {
-             const serverData = data[dataKey];
-             setStoredValue(serverData);
-        } else {
-             // If API returns empty data, we might be in first-run scenario.
-             // We keep the initialValue provided to the hook.
-             console.warn(`API response for ${apiPath} was empty. Using initial default data.`);
-             setStoredValue(initialValue);
-        }
-      } catch (error) {
-        console.error(`Could not load from API (${apiPath}), falling back to initial value.`, error);
-        setStoredValue(initialValue);
-      } finally {
-        setIsLoading(false);
+      if (data && data[key]) {
+          setStoredValue(data[key]);
+      } else if (data) {
+          // API might return an object with a different key, e.g., { settings: {...} }
+          const dataKey = Object.keys(data)[0];
+          if (data[dataKey]) {
+            setStoredValue(data[dataKey]);
+          }
       }
-    }
-    
-    fetchInitialData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apiPath]); 
+  }, [data, key]);
 
   const setValue: SetValue<T> = useCallback((value) => {
     const valueToStore = value instanceof Function ? value(storedValue) : value;
     setStoredValue(valueToStore);
+    // Here you would typically also post the update to the server
+    // and then call mutate() to re-fetch.
+    // This logic is now handled in the individual context files.
   }, [storedValue]);
   
   return [storedValue, setValue, isLoading];

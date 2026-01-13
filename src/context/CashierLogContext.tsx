@@ -1,12 +1,11 @@
 
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, ReactNode, useCallback } from 'react';
 import type { CashierLogEntry } from '@/lib/types';
 import { useAuth } from './AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { useSyncLocalStorage } from '@/hooks/use-sync-local-storage';
-
+import { useDataFetcher } from '@/hooks/use-data-fetcher';
 
 interface CashierLogContextType {
   logs: CashierLogEntry[];
@@ -18,8 +17,8 @@ interface CashierLogContextType {
 const CashierLogContext = createContext<CashierLogContextType | undefined>(undefined);
 
 export const CashierLogProvider = ({ children }: { children: ReactNode }) => {
-  const [logs, setLogs, isLoading] = useSyncLocalStorage<CashierLogEntry[]>('cashierLog', [], '/api/cashier-log');
-  const { user, updateUserBalance } = useAuth(); // We'll now rely on the API to update the balance
+  const { data: logs, isLoading, mutate } = useDataFetcher<CashierLogEntry[]>('/api/cashier-log', []);
+  const { user, updateUserBalance } = useAuth();
   const { toast } = useToast();
 
   const logTransaction = useCallback(async (details: Omit<CashierLogEntry, 'id' | 'timestamp' | 'adminId' | 'adminName'>) => {
@@ -39,13 +38,9 @@ export const CashierLogProvider = ({ children }: { children: ReactNode }) => {
         });
 
         if (response.ok) {
-            const savedLog = await response.json();
-            setLogs(prevLogs => [savedLog, ...prevLogs].sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()));
-            
-            // Trigger a balance update in the AuthContext to reflect the change in the UI
+            mutate(); // Re-fetch logs from the server
             const operation = details.type === 'deposit' ? 'add' : 'subtract';
             updateUserBalance(details.cashierId, details.amount, operation);
-
         } else {
             const errorData = await response.json();
             throw new Error(errorData.message || 'Failed to log transaction.');
@@ -58,13 +53,13 @@ export const CashierLogProvider = ({ children }: { children: ReactNode }) => {
         });
         console.error("Failed to log transaction to API:", error);
     }
-
-  }, [user, updateUserBalance, toast, setLogs]);
+  }, [user, updateUserBalance, toast, mutate]);
 
   const clearLogs = useCallback(async () => {
-    // In a real app, this would be a DELETE request.
-    setLogs([]);
-  }, [setLogs]);
+    // This functionality would require a DELETE endpoint.
+    // For now, it does nothing as clearing logs is a destructive action.
+    console.warn("Clearing all cashier logs is not implemented.");
+  }, []);
 
   return (
     <CashierLogContext.Provider value={{ logs, isLoading, logTransaction, clearLogs }}>
