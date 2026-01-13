@@ -82,7 +82,15 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     try {
       const item = window.localStorage.getItem(SETTINGS_STORAGE_KEY);
       if (item) {
-        setSettings(JSON.parse(item));
+        const parsedData = JSON.parse(item);
+        // Ensure data is not empty before setting
+        if(parsedData.branches.length > 0){
+             setSettings(parsedData);
+        } else {
+             // If local storage is empty, initialize with defaults
+            window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(initialSettings));
+            setSettings(initialSettings);
+        }
       } else {
         // If no settings in local storage, initialize with defaults
         window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(initialSettings));

@@ -35,7 +35,7 @@ const initialData: MenuData = {
 };
 
 export const MenuProvider = ({ children }: { children: ReactNode }) => {
-  const [menu, setMenu] = useState<MenuData>(initialData);
+  const [menu, setMenu] = useState<MenuData>({ items: [], categories: [], addons: [] });
   const [isLoading, setIsLoading] = useState(true);
   const { logActivity } = useActivityLog();
   const { user } = useAuth();
@@ -45,9 +45,17 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
     try {
       const item = window.localStorage.getItem(MENU_STORAGE_KEY);
       if (item) {
-        setMenu(JSON.parse(item));
+        const parsedData = JSON.parse(item);
+        // Ensure data is not empty before setting
+        if (parsedData.items.length > 0) {
+            setMenu(parsedData);
+        } else {
+            // If local storage is empty, initialize with defaults from data.ts
+            window.localStorage.setItem(MENU_STORAGE_KEY, JSON.stringify(initialData));
+            setMenu(initialData);
+        }
       } else {
-        // If no menu in local storage, initialize with defaults from data.ts
+        // If no menu in local storage, initialize with defaults
         window.localStorage.setItem(MENU_STORAGE_KEY, JSON.stringify(initialData));
         setMenu(initialData);
       }

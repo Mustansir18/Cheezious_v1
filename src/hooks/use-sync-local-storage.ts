@@ -22,7 +22,13 @@ export function useSyncLocalStorage<T>(
     }
     try {
       const item = window.localStorage.getItem(key);
-      return item ? JSON.parse(item) : initialValue;
+      // If item exists and is not an empty array/object, parse it. Otherwise, use initial value.
+      if (item && item !== '[]' && item !== '{}') {
+        return JSON.parse(item);
+      }
+      // If local storage is empty or doesn't exist, set it with initial value.
+      window.localStorage.setItem(key, JSON.stringify(initialValue));
+      return initialValue;
     } catch (error) {
       console.warn(`Error reading localStorage key “${key}”:`, error);
       return initialValue;
@@ -57,11 +63,7 @@ export function useSyncLocalStorage<T>(
         }
       } catch (error) {
         console.error(`Could not load from API (${apiPath}), falling back to local storage.`, error);
-        toast({
-          variant: 'destructive',
-          title: `Sync Error: ${key}`,
-          description: `Could not connect to the server. Some data may be outdated.`,
-        });
+        // Don't show toast on initial load failure, as it might just be first-time setup
       } finally {
         setIsLoading(false);
         isInitialized.current = true;
@@ -86,22 +88,10 @@ export function useSyncLocalStorage<T>(
         console.warn(`Error setting localStorage key “${key}”:`, error);
       }
       
-      const apiBodyKey = key.startsWith('cheezious') ? key.substring('cheezious'.length).toLowerCase() : key.toLowerCase();
-      
-      fetch(apiPath, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ [apiBodyKey]: valueToStore })
-      }).catch(err => {
-          console.error(`Failed to sync data to ${apiPath}`, err);
-          toast({
-              variant: 'destructive',
-              title: `Sync Error: ${key}`,
-              description: 'Your recent changes could not be saved to the server.'
-          });
-      });
-    },
-    [apiPath, key, toast, storedValue]
+      // No need to POST back to API, as this hook is now for read-only sync from server
+      // and local-first cache. All writes should go through explicit API calls in contexts.
+
+    }, [key, storedValue]
   );
   
   // Listen for storage changes from other tabs

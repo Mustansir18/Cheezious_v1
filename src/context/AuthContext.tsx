@@ -47,15 +47,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     try {
       const item = window.localStorage.getItem(USERS_STORAGE_KEY);
-      const storedUsers = item ? JSON.parse(item) : initialUsers;
+      const storedUsers = item ? JSON.parse(item) : null;
       
-      // Ensure root user exists
-      if (!storedUsers.some((u: User) => u.id === 'root')) {
-        storedUsers.push(initialUsers[0]);
+      if (storedUsers && storedUsers.length > 0) {
+        setUsers(storedUsers);
+      } else {
+        // If no users in local storage, initialize with defaults
+        setUsers(initialUsers);
+        window.localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(initialUsers));
       }
-      
-      setUsers(storedUsers);
-      window.localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(storedUsers));
     } catch (error) {
       console.warn('Error with user storage:', error);
       setUsers(initialUsers);
