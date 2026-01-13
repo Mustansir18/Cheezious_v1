@@ -1,19 +1,9 @@
 
-
 import type { Metadata } from 'next';
 import { Toaster } from "@/components/ui/toaster"
 import './globals.css';
 import AppLayout from './AppLayout';
 import { Poppins, PT_Sans } from 'next/font/google';
-import { AuthProvider } from '@/context/AuthContext';
-import { CartProvider } from '@/context/CartContext';
-import { MenuProvider } from '@/context/MenuContext';
-import { DealsProvider } from '@/context/DealsContext';
-import { OrderProvider } from '@/context/OrderContext';
-import { SettingsProvider } from '@/context/SettingsContext';
-import { ActivityLogProvider } from '@/context/ActivityLogContext';
-import { RatingProvider } from '@/context/RatingContext';
-import { CashierLogProvider } from '@/context/CashierLogContext';
 
 // This is a dynamic metadata export.
 // In a real app, you might fetch this from the SettingsContext,
@@ -47,28 +37,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${poppins.variable} ${ptSans.variable}`}>
       <body className="font-body antialiased">
-        <ActivityLogProvider>
-          <AuthProvider>
-            <SettingsProvider>
-                <CashierLogProvider>
-                  <MenuProvider>
-                    <DealsProvider>
-                      <OrderProvider>
-                        <RatingProvider>
-                          <CartProvider>
-                            <AppLayout>
-                              {children}
-                            </AppLayout>
-                            <Toaster />
-                          </CartProvider>
-                        </RatingProvider>
-                      </OrderProvider>
-                    </DealsProvider>
-                  </MenuProvider>
-                </CashierLogProvider>
-            </SettingsProvider>
-          </AuthProvider>
-        </ActivityLogProvider>
+        <AppLayout>
+          {children}
+        </AppLayout>
+        <Toaster />
       </body>
     </html>
   );
