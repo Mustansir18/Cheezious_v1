@@ -14,13 +14,22 @@ async function clearAllTables(transaction: sql.Transaction) {
     for (const table of tables) {
         try {
             await transaction.request().query(`IF OBJECT_ID('dbo.${table}', 'U') IS NOT NULL DELETE FROM ${table};`);
-            // Reset identity seed if table has one.
-            if(await transaction.request().query(`SELECT 1 FROM sys.identity_columns WHERE OBJECT_ID = OBJECT_ID('${table}')`)) {
+            
+            // Correctly check if the table has an identity column before reseeding
+            const identityCheckResult = await transaction.request().query(`
+                SELECT COUNT(*) as Count 
+                FROM sys.identity_columns 
+                WHERE OBJECT_ID = OBJECT_ID('dbo.${table}')
+            `);
+
+            if (identityCheckResult.recordset[0].Count > 0) {
                  await transaction.request().query(`DBCC CHECKIDENT ('[${table}]', RESEED, 0);`);
             }
         } catch (e: any) {
-            // Ignore if table doesn't exist
-            if (e.number !== 208) { 
+            // Ignore if table doesn't exist, but throw other errors
+            if (e.number === 208) { 
+                 console.warn(`Table ${table} not found for clearing, skipping.`);
+            } else {
                 console.error(`Error clearing table ${table}:`, e.message);
                 throw e;
             }
