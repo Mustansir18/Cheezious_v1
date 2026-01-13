@@ -47,10 +47,11 @@ export async function GET(request: Request) {
 
 // Login - Create a new session
 export async function POST(request: Request) {
-    const { username, password, guestSessionId } = await request.json();
-    console.log(`[API/SESSION - POST] Attempting login for user: '${username}'. Guest session: ${guestSessionId}`);
+    const { username, password } = await request.json();
+    console.log(`[API/SESSION - POST] Login attempt for user: '${username}'.`);
 
     if (!username || !password) {
+        console.warn(`[API/SESSION - POST] Bad Request: Username or password missing.`);
         return NextResponse.json({ message: 'Username and password are required.' }, { status: 400 });
     }
 
@@ -63,46 +64,28 @@ export async function POST(request: Request) {
 
         if (result.recordset.length > 0) {
             const user: User = result.recordset[0];
-            console.log(`[API/SESSION - POST] Credentials valid for user ID: ${user.id}`);
+            console.log(`[API/SESSION - POST] Credentials valid for user ID: ${user.id}. Creating session.`);
             const newSessionId = uuidv4();
             const expiresAt = new Date();
             expiresAt.setHours(expiresAt.getHours() + SESSION_DURATION_HOURS);
 
-            const transaction = new sql.Transaction(pool);
-            await transaction.begin();
-            try {
-                console.log(`[API/SESSION - POST] Starting transaction to create session ${newSessionId}`);
-                // Create a new session for the logged-in user
-                await transaction.request()
-                    .input('SessionId', sql.NVarChar, newSessionId)
-                    .input('UserId', sql.NVarChar, user.id)
-                    .input('ExpiresAt', sql.DateTime2, expiresAt)
-                    .query('INSERT INTO Sessions (Id, UserId, ExpiresAt) VALUES (@SessionId, @UserId, @ExpiresAt)');
-                
-                console.log('[API/SESSION - POST] Session created successfully.');
-                
-                // Simplified Logic: The client will handle re-fetching the cart.
-                // The server-side cart migration was causing transaction failures.
-                // We no longer try to update the guest cart to a user cart here.
-                
-                await transaction.commit();
-                console.log('[API/SESSION - POST] Transaction committed. Login successful.');
+            await pool.request()
+                .input('SessionId', sql.NVarChar, newSessionId)
+                .input('UserId', sql.NVarChar, user.id)
+                .input('ExpiresAt', sql.DateTime2, expiresAt)
+                .query('INSERT INTO Sessions (Id, UserId, ExpiresAt) VALUES (@SessionId, @UserId, @ExpiresAt)');
+            
+            console.log(`[API/SESSION - POST] Session created successfully for user '${username}'.`);
 
-                delete user.password;
-                return NextResponse.json({ user, sessionId: newSessionId });
-
-            } catch(err: any) {
-                console.error('[API/SESSION - POST] Transaction failed. Rolling back.', err);
-                await transaction.rollback();
-                throw err;
-            }
+            delete user.password;
+            return NextResponse.json({ user, sessionId: newSessionId });
 
         } else {
-            console.warn(`[API/SESSION - POST] Invalid credentials for user: '${username}'`);
+            console.warn(`[API/SESSION - POST] Invalid credentials for user: '${username}'. No matching record found in database.`);
             return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
         }
     } catch (error: any) {
-        console.error('[API/SESSION - POST] Login failed:', error);
+        console.error('[API/SESSION - POST] Login failed due to a server error:', error);
         if (error.number === 208) { // Invalid object name 'Users'
             return NextResponse.json({ message: 'Database not set up. Please run the migration.' }, { status: 500 });
         }
