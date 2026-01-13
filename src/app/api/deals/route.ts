@@ -6,8 +6,9 @@ import type { MenuItem } from '@/lib/types';
 export const revalidate = 0;
 
 /**
- * Handles GET requests to /api/deals.
- * Fetches all items that are categorized as deals.
+ * @deprecated This endpoint is now deprecated as deals are handled by /api/menu.
+ * It is kept for compatibility but should not be used for new features.
+ * It will gracefully return an empty array.
  */
 export async function GET(request: Request) {
   try {
