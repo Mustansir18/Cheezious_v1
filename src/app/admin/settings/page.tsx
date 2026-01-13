@@ -325,9 +325,27 @@ export default function AdminSettingsPage() {
                                                     <TableCell className="font-medium">{branch.name}</TableCell>
                                                     <TableCell className="font-mono text-xs">{branch.id}</TableCell>
                                                     <TableCell className="font-mono">{branch.orderPrefix}</TableCell>
-                                                    <TableCell className="text-center"><Badge variant={branch.dineInEnabled ? 'default' : 'secondary'}>{branch.dineInEnabled ? 'Yes' : 'No'}</Badge></TableCell>
-                                                    <TableCell className="text-center"><Badge variant={branch.takeAwayEnabled ? 'default' : 'secondary'}>{branch.takeAwayEnabled ? 'Yes' : 'No'}</Badge></TableCell>
-                                                    <TableCell className="text-center"><Badge variant={branch.deliveryEnabled ? 'default' : 'secondary'}>{branch.deliveryEnabled ? 'Yes' : 'No'}</Badge></TableCell>
+                                                    <TableCell className="text-center">
+                                                        <Switch
+                                                            checked={branch.dineInEnabled}
+                                                            onCheckedChange={(checked) => toggleService(branch.id, 'dineInEnabled', checked)}
+                                                            aria-label="Dine-In enabled"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="text-center">
+                                                         <Switch
+                                                            checked={branch.takeAwayEnabled}
+                                                            onCheckedChange={(checked) => toggleService(branch.id, 'takeAwayEnabled', checked)}
+                                                            aria-label="Take Away enabled"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="text-center">
+                                                         <Switch
+                                                            checked={branch.deliveryEnabled}
+                                                            onCheckedChange={(checked) => toggleService(branch.id, 'deliveryEnabled', checked)}
+                                                            aria-label="Delivery enabled"
+                                                        />
+                                                    </TableCell>
                                                     <TableCell className="text-right">
                                                         <Button variant="ghost" size="icon" onClick={() => openEditDialog(branch)}><Edit className="h-4 w-4" /></Button>
                                                         <DeleteConfirmationDialog title={`Delete Branch "${branch.name}"?`} description={<>This will permanently delete the branch <strong>{branch.name}</strong> and associated user access.</>} onConfirm={() => deleteBranch(branch.id, branch.name)} />
