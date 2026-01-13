@@ -9,6 +9,7 @@ import { useAuth } from './AuthContext';
 import { useSyncLocalStorage } from '@/hooks/use-sync-local-storage';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { initialDeals, menuCategories, addons } from '@/lib/data';
+import { ALL_PERMISSIONS } from '@/config/permissions';
 
 interface SettingsContextType {
   settings: Settings;
@@ -50,7 +51,18 @@ const initialSettings: Settings = {
     defaultBranchId: 'B-00001',
     businessDayStart: "11:00",
     businessDayEnd: "04:00",
-    roles: [],
+    roles: [
+        { id: 'root', name: 'Root', permissions: ['admin:*'] },
+        { id: 'admin', name: 'Admin', permissions: ['/admin/orders', '/admin/queue', '/admin/kds'] },
+        { id: 'cashier', name: 'Cashier', permissions: ['/cashier'] },
+        { id: 'marketing', name: 'Marketing', permissions: ['/marketing/reporting', '/marketing/feedback', '/marketing/target'] },
+        { id: 'kds', name: 'KDS', permissions: ['/admin/kds'] },
+        { id: 'make-station', name: 'MAKE Station', permissions: ['/admin/kds/pizza'] },
+        { id: 'pasta-station', name: 'PASTA Station', permissions: ['/admin/kds/pasta'] },
+        { id: 'fried-station', name: 'FRIED Station', permissions: ['/admin/kds/fried'] },
+        { id: 'bar-station', name: 'BEVERAGES Station', permissions: ['/admin/kds/bar'] },
+        { id: 'cutt-station', name: 'CUTT Station', permissions: ['/admin/kds/master'] },
+    ],
     deliveryModes: [{ id: 'DM-1', name: 'Website' }],
     promotion: {
         isEnabled: true,
