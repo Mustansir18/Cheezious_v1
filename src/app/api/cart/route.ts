@@ -4,6 +4,8 @@ import { getConnectionPool, sql } from '@/lib/db';
 import type { CartItem, User } from '@/lib/types';
 import { v4 as uuidv4 } from 'uuid'; // For generating session IDs
 
+export const revalidate = 0;
+
 // Helper function to get or create a session ID from headers
 function getSessionId(request: Request): string {
     let sessionId = request.headers.get('x-session-id');
@@ -53,7 +55,7 @@ export async function GET(request: Request) {
 
         if (!cart) {
             // No cart exists, return an empty one but include the session ID for the client
-            const response = NextResponse.json({ cart: null, items: [] });
+            const response = NextResponse.json({ cart: null, items: [] }, { headers: { 'Cache-Control': 'no-store' } });
             response.headers.set('x-session-id', sessionId);
             return response;
         }
@@ -68,7 +70,7 @@ export async function GET(request: Request) {
             selectedVariant: item.SelectedVariant ? JSON.parse(item.SelectedVariant) : undefined,
         }));
         
-        const response = NextResponse.json({ cart, items });
+        const response = NextResponse.json({ cart, items }, { headers: { 'Cache-Control': 'no-store' } });
         response.headers.set('x-session-id', sessionId);
         return response;
 

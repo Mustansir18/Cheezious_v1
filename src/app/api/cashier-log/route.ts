@@ -3,18 +3,19 @@ import { NextResponse } from 'next/server';
 import { getConnectionPool, sql } from '@/lib/db';
 import type { CashierLogEntry } from '@/lib/types';
 
+export const revalidate = 0;
 
 export async function GET(request: Request) {
   try {
     const pool = await getConnectionPool();
     const result = await pool.request().query('SELECT * FROM CashierLog ORDER BY timestamp DESC');
-    return NextResponse.json({ logs: result.recordset });
+    return NextResponse.json({ logs: result.recordset }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error: any) {
     if (error.number === 208) { // Table does not exist
-      return NextResponse.json({ logs: [] });
+      return NextResponse.json({ logs: [] }, { headers: { 'Cache-Control': 'no-store' } });
     }
     console.warn('Could not fetch cashier logs from database, returning empty array. Error:', error.message);
-    return NextResponse.json({ logs: [] });
+    return NextResponse.json({ logs: [] }, { headers: { 'Cache-Control': 'no-store' } });
   }
 }
 

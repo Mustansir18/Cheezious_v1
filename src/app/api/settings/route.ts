@@ -4,6 +4,8 @@ import { getConnectionPool, sql } from '@/lib/db';
 import type { Settings } from '@/lib/types';
 import { initialDeals } from '@/lib/data';
 
+export const revalidate = 0;
+
 const getGlobalSettings = async (pool: any) => {
     // In a real app, this would be a table `GlobalSettings` with key-value pairs
     // For now, we are hardcoding these but a real implementation would fetch them.
@@ -58,10 +60,10 @@ export async function GET(request: Request) {
     try {
         const settings = await getSettingsFromDb();
         if (settings) {
-            return NextResponse.json({ settings });
+            return NextResponse.json({ settings }, { headers: { 'Cache-Control': 'no-store' } });
         }
         // Fallback for initial setup before migration
-        return NextResponse.json({ settings: null });
+        return NextResponse.json({ settings: null }, { headers: { 'Cache-Control': 'no-store' } });
     } catch (error: any) {
         console.error('Failed to fetch settings:', error);
         return NextResponse.json({ message: 'Failed to fetch settings', error: error.message }, { status: 500 });

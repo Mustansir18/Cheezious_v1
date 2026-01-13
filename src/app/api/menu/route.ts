@@ -4,6 +4,8 @@ import { getConnectionPool, sql } from '@/lib/db';
 import type { MenuItem, MenuCategory, Addon } from '@/lib/types';
 import { v4 as uuidv4 } from 'uuid';
 
+export const revalidate = 0;
+
 // Helper to safely parse JSON
 const safeJsonParse = (jsonString: string | null, defaultVal: any = []) => {
     if (!jsonString) return defaultVal;
@@ -44,13 +46,13 @@ export async function GET(request: Request) {
         prices: safeJsonParse(addon.prices, {})
     }));
 
-    return NextResponse.json({ menu: { items, categories, addons } });
+    return NextResponse.json({ menu: { items, categories, addons } }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error: any) {
     if (error.number === 208) { // Table does not exist
-      return NextResponse.json({ menu: { items: [], categories: [], addons: [] } });
+      return NextResponse.json({ menu: { items: [], categories: [], addons: [] } }, { headers: { 'Cache-Control': 'no-store' } });
     }
     console.warn('Could not fetch menu from database. This might be okay if tables are not created yet.', error.message);
-    return NextResponse.json({ menu: { items: [], categories: [], addons: [] } });
+    return NextResponse.json({ menu: { items: [], categories: [], addons: [] } }, { headers: { 'Cache-Control': 'no-store' } });
   }
 }
 

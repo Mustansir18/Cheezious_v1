@@ -3,17 +3,19 @@ import { NextResponse } from 'next/server';
 import { getConnectionPool, sql } from '@/lib/db';
 import type { User } from '@/lib/types';
 
+export const revalidate = 0;
+
 // GET all users (without passwords)
 export async function GET(request: Request) {
   try {
     const pool = await getConnectionPool();
     // Explicitly select columns to exclude the password
     const result = await pool.request().query('SELECT id, username, role, branchId, balance, stationName FROM Users');
-    return NextResponse.json({ users: result.recordset });
+    return NextResponse.json({ users: result.recordset }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error: any) {
     if(error.number === 208) { // Table does not exist
       console.warn('Users table not found, returning empty array.');
-      return NextResponse.json({ users: [] });
+      return NextResponse.json({ users: [] }, { headers: { 'Cache-Control': 'no-store' } });
     }
     console.error('Failed to fetch users:', error);
     return NextResponse.json({ message: 'Failed to fetch users', error: error.message }, { status: 500 });

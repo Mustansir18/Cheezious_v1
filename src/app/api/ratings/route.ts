@@ -4,15 +4,17 @@ import { getConnectionPool, sql } from '@/lib/db';
 import type { Rating } from '@/lib/types';
 import { v4 as uuidv4 } from 'uuid';
 
+export const revalidate = 0;
+
 // GET all ratings
 export async function GET(request: Request) {
   try {
     const pool = await getConnectionPool();
     const result = await pool.request().query('SELECT * FROM Ratings ORDER BY timestamp DESC');
-    return NextResponse.json({ ratings: result.recordset });
+    return NextResponse.json({ ratings: result.recordset }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error: any) {
     if(error.number === 208) { // Table not found
-      return NextResponse.json({ ratings: [] });
+      return NextResponse.json({ ratings: [] }, { headers: { 'Cache-Control': 'no-store' } });
     }
     console.error('Failed to fetch ratings:', error);
     return NextResponse.json({ message: 'Failed to fetch ratings', error: error.message }, { status: 500 });

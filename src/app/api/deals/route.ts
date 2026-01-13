@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { getConnectionPool, sql } from '@/lib/db';
 import type { MenuItem } from '@/lib/types';
 
+export const revalidate = 0;
+
 /**
  * Handles GET requests to /api/deals.
  * Fetches all items that are categorized as deals.
@@ -22,14 +24,14 @@ export async function GET(request: Request) {
       dealItems: deal.dealItems ? JSON.parse(deal.dealItems) : [],
     }));
 
-    return NextResponse.json({ deals });
+    return NextResponse.json({ deals }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error: any) {
     if (error.number === 208) { // Table does not exist
-      return NextResponse.json({ deals: [] });
+      return NextResponse.json({ deals: [] }, { headers: { 'Cache-Control': 'no-store' } });
     }
     // If the table doesn't exist yet, return an empty array gracefully.
     console.warn('Could not fetch deals from database. This might be okay if the table is not created yet.', error.message);
-    return NextResponse.json({ deals: [] });
+    return NextResponse.json({ deals: [] }, { headers: { 'Cache-Control': 'no-store' } });
   }
 }
 

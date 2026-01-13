@@ -4,6 +4,8 @@ import { getConnectionPool, sql } from '@/lib/db';
 import type { User } from '@/lib/types';
 import { v4 as uuidv4 } from 'uuid';
 
+export const revalidate = 0;
+
 const SESSION_DURATION_HOURS = 8;
 
 // Get user session
@@ -11,7 +13,7 @@ export async function GET(request: Request) {
     const sessionId = request.headers.get('x-session-id');
 
     if (!sessionId) {
-        return NextResponse.json({ user: null, message: 'No session ID provided' }, { status: 401 });
+        return NextResponse.json({ user: null, message: 'No session ID provided' }, { status: 401, headers: { 'Cache-Control': 'no-store' } });
     }
 
     try {
@@ -28,9 +30,9 @@ export async function GET(request: Request) {
             const user = result.recordset[0];
             // Don't send password hash to client
             delete user.password;
-            return NextResponse.json({ user });
+            return NextResponse.json({ user }, { headers: { 'Cache-Control': 'no-store' } });
         } else {
-            return NextResponse.json({ user: null, message: 'Session not found or expired' }, { status: 404 });
+            return NextResponse.json({ user: null, message: 'Session not found or expired' }, { status: 404, headers: { 'Cache-Control': 'no-store' } });
         }
 
     } catch (error: any) {

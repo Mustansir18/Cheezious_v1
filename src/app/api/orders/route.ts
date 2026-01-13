@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { getConnectionPool, sql } from '@/lib/db';
 import type { Order, OrderItem } from '@/lib/types';
 
+export const revalidate = 0;
+
 /**
  * Handles GET requests to /api/orders.
  * In a real application, this would fetch recent orders.
@@ -34,14 +36,14 @@ export async function GET(request: Request) {
       }));
     }
 
-    return NextResponse.json({ orders });
+    return NextResponse.json({ orders }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error: any) {
     if (error.number === 208) { // Table does not exist
-      return NextResponse.json({ orders: [] });
+      return NextResponse.json({ orders: [] }, { headers: { 'Cache-Control': 'no-store' } });
     }
     // If the query fails (e.g., table doesn't exist), log the error and return an empty array.
     console.warn('Could not fetch orders from database, returning empty array. Error:', error.message);
-    return NextResponse.json({ orders: [] });
+    return NextResponse.json({ orders: [] }, { headers: { 'Cache-Control': 'no-store' } });
   }
 }
 
