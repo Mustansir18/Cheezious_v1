@@ -16,8 +16,9 @@ export const DealsProvider = ({ children }: { children: ReactNode }) => {
   const { menu, isLoading: isMenuLoading } = useMenu();
   
   const deals = useMemo(() => {
-    return menu.items.filter(item => item.categoryId === 'C-00001');
-  }, [menu.items]);
+    // Safely access menu.items and provide a fallback empty array
+    return (menu?.items || []).filter(item => item.categoryId === 'C-00001');
+  }, [menu?.items]);
   
   return (
     <DealsContext.Provider
