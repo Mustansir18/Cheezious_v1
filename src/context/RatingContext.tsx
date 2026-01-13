@@ -15,10 +15,8 @@ interface RatingContextType {
 
 const RatingContext = createContext<RatingContextType | undefined>(undefined);
 
-const RATINGS_STORAGE_KEY = 'cheeziousRatingsV2';
-
 export const RatingProvider = ({ children }: { children: ReactNode }) => {
-  const [ratings, setRatings, isLoading] = useSyncLocalStorage<Rating[]>(RATINGS_STORAGE_KEY, [], '/api/ratings');
+  const [ratings, setRatings, isLoading] = useSyncLocalStorage<Rating[]>('ratings', [], '/api/ratings');
   const { logActivity } = useActivityLog();
 
   const addRating = useCallback(async (newRatingData: Omit<Rating, 'id' | 'timestamp'>) => {

@@ -14,10 +14,8 @@ interface ActivityLogContextType {
 
 const ActivityLogContext = createContext<ActivityLogContextType | undefined>(undefined);
 
-const ACTIVITY_LOG_STORAGE_KEY = 'cheeziousActivityLogV2';
-
 export const ActivityLogProvider = ({ children }: { children: ReactNode }) => {
-  const [logs, setLogs, isLoading] = useSyncLocalStorage<ActivityLog[]>(ACTIVITY_LOG_STORAGE_KEY, [], '/api/activity-log');
+  const [logs, setLogs, isLoading] = useSyncLocalStorage<ActivityLog[]>('activityLog', [], '/api/activity-log');
 
   const logActivity = useCallback(async (message: string, user: string, category: ActivityLogCategory) => {
     const newLogEntry: Omit<ActivityLog, 'id'> = {

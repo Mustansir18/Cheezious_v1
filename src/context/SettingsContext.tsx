@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
@@ -7,9 +6,7 @@ import type { Settings, Floor, Table, PaymentMethod, Branch, Role, UserRole, Del
 import { useToast } from '@/hooks/use-toast';
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
-import { initialDeals } from '@/lib/data';
-import { ALL_PERMISSIONS } from '@/config/permissions';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { useSyncLocalStorage } from '@/hooks/use-sync-local-storage';
 
 interface SettingsContextType {
   settings: Settings;
@@ -40,78 +37,50 @@ interface SettingsContextType {
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
-const SETTINGS_STORAGE_KEY = 'cheeziousSettingsV2';
-
 const initialSettings: Settings = {
-    floors: [{ id: 'F-00001', name: 'Ground' }],
-    tables: [{ id: 'T-G-1', name: 'Table 1', floorId: 'F-00001' }],
-    paymentMethods: [{ id: 'PM-1', name: 'Cash', taxRate: 0.16 }],
+    floors: [],
+    tables: [],
+    paymentMethods: [],
     autoPrintReceipts: false,
     companyName: "Cheezious",
-    companyLogo: PlaceHolderImages.find(i => i.id === 'cheezious-special')?.imageUrl,
-    branches: [{ id: 'B-00001', name: 'CHZ J3, JOHAR TOWN LAHORE', dineInEnabled: true, takeAwayEnabled: true, deliveryEnabled: true, orderPrefix: 'G3' }],
-    defaultBranchId: 'B-00001',
+    companyLogo: '',
+    branches: [],
+    defaultBranchId: null,
     businessDayStart: "11:00",
     businessDayEnd: "04:00",
-    roles: [
-      { id: 'root', name: 'Root', permissions: ['admin:*'] },
-      { id: 'admin', name: 'Admin', permissions: ['/admin/orders', '/admin/kds', '/admin/queue'] },
-      { id: 'cashier', name: 'Cashier', permissions: ['/cashier'] },
-      { id: 'marketing', name: 'Marketing', permissions: ['/marketing/reporting', '/marketing/feedback', '/marketing/target'] },
-      { id: 'kds', name: 'KDS (All Stations)', permissions: ['/admin/kds'] },
-      { id: 'make-station', name: 'MAKE Station', permissions: ['/admin/kds/pizza'] },
-      { id: 'pasta-station', name: 'PASTA Station', permissions: ['/admin/kds/pasta'] },
-      { id: 'fried-station', name: 'FRIED Station', permissions: ['/admin/kds/fried'] },
-      { id: 'bar-station', name: 'BEVERAGES Station', permissions: ['/admin/kds/bar'] },
-      { id: 'cutt-station', name: 'CUTT Station', permissions: ['/admin/kds/master'] },
-    ],
-    deliveryModes: [{ id: 'DM-1', name: 'Website' }],
+    roles: [],
+    deliveryModes: [],
     promotion: {
-        isEnabled: true,
-        itemId: initialDeals[0]?.id || null,
-        imageUrl: initialDeals[0]?.imageUrl || ''
+        isEnabled: false,
+        itemId: null,
+        imageUrl: ''
     }
 };
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
-  const [settings, setSettings] = useState<Settings>(initialSettings);
-  const [isLoading, setIsLoading] = useState(true);
+  const [settings, setSettings, isLoading] = useSyncLocalStorage<Settings>('settings', initialSettings, '/api/settings');
   const { toast } = useToast();
   const { logActivity } = useActivityLog();
   const { user } = useAuth();
   
-  useEffect(() => {
+  const postSettings = useCallback(async (newSettings: Settings) => {
+    setSettings(newSettings);
+    // In a real app, we'd have more granular API endpoints.
+    // For now, we post the entire settings object on any change.
     try {
-      const item = window.localStorage.getItem(SETTINGS_STORAGE_KEY);
-      if (item) {
-        const parsedData = JSON.parse(item);
-        if(parsedData.branches && parsedData.branches.length > 0 && parsedData.roles && parsedData.roles.length > 0){
-             setSettings(parsedData);
-        } else {
-            window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(initialSettings));
-            setSettings(initialSettings);
-        }
-      } else {
-        window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(initialSettings));
-        setSettings(initialSettings);
+      const response = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ settings: newSettings }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to save settings to the server.');
       }
     } catch (error) {
-      console.warn(`Error reading/initializing settings from localStorage:`, error);
-      setSettings(initialSettings);
-    } finally {
-      setIsLoading(false);
+      console.error(error);
+      toast({ variant: 'destructive', title: 'Sync Error', description: 'Could not save settings to the server.' });
     }
-  }, []);
-
-  const postSettings = useCallback((newSettings: Settings) => {
-      try {
-        window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(newSettings));
-        setSettings(newSettings);
-      } catch (error) {
-        console.error("Failed to save settings to localStorage", error);
-        toast({ variant: 'destructive', title: 'Save Error', description: 'Could not save settings.' });
-      }
-  }, [toast]);
+  }, [setSettings, toast]);
   
   const addFloor = useCallback((id: string, name: string) => {
     if (!id || !name) { return; }

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
@@ -7,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import type { User, UserRole } from '@/lib/types';
 import { useActivityLog } from './ActivityLogContext';
 import { useToast } from '@/hooks/use-toast';
-import { v4 as uuidv4 } from 'uuid';
+import { useSyncLocalStorage } from '@/hooks/use-sync-local-storage';
 
 // Define the shape of the context
 interface AuthContextType {
@@ -26,83 +25,73 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const SESSION_ID_KEY = 'cheezious_session_id';
-const USERS_STORAGE_KEY = 'cheeziousUsersV2';
-
-const initialUsers: User[] = [
-    { id: 'root', username: 'root', password: 'Faith123$$', role: 'root', balance: 0 },
-    { id: 'admin-1', username: 'admin', password: '123', role: 'admin', branchId: 'B-00001', balance: 0 },
-    { id: 'cashier-1', username: 'cashier', password: '123', role: 'cashier', branchId: 'B-00001', balance: 0 },
-    { id: 'kds-master', username: 'kds', password: '123', role: 'kds', branchId: 'B-00001', balance: 0 },
-];
 
 // Create the provider component
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [users, setUsers] = useState<User[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [users, setUsers, isUsersLoading] = useSyncLocalStorage<User[]>('users', [], '/api/users');
+  const [isSessionLoading, setSessionLoading] = useState(true);
   const { logActivity } = useActivityLog();
   const { toast } = useToast();
   const router = useRouter();
 
-  // Load users from storage or initialize on mount
-  useEffect(() => {
-    try {
-      const localUsers = localStorage.getItem(USERS_STORAGE_KEY);
-      if (localUsers && JSON.parse(localUsers).length > 0) {
-        setUsers(JSON.parse(localUsers));
-      } else {
-        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(initialUsers));
-        setUsers(initialUsers);
-      }
-    } catch (error) {
-      console.error("Failed to load users from localStorage, using defaults:", error);
-      setUsers(initialUsers);
-    }
-  }, []);
+  const isLoading = isUsersLoading || isSessionLoading;
 
-
-  // Load session on initial render
+  // Load session from API on initial render
   useEffect(() => {
-    setIsLoading(true);
-    try {
-        const sessionId = localStorage.getItem(SESSION_ID_KEY);
-        if (sessionId) {
-            const sessionUser = sessionStorage.getItem(`session_${sessionId}`);
-            if (sessionUser) {
-                setUser(JSON.parse(sessionUser));
-            }
+    async function fetchSession() {
+      setSessionLoading(true);
+      const sessionId = localStorage.getItem(SESSION_ID_KEY);
+      if (sessionId) {
+        try {
+          const response = await fetch('/api/auth/session', {
+            headers: { 'x-session-id': sessionId }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            setUser(data.user);
+          } else {
+            // Session is invalid, clear it
+            localStorage.removeItem(SESSION_ID_KEY);
+            setUser(null);
+          }
+        } catch (error) {
+          console.error("Failed to fetch session:", error);
+          setUser(null);
         }
-    } catch (error) {
-        console.error("Failed to load user from session storage:", error);
-    } finally {
-        setIsLoading(false);
+      }
+      setSessionLoading(false);
     }
+    fetchSession();
   }, []);
 
 
   const login = useCallback(async (username: string, password: string): Promise<User | null> => {
-    // This now correctly checks the state `users` which is populated from localStorage
-    const foundUser = users.find(
-      u => u.username.toLowerCase() === username.toLowerCase() && u.password === password
-    );
+    const guestSessionId = localStorage.getItem(SESSION_ID_KEY);
+    
+    const response = await fetch('/api/auth/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, guestSessionId })
+    });
 
-    if (foundUser) {
-        const sessionId = uuidv4();
+    if (response.ok) {
+        const { user: loggedInUser, sessionId } = await response.json();
         localStorage.setItem(SESSION_ID_KEY, sessionId);
-        sessionStorage.setItem(`session_${sessionId}`, JSON.stringify(foundUser));
-        setUser(foundUser);
+        setUser(loggedInUser);
         logActivity(`User '${username}' logged in.`, username, 'System');
-        return foundUser;
+        return loggedInUser;
     } else {
-        throw new Error('Invalid username or password.');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Invalid username or password.');
     }
-  }, [users, logActivity]);
+  }, [logActivity]);
 
   const logout = useCallback(async () => {
     const sessionId = localStorage.getItem(SESSION_ID_KEY);
     if (user && sessionId) {
         logActivity(`User '${user.username}' logged out.`, user.username, 'System');
-        sessionStorage.removeItem(`session_${sessionId}`);
+        await fetch('/api/auth/session', { method: 'DELETE', headers: { 'x-session-id': sessionId } });
     }
     setUser(null);
     localStorage.removeItem(SESSION_ID_KEY);
@@ -110,42 +99,64 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [router, user, logActivity]);
 
 
-  const saveUsers = (newUsers: User[]) => {
-      setUsers(newUsers);
-      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(newUsers));
-  }
-
   const addUser = async (newUser: Omit<User, 'id' | 'balance'>, id: string) => {
-    const userExists = users.some(u => u.id === id || u.username.toLowerCase() === newUser.username.toLowerCase());
-    if (userExists) {
-        toast({ variant: 'destructive', title: 'Error', description: 'A user with this ID or username already exists.' });
-        return;
+    const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user: newUser, id })
+    });
+
+    if (response.ok) {
+        const { user: createdUser } = await response.json();
+        setUsers([...users, createdUser]);
+        logActivity(`Added new user '${newUser.username}'.`, user?.username || 'System', 'User');
+        toast({ title: 'Success', description: 'User has been created.' });
+    } else {
+        const errorData = await response.json();
+        toast({ variant: 'destructive', title: 'Error', description: errorData.message });
     }
-    const userToAdd: User = { id, ...newUser, balance: 0 };
-    saveUsers([...users, userToAdd]);
-    logActivity(`Added new user '${newUser.username}'.`, user?.username || 'System', 'User');
-    toast({ title: 'Success', description: 'User has been created.' });
   };
 
   const updateUser = async (updatedUser: User) => {
-     const newUsers = users.map(u => u.id === updatedUser.id ? updatedUser : u);
-     saveUsers(newUsers);
-     if(user?.id === updatedUser.id) {
-         setUser(updatedUser);
-     }
-     logActivity(`Updated user '${updatedUser.username}'.`, user?.username || "System", 'User');
-     toast({ title: 'Success', description: 'User has been updated.' });
+    const response = await fetch('/api/users', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user: updatedUser })
+    });
+
+    if(response.ok) {
+        setUsers(users.map(u => u.id === updatedUser.id ? updatedUser : u));
+        if(user?.id === updatedUser.id) {
+            setUser(updatedUser);
+        }
+        logActivity(`Updated user '${updatedUser.username}'.`, user?.username || "System", 'User');
+        toast({ title: 'Success', description: 'User has been updated.' });
+    } else {
+         const errorData = await response.json();
+         toast({ variant: 'destructive', title: 'Error', description: errorData.message });
+    }
   };
 
   const deleteUser = async (id: string, name: string) => {
-    saveUsers(users.filter(u => u.id !== id));
-    logActivity(`Deleted user '${name}'.`, user?.username || "System", 'User');
-    toast({ title: 'Success', description: 'User has been deleted.' });
+    const response = await fetch('/api/users', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, name })
+    });
+
+    if(response.ok) {
+        setUsers(users.filter(u => u.id !== id));
+        logActivity(`Deleted user '${name}'.`, user?.username || "System", 'User');
+        toast({ title: 'Success', description: 'User has been deleted.' });
+    } else {
+        const errorData = await response.json();
+        toast({ variant: 'destructive', title: 'Error', description: errorData.message });
+    }
   };
 
   const updateUserBalance = useCallback((userId: string, amount: number, operation: 'add' | 'subtract') => {
       setUsers(prevUsers => {
-          const newUsers = prevUsers.map(u => {
+          return prevUsers.map(u => {
               if (u.id === userId) {
                   const currentBalance = u.balance || 0;
                   const newBalance = operation === 'add' ? currentBalance + amount : currentBalance - amount;
@@ -153,8 +164,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               }
               return u;
           });
-          localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(newUsers));
-          return newUsers;
       });
   }, []);
 

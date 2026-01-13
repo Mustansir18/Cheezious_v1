@@ -8,6 +8,8 @@ import { useAuth } from './AuthContext';
 import { useMenu } from './MenuContext';
 import { useSettings } from './SettingsContext';
 import { useToast } from '@/hooks/use-toast';
+import { useSyncLocalStorage } from '@/hooks/use-sync-local-storage';
+
 
 interface OrderContextType {
   orders: Order[];
@@ -41,8 +43,7 @@ function usePrevious<T>(value: T): T | undefined {
 }
 
 export const OrderProvider = ({ children }: { children: ReactNode }) => {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [orders, setOrders, isLoading] = useSyncLocalStorage<Order[]>('orders', [], '/api/orders');
   const { logActivity } = useActivityLog();
   const { user, updateUserBalance } = useAuth();
   const { menu } = useMenu();
@@ -58,29 +59,6 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
   }, [orders]);
 
 
-  useEffect(() => {
-    async function loadInitialOrders() {
-      setIsLoading(true);
-      try {
-        const response = await fetch('/api/orders');
-        if (!response.ok) throw new Error('Failed to fetch orders');
-        const data = await response.json();
-        setOrders(data.orders || []);
-      } catch (error) {
-        console.error("Could not load orders from API", error);
-        toast({
-          variant: 'destructive',
-          title: 'Failed to Load Orders',
-          description: 'Could not connect to the server. Some data may be missing.',
-        });
-        setOrders([]);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    loadInitialOrders();
-  }, [toast]);
-  
   useEffect(() => {
     if (!prevOrders || isLoading || !user) return;
     const username = user?.username || 'System';
@@ -159,7 +137,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
             description: `Could not save the order to the database. Please try again. Error: ${error.message}`,
         });
     }
-  }, [toast]);
+  }, [toast, setOrders]);
 
   const addItemsToOrder = useCallback(async (orderId: string, itemsToAdd: CartItem[]) => {
     // This function will need a PUT /api/orders/:id/items endpoint
@@ -217,7 +195,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
             };
         });
     });
-  }, [menu.items, menu.categories]);
+  }, [menu.items, menu.categories, setOrders]);
 
 
   const updateOrderStatus = useCallback(async (orderId: string, status: OrderStatus, reason?: string) => {
@@ -241,7 +219,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
             };
         });
     });
-  }, [user]);
+  }, [user, setOrders]);
   
  const toggleItemPrepared = useCallback((orderId: string, itemIds: string[]) => {
     // This function will need a PUT /api/orders/:id/items endpoint
@@ -263,7 +241,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
         return order;
       });
     });
-  }, []);
+  }, [setOrders]);
   
   const dispatchItem = useCallback((orderId: string, itemId: string) => {
     // This function will need a PUT /api/orders/:id/items endpoint
@@ -288,7 +266,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
       }
       return order;
     }));
-  }, [menu.items]);
+  }, [menu.items, setOrders]);
 
 
    const applyDiscountOrComplementary = useCallback((orderId: string, details: { discountType?: 'percentage' | 'amount', discountValue?: number, isComplementary?: boolean, complementaryReason?: string }) => {
@@ -324,7 +302,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
       }
       return prevOrders.map(o => o.id === orderId ? updatedOrder : o);
     });
-  }, []);
+  }, [setOrders]);
 
   const changePaymentMethod = useCallback((orderId: string, newPaymentMethod: string) => {
     // This function will need a PUT /api/orders/:id/payment endpoint
@@ -344,13 +322,13 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
             ...order, paymentMethod: newPaymentMethod, taxRate: newTaxRate, taxAmount: newTaxAmount, totalAmount: newTotalAmount,
         };
     }));
-  }, [settings.paymentMethods]);
+  }, [settings.paymentMethods, setOrders]);
 
 
   const clearOrders = useCallback(() => {
     setOrders([]);
     logActivity('Cleared all orders for the current session.', user?.username || 'System', 'System');
-  }, [logActivity, user]);
+  }, [logActivity, user, setOrders]);
 
   return (
     <OrderContext.Provider

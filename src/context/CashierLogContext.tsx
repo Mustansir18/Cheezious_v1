@@ -5,6 +5,8 @@ import React, { createContext, useContext, useState, ReactNode, useEffect, useCa
 import type { CashierLogEntry } from '@/lib/types';
 import { useAuth } from './AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useSyncLocalStorage } from '@/hooks/use-sync-local-storage';
+
 
 interface CashierLogContextType {
   logs: CashierLogEntry[];
@@ -16,29 +18,9 @@ interface CashierLogContextType {
 const CashierLogContext = createContext<CashierLogContextType | undefined>(undefined);
 
 export const CashierLogProvider = ({ children }: { children: ReactNode }) => {
-  const [logs, setLogs] = useState<CashierLogEntry[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [logs, setLogs, isLoading] = useSyncLocalStorage<CashierLogEntry[]>('cashierLog', [], '/api/cashier-log');
   const { user, updateUserBalance } = useAuth(); // We'll now rely on the API to update the balance
   const { toast } = useToast();
-
-  useEffect(() => {
-    async function loadLogs() {
-      setIsLoading(true);
-      try {
-        const response = await fetch('/api/cashier-log');
-        if (!response.ok) throw new Error('Failed to fetch cashier logs');
-        const data = await response.json();
-        setLogs(data.logs || []);
-      } catch (error) {
-        console.error("Could not load cashier logs from API", error);
-        setLogs([]);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    loadLogs();
-  }, []);
-
 
   const logTransaction = useCallback(async (details: Omit<CashierLogEntry, 'id' | 'timestamp' | 'adminId' | 'adminName'>) => {
     if (!user) return;
@@ -77,12 +59,12 @@ export const CashierLogProvider = ({ children }: { children: ReactNode }) => {
         console.error("Failed to log transaction to API:", error);
     }
 
-  }, [user, updateUserBalance, toast]);
+  }, [user, updateUserBalance, toast, setLogs]);
 
   const clearLogs = useCallback(async () => {
     // In a real app, this would be a DELETE request.
     setLogs([]);
-  }, []);
+  }, [setLogs]);
 
   return (
     <CashierLogContext.Provider value={{ logs, isLoading, logTransaction, clearLogs }}>

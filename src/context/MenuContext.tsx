@@ -6,7 +6,7 @@ import type { MenuData, MenuItem, MenuCategory, Addon, SubCategory } from '@/lib
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { menuItems, menuCategories, addons } from '@/lib/data';
+import { useSyncLocalStorage } from '@/hooks/use-sync-local-storage';
 
 interface MenuContextType {
   menu: MenuData;
@@ -26,63 +26,20 @@ interface MenuContextType {
 
 const MenuContext = createContext<MenuContextType | undefined>(undefined);
 
-const MENU_STORAGE_KEY = 'cheeziousMenuV3';
-
-const initialData: MenuData = {
-    items: menuItems,
-    categories: menuCategories,
-    addons: addons,
-};
-
 export const MenuProvider = ({ children }: { children: ReactNode }) => {
-  const [menu, setMenu] = useState<MenuData>({ items: [], categories: [], addons: [] });
-  const [isLoading, setIsLoading] = useState(true);
+  const [menu, setMenu, isLoading] = useSyncLocalStorage<MenuData>('menu', { items: [], categories: [], addons: [] }, '/api/menu');
   const { logActivity } = useActivityLog();
   const { user } = useAuth();
   const { toast } = useToast();
 
-  useEffect(() => {
-    try {
-      const item = window.localStorage.getItem(MENU_STORAGE_KEY);
-      if (item) {
-        const parsedData = JSON.parse(item);
-        // Ensure data is not empty before setting
-        if (parsedData.items.length > 0) {
-            setMenu(parsedData);
-        } else {
-            // If local storage is empty, initialize with defaults from data.ts
-            window.localStorage.setItem(MENU_STORAGE_KEY, JSON.stringify(initialData));
-            setMenu(initialData);
-        }
-      } else {
-        // If no menu in local storage, initialize with defaults
-        window.localStorage.setItem(MENU_STORAGE_KEY, JSON.stringify(initialData));
-        setMenu(initialData);
-      }
-    } catch (error) {
-      console.warn(`Error reading/initializing menu from localStorage:`, error);
-      setMenu(initialData);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const postMenu = useCallback((newMenu: MenuData) => {
-    try {
-        window.localStorage.setItem(MENU_STORAGE_KEY, JSON.stringify(newMenu));
-        setMenu(newMenu);
-    } catch (error) {
-        console.error("Failed to save menu to localStorage", error);
-        toast({ variant: 'destructive', title: 'Save Error', description: 'Could not save menu changes.' });
-    }
-  }, [toast]);
+  const postMenu = useCallback(async (newMenu: MenuData) => {
+    // This is a temporary solution for a single "document" DB model.
+    // In a real app, you'd post to specific endpoints for items, categories, etc.
+    setMenu(newMenu);
+  }, [setMenu]);
   
 
   const addCategory = (newCategory: MenuCategory) => {
-    if (!newCategory.id) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Category Code is required.' });
-      return;
-    }
     // In a real app, this would be a POST request to /api/menu
     postMenu({ ...menu, categories: [...menu.categories, newCategory] });
     logActivity(`Added menu category: '${newCategory.name}'.`, user?.username || 'System', 'Menu');
@@ -135,10 +92,6 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
 
 
   const addItem = (newItem: MenuItem) => {
-     if (!newItem.id) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Item Code is required.' });
-      return;
-    }
     postMenu({ ...menu, items: [...menu.items, newItem] });
     const logMessage = newItem.categoryId === 'C-00001' ? `Added new deal: '${newItem.name}'.` : `Added menu item: '${newItem.name}'.`;
     const logCategory = newItem.categoryId === 'C-00001' ? 'Deal' : 'Menu';
@@ -161,10 +114,6 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addAddon = (newAddon: Addon) => {
-    if (!newAddon.id) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Add-on Code is required.' });
-      return;
-    }
     postMenu({ ...menu, addons: [...menu.addons, newAddon] });
     logActivity(`Added add-on: '${newAddon.name}'.`, user?.username || 'System', 'Menu');
   };
