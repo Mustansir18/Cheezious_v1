@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import Link from "next/link";
@@ -34,7 +33,7 @@ export default function Header({ branchId }: { branchId?: string }) {
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-sm">
       <div className="w-full flex h-16 items-center justify-between px-4 lg:px-8">
         <Link href="/" className="flex items-center gap-2">
-           {isMounted && settings.companyLogo ? (
+           {isMounted && typeof settings.companyLogo === 'string' && settings.companyLogo ? (
             <Image src={settings.companyLogo} alt={settings.companyName} width={48} height={48} className="object-contain" />
           ) : (
             <div style={{ width: 48, height: 48 }} />

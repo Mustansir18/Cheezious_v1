@@ -46,7 +46,7 @@ const initialSettings: Settings = {
     paymentMethods: [{ id: 'PM-1', name: 'Cash', taxRate: 0.16 }],
     autoPrintReceipts: false,
     companyName: "Cheezious",
-    companyLogo: PlaceHolderImages.find(i => i.id === 'cheezious-special')?.imageUrl || '',
+    companyLogo: PlaceHolderImages.find(i => i.id === 'cheezious-special')?.imageUrl || undefined,
     branches: [{ id: 'B-00001', name: 'CHZ J3, JOHAR TOWN LAHORE', dineInEnabled: true, takeAwayEnabled: true, deliveryEnabled: true, orderPrefix: 'G3' }],
     defaultBranchId: 'B-00001',
     businessDayStart: "11:00",
