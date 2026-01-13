@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -6,6 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 /**
  * A generic hook to fetch data from an API endpoint using built-in React hooks.
  * It handles loading, error, and data states, and provides a `mutate` function to re-fetch.
+ * This version does NOT use SWR.
  *
  * @param apiPath The path to the API endpoint (e.g., '/api/settings').
  * @param initialData The initial data to use before the fetch is complete.

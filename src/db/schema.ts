@@ -58,7 +58,7 @@ BEGIN
   CREATE TABLE dbo.Carts (
     Id UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
     SessionId NVARCHAR(50) NOT NULL,
-    UserId NVARCHAR(255) NULL, -- This will now be correctly indexed
+    UserId NVARCHAR(255) NULL,
     BranchId NVARCHAR(50) NULL,
     OrderType NVARCHAR(50) NULL,
     FloorId NVARCHAR(50) NULL,
@@ -264,6 +264,17 @@ BEGIN
     timestamp DATETIME NOT NULL,
     rating INT NOT NULL,
     comment NVARCHAR(MAX)
+  );
+END
+GO
+
+-- Query_12: Roles Table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Roles]') AND type in (N'U'))
+BEGIN
+  CREATE TABLE dbo.Roles (
+    id NVARCHAR(50) PRIMARY KEY,
+    name NVARCHAR(100) NOT NULL,
+    permissions NVARCHAR(MAX) NOT NULL -- Stored as JSON string
   );
 END
 GO
