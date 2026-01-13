@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useMemo } from 'react';
@@ -26,9 +27,10 @@ interface OrderContextType {
 const OrderContext = createContext<OrderContextType | undefined>(undefined);
 
 export const OrderProvider = ({ children }: { children: ReactNode }) => {
-  const { data: orders, isLoading, mutate } = useDataFetcher<Order[]>('/api/orders', []);
+  const { user } = useAuth(); // Use auth context to check for logged-in user
+  const { data: orders, isLoading, mutate } = useDataFetcher<Order[]>(user ? '/api/orders' : null, []);
   const { logActivity } = useActivityLog();
-  const { user, updateUserBalance } = useAuth();
+  const { updateUserBalance } = useAuth();
   const { menu } = useMenu();
   const { settings } = useSettings();
   const { toast } = useToast();

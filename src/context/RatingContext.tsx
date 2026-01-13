@@ -5,6 +5,7 @@ import React, { createContext, useContext, ReactNode, useCallback } from 'react'
 import type { Rating } from '@/lib/types';
 import { useActivityLog } from './ActivityLogContext';
 import { useDataFetcher } from '@/hooks/use-data-fetcher';
+import { useAuth } from './AuthContext';
 
 interface RatingContextType {
   ratings: Rating[];
@@ -16,7 +17,8 @@ interface RatingContextType {
 const RatingContext = createContext<RatingContextType | undefined>(undefined);
 
 export const RatingProvider = ({ children }: { children: ReactNode }) => {
-  const { data: ratings, isLoading, mutate } = useDataFetcher<Rating[]>('/api/ratings', []);
+  const { user } = useAuth(); // Use auth context to check for logged-in user
+  const { data: ratings, isLoading, mutate } = useDataFetcher<Rating[]>(user ? '/api/ratings' : null, []);
   const { logActivity } = useActivityLog();
 
   const addRating = useCallback(async (newRatingData: Omit<Rating, 'id' | 'timestamp'>) => {

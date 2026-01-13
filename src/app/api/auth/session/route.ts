@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import { getConnectionPool, sql } from '@/lib/db';
 import type { User } from '@/lib/types';

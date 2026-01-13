@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Check, Loader, AlertTriangle, FileUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 
 export default function MigrateDataPage() {
@@ -22,6 +23,7 @@ export default function MigrateDataPage() {
     const { logs: cashierLogs } = useCashierLog();
     const { ratings } = useRating();
     const { toast } = useToast();
+    const router = useRouter();
 
     const [isLoading, setIsLoading] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
@@ -120,7 +122,8 @@ export default function MigrateDataPage() {
                     {isSuccess && (
                         <div className="p-4 bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200 rounded-lg text-center">
                             <p className="font-bold">Migration Complete!</p>
-                            <p className="text-sm">You can now safely remove this migration page and the local storage hooks.</p>
+                            <p className="text-sm">You can now proceed to the login page.</p>
+                            <Button onClick={() => router.push('/login')} className="mt-2">Go to Login</Button>
                         </div>
                     )}
                      {error && (

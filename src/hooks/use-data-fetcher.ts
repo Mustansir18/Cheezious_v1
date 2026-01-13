@@ -1,56 +1,48 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import useSWR from 'swr';
 
-/**
- * A generic hook to fetch data from an API endpoint using built-in React hooks.
- * It handles loading, error, and data states, and provides a `mutate` function to re-fetch.
- * This version does NOT use SWR.
- *
- * @param apiPath The path to the API endpoint (e.g., '/api/settings').
- * @param initialData The initial data to use before the fetch is complete.
- * @returns An object containing the fetched data, loading state, error state, and a mutate function.
- */
-export function useDataFetcher<T>(apiPath: string, initialData: T) {
-  const [data, setData] = useState<T>(initialData);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isError, setIsError] = useState<any>(null);
+const fetcher = (url: string) => fetch(url, { cache: 'no-store' }).then(res => {
+  if (!res.ok) {
+    const error = new Error('An error occurred while fetching the data.');
+    (error as any).info = res.statusText;
+    (error as any).status = res.status;
+    throw error;
+  }
+  return res.json();
+});
 
-  const mutate = useCallback(async () => {
-    setIsLoading(true);
-    setIsError(null);
-    try {
-      const res = await fetch(apiPath, { cache: 'no-store' });
-      if (!res.ok) {
-        const error = new Error('An error occurred while fetching the data.');
-        (error as any).info = res.statusText;
-        (error as any).status = res.status;
-        throw error;
-      }
-      const jsonData = await res.json();
-      
-      // The API might return an object with a key, e.g., { settings: {...} }
-      // We extract the data from that key.
-      const dataKey = Object.keys(jsonData)[0];
-      const extractedData = jsonData[dataKey] ?? initialData;
-      
-      setData(extractedData);
-    } catch (error) {
-      setIsError(error);
-      console.error(`Failed to fetch from ${apiPath}:`, error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [apiPath, initialData]);
+export function useDataFetcher<T>(
+  apiPath: string | null, // Allow null to disable fetching
+  initialData: T
+) {
+  const { data, error, isLoading, mutate } = useSWR(apiPath, fetcher, {
+    fallbackData: { [Object.keys(initialData)[0] || 'data']: initialData }, // Improved fallback
+    revalidateOnFocus: false, // Prevent re-fetching on window focus
+    revalidateOnReconnect: true,
+  });
+
+  const [storedValue, setStoredValue] = useState<T>(initialData);
 
   useEffect(() => {
-    mutate();
-  }, [mutate]);
+    if (data) {
+      // API might return an object with a key, e.g., { settings: {...} }
+      // Or it might be the data directly. We find the first key.
+      const dataKey = Object.keys(data)[0];
+      const extractedData = data[dataKey] ?? initialData;
+      setStoredValue(extractedData);
+    } else if (!apiPath) {
+      // If API path is null, reset to initial data
+      setStoredValue(initialData);
+    }
+  }, [data, apiPath, initialData]);
   
   return {
-    data,
+    data: storedValue,
     isLoading,
-    isError,
+    isError: error,
     mutate,
   };
 }
