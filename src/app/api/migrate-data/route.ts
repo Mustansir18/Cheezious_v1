@@ -87,7 +87,7 @@ export async function POST(request: Request) {
             await transaction.request()
                 .input('id', sql.NVarChar, user.id)
                 .input('username', sql.NVarChar, user.username)
-                .input('password', sql.NVarChar, user.password)
+                .input('password', sql.NVarChar, user.password || '') // FIX: Provide a default value for password
                 .input('role', sql.NVarChar, user.role)
                 .input('branchId', sql.NVarChar, user.branchId)
                 .input('balance', sql.Decimal(18, 2), user.balance || 0)

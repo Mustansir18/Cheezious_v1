@@ -21,7 +21,8 @@ const dbConfig: sql.config = {
     max: 10,
     min: 0,
     idleTimeoutMillis: 30000
-  }
+  },
+  requestTimeout: 60000, // FIX: Increase request timeout to 60 seconds
 };
 
 let pool: sql.ConnectionPool | null = null;
