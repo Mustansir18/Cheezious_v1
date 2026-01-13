@@ -27,16 +27,14 @@ export function AdminRouteGuard({ children }: { children: React.ReactNode }) {
       return;
     }
     
-    // Explicitly check if roles are loaded. This is the key fix.
+    // Explicitly check if roles are loaded.
     if (!settings.roles || settings.roles.length === 0) {
         console.error("Roles not loaded in settings context. Cannot verify permissions.");
-        // This is a critical state, something is wrong with settings loading.
-        // For safety, redirect to login.
-        router.push('/login');
+        router.push('/login'); // For safety, redirect to login.
         return;
     }
 
-    // Find the user's role from the loaded settings
+    // Find the user's role definition from the loaded settings
     const userRole = settings.roles.find(role => role.id === user.role);
 
     // If the user's role definition doesn't exist in settings, deny access.
@@ -63,8 +61,8 @@ export function AdminRouteGuard({ children }: { children: React.ReactNode }) {
 
   }, [user, isLoading, router, pathname, settings.roles]);
 
-  // While loading, show a loading screen.
-  if (isLoading) {
+  // While loading, or if the user object is momentarily null, show a loading screen.
+  if (isLoading || !user) {
     return (
       <div className="flex h-screen items-center justify-center">
         <Loader className="h-12 w-12 animate-spin text-primary" />
@@ -73,13 +71,13 @@ export function AdminRouteGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Final check to prevent rendering children if user is not authenticated or authorized
-  const userRole = settings.roles.find(role => role.id === user?.role);
-  if (!user || !userRole) {
+  // Final check to prevent rendering children if authorization fails
+  const userRole = settings.roles.find(role => role.id === user.role);
+
+  if (!userRole) {
      return (
       <div className="flex h-screen items-center justify-center">
-        <Loader className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-4 text-muted-foreground">Redirecting...</p>
+        <p className="text-muted-foreground">Access Denied. Role not found. Redirecting...</p>
       </div>
     );
   }
