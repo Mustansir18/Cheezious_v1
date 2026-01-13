@@ -8,6 +8,7 @@ import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
 import { initialDeals } from '@/lib/data';
 import { ALL_PERMISSIONS } from '@/config/permissions';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 interface SettingsContextType {
   settings: Settings;
@@ -46,7 +47,7 @@ const initialSettings: Settings = {
     paymentMethods: [{ id: 'PM-1', name: 'Cash', taxRate: 0.16 }],
     autoPrintReceipts: false,
     companyName: "Cheezious",
-    companyLogo: "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F9b964344-32b0-4a8b-a7ea-34863f6848d7.png&w=1920&q=75",
+    companyLogo: PlaceHolderImages.find(i => i.id === 'cheezious-special')?.imageUrl,
     branches: [{ id: 'B-00001', name: 'CHZ J3, JOHAR TOWN LAHORE', dineInEnabled: true, takeAwayEnabled: true, deliveryEnabled: true, orderPrefix: 'G3' }],
     defaultBranchId: 'B-00001',
     businessDayStart: "11:00",
