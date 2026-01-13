@@ -6,7 +6,8 @@ import type { Settings, Floor, Table, PaymentMethod, Branch, Role, UserRole, Del
 import { useToast } from '@/hooks/use-toast';
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
-import { useSyncLocalStorage } from '@/hooks/use-sync-local-storage';
+import { initialDeals } from '@/lib/data';
+import { ALL_PERMISSIONS } from '@/config/permissions';
 
 interface SettingsContextType {
   settings: Settings;
@@ -37,37 +38,73 @@ interface SettingsContextType {
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
+const SETTINGS_STORAGE_KEY = 'cheeziousSettingsV2';
+
 const initialSettings: Settings = {
-    floors: [],
-    tables: [],
-    paymentMethods: [],
+    floors: [{ id: 'F-00001', name: 'Ground' }],
+    tables: [{ id: 'T-G-1', name: 'Table 1', floorId: 'F-00001' }],
+    paymentMethods: [{ id: 'PM-1', name: 'Cash', taxRate: 0.16 }],
     autoPrintReceipts: false,
     companyName: "Cheezious",
-    companyLogo: '',
-    branches: [],
-    defaultBranchId: null,
+    companyLogo: "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F9b964344-32b0-4a8b-a7ea-34863f6848d7.png&w=1920&q=75",
+    branches: [{ id: 'B-00001', name: 'CHZ J3, JOHAR TOWN LAHORE', dineInEnabled: true, takeAwayEnabled: true, deliveryEnabled: true, orderPrefix: 'G3' }],
+    defaultBranchId: 'B-00001',
     businessDayStart: "11:00",
     businessDayEnd: "04:00",
-    roles: [],
-    deliveryModes: [],
+    roles: [
+      { id: 'root', name: 'Root', permissions: ['admin:*'] },
+      { id: 'admin', name: 'Admin', permissions: ['/admin/orders', '/admin/kds'] },
+      { id: 'cashier', name: 'Cashier', permissions: ['/cashier'] },
+      { id: 'marketing', name: 'Marketing', permissions: ['/marketing/reporting', '/marketing/feedback', '/marketing/target'] },
+      { id: 'kds', name: 'KDS (All Stations)', permissions: ['/admin/kds'] },
+      { id: 'make-station', name: 'MAKE Station', permissions: ['/admin/kds/pizza'] },
+      { id: 'pasta-station', name: 'PASTA Station', permissions: ['/admin/kds/pasta'] },
+      { id: 'fried-station', name: 'FRIED Station', permissions: ['/admin/kds/fried'] },
+      { id: 'bar-station', name: 'BEVERAGES Station', permissions: ['/admin/kds/bar'] },
+      { id: 'cutt-station', name: 'CUTT Station', permissions: ['/admin/kds/master'] },
+    ],
+    deliveryModes: [{ id: 'DM-1', name: 'Website' }],
     promotion: {
         isEnabled: true,
-        itemId: null,
-        imageUrl: ''
+        itemId: initialDeals[0]?.id || null,
+        imageUrl: initialDeals[0]?.imageUrl || ''
     }
 };
 
-const SETTINGS_STORAGE_KEY = 'cheeziousSettingsV2';
-
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
-  const [settings, setSettings, isLoading] = useSyncLocalStorage<Settings>(SETTINGS_STORAGE_KEY, initialSettings, '/api/settings');
+  const [settings, setSettings] = useState<Settings>(initialSettings);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const { logActivity } = useActivityLog();
   const { user } = useAuth();
   
+  useEffect(() => {
+    try {
+      const item = window.localStorage.getItem(SETTINGS_STORAGE_KEY);
+      if (item) {
+        setSettings(JSON.parse(item));
+      } else {
+        // If no settings in local storage, initialize with defaults
+        window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(initialSettings));
+        setSettings(initialSettings);
+      }
+    } catch (error) {
+      console.warn(`Error reading/initializing settings from localStorage:`, error);
+      setSettings(initialSettings);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   const postSettings = useCallback((newSettings: Settings) => {
-      setSettings(newSettings);
-  }, [setSettings]);
+      try {
+        window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(newSettings));
+        setSettings(newSettings);
+      } catch (error) {
+        console.error("Failed to save settings to localStorage", error);
+        toast({ variant: 'destructive', title: 'Save Error', description: 'Could not save settings.' });
+      }
+  }, [toast]);
   
   const addFloor = useCallback((id: string, name: string) => {
     if (!id || !name) { return; }

@@ -6,7 +6,7 @@ import type { MenuData, MenuItem, MenuCategory, Addon, SubCategory } from '@/lib
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { useSyncLocalStorage } from '@/hooks/use-sync-local-storage';
+import { menuItems, menuCategories, addons } from '@/lib/data';
 
 interface MenuContextType {
   menu: MenuData;
@@ -29,20 +29,45 @@ const MenuContext = createContext<MenuContextType | undefined>(undefined);
 const MENU_STORAGE_KEY = 'cheeziousMenuV3';
 
 const initialData: MenuData = {
-    items: [],
-    categories: [],
-    addons: [],
+    items: menuItems,
+    categories: menuCategories,
+    addons: addons,
 };
 
 export const MenuProvider = ({ children }: { children: ReactNode }) => {
-  const [menu, setMenu, isLoading] = useSyncLocalStorage<MenuData>(MENU_STORAGE_KEY, initialData, '/api/menu');
+  const [menu, setMenu] = useState<MenuData>(initialData);
+  const [isLoading, setIsLoading] = useState(true);
   const { logActivity } = useActivityLog();
   const { user } = useAuth();
   const { toast } = useToast();
 
+  useEffect(() => {
+    try {
+      const item = window.localStorage.getItem(MENU_STORAGE_KEY);
+      if (item) {
+        setMenu(JSON.parse(item));
+      } else {
+        // If no menu in local storage, initialize with defaults from data.ts
+        window.localStorage.setItem(MENU_STORAGE_KEY, JSON.stringify(initialData));
+        setMenu(initialData);
+      }
+    } catch (error) {
+      console.warn(`Error reading/initializing menu from localStorage:`, error);
+      setMenu(initialData);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   const postMenu = useCallback((newMenu: MenuData) => {
-    setMenu(newMenu);
-  }, [setMenu]);
+    try {
+        window.localStorage.setItem(MENU_STORAGE_KEY, JSON.stringify(newMenu));
+        setMenu(newMenu);
+    } catch (error) {
+        console.error("Failed to save menu to localStorage", error);
+        toast({ variant: 'destructive', title: 'Save Error', description: 'Could not save menu changes.' });
+    }
+  }, [toast]);
   
 
   const addCategory = (newCategory: MenuCategory) => {
