@@ -19,7 +19,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { login } = useAuth();
+  const { user, login } = useAuth();
   const { settings } = useSettings();
   const router = useRouter();
   const { toast } = useToast();
@@ -33,12 +33,12 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const user = await login(username, password);
-      if (user) {
-        toast({ title: 'Login Successful', description: `Welcome back, ${user.username}!` });
+      const loggedInUser = await login(username, password);
+      if (loggedInUser) {
+        toast({ title: 'Login Successful', description: `Welcome back, ${loggedInUser.username}!` });
         
         // This is now the single source of truth for post-login redirection.
-        switch (user.role) {
+        switch (loggedInUser.role) {
             case 'root':
                 router.push('/admin');
                 break;
@@ -83,6 +83,16 @@ export default function LoginPage() {
         setIsLoading(false);
     }
   };
+  
+  // If user is already logged in, show a loading/redirecting state.
+  if (user) {
+    return (
+        <div className="flex h-screen items-center justify-center">
+            <Loader className="h-12 w-12 animate-spin text-primary" />
+            <p className="ml-4 text-muted-foreground">Already logged in. Redirecting...</p>
+        </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
