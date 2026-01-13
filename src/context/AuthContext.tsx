@@ -26,10 +26,23 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const SESSION_ID_KEY = 'cheezious_session_id';
 
+const initialUsers: User[] = [
+    { id: 'root', username: 'root', password: 'Faith123$$', role: 'root', balance: 0 },
+    { id: 'admin-1', username: 'admin', password: '123', role: 'admin', branchId: 'B-00001', balance: 0 },
+    { id: 'cashier-1', username: 'cashier', password: '123', role: 'cashier', branchId: 'B-00001', balance: 0 },
+    { id: 'marketing-1', username: 'marketing', password: '123', role: 'marketing', balance: 0 },
+    { id: 'kds-master', username: 'kds', password: '123', role: 'kds', branchId: 'B-00001', balance: 0 },
+    { id: 'kds-make', username: 'pizza', password: '123', role: 'make-station', branchId: 'B-00001', stationName: 'MAKE Station', balance: 0 },
+    { id: 'kds-pasta', username: 'pasta', password: '123', role: 'pasta-station', branchId: 'B-00001', stationName: 'PASTA Station', balance: 0 },
+    { id: 'kds-fried', username: 'fried', password: '123', role: 'fried-station', branchId: 'B-00001', stationName: 'FRIED Station', balance: 0 },
+    { id: 'kds-bar', username: 'bar', password: '123', role: 'bar-station', branchId: 'B-00001', stationName: 'BEVERAGES Station', balance: 0 },
+    { id: 'kds-cutt', username: 'cutt', password: '123', role: 'cutt-station', branchId: 'B-00001', stationName: 'CUTT Station', balance: 0 },
+];
+
 // Create the provider component
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [users, setUsers, isUsersLoading] = useSyncLocalStorage<User[]>('users', [], '/api/users');
+  const [users, setUsers, isUsersLoading] = useSyncLocalStorage<User[]>('users', initialUsers, '/api/users');
   const [isSessionLoading, setSessionLoading] = useState(true);
   const { logActivity } = useActivityLog();
   const { toast } = useToast();
@@ -165,7 +178,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               return u;
           });
       });
-  }, []);
+  }, [setUsers]);
 
 
   const value = { user, users, isLoading, login, logout, addUser, updateUser, deleteUser, updateUserBalance };

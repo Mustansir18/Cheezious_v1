@@ -3,10 +3,11 @@ import { NextResponse } from 'next/server';
 import { getConnectionPool, sql } from '@/lib/db';
 import type { User } from '@/lib/types';
 
-// GET all users
+// GET all users (without passwords)
 export async function GET(request: Request) {
   try {
     const pool = await getConnectionPool();
+    // Explicitly select columns to exclude the password
     const result = await pool.request().query('SELECT id, username, role, branchId, balance, stationName FROM Users');
     return NextResponse.json({ users: result.recordset });
   } catch (error: any) {
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
         VALUES (@id, @username, @password, @role, @branchId, @stationName, 0)
       `);
 
-    const createdUser: User = { id, username, role, branchId, stationName, balance: 0 };
+    const createdUser: Omit<User, 'password'> = { id, username, role, branchId, stationName, balance: 0 };
     return NextResponse.json({ user: createdUser }, { status: 201 });
   } catch (error: any) {
     console.error('Failed to create user:', error);
