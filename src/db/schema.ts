@@ -34,7 +34,7 @@ BEGIN
     stationName NVARCHAR(100),
     createdAt DATETIME DEFAULT GETDATE(),
     updatedAt DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (branchId) REFERENCES Branches(id)
+    FOREIGN KEY (branchId) REFERENCES Branches(id) ON DELETE SET NULL
   );
 END
 GO
@@ -52,13 +52,20 @@ BEGIN
 END
 GO
 
+-- Check for the old foreign key on Carts.SessionId and drop it if it exists.
+IF EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK__Carts__SessionId__4AB81AF0' AND parent_object_id = OBJECT_ID('dbo.Carts'))
+BEGIN
+    ALTER TABLE dbo.Carts DROP CONSTRAINT FK__Carts__SessionId__4AB81AF0;
+END
+GO
+
+
 -- Query_4: Carts table
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Carts]') AND type in (N'U'))
 BEGIN
   CREATE TABLE dbo.Carts (
     Id UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
     SessionId NVARCHAR(50) NOT NULL,
-    UserId NVARCHAR(255), -- Link to user when logged in
     BranchId NVARCHAR(50) NULL,
     OrderType NVARCHAR(50) NULL,
     FloorId NVARCHAR(50) NULL,
@@ -67,11 +74,19 @@ BEGIN
     CustomerName NVARCHAR(200) NULL,
     CustomerPhone NVARCHAR(50) NULL,
     CustomerAddress NVARCHAR(500) NULL,
-    UpdatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
-    FOREIGN KEY (UserId) REFERENCES Users(id) ON DELETE SET NULL -- New relationship
+    UpdatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
   );
 END
 GO
+
+-- Ensure UserId column exists on Carts table
+IF COL_LENGTH('dbo.Carts', 'UserId') IS NULL
+BEGIN
+    ALTER TABLE dbo.Carts ADD UserId NVARCHAR(255) NULL;
+    ALTER TABLE dbo.Carts ADD CONSTRAINT FK_Carts_Users FOREIGN KEY (UserId) REFERENCES Users(id) ON DELETE SET NULL;
+END
+GO
+
 IF NOT EXISTS (SELECT name FROM sys.indexes WHERE name = 'IX_Carts_SessionId')
 BEGIN
     CREATE UNIQUE INDEX IX_Carts_SessionId ON dbo.Carts(SessionId) WHERE UserId IS NULL;
