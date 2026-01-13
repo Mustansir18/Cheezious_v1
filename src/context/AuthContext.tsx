@@ -7,7 +7,7 @@ import type { User, UserRole } from '@/lib/types';
 import { useActivityLog } from './ActivityLogContext';
 import { useToast } from '@/hooks/use-toast';
 import { useDataFetcher } from '@/hooks/use-data-fetcher';
-import { mutate as globalMutate } from 'swr';
+import { useCart } from './CartContext'; // Import useCart
 
 interface AuthContextType {
   user: User | null;
@@ -44,6 +44,7 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { logActivity } = useActivityLog();
   const { toast } = useToast();
   const router = useRouter();
+  const cartContext = useCart(); // Get cart context
 
   const isLoading = isUsersLoading || isSessionLoading;
 
@@ -84,14 +85,18 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem(SESSION_ID_KEY, sessionId);
       setUser(loggedInUser);
       logActivity(`User '${username}' logged in.`, username, 'System');
-      // Trigger a re-fetch of cart data, which might now belong to the user
-      globalMutate('/api/cart');
+      
+      // Trigger a re-fetch of cart data
+      if (cartContext) {
+        cartContext.reloadCart();
+      }
+      
       return loggedInUser;
     } else {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Invalid username or password.');
     }
-  }, [logActivity]);
+  }, [logActivity, cartContext]);
 
   const logout = useCallback(async () => {
     const sessionId = localStorage.getItem(SESSION_ID_KEY);
@@ -101,10 +106,13 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     setUser(null);
     localStorage.removeItem(SESSION_ID_KEY);
-    // Clear cart data from other contexts if necessary (though SWR should handle this)
-    globalMutate('/api/cart', { cart: null, items: [] }, false); // Optimistically update cart to be empty
+    
+    // Trigger cart reload for guest session
+    if (cartContext) {
+      cartContext.reloadCart();
+    }
     router.push('/login');
-  }, [router, user, logActivity]);
+  }, [router, user, logActivity, cartContext]);
 
   const postUserData = async (method: 'POST' | 'PUT' | 'DELETE', body: any) => {
     const response = await fetch('/api/users', {
@@ -151,18 +159,7 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updateUserBalance = useCallback((userId: string, amount: number, operation: 'add' | 'subtract') => {
-    mutateUsers((currentUsers: User[] | undefined) => {
-        if (!currentUsers) return [];
-        const updatedUsers = currentUsers.map((u: User) => {
-            if (u.id === userId) {
-                const currentBalance = u.balance || 0;
-                const newBalance = operation === 'add' ? currentBalance + amount : currentBalance - amount;
-                return { ...u, balance: newBalance };
-            }
-            return u;
-        });
-        return { users: updatedUsers };
-    }, false); // optimistic update
+    mutateUsers(); // Just re-fetch from server to ensure consistency
   }, [mutateUsers]);
 
   const value = { user, users: users || [], isLoading, login, logout, addUser, updateUser, deleteUser, updateUserBalance };
@@ -170,11 +167,15 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-const AuthContextWrapper = ({ children }: { children: ReactNode }) => (
+// We need to wrap the AuthProvider in another component that can safely use the useCart hook
+const AuthProviderWithCart = ({ children }: { children: ReactNode }) => {
+  return (
     <AuthProvider>{children}</AuthProvider>
-);
+  );
+};
 
-export { AuthContextWrapper as AuthProvider };
+
+export { AuthProviderWithCart as AuthProvider };
 
 
 export const useAuth = () => {

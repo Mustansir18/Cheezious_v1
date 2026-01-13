@@ -36,6 +36,7 @@ interface CartContextType {
   updateQuantity: (cartItemId: string, change: number) => void;
   clearCart: () => void;
   closeCart: () => void;
+  reloadCart: () => void;
   setOrderDetails: (details: { branchId: string; orderType: OrderType; deliveryMode?: string }) => void;
   setCustomerDetails: (details: CustomerDetails) => void;
   setTable: (tableId: string, floorId: string) => void;
@@ -60,8 +61,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [cartIsLoading, setCartIsLoading] = useState(true);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [cartTrigger, setCartTrigger] = useState(0);
   const { toast } = useToast();
   const { menu } = useMenu();
+
+  const reloadCart = useCallback(() => {
+    setCartTrigger(prev => prev + 1);
+  }, []);
 
   // 1. Get or create session ID on mount
   useEffect(() => {
@@ -71,7 +77,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         localStorage.setItem(SESSION_ID_KEY, storedSessionId);
     }
     setSessionId(storedSessionId);
-  }, []);
+  }, [cartTrigger]);
   
   // 2. Fetch cart from API when session ID is available
   useEffect(() => {
@@ -86,10 +92,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
             if (!response.ok) throw new Error('Failed to fetch cart');
 
-            const { cart, items } = await response.json();
+            const { cart, items: apiItems } = await response.json();
             
             if (cart) {
-                setItems(items || []);
+                setItems(apiItems || []);
                 setBranchId(cart.BranchId);
                 setOrderType(cart.OrderType);
                 setTableId(cart.TableId);
@@ -98,6 +104,17 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
                 setCustomerName(cart.CustomerName);
                 setCustomerPhone(cart.CustomerPhone);
                 setCustomerAddress(cart.CustomerAddress);
+            } else {
+                // If no cart on server, reset the state
+                setItems([]);
+                setBranchId(null);
+                setOrderType(null);
+                setTableId(null);
+                setFloorId(null);
+                setDeliveryMode(null);
+                setCustomerName(null);
+                setCustomerPhone(null);
+                setCustomerAddress(null);
             }
         } catch (error) {
             console.error("Could not load cart from API:", error);
@@ -295,7 +312,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const cartCount = useMemo(() => items.reduce((count, item) => count + (item.isDealComponent ? 0 : item.quantity), 0), [items]);
 
   return (
-    <CartContext.Provider value={{ items, branchId, orderType, tableId, floorId, deliveryMode, customerName, customerPhone, customerAddress, isCartOpen, cartIsLoading, setIsCartOpen, addItem, updateQuantity, clearCart, closeCart, setOrderDetails, setCustomerDetails, setTable, cartCount, cartTotal }}>
+    <CartContext.Provider value={{ items, branchId, orderType, tableId, floorId, deliveryMode, customerName, customerPhone, customerAddress, isCartOpen, cartIsLoading, setIsCartOpen, addItem, updateQuantity, clearCart, closeCart, reloadCart, setOrderDetails, setCustomerDetails, setTable, cartCount, cartTotal }}>
       {children}
     </CartContext.Provider>
   );

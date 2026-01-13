@@ -15,23 +15,23 @@ import { CashierLogProvider } from '@/context/CashierLogContext';
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <ActivityLogProvider>
-      <AuthProvider>
-        <SettingsProvider>
-            <CashierLogProvider>
-              <MenuProvider>
+      <SettingsProvider>
+        <MenuProvider>
+          <CashierLogProvider>
+            <CartProvider>
+              <AuthProvider>
                 <DealsProvider>
                   <OrderProvider>
                     <RatingProvider>
-                      <CartProvider>
-                        {children}
-                      </CartProvider>
+                      {children}
                     </RatingProvider>
                   </OrderProvider>
                 </DealsProvider>
-              </MenuProvider>
-            </CashierLogProvider>
-        </SettingsProvider>
-      </AuthProvider>
+              </AuthProvider>
+            </CartProvider>
+          </CashierLogProvider>
+        </MenuProvider>
+      </SettingsProvider>
     </ActivityLogProvider>
   );
 }
