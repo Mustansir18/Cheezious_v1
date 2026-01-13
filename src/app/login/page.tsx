@@ -36,8 +36,12 @@ export default function LoginPage() {
       const user = await login(username, password);
       if (user) {
         toast({ title: 'Login Successful', description: `Welcome back, ${user.username}!` });
-        if (user.role === 'root' || user.role === 'admin') {
+        
+        // This logic is now more specific to ensure correct redirection.
+        if (user.role === 'root') {
           router.push('/admin');
+        } else if (user.role === 'admin') {
+          router.push('/admin/orders');
         } else if (user.role === 'cashier') {
           router.push('/cashier');
         } else if (user.role === 'marketing') {
@@ -54,6 +58,8 @@ export default function LoginPage() {
             router.push('/admin/kds/bar');
         } else if (user.role === 'cutt-station') {
             router.push('/admin/kds/master');
+        } else {
+            router.push('/'); // Fallback to home
         }
       }
     } catch (error: any) {

@@ -8,22 +8,22 @@ import { Package, Settings, Users, Megaphone, ShoppingCart, QrCode, Monitor, Cli
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useEffect } from 'react';
-import { Loader, Pizza } from 'lucide-react';
+import { Loader } from 'lucide-react';
 
 export default function AdminDashboardPage() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
 
   useEffect(() => {
-    // If user is a branch admin, redirect them directly to their default page
-    if (!isLoading && user) {
+    // This effect now only handles redirecting non-root users away from the main dashboard
+    if (!isLoading && user && user.role !== 'root') {
       if (user.role === 'admin') router.push('/admin/orders');
-      if (user.role === 'kds') router.push('/admin/kds');
-      if (user.role === 'make-station') router.push('/admin/kds/pizza');
-      if (user.role === 'pasta-station') router.push('/admin/kds/pasta');
-      if (user.role === 'fried-station') router.push('/admin/kds/fried');
-      if (user.role === 'bar-station') router.push('/admin/kds/bar');
-      if (user.role === 'cutt-station') router.push('/admin/kds/master');
+      else if (user.role === 'kds') router.push('/admin/kds');
+      else if (user.role === 'make-station') router.push('/admin/kds/pizza');
+      else if (user.role === 'pasta-station') router.push('/admin/kds/pasta');
+      else if (user.role === 'fried-station') router.push('/admin/kds/fried');
+      else if (user.role === 'bar-station') router.push('/admin/kds/bar');
+      else if (user.role === 'cutt-station') router.push('/admin/kds/master');
     }
   }, [user, isLoading, router]);
 

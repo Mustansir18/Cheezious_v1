@@ -32,8 +32,6 @@ export function AdminRouteGuard({ children }: { children: React.ReactNode }) {
     }
 
     // Check if the user's role grants access to the current path.
-    // The 'admin:*' permission gives access to all admin pages.
-    // The '/admin/kds' permission also gives access to all sub-routes.
     const hasAccess = userRole.permissions.includes('admin:*') 
         || userRole.permissions.includes(pathname)
         || (userRole.permissions.includes('/admin/kds') && pathname.startsWith('/admin/kds'));
@@ -41,13 +39,13 @@ export function AdminRouteGuard({ children }: { children: React.ReactNode }) {
 
     if (!hasAccess) {
         // If no access, redirect to a default page.
-        // Check for specific KDS roles and redirect them to their allowed page if they stray.
-        if (user.role === 'make-station') router.push('/admin/kds/pizza');
+        if (user.role === 'admin') router.push('/admin/orders');
+        else if (user.role === 'kds') router.push('/admin/kds');
+        else if (user.role === 'make-station') router.push('/admin/kds/pizza');
         else if (user.role === 'pasta-station') router.push('/admin/kds/pasta');
         else if (user.role === 'fried-station') router.push('/admin/kds/fried');
         else if (user.role === 'bar-station') router.push('/admin/kds/bar');
         else if (user.role === 'cutt-station') router.push('/admin/kds/master');
-        else if (user.role === 'kds') router.push('/admin/kds');
         else if (user.role === 'cashier') router.push('/cashier');
         else if (user.role === 'marketing') router.push('/marketing/reporting');
         else router.push('/login'); // Fallback redirect
