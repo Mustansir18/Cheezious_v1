@@ -3,16 +3,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-const fetcher = (url: string) => fetch(url, { cache: 'no-store' }).then(res => {
-  if (!res.ok) {
-    const error = new Error('An error occurred while fetching the data.');
-    (error as any).info = res.statusText;
-    (error as any).status = res.status;
-    throw error;
-  }
-  return res.json();
-});
-
 export function useDataFetcher<T>(
   apiPath: string | null,
   initialData: T
@@ -71,8 +61,9 @@ export function useDataFetcher<T>(
     return () => {
       isMounted = false;
     };
-    // The dependency array is critical. It ensures the fetch runs only when apiPath or the trigger changes.
-  }, [apiPath, trigger, initialData]);
+    // This is the fix: Removing `initialData` from the dependency array.
+    // It prevents an infinite loop caused by object/array reference changes on re-renders.
+  }, [apiPath, trigger]);
 
   return {
     data: data,

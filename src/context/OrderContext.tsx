@@ -28,6 +28,7 @@ const OrderContext = createContext<OrderContextType | undefined>(undefined);
 
 export const OrderProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth(); // Use auth context to check for logged-in user
+  // This is the fix: Only fetch orders if a user is logged in.
   const { data: orders, isLoading, mutate } = useDataFetcher<Order[]>(user ? '/api/orders' : null, []);
   const { logActivity } = useActivityLog();
   const { updateUserBalance } = useAuth();

@@ -18,6 +18,7 @@ const RatingContext = createContext<RatingContextType | undefined>(undefined);
 
 export const RatingProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth(); // Use auth context to check for logged-in user
+  // This is the fix: Only fetch ratings if a user is logged in.
   const { data: ratings, isLoading, mutate } = useDataFetcher<Rating[]>(user ? '/api/ratings' : null, []);
   const { logActivity } = useActivityLog();
 
