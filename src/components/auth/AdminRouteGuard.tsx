@@ -24,11 +24,10 @@ export function AdminRouteGuard({ children }: { children: React.ReactNode }) {
       router.push('/login');
       return;
     }
-
-    // --- FIX: Explicitly grant access to the root user immediately ---
-    // The root user should bypass all other permission checks.
+    
+    // Explicitly grant access to the root user immediately.
     if (user.role === 'root') {
-      return; // Access granted, do nothing.
+      return; 
     }
     
     // For all other users, proceed with permission checks.
@@ -49,13 +48,14 @@ export function AdminRouteGuard({ children }: { children: React.ReactNode }) {
     const hasWildcardAccess = userRole.permissions.includes('admin:*');
     const hasDirectAccess = userRole.permissions.includes(pathname);
     
+    // Check if the user has access to any KDS route, if they are on a KDS path.
     const isKdsRoute = pathname.startsWith('/admin/kds');
     const hasKdsAccess = isKdsRoute && userRole.permissions.some(p => p.startsWith('/admin/kds'));
     
     const hasAccess = hasWildcardAccess || hasDirectAccess || hasKdsAccess;
 
     if (!hasAccess) {
-      console.warn(`Access denied for user '${user.username}' to path '${pathname}'.`);
+      console.warn(`Access denied for user '${user.username}' to path '${pathname}'. Redirecting to login.`);
       router.push('/login');
     }
 
@@ -70,6 +70,7 @@ export function AdminRouteGuard({ children }: { children: React.ReactNode }) {
     );
   }
   
+  // If not loading and no user, show redirecting message.
   if (!user) {
       return (
             <div className="flex h-screen items-center justify-center">
@@ -78,7 +79,6 @@ export function AdminRouteGuard({ children }: { children: React.ReactNode }) {
             </div>
       );
   }
-
 
   return <>{children}</>;
 }

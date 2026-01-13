@@ -24,9 +24,22 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const SESSION_ID_KEY = 'cheezious_session_id';
 
+const initialUsers: User[] = [
+    { id: 'CH-00001', username: 'root', password: 'Faith123$$', role: 'root', balance: 100000 },
+    { id: 'CH-00002', username: 'admin', password: 'admin', role: 'admin', branchId: 'B-00001', balance: 50000 },
+    { id: 'CH-00003', username: 'cashier', password: '123', role: 'cashier', branchId: 'B-00001', balance: 10000 },
+    { id: 'CH-00004', username: 'marketing', password: 'marketing', role: 'marketing', balance: 0 },
+    { id: 'CH-00005', username: 'kds', password: 'kds', role: 'kds', branchId: 'B-00001', stationName: 'All Stations' },
+    { id: 'CH-00006', username: 'make-station', password: 'make-station', role: 'make-station', branchId: 'B-00001', stationName: 'MAKE Station' },
+    { id: 'CH-00007', username: 'pasta-station', password: 'pasta-station', role: 'pasta-station', branchId: 'B-00001', stationName: 'PASTA Station' },
+    { id: 'CH-00008', username: 'fried-station', password: 'fried-station', role: 'fried-station', branchId: 'B-00001', stationName: 'FRIED Station' },
+    { id: 'CH-00009', username: 'bar-station', password: 'bar-station', role: 'bar-station', branchId: 'B-00001', stationName: 'BEVERAGES Station' },
+    { id: 'CH-00010', username: 'cutt-station', password: 'cutt-station', role: 'cutt-station', branchId: 'B-00001', stationName: 'CUTT Station' },
+];
+
 const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const { data: users, isLoading: isUsersLoading, mutate: mutateUsers } = useDataFetcher<User[]>('/api/users', []);
+  const { data: users, isLoading: isUsersLoading, mutate: mutateUsers } = useDataFetcher<User[]>('/api/users', initialUsers);
   const [isSessionLoading, setSessionLoading] = useState(true);
   const { logActivity } = useActivityLog();
   const { toast } = useToast();
@@ -86,6 +99,9 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     setUser(null);
     localStorage.removeItem(SESSION_ID_KEY);
+    // Clear cart session storage as well
+    sessionStorage.removeItem('cart');
+    sessionStorage.removeItem('cartContext');
     router.push('/login');
   }, [router, user, logActivity]);
 

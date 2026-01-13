@@ -39,10 +39,46 @@ interface SettingsContextType {
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 const initialSettings: Settings = {
-    floors: [], tables: [], paymentMethods: [], autoPrintReceipts: false, companyName: "Cheezious",
-    companyLogo: '/images/logo.png', branches: [], defaultBranchId: null,
-    businessDayStart: "11:00", businessDayEnd: "04:00", roles: [], deliveryModes: [],
-    promotion: { isEnabled: true, itemId: initialDeals[0].id, imageUrl: initialDeals[0].imageUrl }
+    floors: [
+      { id: 'F-001', name: 'Ground Floor' },
+      { id: 'F-002', name: 'First Floor' },
+    ],
+    tables: [
+        { id: 'T-001', name: 'Table 1', floorId: 'F-001' },
+        { id: 'T-002', name: 'Table 2', floorId: 'F-001' },
+        { id: 'T-003', name: 'Table 3', floorId: 'F-002' },
+    ],
+    paymentMethods: [
+        { id: 'PM-001', name: 'Cash', taxRate: 0.16 },
+        { id: 'PM-002', name: 'Card', taxRate: 0.16 },
+    ],
+    autoPrintReceipts: false, 
+    companyName: "Cheezious",
+    companyLogo: '/images/logo.png', 
+    branches: [
+      { id: 'B-00001', name: 'Johar Town, Lahore', dineInEnabled: true, takeAwayEnabled: true, deliveryEnabled: true, orderPrefix: 'JT' },
+      { id: 'B-00002', name: 'DHA Phase 5, Lahore', dineInEnabled: true, takeAwayEnabled: true, deliveryEnabled: false, orderPrefix: 'DHA' },
+    ], 
+    defaultBranchId: 'B-00001',
+    businessDayStart: "11:00", 
+    businessDayEnd: "04:00", 
+    roles: [
+        { id: 'root', name: 'Root', permissions: ['admin:*'] },
+        { id: 'admin', name: 'Admin', permissions: ['/admin/orders', '/admin/kds', '/admin/reporting'] },
+        { id: 'cashier', name: 'Cashier', permissions: ['/cashier'] },
+        { id: 'marketing', name: 'Marketing', permissions: ['/marketing/reporting', '/marketing/feedback', '/marketing/target'] },
+        { id: 'kds', name: 'KDS (All)', permissions: ['/admin/kds'] },
+        { id: 'make-station', name: 'MAKE Station', permissions: ['/admin/kds/pizza'] },
+        { id: 'pasta-station', name: 'PASTA Station', permissions: ['/admin/kds/pasta'] },
+        { id: 'fried-station', name: 'FRIED Station', permissions: ['/admin/kds/fried'] },
+        { id: 'bar-station', name: 'BEVERAGES Station', permissions: ['/admin/kds/bar'] },
+        { id: 'cutt-station', name: 'CUTT Station', permissions: ['/admin/kds/master'] },
+    ], 
+    deliveryModes: [
+        { id: 'DM-01', name: 'Website' },
+        { id: 'DM-02', name: 'Call Center' },
+    ],
+    promotion: { isEnabled: true, itemId: 'D-00001', imageUrl: 'https://images.unsplash.com/photo-1608835291093-394b0c943a75?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxtZWFsfGVufDB8fHx8MTc2ODI5MzU3OXww&ixlib=rb-4.1.0&q=80&w=1080' }
 };
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
