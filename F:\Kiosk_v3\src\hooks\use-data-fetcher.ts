@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useState, useEffect, useCallback } from 'react';
 import useSWR from 'swr';
 
 // A simple fetcher function that assumes JSON responses.
@@ -19,14 +20,16 @@ const fetcher = (url: string) => fetch(url).then((res) => {
  * @param apiPath The path to the API endpoint (e.g., '/api/settings').
  * @returns An object containing the fetched data, loading state, error state, and a mutate function.
  */
-export function useDataFetcher<T>(apiPath: string) {
-  const { data, error, isLoading, mutate } = useSWR<T>(apiPath, fetcher, {
-    revalidateOnFocus: true, // Re-fetch when the window gains focus
-    revalidateOnReconnect: true, // Re-fetch when the network connection is restored
+export function useDataFetcher<T>(apiPath: string, initialData: T | null = null) {
+  const { data, error, isLoading, mutate } = useSWR(apiPath, fetcher, {
+    revalidateOnFocus: true,
+    revalidateOnReconnect: true,
   });
 
+  const responseData = data ? (Object.values(data)[0] as T) : initialData;
+
   return {
-    data,
+    data: responseData,
     isLoading,
     isError: error,
     mutate,

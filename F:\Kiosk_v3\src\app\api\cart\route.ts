@@ -158,7 +158,7 @@ export async function POST(request: Request) {
             if (user) {
                 createRequest.input('UserId', sql.NVarChar, user.id);
             } else {
-                insertQuery = insertQuery.replace('@UserId', 'NULL');
+                createRequest.input('UserId', sql.NVarChar, null);
             }
             
             const newCartResult = await createRequest.query(insertQuery);

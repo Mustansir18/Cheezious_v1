@@ -81,6 +81,10 @@ export async function POST(request: Request) {
                 
                 console.log('[API/SESSION - POST] Session created successfully.');
                 
+                // Simplified Logic: The client will handle re-fetching the cart.
+                // The server-side cart migration was causing transaction failures.
+                // We no longer try to update the guest cart to a user cart here.
+                
                 await transaction.commit();
                 console.log('[API/SESSION - POST] Transaction committed. Login successful.');
 

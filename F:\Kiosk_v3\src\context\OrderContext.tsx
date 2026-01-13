@@ -8,7 +8,6 @@ import { useAuth } from './AuthContext';
 import { useMenu } from './MenuContext';
 import { useSettings } from './SettingsContext';
 import { useToast } from '@/hooks/use-toast';
-import { useDataFetcher } from '@/hooks/use-data-fetcher';
 import useSWR from 'swr';
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
@@ -30,7 +29,7 @@ interface OrderContextType {
 const OrderContext = createContext<OrderContextType | undefined>(undefined);
 
 export const OrderProvider = ({ children }: { children: ReactNode }) => {
-  const { data, isLoading, mutate } = useSWR('/api/orders', fetcher, { refreshInterval: 10000 });
+  const { data, isLoading: isSwrLoading, mutate } = useSWR('/api/orders', fetcher, { refreshInterval: 10000 });
   const { logActivity } = useActivityLog();
   const { user, updateUserBalance } = useAuth();
   const { menu } = useMenu();
@@ -38,6 +37,8 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   const orders = data?.orders || [];
+  const isLoading = isSwrLoading && !data;
+
 
   const occupiedTableIds = useMemo(() => {
     const ids = orders
