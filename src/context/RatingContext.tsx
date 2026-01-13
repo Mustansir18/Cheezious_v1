@@ -30,25 +30,29 @@ export const RatingProvider = ({ children }: { children: ReactNode }) => {
       });
       if (!response.ok) throw new Error('Failed to submit rating');
       
-      mutate(); // Re-fetch ratings
+      if (user) {
+        mutate(); // Re-fetch ratings only if a user is logged in
+      }
       logActivity(`New ${newRatingData.rating}-star rating received.`, 'Customer', 'System');
     } catch (error) {
       console.error('Failed to add rating:', error);
     }
-  }, [mutate, logActivity]);
+  }, [mutate, logActivity, user]);
 
   const clearRatings = useCallback(async () => {
     try {
       await fetch('/api/ratings', { method: 'DELETE' });
-      mutate(); // Re-fetch to get the empty list
+      if (user) {
+        mutate(); // Re-fetch to get the empty list
+      }
       logActivity('Cleared all customer ratings.', 'System', 'System');
     } catch (error) {
        console.error('Failed to clear ratings:', error);
     }
-  }, [mutate, logActivity]);
+  }, [mutate, logActivity, user]);
 
   return (
-    <RatingContext.Provider value={{ ratings, isLoading, addRating, clearRatings }}>
+    <RatingContext.Provider value={{ ratings: ratings || [], isLoading, addRating, clearRatings }}>
       {children}
     </RatingContext.Provider>
   );

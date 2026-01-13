@@ -48,7 +48,7 @@ export async function GET(request: Request) {
 // Login - Create a new session
 export async function POST(request: Request) {
     const { username, password } = await request.json();
-    console.log(`[API/SESSION - POST] Login attempt for user: '${username}'.`);
+    console.log(`[API/SESSION - POST] Login attempt for user: '${username}'. Password received: '${password}'`);
 
     if (!username || !password) {
         console.warn(`[API/SESSION - POST] Bad Request: Username or password missing.`);

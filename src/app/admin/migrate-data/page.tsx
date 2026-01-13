@@ -92,7 +92,7 @@ export default function MigrateDataPage() {
                         Migrate Local Data to SQL Database
                     </CardTitle>
                     <CardDescription>
-                        This tool will transfer all data currently stored in your browser's local storage to your configured SQL Server database. This is a one-time process.
+                        This tool will transfer all data currently stored in your browser's local storage to your configured SQL Server database. This is a one-time process for new setups.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -100,7 +100,7 @@ export default function MigrateDataPage() {
                         <p className="font-bold flex items-center gap-2">
                             <AlertTriangle className="h-5 w-5"/> Important
                         </p>
-                        <p className="text-sm mt-1">This process will first **DELETE ALL DATA** from the database tables to ensure a clean migration. Make sure you have backed up any existing database data if necessary.</p>
+                        <p className="text-sm mt-1">This process will first **DELETE ALL DATA** from the database tables to ensure a clean migration. Make sure you have backed up any existing database data if necessary. This is intended for initial setup of an empty database.</p>
                     </div>
 
                     <div>

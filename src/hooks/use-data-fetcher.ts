@@ -2,7 +2,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import useSWR from 'swr';
 
 const fetcher = (url: string) => fetch(url, { cache: 'no-store' }).then(res => {
   if (!res.ok) {
@@ -15,34 +14,70 @@ const fetcher = (url: string) => fetch(url, { cache: 'no-store' }).then(res => {
 });
 
 export function useDataFetcher<T>(
-  apiPath: string | null, // Allow null to disable fetching
+  apiPath: string | null,
   initialData: T
 ) {
-  const { data, error, isLoading, mutate } = useSWR(apiPath, fetcher, {
-    fallbackData: { [Object.keys(initialData)[0] || 'data']: initialData }, // Improved fallback
-    revalidateOnFocus: false, // Prevent re-fetching on window focus
-    revalidateOnReconnect: true,
-  });
+  const [data, setData] = useState<T>(initialData);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState<any>(null);
+  const [trigger, setTrigger] = useState(0);
 
-  const [storedValue, setStoredValue] = useState<T>(initialData);
+  const mutate = useCallback(() => {
+    setTrigger(t => t + 1);
+  }, []);
 
   useEffect(() => {
-    if (data) {
-      // API might return an object with a key, e.g., { settings: {...} }
-      // Or it might be the data directly. We find the first key.
-      const dataKey = Object.keys(data)[0];
-      const extractedData = data[dataKey] ?? initialData;
-      setStoredValue(extractedData);
-    } else if (!apiPath) {
-      // If API path is null, reset to initial data
-      setStoredValue(initialData);
+    let isMounted = true;
+    
+    async function fetchData() {
+      if (!apiPath) {
+        if (isMounted) {
+          setData(initialData);
+          setIsLoading(false);
+        }
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const response = await fetch(apiPath, { cache: 'no-store' });
+        if (!response.ok) {
+           const error = new Error('An error occurred while fetching the data.');
+          (error as any).info = response.statusText;
+          (error as any).status = response.status;
+          throw error;
+        }
+        const json = await response.json();
+        if (isMounted) {
+          // API might return an object with a key, e.g., { settings: {...} } or { data: [...] }
+          // Or it might be the data directly. We find the first key that holds the data.
+          const dataKey = Object.keys(json)[0];
+          setData(json[dataKey] ?? initialData);
+        }
+      } catch (error) {
+        if (isMounted) {
+          setIsError(error);
+          console.error(`Failed to fetch from ${apiPath}:`, error);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
     }
-  }, [data, apiPath, initialData]);
-  
+
+    fetchData();
+
+    return () => {
+      isMounted = false;
+    };
+    // The dependency array is critical. It ensures the fetch runs only when apiPath or the trigger changes.
+  }, [apiPath, trigger, initialData]);
+
   return {
-    data: storedValue,
+    data: data,
     isLoading,
-    isError: error,
+    isError,
     mutate,
   };
 }

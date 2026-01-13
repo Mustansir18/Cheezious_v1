@@ -88,7 +88,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
     try {
         await updateOrderAPI(orderId, { action: 'updateStatus', status, reason });
         if (status === 'Completed' && user) {
-            const order = orders.find(o => o.id === orderId);
+            const order = (orders || []).find(o => o.id === orderId);
             if (order) updateUserBalance(user.id, order.totalAmount, 'add');
         }
         logActivity(`Updated Order #${orderId.slice(-6)} status to '${status}'.`, user?.username || 'System', 'Order');
