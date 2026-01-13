@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -15,13 +14,12 @@ export function useDataFetcher<T>(apiPath: string, initialData: T) {
   const [data, setData] = useState<T>(initialData);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState<any>(null);
-  const [refreshToggle, setRefreshToggle] = useState(false);
 
-  const fetcher = useCallback(async () => {
+  const mutate = useCallback(async () => {
     setIsLoading(true);
     setIsError(null);
     try {
-      const res = await fetch(apiPath);
+      const res = await fetch(apiPath, { cache: 'no-store' });
       if (!res.ok) {
         const error = new Error('An error occurred while fetching the data.');
         (error as any).info = res.statusText;
@@ -29,8 +27,12 @@ export function useDataFetcher<T>(apiPath: string, initialData: T) {
         throw error;
       }
       const jsonData = await res.json();
+      
+      // The API should return an object with a single key, e.g., { settings: {...} }
+      // We extract the data from that key.
       const dataKey = Object.keys(jsonData)[0];
       const extractedData = jsonData[dataKey] ?? initialData;
+      
       setData(extractedData);
     } catch (error) {
       setIsError(error);
@@ -41,12 +43,8 @@ export function useDataFetcher<T>(apiPath: string, initialData: T) {
   }, [apiPath, initialData]);
 
   useEffect(() => {
-    fetcher();
-  }, [fetcher, refreshToggle]);
-
-  const mutate = useCallback(() => {
-    setRefreshToggle(prev => !prev);
-  }, []);
+    mutate();
+  }, [mutate]);
   
   return {
     data,

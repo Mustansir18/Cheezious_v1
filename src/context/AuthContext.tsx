@@ -84,6 +84,8 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem(SESSION_ID_KEY, sessionId);
       setUser(loggedInUser);
       logActivity(`User '${username}' logged in.`, username, 'System');
+      // Trigger a re-fetch of cart data, which might now belong to the user
+      globalMutate('/api/cart');
       return loggedInUser;
     } else {
       const errorData = await response.json();
@@ -99,9 +101,8 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     setUser(null);
     localStorage.removeItem(SESSION_ID_KEY);
-    // Clear cart session storage as well
-    sessionStorage.removeItem('cart');
-    sessionStorage.removeItem('cartContext');
+    // Clear cart data from other contexts if necessary (though SWR should handle this)
+    globalMutate('/api/cart', { cart: null, items: [] }, false); // Optimistically update cart to be empty
     router.push('/login');
   }, [router, user, logActivity]);
 
@@ -152,7 +153,7 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
   const updateUserBalance = useCallback((userId: string, amount: number, operation: 'add' | 'subtract') => {
     mutateUsers((currentUsers: User[] | undefined) => {
         if (!currentUsers) return [];
-        return currentUsers.map(u => {
+        const updatedUsers = currentUsers.map((u: User) => {
             if (u.id === userId) {
                 const currentBalance = u.balance || 0;
                 const newBalance = operation === 'add' ? currentBalance + amount : currentBalance - amount;
@@ -160,10 +161,11 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
             return u;
         });
+        return { users: updatedUsers };
     }, false); // optimistic update
   }, [mutateUsers]);
 
-  const value = { user, users, isLoading, login, logout, addUser, updateUser, deleteUser, updateUserBalance };
+  const value = { user, users: users || [], isLoading, login, logout, addUser, updateUser, deleteUser, updateUserBalance };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

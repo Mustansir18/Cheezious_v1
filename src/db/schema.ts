@@ -52,20 +52,13 @@ BEGIN
 END
 GO
 
--- Check for the old foreign key on Carts.SessionId and drop it if it exists.
-IF EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK__Carts__SessionId__4AB81AF0' AND parent_object_id = OBJECT_ID('dbo.Carts'))
-BEGIN
-    ALTER TABLE dbo.Carts DROP CONSTRAINT FK__Carts__SessionId__4AB81AF0;
-END
-GO
-
-
 -- Query_4: Carts table
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Carts]') AND type in (N'U'))
 BEGIN
   CREATE TABLE dbo.Carts (
     Id UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
     SessionId NVARCHAR(50) NOT NULL,
+    UserId NVARCHAR(255) NULL, -- This will now be correctly indexed
     BranchId NVARCHAR(50) NULL,
     OrderType NVARCHAR(50) NULL,
     FloorId NVARCHAR(50) NULL,
@@ -74,27 +67,33 @@ BEGIN
     CustomerName NVARCHAR(200) NULL,
     CustomerPhone NVARCHAR(50) NULL,
     CustomerAddress NVARCHAR(500) NULL,
-    UpdatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+    UpdatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    CONSTRAINT FK_Carts_Users FOREIGN KEY (UserId) REFERENCES Users(id) ON DELETE SET NULL
   );
 END
 GO
 
--- Ensure UserId column exists on Carts table
-IF COL_LENGTH('dbo.Carts', 'UserId') IS NULL
+-- Drop old conflicting indexes if they exist
+IF EXISTS (SELECT name FROM sys.indexes WHERE name = 'IX_Carts_SessionId' AND object_id = OBJECT_ID('dbo.Carts'))
 BEGIN
-    ALTER TABLE dbo.Carts ADD UserId NVARCHAR(255) NULL;
-    ALTER TABLE dbo.Carts ADD CONSTRAINT FK_Carts_Users FOREIGN KEY (UserId) REFERENCES Users(id) ON DELETE SET NULL;
+    DROP INDEX IX_Carts_SessionId ON dbo.Carts;
+END
+GO
+IF EXISTS (SELECT name FROM sys.indexes WHERE name = 'IX_Carts_UserId' AND object_id = OBJECT_ID('dbo.Carts'))
+BEGIN
+    DROP INDEX IX_Carts_UserId ON dbo.Carts;
 END
 GO
 
-IF NOT EXISTS (SELECT name FROM sys.indexes WHERE name = 'IX_Carts_SessionId')
+-- Create correct filtered unique indexes
+IF NOT EXISTS (SELECT name FROM sys.indexes WHERE name = 'UQ_Carts_SessionId_Guest' AND object_id = OBJECT_ID('dbo.Carts'))
 BEGIN
-    CREATE UNIQUE INDEX IX_Carts_SessionId ON dbo.Carts(SessionId) WHERE UserId IS NULL;
+    CREATE UNIQUE INDEX UQ_Carts_SessionId_Guest ON dbo.Carts(SessionId) WHERE UserId IS NULL;
 END
 GO
-IF NOT EXISTS (SELECT name FROM sys.indexes WHERE name = 'IX_Carts_UserId')
+IF NOT EXISTS (SELECT name FROM sys.indexes WHERE name = 'UQ_Carts_UserId_User' AND object_id = OBJECT_ID('dbo.Carts'))
 BEGIN
-    CREATE UNIQUE INDEX IX_Carts_UserId ON dbo.Carts(UserId) WHERE UserId IS NOT NULL;
+    CREATE UNIQUE INDEX UQ_Carts_UserId_User ON dbo.Carts(UserId) WHERE UserId IS NOT NULL;
 END
 GO
 

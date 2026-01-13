@@ -43,9 +43,11 @@ export async function GET(request: Request) {
         const requestPool = pool.request();
 
         if (user) {
+            console.log(`[API/CART - GET] Fetching cart for user ID: ${user.id}`);
             cartQuery = 'SELECT * FROM Carts WHERE UserId = @Identifier';
             requestPool.input('Identifier', sql.NVarChar, user.id);
         } else {
+            console.log(`[API/CART - GET] Fetching cart for guest session ID: ${sessionId}`);
             cartQuery = 'SELECT * FROM Carts WHERE SessionId = @Identifier AND UserId IS NULL';
             requestPool.input('Identifier', sql.NVarChar, sessionId);
         }
@@ -54,12 +56,14 @@ export async function GET(request: Request) {
         let cart = cartResult.recordset[0];
 
         if (!cart) {
+            console.log(`[API/CART - GET] No cart found. Returning empty cart.`);
             // No cart exists, return an empty one but include the session ID for the client
             const response = NextResponse.json({ cart: null, items: [] }, { headers: { 'Cache-Control': 'no-store' } });
             response.headers.set('x-session-id', sessionId);
             return response;
         }
         
+        console.log(`[API/CART - GET] Cart found (ID: ${cart.Id}). Fetching items.`);
         const itemsResult = await pool.request()
             .input('CartId', sql.UniqueIdentifier, cart.Id)
             .query('SELECT * FROM CartItems WHERE CartId = @CartId');
@@ -70,13 +74,18 @@ export async function GET(request: Request) {
             selectedVariant: item.SelectedVariant ? JSON.parse(item.SelectedVariant) : undefined,
         }));
         
+        console.log(`[API/CART - GET] Found ${items.length} items for cart.`);
         const response = NextResponse.json({ cart, items }, { headers: { 'Cache-Control': 'no-store' } });
         response.headers.set('x-session-id', sessionId);
         return response;
 
     } catch (error: any) {
         console.error('[API/CART - GET] Error:', error);
-        return NextResponse.json({ message: 'Failed to fetch cart', error: error.message }, { status: 500 });
+        if (error.number === 208) { // Table does not exist
+            console.warn('[API/CART - GET] Carts or CartItems table not found. Returning empty cart.');
+            return NextResponse.json({ cart: null, items: [] }, { headers: { 'Cache-Control': 'no-store' } });
+        }
+        return NextResponse.json({ message: 'Failed to fetch cart', error: error.message }, { status: 500, headers: { 'Cache-Control': 'no-store' } });
     }
 }
 
@@ -91,13 +100,16 @@ export async function POST(request: Request) {
     const transaction = new sql.Transaction(await getConnectionPool());
     try {
         await transaction.begin();
+        console.log('[API/CART - POST] Transaction started for cart update.');
 
         let findCartQuery = '';
         const findRequest = transaction.request();
         if (user) {
+            console.log(`[API/CART - POST] Searching for cart for user ID: ${user.id}`);
             findCartQuery = 'SELECT Id FROM Carts WHERE UserId = @Identifier';
             findRequest.input('Identifier', sql.NVarChar, user.id);
         } else {
+            console.log(`[API/CART - POST] Searching for cart for guest session ID: ${sessionId}`);
             findCartQuery = 'SELECT Id FROM Carts WHERE SessionId = @Identifier AND UserId IS NULL';
             findRequest.input('Identifier', sql.NVarChar, sessionId);
         }
@@ -107,6 +119,7 @@ export async function POST(request: Request) {
 
         if (cartResult.recordset.length > 0) {
             cartId = cartResult.recordset[0].Id;
+            console.log(`[API/CART - POST] Existing cart found (ID: ${cartId}). Updating details.`);
             // Update existing cart
             await transaction.request()
                 .input('Id', sql.UniqueIdentifier, cartId)
@@ -125,6 +138,7 @@ export async function POST(request: Request) {
                     CustomerAddress = @CustomerAddress, UpdatedAt = @UpdatedAt
                     WHERE Id = @Id`);
         } else {
+            console.log(`[API/CART - POST] No existing cart found. Creating new cart.`);
             // Create new cart
             const createRequest = transaction.request()
                 .input('SessionId', sql.NVarChar, sessionId)
@@ -144,13 +158,15 @@ export async function POST(request: Request) {
             if (user) {
                 createRequest.input('UserId', sql.NVarChar, user.id);
             } else {
-                insertQuery = insertQuery.replace('@UserId', 'NULL');
+                createRequest.input('UserId', sql.NVarChar, null);
             }
             
             const newCartResult = await createRequest.query(insertQuery);
             cartId = newCartResult.recordset[0].Id;
+            console.log(`[API/CART - POST] New cart created (ID: ${cartId}).`);
         }
 
+        console.log(`[API/CART - POST] Clearing and re-inserting ${items.length} items for cart ID: ${cartId}.`);
         // Clear existing items for this cart
         await transaction.request()
             .input('CartId', sql.UniqueIdentifier, cartId)
@@ -166,7 +182,7 @@ export async function POST(request: Request) {
                 .input('BasePrice', sql.Decimal(10,2), item.basePrice)
                 .input('Name', sql.NVarChar, item.name)
                 .input('SelectedAddons', sql.NVarChar, JSON.stringify(item.selectedAddons))
-                .input('SelectedVariant', sql.NVarChar, JSON.stringify(item.selectedVariant))
+                .input('SelectedVariant', sql.NVarChar, item.selectedVariant ? JSON.stringify(item.selectedVariant) : null)
                 .input('StationId', sql.NVarChar, item.stationId)
                 .input('IsDealComponent', sql.Bit, item.isDealComponent)
                 .input('ParentDealCartItemId', sql.UniqueIdentifier, item.parentDealCartItemId)
@@ -176,6 +192,7 @@ export async function POST(request: Request) {
         }
         
         await transaction.commit();
+        console.log('[API/CART - POST] Transaction committed. Cart update successful.');
 
         const response = NextResponse.json({ success: true, cartId, sessionId });
         response.headers.set('x-session-id', sessionId);
@@ -183,7 +200,7 @@ export async function POST(request: Request) {
 
     } catch (error: any) {
         await transaction.rollback();
-        console.error('[API/CART - POST] Error:', error);
+        console.error('[API/CART - POST] Transaction failed. Rolling back.', error);
         return NextResponse.json({ message: 'Failed to update cart', error: error.message }, { status: 500 });
     }
 }

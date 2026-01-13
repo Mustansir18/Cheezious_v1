@@ -35,6 +35,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   const occupiedTableIds = useMemo(() => {
+    if (!orders) return new Set();
     const ids = orders
         .filter(o => o.orderType === 'Dine-In' && o.tableId && ['Pending', 'Preparing', 'Ready', 'Partial Ready'].includes(o.status))
         .map(o => o.tableId!);
@@ -149,7 +150,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <OrderContext.Provider value={{ orders, isLoading, addOrder, addItemsToOrder, updateOrderStatus, toggleItemPrepared, dispatchItem, applyDiscountOrComplementary, changePaymentMethod, clearOrders, occupiedTableIds }}>
+    <OrderContext.Provider value={{ orders: orders || [], isLoading, addOrder, addItemsToOrder, updateOrderStatus, toggleItemPrepared, dispatchItem, applyDiscountOrComplementary, changePaymentMethod, clearOrders, occupiedTableIds }}>
       {children}
     </OrderContext.Provider>
   );

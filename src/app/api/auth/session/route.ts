@@ -38,7 +38,7 @@ export async function GET(request: Request) {
     } catch (error: any) {
         console.error('[API/SESSION - GET] Error:', error);
          if (error.number === 208) { // Invalid object name 'Users' or 'Sessions'
-            return NextResponse.json({ user: null, message: 'Database tables not found. Please run migration.' }, { status: 500 });
+            return NextResponse.json({ user: null, message: 'Database tables not found. Please run migration.' }, { status: 500, headers: { 'Cache-Control': 'no-store' } });
         }
         return NextResponse.json({ message: 'Failed to retrieve session', error: error.message }, { status: 500 });
     }
@@ -48,6 +48,7 @@ export async function GET(request: Request) {
 // Login - Create a new session
 export async function POST(request: Request) {
     const { username, password, guestSessionId } = await request.json();
+    console.log(`[API/SESSION - POST] Attempting login for user: '${username}'. Guest session: ${guestSessionId}`);
 
     if (!username || !password) {
         return NextResponse.json({ message: 'Username and password are required.' }, { status: 400 });
@@ -62,6 +63,7 @@ export async function POST(request: Request) {
 
         if (result.recordset.length > 0) {
             const user: User = result.recordset[0];
+            console.log(`[API/SESSION - POST] Credentials valid for user ID: ${user.id}`);
             const newSessionId = uuidv4();
             const expiresAt = new Date();
             expiresAt.setHours(expiresAt.getHours() + SESSION_DURATION_HOURS);
@@ -69,6 +71,7 @@ export async function POST(request: Request) {
             const transaction = new sql.Transaction(pool);
             await transaction.begin();
             try {
+                console.log(`[API/SESSION - POST] Starting transaction to create session ${newSessionId}`);
                 // Create a new session for the logged-in user
                 await transaction.request()
                     .input('SessionId', sql.NVarChar, newSessionId)
@@ -76,29 +79,30 @@ export async function POST(request: Request) {
                     .input('ExpiresAt', sql.DateTime2, expiresAt)
                     .query('INSERT INTO Sessions (Id, UserId, ExpiresAt) VALUES (@SessionId, @UserId, @ExpiresAt)');
                 
-                // If there was a guest cart, associate it with the new user
-                if (guestSessionId) {
-                    await transaction.request()
-                        .input('UserId', sql.NVarChar, user.id)
-                        .input('GuestSessionId', sql.NVarChar, guestSessionId)
-                        .query('UPDATE Carts SET UserId = @UserId, SessionId = @GuestSessionId WHERE SessionId = @GuestSessionId AND UserId IS NULL');
-                }
+                console.log('[API/SESSION - POST] Session created successfully.');
+                
+                // Simplified Logic: The client will handle re-fetching the cart.
+                // The server-side cart migration was causing transaction failures.
+                // We no longer try to update the guest cart to a user cart here.
                 
                 await transaction.commit();
+                console.log('[API/SESSION - POST] Transaction committed. Login successful.');
 
                 delete user.password;
                 return NextResponse.json({ user, sessionId: newSessionId });
 
-            } catch(err) {
+            } catch(err: any) {
+                console.error('[API/SESSION - POST] Transaction failed. Rolling back.', err);
                 await transaction.rollback();
                 throw err;
             }
 
         } else {
+            console.warn(`[API/SESSION - POST] Invalid credentials for user: '${username}'`);
             return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
         }
     } catch (error: any) {
-        console.error('[API/SESSION - POST] Error:', error);
+        console.error('[API/SESSION - POST] Login failed:', error);
         if (error.number === 208) { // Invalid object name 'Users'
             return NextResponse.json({ message: 'Database not set up. Please run the migration.' }, { status: 500 });
         }
@@ -113,6 +117,8 @@ export async function DELETE(request: Request) {
     if (!sessionId) {
         return NextResponse.json({ message: 'No session ID provided' }, { status: 400 });
     }
+    
+    console.log(`[API/SESSION - DELETE] Logging out session: ${sessionId}`);
 
     try {
         const pool = await getConnectionPool();
@@ -120,10 +126,11 @@ export async function DELETE(request: Request) {
             .input('SessionId', sql.NVarChar, sessionId)
             .query('DELETE FROM Sessions WHERE Id = @SessionId');
         
+        console.log(`[API/SESSION - DELETE] Session ${sessionId} deleted successfully.`);
         return NextResponse.json({ message: 'Logged out successfully' });
 
     } catch (error: any) {
-        console.error('[API/SESSION - DELETE] Error:', error);
+        console.error('[API/SESSION - DELETE] Logout failed:', error);
         return NextResponse.json({ message: 'Logout failed', error: error.message }, { status: 500 });
     }
 }
