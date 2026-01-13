@@ -73,7 +73,7 @@ function AdminSidebar() {
           href="/"
           className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
         >
-          {isMounted && settings.companyLogo ? (
+          {isMounted && typeof settings.companyLogo === 'string' && settings.companyLogo ? (
             <Image src={settings.companyLogo} alt={settings.companyName} width={32} height={32} className="object-contain" />
           ) : (
              <div style={{ width: 32, height: 32 }} />
