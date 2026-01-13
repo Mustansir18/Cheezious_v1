@@ -1,7 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import { getConnectionPool, sql } from '@/lib/db';
-import type { CartItem } from '@/lib/types';
+import type { CartItem, User } from '@/lib/types';
 import { v4 as uuidv4 } from 'uuid'; // For generating session IDs
 
 // Helper function to get or create a session ID from headers
@@ -13,19 +13,42 @@ function getSessionId(request: Request): string {
     return sessionId;
 }
 
-// GET /api/cart
-// Fetches the current user's cart from the database
-export async function GET(request: Request) {
-    const sessionId = getSessionId(request);
+async function getUserFromSession(request: Request): Promise<User | null> {
+    const sessionId = request.headers.get('x-session-id');
+    if (!sessionId) return null;
 
     try {
         const pool = await getConnectionPool();
-
-        // Find the cart associated with the session
-        const cartResult = await pool.request()
+        const result = await pool.request()
             .input('SessionId', sql.NVarChar, sessionId)
-            .query('SELECT * FROM Carts WHERE SessionId = @SessionId');
+            .query(`SELECT u.id, u.username, u.role, u.branchId, u.balance, u.stationName FROM Users u JOIN Sessions s ON u.id = s.UserId WHERE s.Id = @SessionId AND s.ExpiresAt > GETUTCDATE()`);
         
+        return result.recordset[0] || null;
+    } catch {
+        return null;
+    }
+}
+
+// GET /api/cart
+// Fetches the current user's or guest's cart from the database
+export async function GET(request: Request) {
+    const sessionId = getSessionId(request);
+    const user = await getUserFromSession(request);
+
+    try {
+        const pool = await getConnectionPool();
+        let cartQuery = '';
+        const requestPool = pool.request();
+
+        if (user) {
+            cartQuery = 'SELECT * FROM Carts WHERE UserId = @Identifier';
+            requestPool.input('Identifier', sql.NVarChar, user.id);
+        } else {
+            cartQuery = 'SELECT * FROM Carts WHERE SessionId = @Identifier AND UserId IS NULL';
+            requestPool.input('Identifier', sql.NVarChar, sessionId);
+        }
+        
+        const cartResult = await requestPool.query(cartQuery);
         let cart = cartResult.recordset[0];
 
         if (!cart) {
@@ -35,7 +58,6 @@ export async function GET(request: Request) {
             return response;
         }
         
-        // Fetch cart items
         const itemsResult = await pool.request()
             .input('CartId', sql.UniqueIdentifier, cart.Id)
             .query('SELECT * FROM CartItems WHERE CartId = @CartId');
@@ -58,20 +80,27 @@ export async function GET(request: Request) {
 
 
 // POST /api/cart
-// Creates or updates a user's cart
+// Creates or updates a user's or guest's cart
 export async function POST(request: Request) {
     const sessionId = getSessionId(request);
+    const user = await getUserFromSession(request);
     const { cartDetails, items }: { cartDetails: any, items: CartItem[] } = await request.json();
 
     const transaction = new sql.Transaction(await getConnectionPool());
     try {
         await transaction.begin();
 
-        // 1. Upsert Cart
-        let cartResult = await transaction.request()
-            .input('SessionId', sql.NVarChar, sessionId)
-            .query('SELECT Id FROM Carts WHERE SessionId = @SessionId');
+        let findCartQuery = '';
+        const findRequest = transaction.request();
+        if (user) {
+            findCartQuery = 'SELECT Id FROM Carts WHERE UserId = @Identifier';
+            findRequest.input('Identifier', sql.NVarChar, user.id);
+        } else {
+            findCartQuery = 'SELECT Id FROM Carts WHERE SessionId = @Identifier AND UserId IS NULL';
+            findRequest.input('Identifier', sql.NVarChar, sessionId);
+        }
         
+        let cartResult = await findRequest.query(findCartQuery);
         let cartId: string;
 
         if (cartResult.recordset.length > 0) {
@@ -95,7 +124,7 @@ export async function POST(request: Request) {
                     WHERE Id = @Id`);
         } else {
             // Create new cart
-            const newCartResult = await transaction.request()
+            const createRequest = transaction.request()
                 .input('SessionId', sql.NVarChar, sessionId)
                 .input('BranchId', sql.NVarChar, cartDetails.branchId)
                 .input('OrderType', sql.NVarChar, cartDetails.orderType)
@@ -104,19 +133,28 @@ export async function POST(request: Request) {
                 .input('DeliveryMode', sql.NVarChar, cartDetails.deliveryMode)
                 .input('CustomerName', sql.NVarChar, cartDetails.customerName)
                 .input('CustomerPhone', sql.NVarChar, cartDetails.customerPhone)
-                .input('CustomerAddress', sql.NVarChar, cartDetails.customerAddress)
-                .query(`INSERT INTO Carts (SessionId, BranchId, OrderType, TableId, FloorId, DeliveryMode, CustomerName, CustomerPhone, CustomerAddress) 
-                        OUTPUT inserted.Id
-                        VALUES (@SessionId, @BranchId, @OrderType, @TableId, @FloorId, @DeliveryMode, @CustomerName, @CustomerPhone, @CustomerAddress)`);
+                .input('CustomerAddress', sql.NVarChar, cartDetails.customerAddress);
+
+            let insertQuery = `INSERT INTO Carts (SessionId, UserId, BranchId, OrderType, TableId, FloorId, DeliveryMode, CustomerName, CustomerPhone, CustomerAddress) 
+                               OUTPUT inserted.Id
+                               VALUES (@SessionId, @UserId, @BranchId, @OrderType, @TableId, @FloorId, @DeliveryMode, @CustomerName, @CustomerPhone, @CustomerAddress)`;
+            
+            if (user) {
+                createRequest.input('UserId', sql.NVarChar, user.id);
+            } else {
+                insertQuery = insertQuery.replace('@UserId', 'NULL');
+            }
+            
+            const newCartResult = await createRequest.query(insertQuery);
             cartId = newCartResult.recordset[0].Id;
         }
 
-        // 2. Clear existing items for this cart
+        // Clear existing items for this cart
         await transaction.request()
             .input('CartId', sql.UniqueIdentifier, cartId)
             .query('DELETE FROM CartItems WHERE CartId = @CartId');
         
-        // 3. Insert new items
+        // Insert new items
         for (const item of items) {
             await transaction.request()
                 .input('CartId', sql.UniqueIdentifier, cartId)

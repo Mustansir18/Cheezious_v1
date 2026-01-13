@@ -58,6 +58,7 @@ BEGIN
   CREATE TABLE dbo.Carts (
     Id UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
     SessionId NVARCHAR(50) NOT NULL,
+    UserId NVARCHAR(255), -- Link to user when logged in
     BranchId NVARCHAR(50) NULL,
     OrderType NVARCHAR(50) NULL,
     FloorId NVARCHAR(50) NULL,
@@ -66,15 +67,22 @@ BEGIN
     CustomerName NVARCHAR(200) NULL,
     CustomerPhone NVARCHAR(50) NULL,
     CustomerAddress NVARCHAR(500) NULL,
-    UpdatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+    UpdatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    FOREIGN KEY (UserId) REFERENCES Users(id) ON DELETE SET NULL -- New relationship
   );
 END
 GO
 IF NOT EXISTS (SELECT name FROM sys.indexes WHERE name = 'IX_Carts_SessionId')
 BEGIN
-    CREATE INDEX IX_Carts_SessionId ON dbo.Carts(SessionId);
+    CREATE UNIQUE INDEX IX_Carts_SessionId ON dbo.Carts(SessionId) WHERE UserId IS NULL;
 END
 GO
+IF NOT EXISTS (SELECT name FROM sys.indexes WHERE name = 'IX_Carts_UserId')
+BEGIN
+    CREATE UNIQUE INDEX IX_Carts_UserId ON dbo.Carts(UserId) WHERE UserId IS NOT NULL;
+END
+GO
+
 
 -- Query_5: CartItems table
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[CartItems]') AND type in (N'U'))

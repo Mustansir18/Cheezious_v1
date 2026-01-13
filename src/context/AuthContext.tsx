@@ -24,7 +24,7 @@ interface AuthContextType {
 // Create the context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const SESSION_ID_KEY = 'cheezious_session_id';
+const SESSION_ID_KEY = 'cheezious_session_id'; // This is for browser session, not DB session
 const USERS_STORAGE_KEY = 'cheeziousUsersV2';
 
 const initialUsers: User[] = [
@@ -44,29 +44,54 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Load users from storage or initialize on mount
   useEffect(() => {
-    try {
-      const item = window.localStorage.getItem(USERS_STORAGE_KEY);
-      const storedUsers = item ? JSON.parse(item) : null;
-      
-      if (storedUsers && Array.isArray(storedUsers) && storedUsers.length > 0) {
+    async function loadUsers() {
+      try {
+        const response = await fetch('/api/users');
+        if (!response.ok) throw new Error('Failed to fetch users');
+        const data = await response.json();
+        
+        let currentUsers = data.users || [];
+        
         // Ensure root user exists
-        const rootExists = storedUsers.some(u => u.id === 'root');
+        const rootExists = currentUsers.some((u: User) => u.username === 'root');
         if (!rootExists) {
-            const usersWithRoot = [...storedUsers, initialUsers[0]];
-            setUsers(usersWithRoot);
-            window.localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(usersWithRoot));
-        } else {
-            setUsers(storedUsers);
+            console.log("Root user not found in DB, attempting to create...");
+            try {
+                const rootUser = initialUsers.find(u => u.id === 'root')!;
+                const createResponse = await fetch('/api/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user: { ...rootUser, password: 'Faith123$$' }, id: 'root' }),
+                });
+                if (createResponse.ok) {
+                    const { user: createdRoot } = await createResponse.json();
+                    currentUsers.push(createdRoot);
+                    console.log("Root user created successfully.");
+                } else {
+                     const errorData = await createResponse.json();
+                     // If it already exists (race condition), just fetch again
+                     if (errorData.message.includes('already exists')) {
+                        const freshUsers = await (await fetch('/api/users')).json();
+                        currentUsers = freshUsers.users || [];
+                     } else {
+                        throw new Error('Failed to create root user.');
+                     }
+                }
+            } catch (e) {
+                console.error("Failed to create root user:", e);
+            }
         }
-      } else {
-        // If no users in local storage, initialize with defaults
-        setUsers(initialUsers);
-        window.localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(initialUsers));
+        setUsers(currentUsers);
+
+      } catch (error) {
+        console.warn('Error fetching users from API:', error);
+        // Fallback to local storage if API fails, useful for offline dev
+        const localUsers = localStorage.getItem(USERS_STORAGE_KEY);
+        setUsers(localUsers ? JSON.parse(localUsers) : initialUsers);
       }
-    } catch (error) {
-      console.warn('Error with user storage:', error);
-      setUsers(initialUsers);
     }
+
+    loadUsers();
   }, []);
 
 
@@ -76,89 +101,132 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(true);
       const sessionId = localStorage.getItem(SESSION_ID_KEY);
       if (sessionId) {
-          const sessionUser = users.find(u => u.id === sessionId);
-          if(sessionUser) {
-              setUser(sessionUser);
-          } else {
-              // Clear invalid session ID
-              localStorage.removeItem(SESSION_ID_KEY);
+          try {
+            const response = await fetch('/api/auth/session', {
+                headers: { 'x-session-id': sessionId }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setUser(data.user);
+            } else {
+                localStorage.removeItem(SESSION_ID_KEY);
+            }
+          } catch (e) {
+            console.error("Failed to validate session, logging out.", e);
+            localStorage.removeItem(SESSION_ID_KEY);
           }
       }
       setIsLoading(false);
     }
-    // Run this only after users have been loaded
-    if (users.length > 0) {
-        loadSession();
-    }
-  }, [users]);
+    loadSession();
+  }, []);
 
 
   const login = useCallback(async (username: string, password: string): Promise<User | null> => {
-    const foundUser = users.find(u => u.username === username && u.password === password);
-    
-    if (foundUser) {
-        setUser(foundUser);
-        localStorage.setItem(SESSION_ID_KEY, foundUser.id);
+    const guestSessionId = localStorage.getItem(SESSION_ID_KEY);
+
+    const response = await fetch('/api/auth/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, guestSessionId }),
+    });
+
+    if (response.ok) {
+        const { user: loggedInUser, sessionId: newSessionId } = await response.json();
+        setUser(loggedInUser);
+        localStorage.setItem(SESSION_ID_KEY, newSessionId);
         logActivity(`User '${username}' logged in.`, username, 'System');
-        return foundUser;
+        return loggedInUser;
     } else {
-        throw new Error('Invalid username or password.');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Invalid username or password.');
     }
-  }, [users, logActivity]);
+  }, [logActivity]);
 
   const logout = useCallback(async () => {
-    if (user) {
+    const sessionId = localStorage.getItem(SESSION_ID_KEY);
+    if (user && sessionId) {
         logActivity(`User '${user.username}' logged out.`, user.username, 'System');
+        await fetch('/api/auth/session', {
+            method: 'DELETE',
+            headers: { 'x-session-id': sessionId }
+        });
     }
     setUser(null);
     localStorage.removeItem(SESSION_ID_KEY);
+    
+    // Create a new guest session ID
+    const newGuestSessionId = uuidv4();
+    localStorage.setItem(SESSION_ID_KEY, newGuestSessionId);
+
     router.push('/login');
   }, [router, user, logActivity]);
 
-  const postUsers = (newUsers: User[]) => {
-      try {
-        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(newUsers));
-        setUsers(newUsers);
-      } catch (error) {
-          toast({ variant: 'destructive', title: 'Error', description: 'Could not save user data.' });
-      }
-  }
 
   const addUser = async (newUser: Omit<User, 'id' | 'balance'>, id: string) => {
-    const fullUser: User = { ...newUser, id, balance: 0 };
-    postUsers([...users, fullUser]);
-    logActivity(`Added new user '${newUser.username}'.`, user?.username || 'System', 'User');
-    toast({ title: 'Success', description: 'User has been created.' });
+    const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user: newUser, id }),
+    });
+
+    if (response.ok) {
+        const { user: createdUser } = await response.json();
+        setUsers(prev => [...prev, createdUser]);
+        logActivity(`Added new user '${newUser.username}'.`, user?.username || 'System', 'User');
+        toast({ title: 'Success', description: 'User has been created.' });
+    } else {
+        const errorData = await response.json();
+        toast({ variant: 'destructive', title: 'Error', description: errorData.message });
+    }
   };
 
   const updateUser = async (updatedUser: User) => {
-     const newUsers = users.map(u => u.id === updatedUser.id ? updatedUser : u);
-     postUsers(newUsers);
-     if(user?.id === updatedUser.id) {
-         setUser(updatedUser);
+     const response = await fetch('/api/users', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user: updatedUser }),
+     });
+     if (response.ok) {
+        const { user: savedUser } = await response.json();
+        setUsers(prev => prev.map(u => u.id === savedUser.id ? savedUser : u));
+        if(user?.id === savedUser.id) {
+            setUser(savedUser);
+        }
+        logActivity(`Updated user '${savedUser.username}'.`, user?.username || "System", 'User');
+        toast({ title: 'Success', description: 'User has been updated.' });
+     } else {
+        const errorData = await response.json();
+        toast({ variant: 'destructive', title: 'Error', description: errorData.message });
      }
-     logActivity(`Updated user '${updatedUser.username}'.`, user?.username || "System", 'User');
-     toast({ title: 'Success', description: 'User has been updated.' });
   };
 
   const deleteUser = async (id: string, name: string) => {
-    const newUsers = users.filter(u => u.id !== id);
-    postUsers(newUsers);
-    logActivity(`Deleted user '${name}'.`, user?.username || "System", 'User');
-    toast({ title: 'Success', description: 'User has been deleted.' });
+    const response = await fetch('/api/users', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, name }),
+    });
+    if(response.ok) {
+        setUsers(prev => prev.filter(u => u.id !== id));
+        logActivity(`Deleted user '${name}'.`, user?.username || "System", 'User');
+        toast({ title: 'Success', description: 'User has been deleted.' });
+    } else {
+        const errorData = await response.json();
+        toast({ variant: 'destructive', title: 'Error', description: errorData.message });
+    }
   };
 
   const updateUserBalance = useCallback((userId: string, amount: number, operation: 'add' | 'subtract') => {
-      const newUsers = users.map(u => {
+      setUsers(prevUsers => prevUsers.map(u => {
           if (u.id === userId) {
               const currentBalance = u.balance || 0;
               const newBalance = operation === 'add' ? currentBalance + amount : currentBalance - amount;
               return { ...u, balance: newBalance };
           }
           return u;
-      });
-      postUsers(newUsers);
-  }, [users, postUsers]);
+      }));
+  }, []);
 
 
   const value = { user, users, isLoading, login, logout, addUser, updateUser, deleteUser, updateUserBalance };

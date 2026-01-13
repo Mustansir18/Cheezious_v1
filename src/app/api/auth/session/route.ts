@@ -45,7 +45,7 @@ export async function GET(request: Request) {
 
 // Login - Create a new session
 export async function POST(request: Request) {
-    const { username, password } = await request.json();
+    const { username, password, guestSessionId } = await request.json();
 
     if (!username || !password) {
         return NextResponse.json({ message: 'Username and password are required.' }, { status: 400 });
@@ -64,14 +64,34 @@ export async function POST(request: Request) {
             const expiresAt = new Date();
             expiresAt.setHours(expiresAt.getHours() + SESSION_DURATION_HOURS);
 
-            await pool.request()
-                .input('SessionId', sql.NVarChar, newSessionId)
-                .input('UserId', sql.NVarChar, user.id)
-                .input('ExpiresAt', sql.DateTime2, expiresAt)
-                .query('INSERT INTO Sessions (Id, UserId, ExpiresAt) VALUES (@SessionId, @UserId, @ExpiresAt)');
+            const transaction = new sql.Transaction(pool);
+            await transaction.begin();
+            try {
+                // Create a new session for the logged-in user
+                await transaction.request()
+                    .input('SessionId', sql.NVarChar, newSessionId)
+                    .input('UserId', sql.NVarChar, user.id)
+                    .input('ExpiresAt', sql.DateTime2, expiresAt)
+                    .query('INSERT INTO Sessions (Id, UserId, ExpiresAt) VALUES (@SessionId, @UserId, @ExpiresAt)');
+                
+                // If there was a guest cart, associate it with the new user
+                if (guestSessionId) {
+                    await transaction.request()
+                        .input('UserId', sql.NVarChar, user.id)
+                        .input('GuestSessionId', sql.NVarChar, guestSessionId)
+                        .query('UPDATE Carts SET UserId = @UserId, SessionId = @GuestSessionId WHERE SessionId = @GuestSessionId AND UserId IS NULL');
+                }
+                
+                await transaction.commit();
 
-            delete user.password;
-            return NextResponse.json({ user, sessionId: newSessionId });
+                delete user.password;
+                return NextResponse.json({ user, sessionId: newSessionId });
+
+            } catch(err) {
+                await transaction.rollback();
+                throw err;
+            }
+
         } else {
             return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
         }
