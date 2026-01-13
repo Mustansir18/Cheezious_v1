@@ -7,6 +7,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
 import { useSyncLocalStorage } from '@/hooks/use-sync-local-storage';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { initialDeals, menuCategories, addons } from '@/lib/data';
 
 interface SettingsContextType {
   settings: Settings;
@@ -38,22 +40,22 @@ interface SettingsContextType {
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 const initialSettings: Settings = {
-    floors: [],
-    tables: [],
-    paymentMethods: [],
+    floors: [{ id: 'F-00001', name: 'Ground' }],
+    tables: [{ id: 'T-G-1', name: 'Table 1', floorId: 'F-00001' }],
+    paymentMethods: [{ id: 'PM-1', name: 'Cash', taxRate: 0.16 }],
     autoPrintReceipts: false,
     companyName: "Cheezious",
-    companyLogo: '',
-    branches: [],
-    defaultBranchId: null,
+    companyLogo: PlaceHolderImages.find(i => i.id === 'cheezious-special')?.imageUrl || '',
+    branches: [{ id: 'B-00001', name: 'CHZ J3, JOHAR TOWN LAHORE', dineInEnabled: true, takeAwayEnabled: true, deliveryEnabled: true, orderPrefix: 'G3' }],
+    defaultBranchId: 'B-00001',
     businessDayStart: "11:00",
     businessDayEnd: "04:00",
     roles: [],
-    deliveryModes: [],
+    deliveryModes: [{ id: 'DM-1', name: 'Website' }],
     promotion: {
-        isEnabled: false,
-        itemId: null,
-        imageUrl: ''
+        isEnabled: true,
+        itemId: initialDeals[0].id,
+        imageUrl: initialDeals[0].imageUrl
     }
 };
 
