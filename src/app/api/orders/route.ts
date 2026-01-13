@@ -29,12 +29,16 @@ export async function GET(request: Request) {
       // The `selectedAddons` is stored as a JSON string in the DB.
       order.items = itemsResult.recordset.map(item => ({
           ...item,
-          selectedAddons: item.selectedAddons ? JSON.parse(item.selectedAddons) : []
+          selectedAddons: item.selectedAddons ? JSON.parse(item.selectedAddons) : [],
+          selectedVariant: item.selectedVariant ? JSON.parse(item.selectedVariant) : undefined,
       }));
     }
 
     return NextResponse.json({ orders });
   } catch (error: any) {
+    if (error.number === 208) { // Table does not exist
+      return NextResponse.json({ orders: [] });
+    }
     // If the query fails (e.g., table doesn't exist), log the error and return an empty array.
     console.warn('Could not fetch orders from database, returning empty array. Error:', error.message);
     return NextResponse.json({ orders: [] });
@@ -93,15 +97,15 @@ export async function POST(request: Request) {
           .input('baseItemPrice', sql.Decimal(10, 2), item.baseItemPrice)
           .input('name', sql.NVarChar, item.name)
           .input('selectedAddons', sql.NVarChar, JSON.stringify(item.selectedAddons || []))
-          .input('selectedVariantName', sql.NVarChar, item.selectedVariant?.name)
+          .input('selectedVariant', sql.NVarChar, JSON.stringify(item.selectedVariant || null))
           .input('stationId', sql.NVarChar, item.stationId)
           .input('isPrepared', sql.Bit, item.isPrepared ? 1 : 0)
           .input('isDealComponent', sql.Bit, item.isDealComponent ? 1 : 0)
           .input('parentDealCartItemId', sql.NVarChar, item.parentDealCartItemId)
           .input('instructions', sql.NVarChar, item.instructions)
           .query(`
-            INSERT INTO OrderItems (id, orderId, menuItemId, quantity, itemPrice, baseItemPrice, name, selectedAddons, selectedVariantName, stationId, isPrepared, isDealComponent, parentDealCartItemId, instructions)
-            VALUES (@id, @orderId, @menuItemId, @quantity, @itemPrice, @baseItemPrice, @name, @selectedAddons, @selectedVariantName, @stationId, @isPrepared, @isDealComponent, @parentDealCartItemId, @instructions)
+            INSERT INTO OrderItems (id, orderId, menuItemId, quantity, itemPrice, baseItemPrice, name, selectedAddons, selectedVariant, stationId, isPrepared, isDealComponent, parentDealCartItemId, instructions)
+            VALUES (@id, @orderId, @menuItemId, @quantity, @itemPrice, @baseItemPrice, @name, @selectedAddons, @selectedVariant, @stationId, @isPrepared, @isDealComponent, @parentDealCartItemId, @instructions)
           `);
       }
 

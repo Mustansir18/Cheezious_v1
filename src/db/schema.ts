@@ -1,117 +1,14 @@
+-- idempotent migration for deployment: creates missing tables and columns used by the app
+-- Run this file on the target DB to ensure required tables/columns exist
 
+-- Query_0: Ensure we're on the target DB
+USE [CheeziousKiosk];
+GO
 
-# Deployment and Database Integration Guide
-
-This document provides instructions for deploying the Cheezious Connect application to a production server (Windows or Linux) and outlines the necessary steps to transition from browser-based storage to a real SQL database backend.
-
-## 1. Deployment to a Server
-
-### 1.1. Windows Server Deployment
-
-For a detailed, step-by-step guide on deploying to a Windows Server, please refer to the `DEPLOYMENT_MANUAL.md` file located in the root of this project.
-
-The manual covers:
--   **Prerequisites:** Installing Node.js, IIS (with URL Rewrite and ARR modules), and the PM2 process manager.
--   **Application Setup:** Building the app for production (`npm run build`).
--   **Running with PM2:** Using PM2 to run the application as a background service and ensure it restarts on server reboots.
--   **IIS as a Reverse Proxy:** Configuring IIS to serve the Next.js application to the web.
-
-### 1.2. Linux Server Deployment (High-Level Guide)
-
-Deploying on a Linux server (like Ubuntu or CentOS) follows a similar pattern, typically using Nginx as the reverse proxy.
-
-1.  **Prerequisites:**
-    -   Install `Node.js` (latest LTS version) and `npm`.
-    -   Install `Nginx` (`sudo apt-get install nginx`).
-    -   Install `PM2` globally (`npm install pm2 -g`).
-
-2.  **Application Setup:**
-    -   Copy the application files to a directory (e.g., `/var/www/cheezious-connect`).
-    -   Install dependencies: `npm install`.
-    -   Build the app: `npm run build`.
-
-3.  **Run with PM2:**
-    -   Start the app on a specific port: `pm2 start npm --name "cheezious-connect" -- start -p 9002`.
-    -   Ensure it starts on reboot: `pm2 startup` and `pm2 save`.
-
-4.  **Configure Nginx:**
-    -   Create a new Nginx configuration file in `/etc/nginx/sites-available/cheezious-connect`.
-    -   Configure it to act as a reverse proxy, forwarding requests to the port PM2 is using (e.g., `http://localhost:9002`).
-
-    ```nginx
-    server {
-        listen 80;
-        server_name your_domain.com;
-
-        location / {
-            proxy_pass http://localhost:9002;
-            proxy_http_version 1.1;
-            proxy_set_header Upgrade $http_upgrade;
-            proxy_set_header Connection 'upgrade';
-            proxy_set_header Host $host;
-            proxy_cache_bypass $http_upgrade;
-        }
-    }
-    ```
-    -   Enable the site: `sudo ln -s /etc/nginx/sites-available/cheezious-connect /etc/nginx/sites-enabled/` and restart Nginx.
-
-## 2. Connecting to a SQL Database
-
-The application is architecturally prepared to use a real SQL database. This section outlines the final implementation steps.
-
-### 2.1. Configure Your Database Connection
-
--   **Update Environment Variables:** Open the `.env` file in the project root. Fill in the `DB_USER`, `DB_PASSWORD`, `DB_SERVER`, and `DB_DATABASE` placeholders with your actual SQL Server credentials.
--   **Review Connection Logic:** A database connection file has been created at `src/lib/db.ts`. It uses the `mssql` package and is configured to read the variables from your `.env` file. If you are using a different database (like PostgreSQL or MySQL), you will need to install its driver (`npm install pg` or `npm install mysql2`) and update this file accordingly.
--   **Test Connection**: Run the application and navigate to the `/api/db-test` route in your browser to verify that the connection credentials are correct.
-
-### 2.2. Implement Database Queries in API Routes
-
-For each API route in `src/app/api/`, you must replace the placeholder data with a real database query.
-
-**Example: Replacing Placeholder Data in `src/app/api/users/route.ts`**
-
-This example shows how to use the connection pool from `src/lib/db.ts` to fetch users from your SQL Server database.
-
-```typescript
-// src/app/api/users/route.ts
-import { NextResponse } from 'next/server';
-import { getConnectionPool, sql } from '@/lib/db';
-
-export async function GET(request: Request) {
-  try {
-    const pool = await getConnectionPool();
-    const result = await pool.request().query('SELECT * FROM Users');
-    
-    // The API should return an object with a key, e.g., { users: ... }
-    return NextResponse.json({ users: result.recordset });
-
-  } catch (error: any) {
-    console.error('Failed to fetch users:', error);
-    // Return a 500 Internal Server Error response
-    return NextResponse.json({ message: 'Failed to fetch users', error: error.message }, { status: 500 });
-  }
-}
-```
-
-### 2.3. Apply This Pattern to All API Routes
-
-You must apply this same pattern to all files in the `src/app/api/` directory, replacing the placeholder arrays with the appropriate `SELECT`, `INSERT`, `UPDATE`, or `DELETE` queries for your database.
-
--   `/api/menu/route.ts`: `SELECT * FROM MenuItems`, `SELECT * FROM MenuCategories`, etc.
--   `/api/orders/route.ts`:
-    -   `GET`: `SELECT * FROM Orders WHERE OrderDate > ...`
-    -   `POST`: `INSERT INTO Orders (...) VALUES (...)`
-    -   `PUT`: `UPDATE Orders SET Status = @Status WHERE id = @id`
--   `/api/settings/route.ts`: Fetch data from your `Branches`, `Floors`, `Tables`, `PaymentMethods` tables.
-
-## 3. Database Schema (SQL)
-
-Below are the complete `CREATE TABLE` queries for setting up your database in SQL Server. The tables are ordered to ensure that foreign key constraints are met.
-
-```sql
--- Create Branches table first as Users depends on it
-CREATE TABLE Branches (
+-- Query_1: Branches table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Branches]') AND type in (N'U'))
+BEGIN
+  CREATE TABLE dbo.Branches (
     id NVARCHAR(255) PRIMARY KEY,
     name NVARCHAR(255) NOT NULL,
     orderPrefix NVARCHAR(10) NOT NULL,
@@ -120,10 +17,14 @@ CREATE TABLE Branches (
     deliveryEnabled BIT NOT NULL DEFAULT 1,
     createdAt DATETIME DEFAULT GETDATE(),
     updatedAt DATETIME DEFAULT GETDATE()
-);
+  );
+END
+GO
 
--- Users table with a foreign key to Branches
-CREATE TABLE Users (
+-- Query_2: Users table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Users]') AND type in (N'U'))
+BEGIN
+  CREATE TABLE dbo.Users (
     id NVARCHAR(255) PRIMARY KEY,
     username NVARCHAR(255) UNIQUE NOT NULL,
     password NVARCHAR(255) NOT NULL,
@@ -134,100 +35,133 @@ CREATE TABLE Users (
     createdAt DATETIME DEFAULT GETDATE(),
     updatedAt DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (branchId) REFERENCES Branches(id)
-);
+  );
+END
+GO
 
--- Create simple lookup tables
-CREATE TABLE Floors (
-    id NVARCHAR(255) PRIMARY KEY,
-    name NVARCHAR(255) NOT NULL
-);
+-- Query_3: Sessions table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Sessions]') AND type in (N'U'))
+BEGIN
+  CREATE TABLE dbo.Sessions (
+    Id NVARCHAR(50) PRIMARY KEY,
+    UserId NVARCHAR(255) NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    ExpiresAt DATETIME2 NULL,
+    FOREIGN KEY (UserId) REFERENCES Users(id) ON DELETE SET NULL
+  );
+END
+GO
 
-CREATE TABLE Tables (
+-- Query_4: Carts table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Carts]') AND type in (N'U'))
+BEGIN
+  CREATE TABLE dbo.Carts (
+    Id UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+    SessionId NVARCHAR(50) NOT NULL,
+    BranchId NVARCHAR(50) NULL,
+    OrderType NVARCHAR(50) NULL,
+    FloorId NVARCHAR(50) NULL,
+    TableId NVARCHAR(50) NULL,
+    DeliveryMode NVARCHAR(50) NULL,
+    CustomerName NVARCHAR(200) NULL,
+    CustomerPhone NVARCHAR(50) NULL,
+    CustomerAddress NVARCHAR(500) NULL,
+    UpdatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    FOREIGN KEY (SessionId) REFERENCES Sessions(Id) ON DELETE CASCADE
+  );
+END
+GO
+IF NOT EXISTS (SELECT name FROM sys.indexes WHERE name = 'IX_Carts_SessionId')
+BEGIN
+    CREATE INDEX IX_Carts_SessionId ON dbo.Carts(SessionId);
+END
+GO
+
+-- Query_5: CartItems table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[CartItems]') AND type in (N'U'))
+BEGIN
+  CREATE TABLE dbo.CartItems (
+    Id UNIQUEIDENTIFIER DEFAULT NEWID() PRIMARY KEY,
+    CartId UNIQUEIDENTIFIER NOT NULL,
+    MenuItemId NVARCHAR(50),
+    Quantity INT NOT NULL DEFAULT 1,
+    Price DECIMAL(10,2) NULL,
+    BasePrice DECIMAL(10,2) NULL,
+    Name NVARCHAR(500) NULL,
+    SelectedAddons NVARCHAR(MAX) NULL,
+    SelectedVariant NVARCHAR(MAX) NULL,
+    StationId NVARCHAR(50) NULL,
+    IsPrepared BIT DEFAULT 0,
+    IsDealComponent BIT DEFAULT 0,
+    ParentDealCartItemId UNIQUEIDENTIFIER NULL,
+    Instructions NVARCHAR(1000) NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    FOREIGN KEY (CartId) REFERENCES Carts(Id) ON DELETE CASCADE
+  );
+END
+GO
+IF NOT EXISTS (SELECT name FROM sys.indexes WHERE name = 'IX_CartItems_CartId')
+BEGIN
+    CREATE INDEX IX_CartItems_CartId ON dbo.CartItems(CartId);
+END
+GO
+
+
+-- Query_6: Floors and Tables
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Floors]') AND type in (N'U'))
+BEGIN
+  CREATE TABLE dbo.Floors ( id NVARCHAR(255) PRIMARY KEY, name NVARCHAR(255) NOT NULL );
+END
+GO
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Tables]') AND type in (N'U'))
+BEGIN
+  CREATE TABLE dbo.Tables (
     id NVARCHAR(255) PRIMARY KEY,
     name NVARCHAR(255) NOT NULL,
     floorId NVARCHAR(255),
     FOREIGN KEY (floorId) REFERENCES Floors(id) ON DELETE SET NULL
-);
+  );
+END
+GO
 
-CREATE TABLE PaymentMethods (
-    id NVARCHAR(255) PRIMARY KEY,
-    name NVARCHAR(255) NOT NULL,
-    taxRate DECIMAL(5, 2) NOT NULL DEFAULT 0.00
-);
+-- Query_7: Payment and Delivery Modes
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[PaymentMethods]') AND type in (N'U'))
+BEGIN
+  CREATE TABLE dbo.PaymentMethods ( id NVARCHAR(255) PRIMARY KEY, name NVARCHAR(255) NOT NULL, taxRate DECIMAL(5, 2) NOT NULL DEFAULT 0.00 );
+END
+GO
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[DeliveryModes]') AND type in (N'U'))
+BEGIN
+  CREATE TABLE dbo.DeliveryModes ( id NVARCHAR(255) PRIMARY KEY, name NVARCHAR(255) NOT NULL );
+END
+GO
 
-CREATE TABLE DeliveryModes (
-    id NVARCHAR(255) PRIMARY KEY,
-    name NVARCHAR(255) NOT NULL
-);
+-- Query_8: Menu Tables
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[MenuCategories]') AND type in (N'U'))
+BEGIN
+  CREATE TABLE dbo.MenuCategories ( id NVARCHAR(255) PRIMARY KEY, name NVARCHAR(255) NOT NULL, icon NVARCHAR(255), stationId NVARCHAR(50) );
+END
+GO
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SubCategories]') AND type in (N'U'))
+BEGIN
+  CREATE TABLE dbo.SubCategories ( id NVARCHAR(255) PRIMARY KEY, categoryId NVARCHAR(255) NOT NULL, name NVARCHAR(255) NOT NULL, FOREIGN KEY (categoryId) REFERENCES MenuCategories(id) ON DELETE CASCADE );
+END
+GO
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Addons]') AND type in (N'U'))
+BEGIN
+  CREATE TABLE dbo.Addons ( id NVARCHAR(255) PRIMARY KEY, name NVARCHAR(255) NOT NULL, price DECIMAL(10, 2), prices NVARCHAR(MAX), type NVARCHAR(50) DEFAULT 'standard' );
+END
+GO
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[MenuItems]') AND type in (N'U'))
+BEGIN
+  CREATE TABLE dbo.MenuItems ( id NVARCHAR(255) PRIMARY KEY, name NVARCHAR(MAX) NOT NULL, description NVARCHAR(MAX), price DECIMAL(10, 2) NOT NULL, categoryId NVARCHAR(255), subCategoryId NVARCHAR(255), imageUrl NVARCHAR(MAX), availableAddonIds NVARCHAR(MAX), variants NVARCHAR(MAX), dealItems NVARCHAR(MAX), FOREIGN KEY (categoryId) REFERENCES MenuCategories(id) ON DELETE SET NULL );
+END
+GO
 
--- Menu-related tables
-CREATE TABLE MenuCategories (
-    id NVARCHAR(255) PRIMARY KEY,
-    name NVARCHAR(255) NOT NULL,
-    icon NVARCHAR(255),
-    stationId NVARCHAR(50)
-);
-
-CREATE TABLE SubCategories (
-    id NVARCHAR(255) PRIMARY KEY,
-    categoryId NVARCHAR(255) NOT NULL,
-    name NVARCHAR(255) NOT NULL,
-    FOREIGN KEY (categoryId) REFERENCES MenuCategories(id) ON DELETE CASCADE
-);
-
-CREATE TABLE Addons (
-    id NVARCHAR(255) PRIMARY KEY,
-    name NVARCHAR(255) NOT NULL,
-    price DECIMAL(10, 2),
-    prices NVARCHAR(MAX), -- For JSON object
-    type NVARCHAR(50) DEFAULT 'standard'
-);
-
-CREATE TABLE MenuItems (
-    id NVARCHAR(255) PRIMARY KEY,
-    name NVARCHAR(MAX) NOT NULL,
-    description NVARCHAR(MAX),
-    price DECIMAL(10, 2) NOT NULL,
-    categoryId NVARCHAR(255),
-    subCategoryId NVARCHAR(255),
-    imageUrl NVARCHAR(MAX),
-    availableAddonIds NVARCHAR(MAX), -- For JSON array of strings
-    variants NVARCHAR(MAX), -- For JSON array of objects
-    dealItems NVARCHAR(MAX), -- For JSON array of objects
-    FOREIGN KEY (categoryId) REFERENCES MenuCategories(id) ON DELETE SET NULL
-);
-
--- Carts and CartItems tables for persistent shopping carts
-CREATE TABLE Carts (
-    id NVARCHAR(255) PRIMARY KEY,
-    sessionId NVARCHAR(255) UNIQUE NOT NULL, -- Corresponds to browser session
-    userId NVARCHAR(255), -- Nullable, for guest carts
-    branchId NVARCHAR(255),
-    orderType NVARCHAR(50),
-    tableId NVARCHAR(255),
-    createdAt DATETIME DEFAULT GETDATE(),
-    updatedAt DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (userId) REFERENCES Users(id),
-    FOREIGN KEY (branchId) REFERENCES Branches(id)
-);
-
-CREATE TABLE CartItems (
-    id NVARCHAR(255) PRIMARY KEY,
-    cartId NVARCHAR(255) NOT NULL,
-    menuItemId NVARCHAR(255) NOT NULL,
-    quantity INT NOT NULL,
-    price DECIMAL(18, 2) NOT NULL,
-    selectedAddons NVARCHAR(MAX), -- Stored as JSON string
-    selectedVariantName NVARCHAR(255),
-    instructions NVARCHAR(MAX),
-    isDealComponent BIT DEFAULT 0,
-    parentDealCartItemId NVARCHAR(255),
-    FOREIGN KEY (cartId) REFERENCES Carts(id) ON DELETE CASCADE
-);
-
-
--- Orders and OrderItems tables
-CREATE TABLE Orders (
+-- Query_9: Order Tables
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Orders]') AND type in (N'U'))
+BEGIN
+  CREATE TABLE dbo.Orders (
     id NVARCHAR(255) PRIMARY KEY,
     orderNumber NVARCHAR(255) UNIQUE NOT NULL,
     branchId NVARCHAR(255),
@@ -257,9 +191,12 @@ CREATE TABLE Orders (
     originalTotalAmount DECIMAL(18, 2),
     cancellationReason NVARCHAR(MAX),
     FOREIGN KEY (branchId) REFERENCES Branches(id) ON DELETE SET NULL
-);
-
-CREATE TABLE OrderItems (
+  );
+END
+GO
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[OrderItems]') AND type in (N'U'))
+BEGIN
+  CREATE TABLE dbo.OrderItems (
     id NVARCHAR(255) PRIMARY KEY,
     orderId NVARCHAR(255) NOT NULL,
     menuItemId NVARCHAR(255),
@@ -267,8 +204,8 @@ CREATE TABLE OrderItems (
     quantity INT,
     itemPrice DECIMAL(18, 2),
     baseItemPrice DECIMAL(18, 2),
-    selectedAddons NVARCHAR(MAX), -- Stored as JSON string
-    selectedVariantName NVARCHAR(255),
+    selectedAddons NVARCHAR(MAX),
+    selectedVariant NVARCHAR(MAX),
     stationId NVARCHAR(50),
     isPrepared BIT DEFAULT 0,
     preparedAt DATETIME,
@@ -277,105 +214,38 @@ CREATE TABLE OrderItems (
     parentDealCartItemId NVARCHAR(255),
     instructions NVARCHAR(MAX),
     FOREIGN KEY (orderId) REFERENCES Orders(id) ON DELETE CASCADE
-);
+  );
+END
+GO
 
--- Log tables
-CREATE TABLE ActivityLog (
-    id NVARCHAR(255) PRIMARY KEY,
-    timestamp DATETIME NOT NULL,
-    [user] NVARCHAR(255),
-    message NVARCHAR(MAX),
-    category NVARCHAR(50)
-);
-
-CREATE TABLE CashierLog (
-    id NVARCHAR(255) PRIMARY KEY,
-    timestamp DATETIME NOT NULL,
-    type NVARCHAR(50) NOT NULL,
-    amount DECIMAL(18, 2) NOT NULL,
-    cashierId NVARCHAR(255) NOT NULL,
-    cashierName NVARCHAR(255),
-    adminId NVARCHAR(255) NOT NULL,
-    adminName NVARCHAR(255),
-    notes NVARCHAR(MAX)
-);
-
--- === INDEXES (for performance) ===
-
--- Add an index to ActivityLog to speed up fetching logs sorted by date.
+-- Query_10: Log Tables
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[ActivityLog]') AND type in (N'U'))
+BEGIN
+  CREATE TABLE dbo.ActivityLog ( id NVARCHAR(50) PRIMARY KEY, timestamp DATETIME NOT NULL, [user] NVARCHAR(100) NOT NULL, message NVARCHAR(MAX) NOT NULL, category NVARCHAR(50) NOT NULL );
+END
+GO
 IF NOT EXISTS (SELECT name FROM sys.indexes WHERE name = 'IDX_ActivityLog_Timestamp')
 BEGIN
     CREATE INDEX IDX_ActivityLog_Timestamp ON ActivityLog([timestamp] DESC);
 END
 GO
-
--- Add an index to CartItems to speed up fetching items for a specific cart.
-IF NOT EXISTS (SELECT name FROM sys.indexes WHERE name = 'IDX_CartItems_CartId')
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[CashierLog]') AND type in (N'U'))
 BEGIN
-    CREATE INDEX IDX_CartItems_CartId ON CartItems(CartId);
+  CREATE TABLE dbo.CashierLog ( id NVARCHAR(50) PRIMARY KEY, timestamp DATETIME NOT NULL, type NVARCHAR(50) NOT NULL, amount DECIMAL(18,2) NOT NULL, cashierId NVARCHAR(255) NOT NULL, cashierName NVARCHAR(255), adminId NVARCHAR(255) NOT NULL, adminName NVARCHAR(255), notes NVARCHAR(MAX) );
 END
 GO
 
--- Add an index to Carts to speed up fetching a cart by its session ID.
-IF NOT EXISTS (SELECT name FROM sys.indexes WHERE name = 'IDX_Carts_SessionId')
+-- Query_11: Ratings Table
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Ratings]') AND type in (N'U'))
 BEGIN
-    CREATE INDEX IDX_Carts_SessionId ON Carts(sessionId);
+  CREATE TABLE dbo.Ratings (
+    id NVARCHAR(50) PRIMARY KEY,
+    timestamp DATETIME NOT NULL,
+    rating INT NOT NULL,
+    comment NVARCHAR(MAX)
+  );
 END
 GO
 
--- === SEED DATA (for initial setup) ===
-
--- Seed Branch
-IF NOT EXISTS (SELECT 1 FROM Branches WHERE id = 'B-00001')
-BEGIN
-  INSERT INTO Branches (id, name, dineInEnabled, takeAwayEnabled, deliveryEnabled, orderPrefix)
-  VALUES ('B-00001', 'CHZ J3, JOHAR TOWN LAHORE', 1, 1, 1, 'G3');
-END
+PRINT 'Initial deployment migrations complete.';
 GO
-
--- Seed Users
--- Note: Passwords should be replaced with secure hashes in a real application.
-IF NOT EXISTS (SELECT 1 FROM Users WHERE username = 'root')
-BEGIN
-  INSERT INTO Users (id, username, password, role, balance)
-  VALUES ('CH-00001', 'root', 'Faith123$$', 'root', 0);
-END
-GO
-IF NOT EXISTS (SELECT 1 FROM Users WHERE username = 'admin')
-BEGIN
-  INSERT INTO Users (id, username, password, role, branchId, balance)
-  VALUES ('CH-00002', 'admin', 'admin', 'admin', 'B-00001', 0);
-END
-GO
-IF NOT EXISTS (SELECT 1 FROM Users WHERE username = 'cashier')
-BEGIN
-  INSERT INTO Users (id, username, password, role, branchId, balance)
-  VALUES ('CH-00003', 'cashier', 'cashier', 'cashier', 'B-00001', 0);
-END
-GO
-
--- Seed Floors & Tables
-IF NOT EXISTS (SELECT 1 FROM Floors WHERE id = 'F-00001') INSERT INTO Floors (id, name) VALUES ('F-00001', 'Ground Floor');
-IF NOT EXISTS (SELECT 1 FROM Tables WHERE id = 'T-00001') INSERT INTO Tables (id, name, floorId) VALUES ('T-00001', 'Table 1', 'F-00001');
-IF NOT EXISTS (SELECT 1 FROM Tables WHERE id = 'T-00002') INSERT INTO Tables (id, name, floorId) VALUES ('T-00002', 'Table 2', 'F-00001');
-GO
-
--- Seed Payment Methods
-IF NOT EXISTS (SELECT 1 FROM PaymentMethods WHERE id = 'PM-00001') INSERT INTO PaymentMethods (id, name, taxRate) VALUES ('PM-00001', 'Cash', 0.16);
-IF NOT EXISTS (SELECT 1 FROM PaymentMethods WHERE id = 'PM-00002') INSERT INTO PaymentMethods (id, name, taxRate) VALUES ('PM-00002', 'Credit/Debit Card', 0.05);
-GO
-
--- Seed Delivery Modes
-IF NOT EXISTS (SELECT 1 FROM DeliveryModes WHERE id = 'DM-001') INSERT INTO DeliveryModes (id, name) VALUES ('DM-001', 'Website');
-IF NOT EXISTS (SELECT 1 FROM DeliveryModes WHERE id = 'DM-002') INSERT INTO DeliveryModes (id, name) VALUES ('DM-002', 'App');
-IF NOT EXISTS (SELECT 1 FROM DeliveryModes WHERE id = 'DM-003') INSERT INTO DeliveryModes (id, name) VALUES ('DM-003', 'Call Centre');
-GO
-
-PRINT 'Seed data for Branches, Users, Floors, Tables, PaymentMethods, and DeliveryModes inserted (if not present).';
-GO
-
-```
-  </change>
-  <change>
-    <file>src/db/schema.ts</file>
-    <content><

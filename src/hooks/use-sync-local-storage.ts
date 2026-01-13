@@ -32,17 +32,26 @@ export function useSyncLocalStorage<T>(
   // Fetch from API on initial mount
   useEffect(() => {
     async function fetchInitialData() {
+      if (isInitialized.current) {
+        setIsLoading(false);
+        return;
+      }
+      
       try {
         const response = await fetch(apiPath);
         if (!response.ok) {
           throw new Error(`Failed to fetch from ${apiPath}. Status: ${response.status}`);
         }
         const data = await response.json();
-        // The API should return an object where the data is under a key, e.g., { settings: {...} }
-        const dataKey = Object.keys(data)[0]; // e.g. 'settings', 'menu' etc.
-        if (data[dataKey] && Array.isArray(data[dataKey]) ? data[dataKey].length > 0 : data[dataKey]) {
-             setStoredValue(data[dataKey]);
-             window.localStorage.setItem(key, JSON.stringify(data[dataKey]));
+        // The API should return an object where the data is under a key, e.g., { settings: {...} } or { menu: {...} } or { logs: [...] }
+        const dataKey = Object.keys(data)[0];
+        if (data[dataKey]) {
+             const serverData = data[dataKey];
+             // Check if server data is not empty before updating
+             if (Array.isArray(serverData) ? serverData.length > 0 : (typeof serverData === 'object' && Object.keys(serverData).length > 0)) {
+                setStoredValue(serverData);
+                window.localStorage.setItem(key, JSON.stringify(serverData));
+             }
         } else {
              console.warn(`API response for ${apiPath} did not contain expected key '${dataKey}' or data was empty.`);
         }
@@ -77,13 +86,12 @@ export function useSyncLocalStorage<T>(
         console.warn(`Error setting localStorage key “${key}”:`, error);
       }
       
-      // Post to API - this is fire-and-forget for now
-      // A more robust solution would handle queuing and retries
-      const dataToPost = { [key.replace(/cheezious|V\d/g, '').toLowerCase()]: valueToStore };
+      const apiBodyKey = key.startsWith('cheezious') ? key.substring('cheezious'.length).toLowerCase() : key.toLowerCase();
+      
       fetch(apiPath, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(dataToPost)
+          body: JSON.stringify({ [apiBodyKey]: valueToStore })
       }).catch(err => {
           console.error(`Failed to sync data to ${apiPath}`, err);
           toast({

@@ -10,6 +10,9 @@ export async function GET(request: Request) {
     const result = await pool.request().query('SELECT * FROM ActivityLog ORDER BY timestamp DESC');
     return NextResponse.json({ logs: result.recordset });
   } catch (error: any) {
+    if (error.number === 208) { // Table does not exist
+      return NextResponse.json({ logs: [] });
+    }
     console.error('Failed to fetch activity logs:', error);
     return NextResponse.json({ message: 'Failed to fetch activity logs', error: error.message }, { status: 500 });
   }

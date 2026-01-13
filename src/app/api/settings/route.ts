@@ -81,7 +81,11 @@ export async function GET(request: Request) {
 
 // POST endpoint to update the whole settings object
 export async function POST(request: Request) {
-    const settings: Settings = await request.json();
+    const { settings } = await request.json();
+    if (!settings) {
+        return NextResponse.json({ message: 'Settings object is required' }, { status: 400 });
+    }
+
     const pool = await getConnectionPool();
     const transaction = new sql.Transaction(pool);
 

@@ -2,51 +2,57 @@
 /**
  * @fileoverview This file establishes and exports a reusable connection pool to a SQL Server database.
  * It reads configuration from environment variables for security.
- * In a real production environment, you might add more robust features like connection retry logic.
+ * The connection pool is implemented as a singleton to ensure it's created only once.
  */
 
 import sql from 'mssql';
 
-// Define the configuration for the database connection.
-// It pulls values from the .env file.
-const dbConfig = {
+const dbConfig: sql.config = {
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   server: process.env.DB_SERVER || 'localhost',
   database: process.env.DB_NAME,
   port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 1433,
   options: {
-    encrypt: process.env.NODE_ENV === 'production', // Use encryption for production connections
-    trustServerCertificate: true, // Change to true for local dev / self-signed certs
+    encrypt: process.env.NODE_ENV === 'production',
+    trustServerCertificate: true,
   },
+  pool: {
+    max: 10,
+    min: 0,
+    idleTimeoutMillis: 30000
+  }
 };
 
-/**
- * A global connection pool. By creating it once and exporting it,
- * we can reuse the same pool across all our API routes, which is much more efficient
- * than creating a new connection for every request.
- */
-let pool: sql.ConnectionPool;
+let pool: sql.ConnectionPool | null = null;
+let poolConnectPromise: Promise<sql.ConnectionPool> | null = null;
 
-export async function getConnectionPool() {
+export async function getConnectionPool(): Promise<sql.ConnectionPool> {
   if (pool && pool.connected) {
     return pool;
   }
-  try {
-    pool = new sql.ConnectionPool(dbConfig);
-    await pool.connect();
-    console.log('[db] Database connection pool established.');
-    return pool;
-  } catch (err) {
-    console.error('Database connection failed:', err);
-    // In a production app, you might want to throw the error or exit the process
-    // throw err;
-    // For this app, we'll allow it to continue so the UI can still be explored,
-    // but API calls will fail.
-    return Promise.reject(err);
+
+  if (poolConnectPromise) {
+    return poolConnectPromise;
   }
+
+  poolConnectPromise = new Promise(async (resolve, reject) => {
+    try {
+      console.log('[db] Creating new database connection pool...');
+      const newPool = new sql.ConnectionPool(dbConfig);
+      await newPool.connect();
+      console.log('[db] Database connection pool established.');
+      pool = newPool;
+      resolve(pool);
+    } catch (err) {
+      console.error('[db] Database connection failed:', err);
+      pool = null;
+      poolConnectPromise = null;
+      reject(err);
+    }
+  });
+
+  return poolConnectPromise;
 }
 
-// Export the sql object itself so we can use its types (e.g., sql.Int, sql.VarChar)
-// in our API routes when defining query parameters.
 export { sql };

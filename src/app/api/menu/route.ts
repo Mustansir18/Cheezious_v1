@@ -44,10 +44,13 @@ export async function GET(request: Request) {
         prices: safeJsonParse(addon.prices, {})
     }));
 
-    return NextResponse.json({ items, categories, addons });
+    return NextResponse.json({ menu: { items, categories, addons } });
   } catch (error: any) {
+    if (error.number === 208) { // Table does not exist
+      return NextResponse.json({ menu: { items: [], categories: [], addons: [] } });
+    }
     console.warn('Could not fetch menu from database. This might be okay if tables are not created yet.', error.message);
-    return NextResponse.json({ items: [], categories: [], addons: [] });
+    return NextResponse.json({ menu: { items: [], categories: [], addons: [] } });
   }
 }
 

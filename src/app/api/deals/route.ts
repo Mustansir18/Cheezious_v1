@@ -24,6 +24,9 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ deals });
   } catch (error: any) {
+    if (error.number === 208) { // Table does not exist
+      return NextResponse.json({ deals: [] });
+    }
     // If the table doesn't exist yet, return an empty array gracefully.
     console.warn('Could not fetch deals from database. This might be okay if the table is not created yet.', error.message);
     return NextResponse.json({ deals: [] });

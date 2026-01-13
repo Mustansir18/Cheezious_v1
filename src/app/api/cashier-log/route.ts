@@ -10,6 +10,9 @@ export async function GET(request: Request) {
     const result = await pool.request().query('SELECT * FROM CashierLog ORDER BY timestamp DESC');
     return NextResponse.json({ logs: result.recordset });
   } catch (error: any) {
+    if (error.number === 208) { // Table does not exist
+      return NextResponse.json({ logs: [] });
+    }
     console.warn('Could not fetch cashier logs from database, returning empty array. Error:', error.message);
     return NextResponse.json({ logs: [] });
   }
