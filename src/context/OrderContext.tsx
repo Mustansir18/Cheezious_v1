@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useMemo } from 'react';
@@ -41,15 +40,6 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
         .map(o => o.tableId!);
     return new Set(ids);
   }, [orders]);
-
-  useEffect(() => {
-    // Set up an interval to re-fetch orders every 10 seconds to keep the dashboard live
-    const interval = setInterval(() => {
-      mutate();
-    }, 10000); // 10 seconds
-
-    return () => clearInterval(interval);
-  }, [mutate]);
 
   const addOrder = useCallback(async (order: Order) => {
     try {

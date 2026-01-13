@@ -28,7 +28,7 @@ export function useDataFetcher<T>(apiPath: string, initialData: T) {
       }
       const jsonData = await res.json();
       
-      // The API should return an object with a single key, e.g., { settings: {...} }
+      // The API might return an object with a key, e.g., { settings: {...} }
       // We extract the data from that key.
       const dataKey = Object.keys(jsonData)[0];
       const extractedData = jsonData[dataKey] ?? initialData;

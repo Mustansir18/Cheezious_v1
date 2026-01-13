@@ -1,4 +1,3 @@
-
 -- idempotent migration for deployment: creates missing tables and columns used by the app
 -- Run this file on the target DB to ensure required tables/columns exist
 
