@@ -72,10 +72,11 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = useCallback(async (username: string, password: string): Promise<User | null> => {
+    const guestSessionId = localStorage.getItem(SESSION_ID_KEY);
     const response = await fetch('/api/auth/session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify({ username, password, guestSessionId })
     });
 
     if (response.ok) {
