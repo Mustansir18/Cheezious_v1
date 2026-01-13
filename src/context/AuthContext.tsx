@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
@@ -49,8 +48,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const item = window.localStorage.getItem(USERS_STORAGE_KEY);
       const storedUsers = item ? JSON.parse(item) : null;
       
-      if (storedUsers && storedUsers.length > 0) {
-        setUsers(storedUsers);
+      if (storedUsers && Array.isArray(storedUsers) && storedUsers.length > 0) {
+        // Ensure root user exists
+        const rootExists = storedUsers.some(u => u.id === 'root');
+        if (!rootExists) {
+            const usersWithRoot = [...storedUsers, initialUsers[0]];
+            setUsers(usersWithRoot);
+            window.localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(usersWithRoot));
+        } else {
+            setUsers(storedUsers);
+        }
       } else {
         // If no users in local storage, initialize with defaults
         setUsers(initialUsers);
@@ -73,11 +80,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if(sessionUser) {
               setUser(sessionUser);
           } else {
+              // Clear invalid session ID
               localStorage.removeItem(SESSION_ID_KEY);
           }
       }
       setIsLoading(false);
     }
+    // Run this only after users have been loaded
     if (users.length > 0) {
         loadSession();
     }

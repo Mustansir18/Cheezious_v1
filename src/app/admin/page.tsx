@@ -15,7 +15,8 @@ export default function AdminDashboardPage() {
   const { user, isLoading } = useAuth();
 
   useEffect(() => {
-    // This effect now only handles redirecting non-root users away from the main dashboard
+    // This effect now ONLY handles redirecting users who land here by mistake.
+    // The main redirection logic is on the login page.
     if (!isLoading && user && user.role !== 'root') {
       if (user.role === 'admin') router.push('/admin/orders');
       else if (user.role === 'kds') router.push('/admin/kds');
@@ -24,11 +25,15 @@ export default function AdminDashboardPage() {
       else if (user.role === 'fried-station') router.push('/admin/kds/fried');
       else if (user.role === 'bar-station') router.push('/admin/kds/bar');
       else if (user.role === 'cutt-station') router.push('/admin/kds/master');
+      else if (user.role === 'cashier') router.push('/cashier');
+      else if (user.role === 'marketing') router.push('/marketing/reporting');
+      else router.push('/login'); // Fallback if role has no specific dashboard
     }
   }, [user, isLoading, router]);
 
 
-  if (isLoading || (user && user.role !== 'root')) {
+  // Show loading spinner while auth state is resolving, or if user is not root and is about to be redirected.
+  if (isLoading || !user || user.role !== 'root') {
       return (
           <div className="flex h-screen items-center justify-center">
             <Loader className="h-12 w-12 animate-spin text-primary" />
