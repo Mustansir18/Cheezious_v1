@@ -2,7 +2,6 @@
 import { NextResponse } from 'next/server';
 import { getConnectionPool, sql } from '@/lib/db';
 import type { User } from '@/lib/types';
-import { v4 as uuidv4 } from 'uuid';
 
 // GET all users
 export async function GET(request: Request) {
@@ -22,23 +21,30 @@ export async function GET(request: Request) {
 
 // POST a new user
 export async function POST(request: Request) {
-  const { user: newUser } = await request.json();
-  const { id, username, password, role, branchId, stationName } = newUser;
+  const { user: newUser, id } = await request.json();
+  const { username, password, role, branchId, stationName } = newUser;
   
   if (!username || !password || !role) {
     return NextResponse.json({ message: 'Username, password, and role are required' }, { status: 400 });
+  }
+  if (!id) {
+    return NextResponse.json({ message: 'User ID is required' }, { status: 400 });
   }
 
   try {
     const pool = await getConnectionPool();
 
-    // Check for existing username
+    // Check for existing username OR id
     const existingUser = await pool.request()
       .input('Username', sql.NVarChar, username)
-      .query('SELECT id FROM Users WHERE username = @Username');
+      .input('Id', sql.NVarChar, id)
+      .query('SELECT id FROM Users WHERE username = @Username OR id = @Id');
     
     if (existingUser.recordset.length > 0) {
-      return NextResponse.json({ message: `User with username '${username}' already exists.` }, { status: 409 });
+        if (existingUser.recordset[0].id === id) {
+             return NextResponse.json({ message: `User with ID '${id}' already exists.` }, { status: 409 });
+        }
+        return NextResponse.json({ message: `User with username '${username}' already exists.` }, { status: 409 });
     }
     
     await pool.request()
@@ -90,7 +96,7 @@ export async function PUT(request: Request) {
         .input('role', sql.NVarChar, role)
         .input('branchId', sql.NVarChar, branchId)
         .input('stationName', sql.NVarChar, stationName)
-        .input('balance', sql.Decimal(18, 2), balance);
+        .input('balance', sql.Decimal(18, 2), balance || 0);
 
     if (password) {
       requestToRun.input('password', sql.NVarChar, password);
@@ -98,7 +104,7 @@ export async function PUT(request: Request) {
     
     await requestToRun.query(`UPDATE Users SET ${setClauses.join(', ')} WHERE id = @id`);
 
-    const returnedUser: User = { id, username, role, branchId, stationName, balance };
+    const returnedUser: Omit<User, 'password'> = { id, username, role, branchId, stationName, balance: balance || 0 };
     return NextResponse.json({ user: returnedUser });
   } catch (error: any) {
     console.error('Failed to update user:', error);
@@ -108,7 +114,7 @@ export async function PUT(request: Request) {
 
 // DELETE a user
 export async function DELETE(request: Request) {
-    const { id } = await request.json();
+    const { id, name } = await request.json();
 
     if (!id) {
         return NextResponse.json({ message: 'User ID is required' }, { status: 400 });
@@ -116,21 +122,11 @@ export async function DELETE(request: Request) {
 
     try {
         const pool = await getConnectionPool();
-        const result = await pool.request()
-            .input('id', sql.NVarChar, id)
-            .query('SELECT username FROM Users WHERE id = @id');
-        
-        if (result.recordset.length === 0) {
-            return NextResponse.json({ message: 'User not found' }, { status: 404 });
-        }
-        
-        const username = result.recordset[0].username;
-
         await pool.request()
             .input('id', sql.NVarChar, id)
             .query('DELETE FROM Users WHERE id = @id');
 
-        return NextResponse.json({ message: `User '${username}' deleted successfully.`, id: id, username: username });
+        return NextResponse.json({ message: `User '${name}' deleted successfully.`, id: id, username: name });
     } catch (error: any) {
         console.error('Failed to delete user:', error);
         return NextResponse.json({ message: 'Failed to delete user', error: error.message }, { status: 500 });

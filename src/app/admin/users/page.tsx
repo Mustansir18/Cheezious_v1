@@ -356,13 +356,12 @@ export default function UserManagementPage() {
       updateUser(userToSave);
     } else if (id){
       addUser({
-        id,
         username: userToSave.username,
         password: userToSave.password!,
         role: userToSave.role,
         branchId: userToSave.branchId,
         stationName: userToSave.stationName,
-      });
+      }, id);
     }
     setDialogOpen(false);
     setEditingUser(undefined);
@@ -370,7 +369,7 @@ export default function UserManagementPage() {
 
   const displayableUsers = users.filter((u) => {
     if (user?.role === "root") return u.role !== "root";
-    if (user?.role === "admin") return u.branchId === user.branchId;
+    if (user?.role === "admin") return u.branchId === user.branchId && u.role !== 'root';
     return false;
   });
 

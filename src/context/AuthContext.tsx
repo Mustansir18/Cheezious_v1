@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
@@ -15,9 +16,9 @@ interface AuthContextType {
   isLoading: boolean;
   login: (username: string, password: string) => Promise<User | null>;
   logout: () => void;
-  addUser: (user: Omit<User, 'id' | 'balance'>) => Promise<void>;
+  addUser: (user: Omit<User, 'id' | 'balance'>, id: string) => Promise<void>;
   updateUser: (user: User) => Promise<void>;
-  deleteUser: (id: string) => Promise<void>;
+  deleteUser: (id: string, name: string) => Promise<void>;
   updateUserBalance: (userId: string, amount: number, operation: 'add' | 'subtract') => void;
 }
 
@@ -45,8 +46,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const response = await fetch('/api/users');
           if (!response.ok) throw new Error('Failed to fetch users');
           const data = await response.json();
-          setUsers(data.users || []);
-          return data.users || [];
+          const fetchedUsers = data.users || [];
+          setUsers(fetchedUsers);
+          return fetchedUsers;
         } catch (error) {
           console.error("Failed to fetch users:", error);
           toast({ variant: 'destructive', title: 'User Sync Error', description: 'Could not load user accounts.' });
@@ -54,7 +56,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       };
       
-      const loadSession = async (allUsers: User[]) => {
+      const ensureRootUser = async (currentUsers: User[]) => {
+          const rootExists = currentUsers.some(u => u.username === 'root');
+          if (!rootExists) {
+              console.log("Root user not found, attempting to create...");
+              try {
+                  const rootUserData = {
+                      username: 'root',
+                      password: 'Faith123$$',
+                      role: 'root' as UserRole,
+                  };
+                  const response = await fetch('/api/users', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ user: rootUserData, id: 'root' }),
+                  });
+                  if(response.ok) {
+                      const { user: createdRoot } = await response.json();
+                      setUsers(prev => [...prev, createdRoot]);
+                      console.log("Root user created successfully.");
+                  } else {
+                       const errorData = await response.json();
+                       throw new Error(errorData.message || 'Failed to create root user.');
+                  }
+              } catch (error) {
+                  console.error("Failed to create root user:", error);
+              }
+          }
+      };
+
+      const loadSession = async () => {
           const sessionId = localStorage.getItem(SESSION_ID_KEY);
           if (sessionId) {
               try {
@@ -77,11 +108,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       };
       
       const allUsers = await loadUsers();
-      await loadSession(allUsers);
+      await ensureRootUser(allUsers);
+      await loadSession();
       setIsLoading(false);
     }
     loadInitialData();
-  }, [toast]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
 
   const login = useCallback(async (username: string, password: string): Promise<User | null> => {
@@ -125,12 +158,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     router.push('/login');
   }, [router, user, logActivity]);
 
-  const addUser = async (newUser: Omit<User, 'id' | 'balance'>) => {
+  const addUser = async (newUser: Omit<User, 'id' | 'balance'>, id: string) => {
     try {
       const response = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newUser),
+        body: JSON.stringify({ user: newUser, id }),
       });
 
       if (!response.ok) {
@@ -138,7 +171,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error(message || 'Failed to add user');
       }
 
-      const savedUser = await response.json();
+      const { user: savedUser } = await response.json();
       setUsers(prev => [...prev, savedUser]);
       logActivity(`Added new user '${newUser.username}'.`, user?.username || 'System', 'User');
       toast({ title: 'Success', description: 'User has been created.' });
@@ -152,7 +185,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const response = await fetch(`/api/users`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedUser),
+        body: JSON.stringify({ user: updatedUser }),
       });
 
       if (!response.ok) {
@@ -160,8 +193,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error(message || 'Failed to update user');
       }
 
-      const returnedUser = await response.json();
+      const { user: returnedUser } = await response.json();
       setUsers(prev => prev.map(u => u.id === returnedUser.id ? returnedUser : u));
+      if (user?.id === returnedUser.id) {
+          setUser(returnedUser);
+      }
       logActivity(`Updated user '${returnedUser.username}'.`, user?.username || "System", 'User');
       toast({ title: 'Success', description: 'User has been updated.' });
     } catch (error: any) {
@@ -169,7 +205,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const deleteUser = async (id: string) => {
+  const deleteUser = async (id: string, name: string) => {
      try {
       const response = await fetch(`/api/users`, {
         method: 'DELETE',
