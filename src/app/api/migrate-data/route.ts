@@ -13,7 +13,7 @@ async function clearAllTables(transaction: sql.Transaction) {
     ];
     for (const table of tables) {
         try {
-            await transaction.request().query(`DELETE FROM ${table};`);
+            await transaction.request().query(`IF OBJECT_ID('dbo.${table}', 'U') IS NOT NULL DELETE FROM ${table};`);
             // Reset identity seed if table has one.
             if(await transaction.request().query(`SELECT 1 FROM sys.identity_columns WHERE OBJECT_ID = OBJECT_ID('${table}')`)) {
                  await transaction.request().query(`DBCC CHECKIDENT ('[${table}]', RESEED, 0);`);
@@ -136,7 +136,9 @@ export async function POST(request: Request) {
         return NextResponse.json({ message: "Data migration successful!" });
 
     } catch (error: any) {
-        await transaction.rollback();
+        if(transaction.rolledBack === false) {
+          await transaction.rollback();
+        }
         console.error("--- Data Migration Failed ---");
         console.error(error);
         return NextResponse.json({ message: "Data migration failed", error: error.message }, { status: 500 });

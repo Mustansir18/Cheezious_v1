@@ -55,56 +55,24 @@ Deploying on a Linux server (like Ubuntu or CentOS) follows a similar pattern, t
     ```
     -   Enable the site: `sudo ln -s /etc/nginx/sites-available/cheezious-connect /etc/nginx/sites-enabled/` and restart Nginx.
 
-## 2. Connecting to a SQL Database
+## 2. Setting Up the SQL Database
 
-The application is architecturally prepared to use a real SQL database. This section outlines the final implementation steps.
+The application is now fully integrated with a SQL Server database. Follow these steps to set it up.
 
-### 2.1. Configure Your Database Connection
+### 2.1. Configure Database Connection
 
--   **Update Environment Variables:** Open the `.env` file in the project root. Fill in the `DB_USER`, `DB_PASSWORD`, `DB_SERVER`, and `DB_DATABASE` placeholders with your actual SQL Server credentials.
--   **Review Connection Logic:** A database connection file has been created at `src/lib/db.ts`. It uses the `mssql` package and is configured to read the variables from your `.env` file. If you are using a different database (like PostgreSQL or MySQL), you will need to install its driver (`npm install pg` or `npm install mysql2`) and update this file accordingly.
--   **Test Connection**: Run the application and navigate to the `/api/db-test` route in your browser to verify that the connection credentials are correct.
+-   **Update Environment Variables:** Open the `.env` file in the project root. Fill in the `DB_USER`, `DB_PASSWORD`, `DB_SERVER`, `DB_DATABASE`, and `DB_PORT` placeholders with your actual SQL Server credentials.
+-   **Test Connection**: Run the application (`npm run dev`) and navigate to `http://localhost:3000/api/db-test` in your browser. You should see a success message. If not, double-check your credentials in the `.env` file.
 
-### 2.2. Implement Database Queries in API Routes
+### 2.2. Create Database Schema
 
-For each API route in `src/app/api/`, you must replace the placeholder data with a real database query.
-
-**Example: Replacing Placeholder Data in `src/app/api/users/route.ts`**
-
-```typescript
-// src/app/api/users/route.ts
-import { NextResponse } from 'next/server';
-import { getConnectionPool, sql } from '@/lib/db';
-
-export async function GET(request: Request) {
-  try {
-    const pool = await getConnectionPool();
-    const result = await pool.request().query('SELECT * FROM Users');
+-   **Run the Migration Script**: The simplest way to create all the necessary tables is to use the built-in data migration tool.
+    1.  Run the application (`npm run dev`).
+    2.  Navigate to `http://localhost:3000/admin/migrate-data`.
+    3.  Click the "Start Migration" button. This will execute the SQL commands from `src/db/schema.ts` to create and configure all required tables in your database.
     
-    // The API should return an object with a key, e.g., { users: ... }
-    return NextResponse.json({ users: result.recordset });
+-   **Manual Schema Creation**: Alternatively, you can manually run the SQL script. The complete, idempotent migration script for setting up your database in SQL Server can be found in the file `src/db/schema.ts`. Copy its contents and run it against your target database using a tool like SQL Server Management Studio.
 
-  } catch (error: any) {
-    console.error('Failed to fetch users:', error);
-    // Return a 500 Internal Server Error response
-    return NextResponse.json({ message: 'Failed to fetch users', error: error.message }, { status: 500 });
-  }
-}
-```
+### 2.3. Data Persistence
 
-### 2.3. Apply This Pattern to All API Routes
-
-You must apply this same pattern to all files in the `src/app/api/` directory, replacing the placeholder arrays with the appropriate `SELECT`, `INSERT`, `UPDATE`, or `DELETE` queries for your database.
-
--   `/api/menu/route.ts`: `SELECT * FROM MenuItems`, `SELECT * FROM MenuCategories`, etc.
--   `/api/orders/route.ts`:
-    -   `GET`: `SELECT * FROM Orders WHERE OrderDate > ...`
-    -   `POST`: `INSERT INTO Orders (...) VALUES (...)`
-    -   `PUT`: `UPDATE Orders SET Status = @Status WHERE id = @id`
--   `/api/settings/route.ts`: Fetch data from your `Branches`, `Floors`, `Tables`, `PaymentMethods` tables.
-
-## 3. Database Schema (SQL)
-
-The complete, idempotent migration script for setting up your database in SQL Server can be found in the file `src/db/schema.ts`.
-
-Run the contents of this file against your target database to ensure all required tables, columns, and indexes exist.
+Once the database is set up, all data management (for users, orders, settings, menu items, etc.) is handled automatically through API routes. The application no longer relies on `localStorage` for primary data storage, ensuring that all data is centralized and consistent across all devices.
