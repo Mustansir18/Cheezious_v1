@@ -20,6 +20,8 @@ export function useDataFetcher<T>(
     let isMounted = true;
     
     async function fetchData() {
+      // If there's no API path, we're not fetching from the server.
+      // Set loading to false and use initial data.
       if (!apiPath) {
         if (isMounted) {
           setData(initialData);
