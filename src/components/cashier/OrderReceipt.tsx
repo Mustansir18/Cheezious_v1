@@ -180,5 +180,3 @@ export function OrderReceipt({ order }: OrderReceiptProps) {
         </div>
     );
 }
-
-    
