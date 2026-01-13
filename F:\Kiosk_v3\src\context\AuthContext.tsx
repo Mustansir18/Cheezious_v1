@@ -6,8 +6,9 @@ import { useRouter } from 'next/navigation';
 import type { User, UserRole } from '@/lib/types';
 import { useActivityLog } from './ActivityLogContext';
 import { useToast } from '@/hooks/use-toast';
-import { useDataFetcher } from '@/hooks/use-data-fetcher';
-import { mutate as globalMutate } from 'swr';
+import useSWR, { mutate as globalMutate } from 'swr';
+
+const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 interface AuthContextType {
   user: User | null;
@@ -24,27 +25,15 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const SESSION_ID_KEY = 'cheezious_session_id';
 
-const initialUsers: User[] = [
-    { id: 'CH-00001', username: 'root', password: 'Faith123$$', role: 'root', balance: 100000 },
-    { id: 'CH-00002', username: 'admin', password: 'admin', role: 'admin', branchId: 'B-00001', balance: 50000 },
-    { id: 'CH-00003', username: 'cashier', password: '123', role: 'cashier', branchId: 'B-00001', balance: 10000 },
-    { id: 'CH-00004', username: 'marketing', password: 'marketing', role: 'marketing', balance: 0 },
-    { id: 'CH-00005', username: 'kds', password: 'kds', role: 'kds', branchId: 'B-00001', stationName: 'All Stations' },
-    { id: 'CH-00006', username: 'make-station', password: 'make-station', role: 'make-station', branchId: 'B-00001', stationName: 'MAKE Station' },
-    { id: 'CH-00007', username: 'pasta-station', password: 'pasta-station', role: 'pasta-station', branchId: 'B-00001', stationName: 'PASTA Station' },
-    { id: 'CH-00008', username: 'fried-station', password: 'fried-station', role: 'fried-station', branchId: 'B-00001', stationName: 'FRIED Station' },
-    { id: 'CH-00009', username: 'bar-station', password: 'bar-station', role: 'bar-station', branchId: 'B-00001', stationName: 'BEVERAGES Station' },
-    { id: 'CH-00010', username: 'cutt-station', password: 'cutt-station', role: 'cutt-station', branchId: 'B-00001', stationName: 'CUTT Station' },
-];
-
 const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const { data: users, isLoading: isUsersLoading, mutate: mutateUsers } = useDataFetcher<User[]>('/api/users', initialUsers);
+  const { data: usersData, isLoading: isUsersLoading, mutate: mutateUsers } = useSWR('/api/users', fetcher);
   const [isSessionLoading, setSessionLoading] = useState(true);
   const { logActivity } = useActivityLog();
   const { toast } = useToast();
   const router = useRouter();
 
+  const users = usersData?.users || [];
   const isLoading = isUsersLoading || isSessionLoading;
 
   useEffect(() => {
@@ -151,9 +140,9 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updateUserBalance = useCallback((userId: string, amount: number, operation: 'add' | 'subtract') => {
-    mutateUsers((currentUsers: User[] | undefined) => {
-        if (!currentUsers) return [];
-        return currentUsers.map(u => {
+    mutateUsers((currentData: any) => {
+        if (!currentData || !currentData.users) return { users: [] };
+        const updatedUsers = currentData.users.map((u: User) => {
             if (u.id === userId) {
                 const currentBalance = u.balance || 0;
                 const newBalance = operation === 'add' ? currentBalance + amount : currentBalance - amount;
@@ -161,6 +150,7 @@ const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
             return u;
         });
+        return { users: updatedUsers };
     }, false); // optimistic update
   }, [mutateUsers]);
 

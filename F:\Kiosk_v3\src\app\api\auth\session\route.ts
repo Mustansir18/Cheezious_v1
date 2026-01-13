@@ -40,7 +40,7 @@ export async function GET(request: Request) {
          if (error.number === 208) { // Invalid object name 'Users' or 'Sessions'
             return NextResponse.json({ user: null, message: 'Database tables not found. Please run migration.' }, { status: 500, headers: { 'Cache-Control': 'no-store' } });
         }
-        return NextResponse.json({ message: 'Failed to retrieve session', error: error.message }, { status: 500, headers: { 'Cache-Control': 'no-store' } });
+        return NextResponse.json({ message: 'Failed to retrieve session', error: error.message }, { status: 500 });
     }
 }
 
@@ -80,27 +80,6 @@ export async function POST(request: Request) {
                     .query('INSERT INTO Sessions (Id, UserId, ExpiresAt) VALUES (@SessionId, @UserId, @ExpiresAt)');
                 
                 console.log('[API/SESSION - POST] Session created successfully.');
-                
-                // If there was a guest cart, associate it with the new user
-                if (guestSessionId) {
-                     console.log(`[API/SESSION - POST] Guest session ID found. Checking for existing user cart for user ID: ${user.id}`);
-                     // Check if a cart already exists for the user
-                    const userCartExists = await transaction.request()
-                        .input('UserId', sql.NVarChar, user.id)
-                        .query('SELECT Id FROM Carts WHERE UserId = @UserId');
-
-                    if (userCartExists.recordset.length === 0) {
-                        console.log(`[API/SESSION - POST] No existing cart for user. Attempting to migrate guest cart.`);
-                        // No user cart exists, so we can try to associate the guest cart.
-                        await transaction.request()
-                            .input('UserId', sql.NVarChar, user.id)
-                            .input('GuestSessionId', sql.NVarChar, guestSessionId)
-                            .query('UPDATE Carts SET UserId = @UserId, SessionId = @GuestSessionId WHERE SessionId = @GuestSessionId AND UserId IS NULL');
-                        console.log(`[API/SESSION - POST] Guest cart migrated.`);
-                    } else {
-                         console.log(`[API/SESSION - POST] User already has a cart. Skipping guest cart migration.`);
-                    }
-                }
                 
                 await transaction.commit();
                 console.log('[API/SESSION - POST] Transaction committed. Login successful.');
