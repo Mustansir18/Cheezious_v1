@@ -20,15 +20,10 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  if (!request.body) {
-    console.warn('[API/ACTIVITY-LOG] POST request received with empty body.');
-    return NextResponse.json({ message: 'Request body is empty' }, { status: 400 });
-  }
-
   try {
     const logEntry: Omit<ActivityLog, 'id'> = await request.json();
 
-    if (!logEntry.message || !logEntry.user || !logEntry.category) {
+    if (!logEntry || !logEntry.message || !logEntry.user || !logEntry.category) {
         console.error('logActivity API called with invalid arguments:', logEntry);
         return NextResponse.json({ message: 'Invalid log entry data' }, { status: 400 });
     }
