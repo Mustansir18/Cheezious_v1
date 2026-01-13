@@ -3,229 +3,229 @@
     {
       "id": "deal-1",
       "description": "Two burgers with fries and drinks",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F9b9e6c4e-5e3e-4f4d-8060-959c946f0474.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1608835291093-394b0c943a75?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxtZWFsfGVufDB8fHx8MTc2ODI5MzU3OXww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "meal"
     },
     {
       "id": "deal-2",
       "description": "Two burgers with chicken, fries and drinks",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F7155e8a5-1773-45f8-a15f-9e67b2d226a0.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1490645935967-10de6ba17061?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8bWVhbHxlbnwwfHx8fDE3NjgyOTM1Nzl8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "meal"
     },
     {
       "id": "deal-3",
       "description": "Three burgers with fries and a large drink",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2Fb52a5c53-b3a1-4340-8b1e-183421111666.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxtZWFsfGVufDB8fHx8MTc2ODI5MzU3OXww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "meal"
     },
     {
       "id": "deal-4",
       "description": "Three burgers with chicken, fries and a large drink",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F590f2305-b162-4217-91f9-90b4d4554b35.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1711469147166-845e564b6ee5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxwbGF0dGVyfGVufDB8fHx8MTc2ODI5MzU3OXww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "platter"
     },
     {
       "id": "pizza-deal-sm",
       "description": "A small pizza with a drink",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2Fd2314545-31f0-4638-b78f-621b1062b08a.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxwaXp6YXxlbnwwfHx8fDE3NjgxOTQyNTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "pizza"
     },
     {
       "id": "pizza-deal-reg",
       "description": "A regular pizza with two drinks",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F2b3f112b-b6d3-48b6-9635-73138b1f506c.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1594007654729-407eedc4be65?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxwaXp6YXxlbnwwfHx8fDE3NjgxOTQyNTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "pizza"
     },
     {
       "id": "pizza-deal-lg",
       "description": "A large pizza with a large drink",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F9b7a4211-ac4d-4e92-bb8a-77e82845c8c5.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1579751626657-72bc17010498?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxwaXp6YXxlbnwwfHx8fDE3NjgxOTQyNTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "pizza"
     },
     {
       "id": "cheezy-sticks",
       "description": "Cheezy bread sticks with a dip",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F58498b35-7798-4665-b77c-639a0c2834b9.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1666812651517-be948fa0512f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxjaGVlc2UlMjBzdGlja3N8ZW58MHx8fHwxNzY4MjkzNTc5fDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "cheese sticks"
     },
     {
       "id": "calzone-chunks",
       "description": "Stuffed calzone pieces with fries",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2Fd8a6c8e3-b3c1-4c11-9e58-39a756658137.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1753656681797-3234c89d6d4d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxjYWx6b25lfGVufDB8fHx8MTc2ODI0MDA3Nnww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "calzone"
     },
     {
       "id": "baked-wings",
       "description": "A plate of oven-baked chicken wings",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F09805988-0520-4352-ac53-0668b57b1029.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1614596559005-4237709526bf?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHx3aW5nc3xlbnwwfHx8fDE3NjgyOTM1Nzl8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "wings"
     },
     {
       "id": "flaming-wings",
       "description": "Spicy peri peri chicken wings",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F80b18f0f-02a8-410a-9d62-37887e41b312.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1680211977725-649861ac7819?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxzcGljeSUyMHdpbmdzfGVufDB8fHx8MTc2ODI5MzU3OXww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "spicy wings"
     },
     {
       "id": "cheezious-rolls",
       "description": "Fried spring rolls on a plate",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F4a1c53e0-6e42-4b35-8664-9b884964f434.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1618406854423-ef169758d6a6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxzcHJpbmclMjByb2xsc3xlbnwwfHx8fDE3NjgyOTM1Nzl8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "spring rolls"
     },
     {
       "id": "crown-crust",
       "description": "A large pizza with a special crown-shaped crust",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F2547b973-c821-4f11-9430-81f1e31d4512.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1571997478779-2adcbbe9ab2f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8cGl6emF8ZW58MHx8fHwxNzY4MTk0MjUwfDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "pizza"
     },
     {
       "id": "stuff-crust",
       "description": "A pizza with a cheese-stuffed crust",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F62740a32-9c9c-4824-a78b-5777a118835a.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1613564834361-9436948817d1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxwaXp6YXxlbnwwfHx8fDE3NjgxOTQyNTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "pizza"
     },
     {
       "id": "cheezious-special",
       "description": "A pizza loaded with various toppings",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F9b964344-32b0-4a8b-a7ea-34863f6848d7.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1513104890138-7c749659a591?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwaXp6YXxlbnwwfHx8fDE3NjgxOTQyNTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "pizza"
     },
     {
       "id": "chicken-tikka",
       "description": "A pizza with chicken tikka topping",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F2ec3a1d2-9694-44b2-a4f6-7b250529d20c.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1534308983496-4fabb1a015ee?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxwaXp6YXxlbnwwfHx8fDE3NjgxOTQyNTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "pizza"
     },
     {
       "id": "chicken-fajita",
       "description": "A pizza with chicken fajita topping",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F4a08892f-508b-4b68-b80c-e2f42a17f1a3.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1594007654729-407eedc4be65?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxwaXp6YXxlbnwwfHx8fDE3NjgxOTQyNTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "pizza"
     },
     {
       "id": "chicken-supreme",
       "description": "A supreme pizza with chicken and vegetables",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2Fc4d2d46e-1d12-4b2a-a925-502a5146522c.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1593560708920-61dd98c46a4e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxwaXp6YXxlbnwwfHx8fDE3NjgxOTQyNTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "pizza"
     },
     {
       "id": "behari-kebab",
       "description": "A pizza topped with behari kebabs",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2Fc4d2d46e-1d12-4b2a-a925-502a5146522c.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1613564834361-9436948817d1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxwaXp6YXxlbnwwfHx8fDE3NjgxOTQyNTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "pizza"
     },
     {
       "id": "fettuccine-alfredo",
       "description": "A bowl of fettuccine alfredo pasta",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F97b5a59c-6b3a-4464-9b2f-9173041935c2.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1551462147-ff29053bfc14?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxwYXN0YXxlbnwwfHx8fDE3NjgyODk1ODl8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "pasta"
     },
     {
       "id": "crunchy-pasta",
       "description": "A bowl of macaroni pasta with crunchy chicken",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F9b9f71af-4899-4c12-850c-3d231d6706e5.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1598866594230-a7c12756260f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8cGFzdGF8ZW58MHx8fHwxNzY4Mjg5NTg5fDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "pasta"
     },
     {
       "id": "roasted-platter",
       "description": "A platter with rolls, wings, and fries",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F2f63f572-c51d-44a6-800a-4299b9e6f0b4.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1601912262364-3a35aa0d9399?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxwbGF0dGVyfGVufDB8fHx8MTc2ODI5MzU3OXww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "platter"
     },
     {
       "id": "roll-platter",
       "description": "A platter with different kinds of rolls and fries",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F750e685f-c4a0-4743-9828-d380e22cc3e6.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1607384070812-0965d8827f6f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8cGxhdHRlcnxlbnwwfHx8fDE3NjgyOTM1Nzl8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "platter"
     },
     {
       "id": "euro-sandwich",
       "description": "A sandwich with fries on the side",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F624419b4-b633-4f9e-b7d6-848f3b2075a3.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxzYW5kd2ljaHxlbnwwfHx8fDE3NjgxOTQ0MzR8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "sandwich"
     },
     {
       "id": "mexican-sandwich",
       "description": "A mexican style sandwich with fries",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F78ed3728-2621-4f36-a36c-94a28f806e5e.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1553909489-cd47e0907980?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzYW5kd2ljaHxlbnwwfHx8fDE3NjgxOTQ0MzR8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "sandwich"
     },
     {
       "id": "pizza-stacker",
       "description": "A layered pizza stacker sandwich",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F1c3c9b78-c0b8-4c28-98e6-14639d1b0660.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxzYW5kd2ljaHxlbnwwfHx8fDE3NjgxOTQ0MzR8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "sandwich"
     },
     {
       "id": "reggy-burger",
       "description": "A simple beef or chicken burger",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F3a928989-8d77-4940-b6aa-02c39e2d3345.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1610440042657-612c34d95e9f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxidXJnZXJ8ZW58MHx8fHwxNzY4MjQ3MTI5fDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "burger"
     },
     {
       "id": "bazinga-burger",
       "description": "A large crispy chicken zinger burger",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F21977726-218a-441f-8255-520146f881f2.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1572802419224-296b0aeee0d9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxidXJnZXJ8ZW58MHx8fHwxNzY4MjQ3MTI5fDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "burger"
     },
     {
       "id": "bazinga-combo",
       "description": "A burger combo with fries and a drink",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F2e90e72f-5374-4b53-b244-67252277d33d.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1572424117831-005b5e9b3ae4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxtZWFsfGVufDB8fHx8MTc2ODI5MzU3OXww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "meal"
     },
     {
       "id": "fried-chicken",
       "description": "Pieces of crispy fried chicken",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F715904d9-59b4-4b6c-b715-f5f7f3299778.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1587593810167-a84920ea0781?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxjaGlja2VufGVufDB8fHx8MTc2ODI2ODgyMnww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "chicken"
     },
     {
       "id": "fried-chicken-single",
       "description": "A single piece of fried chicken",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F715904d9-59b4-4b6c-b715-f5f7f3299778.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1587593810167-a84920ea0781?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxjaGlja2VufGVufDB8fHx8MTc2ODI2ODgyMnww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "chicken"
     },
     {
       "id": "nuggets",
       "description": "A serving of chicken nuggets with dip",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F6131464c-b1dc-4161-9c60-a29ab1a0fba7.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1550513008-8cd1a9b590c8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxudWdnZXRzfGVufDB8fHx8MTc2ODI5MzU4MHww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "nuggets"
     },
     {
       "id": "fries",
       "description": "A basket of french fries",
-      "imageUrl": "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F094c9b9f-0994-4680-a616-86c8f498c1a6.png&w=1920&q=75",
+      "imageUrl": "https://images.unsplash.com/photo-1598679253544-2c97992403ea?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxmcmllc3xlbnwwfHx8fDE3NjgyOTM1ODB8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "fries"
     },
     {
       "id": "drink-1",
       "description": "A standard serving of a soft drink in a cup.",
-      "imageUrl": "https://images.unsplash.com/photo-1600271886742-f049cd451bba?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+      "imageUrl": "https://images.unsplash.com/photo-1594058573823-d8edf1ad3380?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MXwxfHNlYXJjaHwxfHxkcmlua3xlbnwwfHx8fDE3NjgyOTM1Nzl8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "drink"
     },
     {
       "id": "drink-liter",
       "description": "A 1-liter bottle of a soft drink.",
-      "imageUrl": "https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+      "imageUrl": "https://images.unsplash.com/photo-1592858167090-2473780d894d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxkcmlua3xlbnwwfHx8fDE3NjgyOTM1Nzl8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "drink"
     },
     {
       "id": "drink-1.5-liter",
       "description": "A 1.5-liter bottle of a soft drink.",
-      "imageUrl": "https://images.unsplash.com/photo-1543253687-c931c8e01820?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzb2RhJTIwYm90dGxlfGVufDB8fHx8MTc2MzkzNjM3OHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1497534446932-c925b458314e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxkcmlua3xlbnwwfHx8fDE3NjgyOTM1Nzl8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "drink"
     },
     {
       "id": "drink-2",
       "description": "A small bottle of mineral water.",
-      "imageUrl": "https://images.unsplash.com/photo-1523362628745-0c100150b504?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxib3R0bGVkJTIwd2F0ZXJ8ZW58MHx8fHwxNzYzOTM2Mzc4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1615529328331-f8917597711f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHx3YXRlcnxlbnwwfHx8fDE3NjgyOTM1Nzl8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "water"
     },
     {
       "id": "juice-small",
       "description": "A small carton of fruit juice.",
-      "imageUrl": "https://images.unsplash.com/photo-1577805947693-89ba121175a3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxqdWljZSUyMGNhcnRvbnxlbnwwfHx8fDE3NjM5MzYzNzl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxqdWljZXxlbnwwfHx8fDE3NjgyOTM1ODB8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "juice"
     }
   ]

@@ -117,6 +117,19 @@ export async function POST(request: Request) {
         }
         console.log("Step 4: Complete.");
 
+        // Step 5: Migrate Logs & Ratings (optional but good for testing)
+        console.log("Step 5: Migrating Logs and Ratings...");
+        for (const log of activityLogsData) {
+             await transaction.request().input('id', sql.NVarChar, log.id).input('timestamp', sql.DateTime, new Date(log.timestamp)).input('user', sql.NVarChar, log.user).input('message', sql.NVarChar, log.message).input('category', sql.NVarChar, log.category).query('INSERT INTO ActivityLog (id, timestamp, [user], message, category) VALUES (@id, @timestamp, @user, @message, @category)');
+        }
+        for (const log of cashierLogsData) {
+             await transaction.request().input('id', sql.NVarChar, log.id).input('timestamp', sql.DateTime, new Date(log.timestamp)).input('type', sql.NVarChar, log.type).input('amount', sql.Decimal(18, 2), log.amount).input('cashierId', sql.NVarChar, log.cashierId).input('cashierName', sql.NVarChar, log.cashierName).input('adminId', sql.NVarChar, log.adminId).input('adminName', sql.NVarChar, log.adminName).input('notes', sql.NVarChar, log.notes).query('INSERT INTO CashierLog (id, timestamp, type, amount, cashierId, cashierName, adminId, adminName, notes) VALUES (@id, @timestamp, @type, @amount, @cashierId, @cashierName, @adminId, @adminName, @notes)');
+        }
+        for (const rating of ratingsData) {
+             await transaction.request().input('id', sql.NVarChar, rating.id).input('timestamp', sql.DateTime, new Date(rating.timestamp)).input('rating', sql.Int, rating.rating).input('comment', sql.NVarChar, rating.comment).query('INSERT INTO Ratings (id, timestamp, rating, comment) VALUES (@id, @timestamp, @rating, @comment)');
+        }
+        console.log("Step 5: Complete.");
+
         console.log("--- Data Migration Successful ---");
         await transaction.commit();
 

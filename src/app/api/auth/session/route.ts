@@ -35,6 +35,9 @@ export async function GET(request: Request) {
 
     } catch (error: any) {
         console.error('[API/SESSION - GET] Error:', error);
+         if (error.number === 208) { // Invalid object name 'Users' or 'Sessions'
+            return NextResponse.json({ user: null, message: 'Database tables not found. Please run migration.' }, { status: 500 });
+        }
         return NextResponse.json({ message: 'Failed to retrieve session', error: error.message }, { status: 500 });
     }
 }
@@ -74,6 +77,9 @@ export async function POST(request: Request) {
         }
     } catch (error: any) {
         console.error('[API/SESSION - POST] Error:', error);
+        if (error.number === 208) { // Invalid object name 'Users'
+            return NextResponse.json({ message: 'Database not set up. Please run the migration.' }, { status: 500 });
+        }
         return NextResponse.json({ message: 'Login failed', error: error.message }, { status: 500 });
     }
 }

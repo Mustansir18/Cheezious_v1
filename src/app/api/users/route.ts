@@ -12,6 +12,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ users: result.recordset });
   } catch (error: any) {
     if(error.number === 208) { // Table does not exist
+      console.warn('Users table not found, returning empty array.');
       return NextResponse.json({ users: [] });
     }
     console.error('Failed to fetch users:', error);

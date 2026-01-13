@@ -21,6 +21,7 @@ import {
   ChefHat,
   Activity,
   Landmark,
+  FileUp,
 } from 'lucide-react';
 import {
   Tooltip,
@@ -60,6 +61,7 @@ function AdminSidebar() {
     { href: '/admin/activity-log', label: 'Activity Log', icon: Activity, role: ['root'] },
     { href: '/admin/users', label: 'Users', icon: Users, role: ['root'] },
     { href: '/admin/settings', label: 'Settings', icon: Settings, role: ['root'] },
+    { href: '/admin/migrate-data', label: 'Migrate Data', icon: FileUp, role: ['root'] },
   ];
 
   const visibleLinks = navLinks.filter(link => user?.role && link.role.includes(user.role));
