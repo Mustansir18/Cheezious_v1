@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useRouter } from 'next/navigation';
@@ -109,6 +108,11 @@ export default function Home() {
   const [isPromoOpen, setPromoOpen] = useState(false);
   const [selectedDeal, setSelectedDeal] = useState<MenuItem | null>(null);
   const [isDealDetailOpen, setDealDetailOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   
   const isLoading = isSettingsLoading || isMenuLoading || isDealsLoading;
   
@@ -163,7 +167,7 @@ export default function Home() {
       <Header />
       <main className="flex-grow flex flex-col items-center justify-center p-4 text-center">
         <div className="space-y-1">
-          {settings.companyLogo ? (
+          {isMounted && typeof settings.companyLogo === 'string' && settings.companyLogo ? (
             <Image src={settings.companyLogo} alt={settings.companyName} width={120} height={120} className="object-contain mx-auto" />
           ) : (
             <div style={{ width: 120, height: 120 }} className="mx-auto" />
