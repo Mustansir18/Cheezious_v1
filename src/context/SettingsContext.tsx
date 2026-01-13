@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
@@ -54,7 +55,7 @@ const initialSettings: Settings = {
     businessDayEnd: "04:00",
     roles: [
       { id: 'root', name: 'Root', permissions: ['admin:*'] },
-      { id: 'admin', name: 'Admin', permissions: ['/admin/orders', '/admin/kds'] },
+      { id: 'admin', name: 'Admin', permissions: ['/admin/orders', '/admin/kds', '/admin/queue'] },
       { id: 'cashier', name: 'Cashier', permissions: ['/cashier'] },
       { id: 'marketing', name: 'Marketing', permissions: ['/marketing/reporting', '/marketing/feedback', '/marketing/target'] },
       { id: 'kds', name: 'KDS (All Stations)', permissions: ['/admin/kds'] },

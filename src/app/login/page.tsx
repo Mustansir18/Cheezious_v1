@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -37,29 +38,40 @@ export default function LoginPage() {
       if (user) {
         toast({ title: 'Login Successful', description: `Welcome back, ${user.username}!` });
         
-        // This logic is now more specific to ensure correct redirection.
-        if (user.role === 'root') {
-          router.push('/admin');
-        } else if (user.role === 'admin') {
-          router.push('/admin/orders');
-        } else if (user.role === 'cashier') {
-          router.push('/cashier');
-        } else if (user.role === 'marketing') {
-            router.push('/marketing/reporting');
-        } else if (user.role === 'kds') {
-            router.push('/admin/kds');
-        } else if (user.role === 'make-station') {
-            router.push('/admin/kds/pizza');
-        } else if (user.role === 'pasta-station') {
-            router.push('/admin/kds/pasta');
-        } else if (user.role === 'fried-station') {
-            router.push('/admin/kds/fried');
-        } else if (user.role === 'bar-station') {
-            router.push('/admin/kds/bar');
-        } else if (user.role === 'cutt-station') {
-            router.push('/admin/kds/master');
-        } else {
-            router.push('/'); // Fallback to home
+        // This is now the single source of truth for post-login redirection.
+        switch (user.role) {
+            case 'root':
+                router.push('/admin');
+                break;
+            case 'admin':
+                router.push('/admin/orders');
+                break;
+            case 'cashier':
+                router.push('/cashier');
+                break;
+            case 'marketing':
+                router.push('/marketing/reporting');
+                break;
+            case 'kds':
+                router.push('/admin/kds');
+                break;
+            case 'make-station':
+                router.push('/admin/kds/pizza');
+                break;
+            case 'pasta-station':
+                router.push('/admin/kds/pasta');
+                break;
+            case 'fried-station':
+                router.push('/admin/kds/fried');
+                break;
+            case 'bar-station':
+                router.push('/admin/kds/bar');
+                break;
+            case 'cutt-station':
+                router.push('/admin/kds/master');
+                break;
+            default:
+                router.push('/'); // Fallback to home
         }
       }
     } catch (error: any) {
