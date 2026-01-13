@@ -9,7 +9,7 @@ type SetValue<T> = (value: T | ((val: T) => T)) => void;
 export function useSyncLocalStorage<T>(
   key: string,
   initialValue: T,
-  apiPath: string
+  apiPath?: string
 ): [T, SetValue<T>, boolean] {
   const { toast } = useToast();
   // Start with loading true
@@ -22,7 +22,8 @@ export function useSyncLocalStorage<T>(
   // Fetch from API on initial mount
   useEffect(() => {
     // This check prevents re-fetching on component re-mounts in development
-    if (isInitialized.current) {
+    if (isInitialized.current || !apiPath) {
+      if (!apiPath) setIsLoading(false);
       return;
     }
     isInitialized.current = true;
