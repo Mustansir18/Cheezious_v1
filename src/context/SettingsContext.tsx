@@ -85,7 +85,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
       const item = window.localStorage.getItem(SETTINGS_STORAGE_KEY);
       if (item) {
         const parsedData = JSON.parse(item);
-        if(parsedData.branches && parsedData.branches.length > 0){
+        if(parsedData.branches && parsedData.branches.length > 0 && parsedData.roles && parsedData.roles.length > 0){
              setSettings(parsedData);
         } else {
             window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(initialSettings));

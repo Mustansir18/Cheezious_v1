@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     try {
       const localUsers = localStorage.getItem(USERS_STORAGE_KEY);
-      if (localUsers && localUsers !== '[]') {
+      if (localUsers && JSON.parse(localUsers).length > 0) {
         setUsers(JSON.parse(localUsers));
       } else {
         localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(initialUsers));
@@ -74,8 +74,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     } catch (error) {
         console.error("Failed to load user from session storage:", error);
+    } finally {
+        setIsLoading(false);
     }
-    setIsLoading(false);
   }, []);
 
 
