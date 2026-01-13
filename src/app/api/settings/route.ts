@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { getConnectionPool, sql } from '@/lib/db';
 import type { Settings } from '@/lib/types';
+import { initialDeals } from '@/lib/data';
 
 
 async function getSettingsFromDb(): Promise<Settings | null> {
@@ -25,7 +26,7 @@ async function getSettingsFromDb(): Promise<Settings | null> {
             deliveryModes: deliveryModes.recordset,
             // Hardcoded values that would normally come from a 'Globals' or 'CompanyInfo' table
             companyName: "Cheezious",
-            companyLogo: "https://cheezious.com/_next/image?url=https%3A%2F%2Fcheezious.fra1.cdn.digitaloceanspaces.com%2F9b964344-32b0-4a8b-a7ea-34863f6848d7.png&w=1920&q=75",
+            companyLogo: "/images/logo.png",
             defaultBranchId: "B-00001",
             autoPrintReceipts: false,
             businessDayStart: "11:00",
@@ -50,8 +51,6 @@ export async function GET(request: Request) {
             return NextResponse.json({ settings });
         }
         // Fallback to initial data if DB is not set up
-        const { initialDeals } = await import('@/lib/data');
-        const { PlaceHolderImages } = await import('@/lib/placeholder-images');
 
         const fallbackSettings = {
             floors: [{ id: 'F-00001', name: 'Ground' }],
@@ -59,7 +58,7 @@ export async function GET(request: Request) {
             paymentMethods: [{ id: 'PM-1', name: 'Cash', taxRate: 0.16 }],
             autoPrintReceipts: false,
             companyName: "Cheezious",
-            companyLogo: PlaceHolderImages.find(i => i.id === 'cheezious-special')?.imageUrl,
+            companyLogo: '/images/logo.png',
             branches: [{ id: 'B-00001', name: 'CHZ J3, JOHAR TOWN LAHORE', dineInEnabled: true, takeAwayEnabled: true, deliveryEnabled: true, orderPrefix: 'G3' }],
             defaultBranchId: 'B-00001',
             businessDayStart: "11:00",

@@ -7,7 +7,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useActivityLog } from './ActivityLogContext';
 import { useAuth } from './AuthContext';
 import { useSyncLocalStorage } from '@/hooks/use-sync-local-storage';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { initialDeals, menuCategories, addons } from '@/lib/data';
 import { ALL_PERMISSIONS } from '@/config/permissions';
 
@@ -46,7 +45,7 @@ const initialSettings: Settings = {
     paymentMethods: [{ id: 'PM-1', name: 'Cash', taxRate: 0.16 }],
     autoPrintReceipts: false,
     companyName: "Cheezious",
-    companyLogo: PlaceHolderImages.find(i => i.id === 'cheezious-special')?.imageUrl || undefined,
+    companyLogo: '/images/logo.png', // Use local logo
     branches: [{ id: 'B-00001', name: 'CHZ J3, JOHAR TOWN LAHORE', dineInEnabled: true, takeAwayEnabled: true, deliveryEnabled: true, orderPrefix: 'G3' }],
     defaultBranchId: 'B-00001',
     businessDayStart: "11:00",
