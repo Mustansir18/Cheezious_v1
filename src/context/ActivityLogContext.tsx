@@ -18,6 +18,12 @@ export const ActivityLogProvider = ({ children }: { children: ReactNode }) => {
   const [logs, setLogs, isLoading] = useSyncLocalStorage<ActivityLog[]>('activityLog', [], '/api/activity-log');
 
   const logActivity = useCallback(async (message: string, user: string, category: ActivityLogCategory) => {
+    // FIX: Add validation to prevent requests with invalid bodies
+    if (!message || !user || !category) {
+      console.error('logActivity called with invalid arguments:', { message, user, category });
+      return;
+    }
+
     const newLogEntry: Omit<ActivityLog, 'id'> = {
       timestamp: new Date().toISOString(),
       user: user || 'System',
