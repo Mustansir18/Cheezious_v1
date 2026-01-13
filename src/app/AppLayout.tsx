@@ -12,14 +12,15 @@ import { RatingProvider } from '@/context/RatingContext';
 import { CashierLogProvider } from '@/context/CashierLogContext';
 
 // This component now correctly wraps all client-side context providers.
+// AuthProvider is at the top level as other providers depend on it.
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ActivityLogProvider>
+    <AuthProvider>
       <SettingsProvider>
-        <MenuProvider>
-          <CashierLogProvider>
-            <CartProvider>
-              <AuthProvider>
+        <ActivityLogProvider>
+          <MenuProvider>
+            <CashierLogProvider>
+              <CartProvider>
                 <DealsProvider>
                   <OrderProvider>
                     <RatingProvider>
@@ -27,11 +28,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     </RatingProvider>
                   </OrderProvider>
                 </DealsProvider>
-              </AuthProvider>
-            </CartProvider>
-          </CashierLogProvider>
-        </MenuProvider>
+              </CartProvider>
+            </CashierLogProvider>
+          </MenuProvider>
+        </ActivityLogProvider>
       </SettingsProvider>
-    </ActivityLogProvider>
+    </AuthProvider>
   );
 }
