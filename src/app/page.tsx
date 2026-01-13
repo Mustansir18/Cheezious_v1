@@ -103,25 +103,27 @@ function DealDetailDialog({ deal, isOpen, onOpenChange, onConfirm }: { deal: Men
 export default function Home() {
   const { settings, isLoading: isSettingsLoading } = useSettings();
   const { menu, isLoading: isMenuLoading } = useMenu();
-  const { deals, isLoading: isDealsLoading } = useDeals();
+  const { deals, isLoading: isDealsLoading } = useDeals(); // This now gets deals from MenuContext
   const router = useRouter();
 
   const [isPromoOpen, setPromoOpen] = useState(false);
   const [selectedDeal, setSelectedDeal] = useState<MenuItem | null>(null);
   const [isDealDetailOpen, setDealDetailOpen] = useState(false);
-
-  const allItems = useMemo(() => [...menu.items, ...deals], [menu.items, deals]);
-
-  const promoItem = useMemo(() => {
-    if (isMenuLoading || isDealsLoading || !settings.promotion.itemId) return null;
-    return allItems.find(d => d.id === settings.promotion.itemId);
-  }, [isMenuLoading, isDealsLoading, allItems, settings.promotion.itemId]);
   
   const isLoading = isSettingsLoading || isMenuLoading || isDealsLoading;
   
+  const promoItem = useMemo(() => {
+    if (isLoading || !settings.promotion.itemId) return null;
+    // Find the promo item from the main menu list
+    return menu.items.find(d => d.id === settings.promotion.itemId);
+  }, [isLoading, menu.items, settings.promotion.itemId]);
+
   useEffect(() => {
-    if (!isLoading && settings.promotion.isEnabled && promoItem) {
+    // Only show promo if it's enabled and the session hasn't seen it yet
+    const promoSeen = sessionStorage.getItem('promo_seen');
+    if (!isLoading && settings.promotion.isEnabled && promoItem && !promoSeen) {
       setPromoOpen(true);
+      sessionStorage.setItem('promo_seen', 'true');
     }
   }, [isLoading, settings.promotion.isEnabled, promoItem]);
 
@@ -153,7 +155,7 @@ export default function Home() {
   const handleConfirmPromo = () => {
     if (!promoItem) return;
     setPromoOpen(false);
-    handleDealClick(promoItem);
+    handleStartOrder(promoItem.id);
   };
 
   return (

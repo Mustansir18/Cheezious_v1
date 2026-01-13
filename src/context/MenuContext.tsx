@@ -108,20 +108,23 @@ export const MenuProvider = ({ children }: { children: ReactNode }) => {
     }
     postMenu({ ...menu, items: [...menu.items, newItem] });
     const logMessage = newItem.categoryId === 'C-00001' ? `Added new deal: '${newItem.name}'.` : `Added menu item: '${newItem.name}'.`;
-    logActivity(logMessage, user?.username || 'System', 'Menu');
+    const logCategory = newItem.categoryId === 'C-00001' ? 'Deal' : 'Menu';
+    logActivity(logMessage, user?.username || 'System', logCategory);
   };
 
   const updateItem = (item: MenuItem) => {
     postMenu({ ...menu, items: menu.items.map(i => i.id === item.id ? item : i) });
      const logMessage = item.categoryId === 'C-00001' ? `Updated deal: '${item.name}'.` : `Updated menu item: '${item.name}'.`;
-    logActivity(logMessage, user?.username || 'System', 'Menu');
+    const logCategory = item.categoryId === 'C-00001' ? 'Deal' : 'Menu';
+    logActivity(logMessage, user?.username || 'System', logCategory);
   };
 
   const deleteItem = (id: string, name: string) => {
     const item = menu.items.find(i => i.id === id);
     postMenu({ ...menu, items: menu.items.filter(i => i.id !== id) });
     const logMessage = item?.categoryId === 'C-00001' ? `Deleted deal: '${name}'.` : `Deleted menu item: '${name}'.`;
-    logActivity(logMessage, user?.username || 'System', 'Menu');
+    const logCategory = item?.categoryId === 'C-00001' ? 'Deal' : 'Menu';
+    logActivity(logMessage, user?.username || 'System', logCategory);
   };
 
   const addAddon = (newAddon: Addon) => {
